@@ -2,6 +2,51 @@
 #include <Python.h>
 #include <systemd/sd-bus.h>
 
+#define SD_BUS_PY_CHECK_RETURN_VALUE(_exception_to_raise) \
+    if (return_value < 0)                                 \
+    {                                                     \
+        PyErr_SetFromErrno(_exception_to_raise);          \
+        return NULL;                                      \
+    }
+
+typedef struct
+{
+    PyObject_HEAD;
+    sd_bus_message *message_ref;
+} SdBusMessageObject;
+
+static void
+SdBusMessage_free(SdBusMessageObject *self)
+{
+    sd_bus_message_unref(self->message_ref);
+}
+
+static PyObject *
+SdBusMessage_dump(SdBusMessageObject *self, PyObject *args)
+{
+    int return_value = sd_bus_message_dump(self->message_ref, 0, SD_BUS_MESSAGE_DUMP_WITH_HEADER);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    return_value = sd_bus_message_rewind(self->message_ref, 1);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    return Py_None;
+}
+
+static PyMethodDef SdBusMessage_methods[] = {
+    {"dump", (PyCFunction)SdBusMessage_dump, METH_NOARGS, "Dump message to stdout"},
+    {NULL, NULL, 0, NULL},
+};
+
+static PyTypeObject SdBusMessageType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+        .tp_name = "sd_bus_internals.SdBusMessage",
+    .tp_basicsize = sizeof(SdBusMessageObject),
+    .tp_itemsize = 0,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_new = PyType_GenericNew,
+    .tp_free = (freefunc)SdBusMessage_free,
+    .tp_methods = SdBusMessage_methods,
+};
+
 typedef struct
 {
     PyObject_HEAD;
@@ -103,6 +148,10 @@ PyInit_sd_bus_internals(void)
     {
         return NULL;
     }
+    if (PyType_Ready(&SdBusMessageType) < 0)
+    {
+        return NULL;
+    }
 
     m = PyModule_Create(&sd_bus_internals_module);
     if (m == NULL)
@@ -114,6 +163,12 @@ PyInit_sd_bus_internals(void)
     if (PyModule_AddObject(m, "SdBus", (PyObject *)&SdBusType) < 0)
     {
         Py_DECREF(&SdBusType);
+        Py_DECREF(m);
+        return NULL;
+    }
+    if (PyModule_AddObject(m, "SdBusMessage", (PyObject *)&SdBusMessageType) < 0)
+    {
+        Py_DECREF(&SdBusMessageType);
         Py_DECREF(m);
         return NULL;
     }

@@ -1,6 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <systemd/sd-bus.h>
+#include <structmember.h>
 
 #define SD_BUS_PY_CHECK_RETURN_VALUE(_exception_to_raise) \
     if (return_value < 0)                                 \
@@ -8,6 +9,48 @@
         PyErr_SetFromErrno(_exception_to_raise);          \
         return NULL;                                      \
     }
+
+typedef struct
+{
+    PyObject_HEAD;
+    sd_bus_error error;
+} SdBusErrorObject;
+
+static int
+SdBusError_init(SdBusErrorObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
+{
+    self->error = SD_BUS_ERROR_NULL;
+    return 0;
+}
+
+static void
+SdBusError_free(SdBusErrorObject *self)
+{
+    sd_bus_error_free(&(self->error));
+}
+
+static PyMemberDef SdBusError_members[] = {
+    {"name", T_STRING, offsetof(SdBusErrorObject, error.name), READONLY, "Error name"},
+    {"message", T_STRING, offsetof(SdBusErrorObject, error.message), READONLY, "Error message"},
+    {NULL},
+};
+
+static PyMethodDef SdBusError_methods[] = {
+    {NULL, NULL, 0, NULL},
+};
+
+static PyTypeObject SdBusErrorType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+        .tp_name = "sd_bus_internals.SdBusError",
+    .tp_basicsize = sizeof(SdBusErrorObject),
+    .tp_itemsize = 0,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_new = PyType_GenericNew,
+    .tp_init = (initproc)SdBusError_init,
+    .tp_free = (freefunc)SdBusError_free,
+    .tp_methods = SdBusError_methods,
+    .tp_members = SdBusError_members,
+};
 
 typedef struct
 {
@@ -135,6 +178,10 @@ PyInit_sd_bus_internals(void)
     {
         return NULL;
     }
+    if (PyType_Ready(&SdBusErrorType) < 0)
+    {
+        return NULL;
+    }
 
     m = PyModule_Create(&sd_bus_internals_module);
     if (m == NULL)
@@ -152,6 +199,12 @@ PyInit_sd_bus_internals(void)
     if (PyModule_AddObject(m, "SdBusMessage", (PyObject *)&SdBusMessageType) < 0)
     {
         Py_DECREF(&SdBusMessageType);
+        Py_DECREF(m);
+        return NULL;
+    }
+    if (PyModule_AddObject(m, "SdBusError", (PyObject *)&SdBusErrorType) < 0)
+    {
+        Py_DECREF(&SdBusErrorType);
         Py_DECREF(m);
         return NULL;
     }

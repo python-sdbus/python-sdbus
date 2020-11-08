@@ -5,4 +5,4 @@ __pycache__
 build
 dev*
 strace*.txt
-notcurses/*.so
+sd_bus/*.so

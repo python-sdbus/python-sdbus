@@ -58,6 +58,13 @@ typedef struct
     sd_bus_message *message_ref;
 } SdBusMessageObject;
 
+static int
+SdBusMessage_init(SdBusMessageObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
+{
+    self->message_ref = NULL;
+    return 0;
+}
+
 static void
 SdBusMessage_free(SdBusMessageObject *self)
 {
@@ -86,6 +93,7 @@ static PyTypeObject SdBusMessageType = {
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_new = PyType_GenericNew,
+    .tp_init = (initproc)SdBusMessage_init,
     .tp_free = (freefunc)SdBusMessage_free,
     .tp_methods = SdBusMessage_methods,
 };
@@ -96,13 +104,20 @@ typedef struct
     sd_bus *sd_bus_ref;
 } SdBusObject;
 
-static SdBusMessageObject *
+static PyObject *
 SdBus_test(SdBusObject *self, PyObject *Py_UNUSED(args));
 
 static void
 SdBus_free(SdBusObject *self)
 {
     sd_bus_unref(self->sd_bus_ref);
+}
+
+static int
+SdBus_init(SdBusObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
+{
+    self->sd_bus_ref = NULL;
+    return 0;
 }
 
 static PyMethodDef SdBus_methods[] = {
@@ -117,30 +132,31 @@ static PyTypeObject SdBusType = {
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_new = PyType_GenericNew,
+    .tp_init = (initproc)SdBus_init,
     .tp_free = (freefunc)SdBus_free,
     .tp_methods = SdBus_methods,
 };
 
-static SdBusMessageObject *
+static PyObject *
 SdBus_test(SdBusObject *self, PyObject *Py_UNUSED(args))
 {
-    sd_bus_error error = SD_BUS_ERROR_NULL;
-    sd_bus_message *m = NULL;
 
-    int return_value = sd_bus_call_method(
+    SdBusMessageObject *message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
+    SdBusMessageType.tp_init((PyObject *)message_object, NULL, NULL);
+    SdBusErrorObject *error_object = PyObject_NEW(SdBusErrorObject, &SdBusErrorType);
+    SdBusErrorType.tp_init((PyObject *)error_object, NULL, NULL);
+
+    sd_bus_call_method(
         self->sd_bus_ref,
         "org.freedesktop.DBus",
         "/org/freedesktop/DBus",
         "org.freedesktop.DBus.Peer",
         "GetMachineId",
-        &error,
-        &m,
+        &error_object->error,
+        &message_object->message_ref,
         "");
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
-    SdBusMessageObject *message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
-    sd_bus_error_free(&error);
-    message_object->message_ref = m;
-    return message_object;
+
+    return PyTuple_Pack(2, message_object, error_object);
 }
 
 static SdBusObject *
@@ -148,6 +164,7 @@ get_default_sd_bus(PyObject *Py_UNUSED(self),
                    PyObject *Py_UNUSED(ignored))
 {
     SdBusObject *new_sd_bus = PyObject_New(SdBusObject, &SdBusType);
+    SdBusType.tp_init((PyObject *)new_sd_bus, NULL, NULL);
     int return_value = sd_bus_default(&(new_sd_bus->sd_bus_ref));
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
     return new_sd_bus;

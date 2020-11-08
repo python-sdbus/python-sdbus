@@ -22,7 +22,7 @@ SdBusMessage_free(SdBusMessageObject *self)
 }
 
 static PyObject *
-SdBusMessage_dump(SdBusMessageObject *self, PyObject *args)
+SdBusMessage_dump(SdBusMessageObject *self, PyObject *Py_UNUSED(args))
 {
     int return_value = sd_bus_message_dump(self->message_ref, 0, SD_BUS_MESSAGE_DUMP_WITH_HEADER);
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
@@ -54,7 +54,7 @@ typedef struct
 } SdBusObject;
 
 static SdBusMessageObject *
-SdBus_test(SdBusObject *self, PyObject *args);
+SdBus_test(SdBusObject *self, PyObject *Py_UNUSED(args));
 
 static void
 SdBus_free(SdBusObject *self)
@@ -79,7 +79,7 @@ static PyTypeObject SdBusType = {
 };
 
 static SdBusMessageObject *
-SdBus_test(SdBusObject *self, PyObject *args)
+SdBus_test(SdBusObject *self, PyObject *Py_UNUSED(args))
 {
     sd_bus_error error = SD_BUS_ERROR_NULL;
     sd_bus_message *m = NULL;
@@ -101,7 +101,7 @@ SdBus_test(SdBusObject *self, PyObject *args)
 }
 
 static SdBusObject *
-get_default_sd_bus(PyObject *self,
+get_default_sd_bus(PyObject *Py_UNUSED(self),
                    PyObject *Py_UNUSED(ignored))
 {
     SdBusObject *new_sd_bus = PyObject_New(SdBusObject, &SdBusType);

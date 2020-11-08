@@ -9,36 +9,7 @@ typedef struct
 } SdBusObject;
 
 static PyObject *
-SdBus_test(SdBusObject *self, PyObject *args)
-{
-    sd_bus_error error = SD_BUS_ERROR_NULL;
-    sd_bus_message *m = NULL;
-    const char *name = NULL;
-
-    int return_value = sd_bus_call_method(
-        self->sd_bus_ref,
-        "org.freedesktop.DBus",
-        "/org/freedesktop/DBus",
-        "org.freedesktop.DBus.Peer",
-        "GetMachineId",
-        &error,
-        &m,
-        "");
-    if (return_value < 0)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to call");
-        return NULL;
-    }
-    return_value = sd_bus_message_read(m, "s", &name);
-    if (return_value < 0)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to read message");
-        return NULL;
-    }
-    return PyUnicode_FromString(name);
-    sd_bus_error_free(&error);
-    sd_bus_message_unref(m);
-}
+SdBus_test(SdBusObject *self, PyObject *args);
 
 static void
 SdBus_free(SdBusObject *self)
@@ -62,6 +33,38 @@ static PyTypeObject SdBusType = {
     .tp_methods = SdBus_methods,
 };
 
+static PyObject *
+SdBus_test(SdBusObject *self, PyObject *args)
+{
+    sd_bus_error error = SD_BUS_ERROR_NULL;
+    sd_bus_message *m = NULL;
+    const char *name = NULL;
+
+    int return_value = sd_bus_call_method(
+        self->sd_bus_ref,
+        "org.freedesktop.DBus",
+        "/org/freedesktop/DBus",
+        "org.freedesktop.DBus.Peer",
+        "GetMachineId",
+        &error,
+        &m,
+        "");
+    if (return_value < 0)
+    {
+        PyErr_SetFromErrno(PyExc_RuntimeError);
+        return NULL;
+    }
+    return_value = sd_bus_message_read(m, "s", &name);
+    if (return_value < 0)
+    {
+        PyErr_SetFromErrno(PyExc_RuntimeError);
+        return NULL;
+    }
+    return PyUnicode_FromString(name);
+    sd_bus_error_free(&error);
+    sd_bus_message_unref(m);
+}
+
 static SdBusObject *
 get_default_sd_bus(PyObject *self,
                    PyObject *Py_UNUSED(ignored))
@@ -70,7 +73,7 @@ get_default_sd_bus(PyObject *self,
     int return_value = sd_bus_default(&(new_sd_bus->sd_bus_ref));
     if (return_value < 0)
     {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to get default sd_bus");
+        PyErr_SetFromErrno(PyExc_RuntimeError);
         return NULL;
     }
     else

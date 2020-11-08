@@ -53,7 +53,7 @@ typedef struct
     sd_bus *sd_bus_ref;
 } SdBusObject;
 
-static PyObject *
+static SdBusMessageObject *
 SdBus_test(SdBusObject *self, PyObject *args);
 
 static void
@@ -78,12 +78,11 @@ static PyTypeObject SdBusType = {
     .tp_methods = SdBus_methods,
 };
 
-static PyObject *
+static SdBusMessageObject *
 SdBus_test(SdBusObject *self, PyObject *args)
 {
     sd_bus_error error = SD_BUS_ERROR_NULL;
     sd_bus_message *m = NULL;
-    const char *name = NULL;
 
     int return_value = sd_bus_call_method(
         self->sd_bus_ref,
@@ -94,20 +93,11 @@ SdBus_test(SdBusObject *self, PyObject *args)
         &error,
         &m,
         "");
-    if (return_value < 0)
-    {
-        PyErr_SetFromErrno(PyExc_RuntimeError);
-        return NULL;
-    }
-    return_value = sd_bus_message_read(m, "s", &name);
-    if (return_value < 0)
-    {
-        PyErr_SetFromErrno(PyExc_RuntimeError);
-        return NULL;
-    }
-    return PyUnicode_FromString(name);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    SdBusMessageObject *message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
     sd_bus_error_free(&error);
-    sd_bus_message_unref(m);
+    message_object->message_ref = m;
+    return message_object;
 }
 
 static SdBusObject *
@@ -116,15 +106,8 @@ get_default_sd_bus(PyObject *self,
 {
     SdBusObject *new_sd_bus = PyObject_New(SdBusObject, &SdBusType);
     int return_value = sd_bus_default(&(new_sd_bus->sd_bus_ref));
-    if (return_value < 0)
-    {
-        PyErr_SetFromErrno(PyExc_RuntimeError);
-        return NULL;
-    }
-    else
-    {
-        return new_sd_bus;
-    }
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    return new_sd_bus;
 }
 
 static PyMethodDef SdBusPyInternal_methods[] = {

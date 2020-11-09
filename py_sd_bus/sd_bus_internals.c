@@ -45,6 +45,9 @@
         return NULL;                                                                   \
     }
 
+static PyObject *exception_dict = NULL;
+static PyObject *exception_default = NULL;
+
 typedef struct
 {
     PyObject_HEAD;
@@ -219,7 +222,20 @@ SdBus_call(SdBusObject *self,
         &error_object->error,
         &reply_message_object->message_ref);
 
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    if (error_object->error.name != NULL)
+    {
+        PyObject *exception_to_raise = PyDict_GetItemString(exception_dict, error_object->error.name);
+        if (exception_to_raise == NULL)
+        {
+            exception_to_raise = exception_default;
+        }
+        PyErr_Format(exception_to_raise, "%s", error_object->error.message);
+        return NULL;
+    }
+    else
+    {
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    }
 
     return PyTuple_Pack(2, reply_message_object, error_object);
 }
@@ -331,6 +347,71 @@ PyInit_sd_bus_internals(void)
         Py_DECREF(m);
         return NULL;
     }
+
+    // Exception map
+    exception_dict = PyDict_New();
+    if (exception_dict == NULL)
+    {
+        Py_DECREF(m);
+        return NULL;
+    }
+    if (PyModule_AddObject(m, "_ExceptionsMap", exception_dict) < 0)
+    {
+        Py_XDECREF(exception_dict);
+        Py_DECREF(m);
+        return NULL;
+    }
+
+    // TODO: check if PyErr_NewException can return NULL
+    PyObject *new_base_exception = PyErr_NewException("sd_bus_internals.DbusBaseError", NULL, NULL);
+    if (PyModule_AddObject(m, "DbusBaseError", new_base_exception) < 0)
+    {
+        Py_XDECREF(new_base_exception);
+        Py_DECREF(m);
+        return NULL;
+    }
+    exception_default = new_base_exception;
+
+    PyObject *new_exception = NULL;
+#define PY_SD_BUS_ADD_EXCEPTION(exception_name, dbus_string)                                \
+    new_exception = PyErr_NewException("sd_bus_internals." #exception_name "", NULL, NULL); \
+    PyDict_SetItemString(exception_dict, dbus_string, new_exception);                       \
+    if (PyModule_AddObject(m, #exception_name, new_exception) < 0)                          \
+    {                                                                                       \
+        Py_XDECREF(new_exception);                                                          \
+        Py_DECREF(m);                                                                       \
+        return NULL;                                                                        \
+    }
+
+    PY_SD_BUS_ADD_EXCEPTION(DbusFailedError, SD_BUS_ERROR_FAILED);
+    PY_SD_BUS_ADD_EXCEPTION(DbusNoMemoryError, SD_BUS_ERROR_NO_MEMORY);
+    PY_SD_BUS_ADD_EXCEPTION(DbusServiceUnknownError, SD_BUS_ERROR_SERVICE_UNKNOWN);
+    PY_SD_BUS_ADD_EXCEPTION(DbusNameHasNoOwnerError, SD_BUS_ERROR_NAME_HAS_NO_OWNER);
+    PY_SD_BUS_ADD_EXCEPTION(DbusNoReplyError, SD_BUS_ERROR_NO_REPLY);
+    PY_SD_BUS_ADD_EXCEPTION(DbusIOError, SD_BUS_ERROR_IO_ERROR);
+    PY_SD_BUS_ADD_EXCEPTION(DbusBadAddressError, SD_BUS_ERROR_BAD_ADDRESS);
+    PY_SD_BUS_ADD_EXCEPTION(DbusNotSupportedError, SD_BUS_ERROR_NOT_SUPPORTED);
+    PY_SD_BUS_ADD_EXCEPTION(DbusLimitsExceededError, SD_BUS_ERROR_LIMITS_EXCEEDED);
+    PY_SD_BUS_ADD_EXCEPTION(DbusAccessDeniedError, SD_BUS_ERROR_ACCESS_DENIED);
+    PY_SD_BUS_ADD_EXCEPTION(DbusAuthFailedError, SD_BUS_ERROR_AUTH_FAILED);
+    PY_SD_BUS_ADD_EXCEPTION(DbusNoServerError, SD_BUS_ERROR_NO_SERVER);
+    PY_SD_BUS_ADD_EXCEPTION(DbusTimeoutError, SD_BUS_ERROR_TIMEOUT);
+    PY_SD_BUS_ADD_EXCEPTION(DbusNoNetworkError, SD_BUS_ERROR_NO_NETWORK);
+    PY_SD_BUS_ADD_EXCEPTION(DbusAddressInUseError, SD_BUS_ERROR_ADDRESS_IN_USE);
+    PY_SD_BUS_ADD_EXCEPTION(DbusDisconnectedError, SD_BUS_ERROR_DISCONNECTED);
+    PY_SD_BUS_ADD_EXCEPTION(DbusInvalidArgsError, SD_BUS_ERROR_INVALID_ARGS);
+    PY_SD_BUS_ADD_EXCEPTION(DbusFileExistsError, SD_BUS_ERROR_FILE_EXISTS);
+    PY_SD_BUS_ADD_EXCEPTION(DbusUnknownMethodError, SD_BUS_ERROR_UNKNOWN_METHOD);
+    PY_SD_BUS_ADD_EXCEPTION(DbusUnknownObjectError, SD_BUS_ERROR_UNKNOWN_OBJECT);
+    PY_SD_BUS_ADD_EXCEPTION(DbusUnknownInterfaceError, SD_BUS_ERROR_UNKNOWN_INTERFACE);
+    PY_SD_BUS_ADD_EXCEPTION(DbusUnknownPropertyError, SD_BUS_ERROR_UNKNOWN_PROPERTY);
+    PY_SD_BUS_ADD_EXCEPTION(DbusPropertyReadOnlyError, SD_BUS_ERROR_PROPERTY_READ_ONLY);
+    PY_SD_BUS_ADD_EXCEPTION(DbusUnixProcessIdUnknownError, SD_BUS_ERROR_UNIX_PROCESS_ID_UNKNOWN);
+    PY_SD_BUS_ADD_EXCEPTION(DbusInvalidSignatureError, SD_BUS_ERROR_INVALID_SIGNATURE);
+    PY_SD_BUS_ADD_EXCEPTION(DbusInconsistentMessageError, SD_BUS_ERROR_INCONSISTENT_MESSAGE);
+    PY_SD_BUS_ADD_EXCEPTION(DbusMatchRuleNotFound, SD_BUS_ERROR_MATCH_RULE_NOT_FOUND);
+    PY_SD_BUS_ADD_EXCEPTION(DbusMatchRuleInvalidError, SD_BUS_ERROR_MATCH_RULE_INVALID);
+    PY_SD_BUS_ADD_EXCEPTION(DbusInteractiveAuthorizationRequiredError, SD_BUS_ERROR_INTERACTIVE_AUTHORIZATION_REQUIRED);
 
     return m;
 }

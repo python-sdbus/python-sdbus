@@ -140,7 +140,28 @@ SdBus_init(SdBusObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwd
     return 0;
 }
 
+static SdBusMessageObject *
+SdBus_new_method_call(SdBusObject *self, PyObject *Py_UNUSED(args))
+{
+    const char *destination_bus_name = "org.freedesktop.DBus";
+    const char *object_path = "/org/freedesktop/DBus";
+    const char *interface_name = "org.freedesktop.DBus.Peer";
+    const char *member_name = "GetMachineId";
+    SdBusMessageObject *new_message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
+    SdBusMessageType.tp_init((PyObject *)new_message_object, NULL, NULL);
+    int return_value = sd_bus_message_new_method_call(
+        self->sd_bus_ref,
+        &new_message_object->message_ref,
+        destination_bus_name,
+        object_path,
+        interface_name,
+        member_name);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError); // TODO: decrease reference
+    return new_message_object;
+}
+
 static PyMethodDef SdBus_methods[] = {
+    {"new_method_call", (PyCFunction)SdBus_new_method_call, METH_NOARGS, NULL},
     {"test", (PyCFunction)SdBus_test, METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL},
 };

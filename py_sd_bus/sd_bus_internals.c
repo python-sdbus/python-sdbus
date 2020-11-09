@@ -30,7 +30,7 @@
         return NULL;                                      \
     }
 
-#define PY_SD_BUS_CHECK_ARG_NUMBER(number_args)                                              \
+#define PY_SD_BUS_CHECK_ARGS_NUMBER(number_args)                                             \
     if (nargs != 1)                                                                          \
     {                                                                                        \
         PyErr_Format(PyExc_TypeError, "Expected " #number_args " arguments, got %i", nargs); \
@@ -120,7 +120,7 @@ SdBusMessage_add_str(SdBusMessageObject *self,
                      PyObject *const *args,
                      Py_ssize_t nargs)
 {
-    PY_SD_BUS_CHECK_ARG_NUMBER(1);
+    PY_SD_BUS_CHECK_ARGS_NUMBER(1);
     PY_SD_BUS_CHECK_ARG_TYPE(0, PyUnicode_Type);
 
     sd_bus_message_append_basic(self->message_ref, 's', PyUnicode_AsUTF8(args[0]));
@@ -192,7 +192,7 @@ SdBus_call(SdBusObject *self,
            PyObject *const *args,
            Py_ssize_t nargs)
 {
-    PY_SD_BUS_CHECK_ARG_NUMBER(1);
+    PY_SD_BUS_CHECK_ARGS_NUMBER(1);
     PY_SD_BUS_CHECK_ARG_TYPE(0, SdBusMessageType);
 
     SdBusMessageObject *call_message = (SdBusMessageObject *)args[0];

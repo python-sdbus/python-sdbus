@@ -24,4 +24,4 @@ __pycache__
 build
 dev*
 strace*.txt
-sd_bus/*.so
+*.so

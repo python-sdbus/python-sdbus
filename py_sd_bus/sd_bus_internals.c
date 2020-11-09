@@ -23,15 +23,16 @@
 #include <systemd/sd-bus.h>
 #include <structmember.h>
 
-#define SD_BUS_PY_CHECK_RETURN_VALUE(_exception_to_raise) \
-    if (return_value < 0)                                 \
-    {                                                     \
-        PyErr_SetFromErrno(_exception_to_raise);          \
-        return NULL;                                      \
+#define SD_BUS_PY_CHECK_RETURN_VALUE(_exception_to_raise)                 \
+    if (return_value < 0)                                                 \
+    {                                                                     \
+        PyErr_Format(_exception_to_raise, "sd-bus returned error %i: %s", \
+                     -return_value, strerror(-return_value));             \
+        return NULL;                                                      \
     }
 
 #define PY_SD_BUS_CHECK_ARGS_NUMBER(number_args)                                             \
-    if (nargs != 1)                                                                          \
+    if (nargs != number_args)                                                                \
     {                                                                                        \
         PyErr_Format(PyExc_TypeError, "Expected " #number_args " arguments, got %i", nargs); \
         return NULL;                                                                         \
@@ -168,12 +169,21 @@ SdBus_init(SdBusObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwd
 }
 
 static SdBusMessageObject *
-SdBus_new_method_call_message(SdBusObject *self, PyObject *Py_UNUSED(args))
+SdBus_new_method_call_message(SdBusObject *self,
+                              PyObject *const *args,
+                              Py_ssize_t nargs)
 {
-    const char *destination_bus_name = "org.freedesktop.DBus";
-    const char *object_path = "/org/freedesktop/DBus";
-    const char *interface_name = "org.freedesktop.DBus.Peer";
-    const char *member_name = "GetMachineId";
+    PY_SD_BUS_CHECK_ARGS_NUMBER(4);
+    PY_SD_BUS_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    PY_SD_BUS_CHECK_ARG_TYPE(1, PyUnicode_Type);
+    PY_SD_BUS_CHECK_ARG_TYPE(2, PyUnicode_Type);
+    PY_SD_BUS_CHECK_ARG_TYPE(3, PyUnicode_Type);
+
+    const char *destination_bus_name = PyUnicode_AsUTF8(args[0]);
+    const char *object_path = PyUnicode_AsUTF8(args[1]);
+    const char *interface_name = PyUnicode_AsUTF8(args[2]);
+    const char *member_name = PyUnicode_AsUTF8(args[3]);
+
     SdBusMessageObject *new_message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
     SdBusMessageType.tp_init((PyObject *)new_message_object, NULL, NULL);
     int return_value = sd_bus_message_new_method_call(
@@ -216,7 +226,7 @@ SdBus_call(SdBusObject *self,
 
 static PyMethodDef SdBus_methods[] = {
     {"call", (void *)SdBus_call, METH_FASTCALL, NULL},
-    {"new_method_call_message", (PyCFunction)SdBus_new_method_call_message, METH_NOARGS, NULL},
+    {"new_method_call_message", (void *)SdBus_new_method_call_message, METH_FASTCALL, NULL},
     {"test", (PyCFunction)SdBus_test, METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL},
 };

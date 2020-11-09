@@ -373,14 +373,14 @@ PyInit_sd_bus_internals(void)
     exception_default = new_base_exception;
 
     PyObject *new_exception = NULL;
-#define PY_SD_BUS_ADD_EXCEPTION(exception_name, dbus_string)                                \
-    new_exception = PyErr_NewException("sd_bus_internals." #exception_name "", NULL, NULL); \
-    PyDict_SetItemString(exception_dict, dbus_string, new_exception);                       \
-    if (PyModule_AddObject(m, #exception_name, new_exception) < 0)                          \
-    {                                                                                       \
-        Py_XDECREF(new_exception);                                                          \
-        Py_DECREF(m);                                                                       \
-        return NULL;                                                                        \
+#define PY_SD_BUS_ADD_EXCEPTION(exception_name, dbus_string)                                              \
+    new_exception = PyErr_NewException("sd_bus_internals." #exception_name "", new_base_exception, NULL); \
+    PyDict_SetItemString(exception_dict, dbus_string, new_exception);                                     \
+    if (PyModule_AddObject(m, #exception_name, new_exception) < 0)                                        \
+    {                                                                                                     \
+        Py_XDECREF(new_exception);                                                                        \
+        Py_DECREF(m);                                                                                     \
+        return NULL;                                                                                      \
     }
 
     PY_SD_BUS_ADD_EXCEPTION(DbusFailedError, SD_BUS_ERROR_FAILED);

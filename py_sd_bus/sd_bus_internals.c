@@ -141,7 +141,7 @@ SdBus_init(SdBusObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwd
 }
 
 static SdBusMessageObject *
-SdBus_new_method_call(SdBusObject *self, PyObject *Py_UNUSED(args))
+SdBus_new_method_call_message(SdBusObject *self, PyObject *Py_UNUSED(args))
 {
     const char *destination_bus_name = "org.freedesktop.DBus";
     const char *object_path = "/org/freedesktop/DBus";
@@ -161,7 +161,7 @@ SdBus_new_method_call(SdBusObject *self, PyObject *Py_UNUSED(args))
 }
 
 static PyMethodDef SdBus_methods[] = {
-    {"new_method_call", (PyCFunction)SdBus_new_method_call, METH_NOARGS, NULL},
+    {"new_method_call_message", (PyCFunction)SdBus_new_method_call_message, METH_NOARGS, NULL},
     {"test", (PyCFunction)SdBus_test, METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL},
 };

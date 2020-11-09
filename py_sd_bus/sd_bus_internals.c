@@ -30,6 +30,20 @@
         return NULL;                                      \
     }
 
+#define PY_SD_BUS_CHECK_ARG_NUMBER(number_args)                                              \
+    if (nargs != 1)                                                                          \
+    {                                                                                        \
+        PyErr_Format(PyExc_TypeError, "Expected " #number_args " arguments, got %i", nargs); \
+        return NULL;                                                                         \
+    }
+
+#define PY_SD_BUS_CHECK_ARG_TYPE(arg_num, arg_expected_type)                           \
+    if (Py_TYPE(args[arg_num]) != &arg_expected_type)                                  \
+    {                                                                                  \
+        PyErr_SetString(PyExc_TypeError, "Argument is not an " #arg_expected_type ""); \
+        return NULL;                                                                   \
+    }
+
 typedef struct
 {
     PyObject_HEAD;
@@ -101,7 +115,20 @@ SdBusMessage_dump(SdBusMessageObject *self, PyObject *Py_UNUSED(args))
     return Py_None;
 }
 
+static PyObject *
+SdBusMessage_add_str(SdBusMessageObject *self,
+                     PyObject *const *args,
+                     Py_ssize_t nargs)
+{
+    PY_SD_BUS_CHECK_ARG_NUMBER(1);
+    PY_SD_BUS_CHECK_ARG_TYPE(0, PyUnicode_Type);
+
+    sd_bus_message_append_basic(self->message_ref, 's', PyUnicode_AsUTF8(args[0]));
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef SdBusMessage_methods[] = {
+    {"add_str", (void *)SdBusMessage_add_str, METH_FASTCALL, "Add str to message"},
     {"dump", (PyCFunction)SdBusMessage_dump, METH_NOARGS, "Dump message to stdout"},
     {NULL, NULL, 0, NULL},
 };
@@ -165,17 +192,8 @@ SdBus_call(SdBusObject *self,
            PyObject *const *args,
            Py_ssize_t nargs)
 {
-    if (nargs != 1)
-    {
-        PyErr_SetString(PyExc_TypeError, "Expected one argument");
-        return NULL;
-    }
-
-    if (Py_TYPE(args[0]) != &SdBusMessageType)
-    {
-        PyErr_SetString(PyExc_TypeError, "Argument is not an SdBusMessage");
-        return NULL;
-    }
+    PY_SD_BUS_CHECK_ARG_NUMBER(1);
+    PY_SD_BUS_CHECK_ARG_TYPE(0, SdBusMessageType);
 
     SdBusMessageObject *call_message = (SdBusMessageObject *)args[0];
 

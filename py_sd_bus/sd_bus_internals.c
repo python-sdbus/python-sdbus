@@ -160,7 +160,44 @@ SdBus_new_method_call_message(SdBusObject *self, PyObject *Py_UNUSED(args))
     return new_message_object;
 }
 
+static PyObject *
+SdBus_call(SdBusObject *self,
+           PyObject *const *args,
+           Py_ssize_t nargs)
+{
+    if (nargs != 1)
+    {
+        PyErr_SetString(PyExc_TypeError, "Expected one argument");
+        return NULL;
+    }
+
+    if (Py_TYPE(args[0]) != &SdBusMessageType)
+    {
+        PyErr_SetString(PyExc_TypeError, "Argument is not an SdBusMessage");
+        return NULL;
+    }
+
+    SdBusMessageObject *call_message = (SdBusMessageObject *)args[0];
+
+    SdBusMessageObject *reply_message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
+    SdBusMessageType.tp_init((PyObject *)reply_message_object, NULL, NULL);
+    SdBusErrorObject *error_object = PyObject_NEW(SdBusErrorObject, &SdBusErrorType);
+    SdBusErrorType.tp_init((PyObject *)error_object, NULL, NULL);
+
+    int return_value = sd_bus_call(
+        self->sd_bus_ref,
+        call_message->message_ref,
+        (uint64_t)0,
+        &error_object->error,
+        &reply_message_object->message_ref);
+
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+    return PyTuple_Pack(2, reply_message_object, error_object);
+}
+
 static PyMethodDef SdBus_methods[] = {
+    {"call", (void *)SdBus_call, METH_FASTCALL, NULL},
     {"new_method_call_message", (PyCFunction)SdBus_new_method_call_message, METH_NOARGS, NULL},
     {"test", (PyCFunction)SdBus_test, METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL},

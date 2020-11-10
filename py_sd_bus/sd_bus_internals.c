@@ -270,7 +270,7 @@ SdBus_call_async(SdBusObject *self,
 
     int return_value = sd_bus_call_async(
         self->sd_bus_ref,
-        NULL, // TODO: make cancelable
+        NULL, // CAVEAT: its cancelable by cancelling Future inside python but callback must happen
         call_message->message_ref,
         PySbBus_async_callback,
         args[1],

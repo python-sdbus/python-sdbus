@@ -47,48 +47,7 @@
 
 static PyObject *exception_dict = NULL;
 static PyObject *exception_default = NULL;
-
-typedef struct
-{
-    PyObject_HEAD;
-    sd_bus_error error;
-} SdBusErrorObject;
-
-static int
-SdBusError_init(SdBusErrorObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
-{
-    self->error = SD_BUS_ERROR_NULL;
-    return 0;
-}
-
-static void
-SdBusError_free(SdBusErrorObject *self)
-{
-    sd_bus_error_free(&(self->error));
-}
-
-static PyMemberDef SdBusError_members[] = {
-    {"name", T_STRING, offsetof(SdBusErrorObject, error.name), READONLY, "Error name"},
-    {"message", T_STRING, offsetof(SdBusErrorObject, error.message), READONLY, "Error message"},
-    {NULL},
-};
-
-static PyMethodDef SdBusError_methods[] = {
-    {NULL, NULL, 0, NULL},
-};
-
-static PyTypeObject SdBusErrorType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-        .tp_name = "sd_bus_internals.SdBusError",
-    .tp_basicsize = sizeof(SdBusErrorObject),
-    .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_new = PyType_GenericNew,
-    .tp_init = (initproc)SdBusError_init,
-    .tp_free = (freefunc)SdBusError_free,
-    .tp_methods = SdBusError_methods,
-    .tp_members = SdBusError_members,
-};
+static PyObject *exception_generic = NULL;
 
 typedef struct
 {
@@ -154,9 +113,6 @@ typedef struct
     PyObject_HEAD;
     sd_bus *sd_bus_ref;
 } SdBusObject;
-
-static PyObject *
-SdBus_test(SdBusObject *self, PyObject *Py_UNUSED(args));
 
 static void
 SdBus_free(SdBusObject *self)
@@ -227,9 +183,9 @@ SdBus_call(SdBusObject *self,
         PyObject *exception_to_raise = PyDict_GetItemString(exception_dict, error.name);
         if (exception_to_raise == NULL)
         {
-            exception_to_raise = exception_default;
+            exception_to_raise = exception_generic;
         }
-        PyErr_Format(exception_to_raise, "%s", error.message);
+        PyErr_SetObject(exception_to_raise, Py_BuildValue("(ss)", error.name, error.message));
         return NULL;
     }
     else
@@ -243,7 +199,6 @@ SdBus_call(SdBusObject *self,
 static PyMethodDef SdBus_methods[] = {
     {"call", (void *)SdBus_call, METH_FASTCALL, NULL},
     {"new_method_call_message", (void *)SdBus_new_method_call_message, METH_FASTCALL, NULL},
-    {"test", (PyCFunction)SdBus_test, METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL},
 };
 
@@ -258,28 +213,6 @@ static PyTypeObject SdBusType = {
     .tp_free = (freefunc)SdBus_free,
     .tp_methods = SdBus_methods,
 };
-
-static PyObject *
-SdBus_test(SdBusObject *self, PyObject *Py_UNUSED(args))
-{
-
-    SdBusMessageObject *message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
-    SdBusMessageType.tp_init((PyObject *)message_object, NULL, NULL);
-    SdBusErrorObject *error_object = PyObject_NEW(SdBusErrorObject, &SdBusErrorType);
-    SdBusErrorType.tp_init((PyObject *)error_object, NULL, NULL);
-
-    sd_bus_call_method(
-        self->sd_bus_ref,
-        "org.freedesktop.DBus",
-        "/org/freedesktop/DBus",
-        "org.freedesktop.DBus.Peer",
-        "GetMachineId",
-        &error_object->error,
-        &message_object->message_ref,
-        "");
-
-    return PyTuple_Pack(2, message_object, error_object);
-}
 
 static SdBusObject *
 get_default_sd_bus(PyObject *Py_UNUSED(self),
@@ -317,10 +250,6 @@ PyInit_sd_bus_internals(void)
     {
         return NULL;
     }
-    if (PyType_Ready(&SdBusErrorType) < 0)
-    {
-        return NULL;
-    }
 
     m = PyModule_Create(&sd_bus_internals_module);
     if (m == NULL)
@@ -338,12 +267,6 @@ PyInit_sd_bus_internals(void)
     if (PyModule_AddObject(m, "SdBusMessage", (PyObject *)&SdBusMessageType) < 0)
     {
         Py_DECREF(&SdBusMessageType);
-        Py_DECREF(m);
-        return NULL;
-    }
-    if (PyModule_AddObject(m, "SdBusError", (PyObject *)&SdBusErrorType) < 0)
-    {
-        Py_DECREF(&SdBusErrorType);
         Py_DECREF(m);
         return NULL;
     }
@@ -412,6 +335,14 @@ PyInit_sd_bus_internals(void)
     PY_SD_BUS_ADD_EXCEPTION(DbusMatchRuleNotFound, SD_BUS_ERROR_MATCH_RULE_NOT_FOUND);
     PY_SD_BUS_ADD_EXCEPTION(DbusMatchRuleInvalidError, SD_BUS_ERROR_MATCH_RULE_INVALID);
     PY_SD_BUS_ADD_EXCEPTION(DbusInteractiveAuthorizationRequiredError, SD_BUS_ERROR_INTERACTIVE_AUTHORIZATION_REQUIRED);
+
+    exception_generic = PyErr_NewException("sd_bus_internals.DbusGenericError", new_base_exception, NULL);
+    if (PyModule_AddObject(m, "DbusGenericError", exception_generic) < 0)
+    {
+        Py_XDECREF(exception_generic);
+        Py_DECREF(m);
+        return NULL;
+    }
 
     return m;
 }

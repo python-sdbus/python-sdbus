@@ -48,6 +48,7 @@
 static PyObject *exception_dict = NULL;
 static PyObject *exception_default = NULL;
 static PyObject *exception_generic = NULL;
+static PyTypeObject *async_future_type = NULL;
 
 typedef struct
 {
@@ -196,8 +197,84 @@ SdBus_call(SdBusObject *self,
     return reply_message_object;
 }
 
+int PySbBus_async_callback(sd_bus_message *m,
+                           void *userdata, // Should be the asyncio.Future
+                           sd_bus_error *Py_UNUSED(ret_error))
+{
+
+    if (!sd_bus_message_is_method_error(m, NULL))
+    {
+        // Not Error, set Future result to new message object
+        SdBusMessageObject *reply_message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
+        SdBusMessageType.tp_init((PyObject *)reply_message_object, NULL, NULL);
+        PyObject *return_object = PyObject_CallMethod(userdata, "set_result", "O", reply_message_object);
+        if (return_object == NULL)
+        {
+            return -1;
+        }
+    }
+    else
+    {
+        // An Error, set exception
+        const sd_bus_error *callback_error = sd_bus_message_get_error(m);
+        PyObject *exception_to_raise = PyDict_GetItemString(exception_dict, callback_error->name);
+        if (exception_to_raise == NULL)
+        {
+            exception_to_raise = exception_generic;
+        }
+        PyErr_SetObject(exception_to_raise, Py_BuildValue("(ss)", callback_error->name, callback_error->message));
+        PyObject *return_object = PyObject_CallMethod(userdata, "set_exception", "O", exception_to_raise);
+        if (return_object == NULL)
+        {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+PyObject *create_future()
+{
+    PyObject *dummy_tuple = PyTuple_New(0);
+    PyObject *dummy_dict = PyDict_New();
+    PyObject *reply_future_object = PyObject_Call((PyObject *)async_future_type, dummy_tuple, dummy_dict);
+    Py_XDECREF(dummy_tuple);
+    Py_XDECREF(dummy_dict);
+    return reply_future_object;
+}
+
+static PyObject *
+SdBus_call_async(SdBusObject *self,
+                 PyObject *const *args,
+                 Py_ssize_t nargs)
+{
+    PY_SD_BUS_CHECK_ARGS_NUMBER(1);
+    PY_SD_BUS_CHECK_ARG_TYPE(0, SdBusMessageType);
+
+    SdBusMessageObject *call_message = (SdBusMessageObject *)args[0];
+
+    PyObject *reply_future_object = create_future();
+    if (reply_future_object == NULL)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Failed to create future");
+    }
+    sd_bus_error error __attribute__((cleanup(sd_bus_error_free))) = SD_BUS_ERROR_NULL;
+
+    int return_value = sd_bus_call_async(
+        self->sd_bus_ref,
+        NULL, // TODO: make cancelable
+        call_message->message_ref,
+        PySbBus_async_callback,
+        reply_future_object,
+        (uint64_t)0);
+
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+    return reply_future_object;
+}
+
 static PyMethodDef SdBus_methods[] = {
-    {"call", (void *)SdBus_call, METH_FASTCALL, NULL},
+    {"call", (void *)SdBus_call, METH_FASTCALL, "Send message and get reply"},
+    {"call_async", (void *)SdBus_call_async, METH_FASTCALL, "Async send message, returns awaitable future"},
     {"new_method_call_message", (void *)SdBus_new_method_call_message, METH_FASTCALL, NULL},
     {NULL, NULL, 0, NULL},
 };
@@ -341,6 +418,23 @@ PyInit_sd_bus_internals(void)
     {
         Py_XDECREF(exception_generic);
         Py_DECREF(m);
+        return NULL;
+    }
+
+    PyObject *asyncio_module = PyImport_ImportModule("asyncio");
+    async_future_type = (PyTypeObject *)PyObject_GetAttrString(asyncio_module, "Future");
+    if (async_future_type == NULL)
+    {
+        Py_DECREF(m);
+        return NULL;
+    }
+    if (!PyType_Check(async_future_type))
+    {
+        Py_DECREF(m);
+        return NULL;
+    }
+    if (PyType_Ready(async_future_type) < 0)
+    {
         return NULL;
     }
 

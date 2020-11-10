@@ -197,17 +197,28 @@ SdBus_call(SdBusObject *self,
     return reply_message_object;
 }
 
+void PyObjectXDecRef(PyObject **object)
+{
+    Py_XDECREF(*object);
+}
+
 int PySbBus_async_callback(sd_bus_message *m,
                            void *userdata, // Should be the asyncio.Future
                            sd_bus_error *Py_UNUSED(ret_error))
 {
+    PyObject *py_future __attribute__((cleanup(PyObjectXDecRef))) = userdata;
+    PyObject *is_cancelled = PyObject_CallMethod(py_future, "cancelled", "");
+    if (Py_True == is_cancelled)
+    {
+        return 0;
+    }
 
     if (!sd_bus_message_is_method_error(m, NULL))
     {
         // Not Error, set Future result to new message object
         SdBusMessageObject *reply_message_object = (SdBusMessageObject *)_PyObject_CallNoArg((PyObject *)&SdBusMessageType);
         reply_message_object->message_ref = m;
-        PyObject *return_object = PyObject_CallMethod(userdata, "set_result", "O", reply_message_object);
+        PyObject *return_object = PyObject_CallMethod(py_future, "set_result", "O", reply_message_object);
         if (return_object == NULL)
         {
             return -1;
@@ -236,23 +247,14 @@ int PySbBus_async_callback(sd_bus_message *m,
         PyObject *new_exception = PyObject_Call(exception_to_raise_type, exception_data, dummy_dict);
         Py_XDECREF(dummy_dict);
 
-        PyObject *return_object = PyObject_CallMethod(userdata, "set_exception", "O", new_exception);
+        PyObject *return_object = PyObject_CallMethod(py_future, "set_exception", "O", new_exception);
         if (return_object == NULL)
         {
             return -1;
         }
     }
-    return 0;
-}
 
-PyObject *create_future()
-{
-    PyObject *dummy_tuple = PyTuple_New(0);
-    PyObject *dummy_dict = PyDict_New();
-    PyObject *reply_future_object = PyObject_Call((PyObject *)async_future_type, dummy_tuple, dummy_dict);
-    Py_XDECREF(dummy_tuple);
-    Py_XDECREF(dummy_dict);
-    return reply_future_object;
+    return 0;
 }
 
 static PyObject *
@@ -275,6 +277,8 @@ SdBus_call_async(SdBusObject *self,
         (uint64_t)0);
 
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+    Py_INCREF(args[1]);
 
     Py_RETURN_NONE;
 }

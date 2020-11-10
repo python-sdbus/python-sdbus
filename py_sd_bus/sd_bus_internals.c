@@ -205,8 +205,8 @@ int PySbBus_async_callback(sd_bus_message *m,
     if (!sd_bus_message_is_method_error(m, NULL))
     {
         // Not Error, set Future result to new message object
-        SdBusMessageObject *reply_message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
-        SdBusMessageType.tp_init((PyObject *)reply_message_object, NULL, NULL);
+        SdBusMessageObject *reply_message_object = (SdBusMessageObject *)_PyObject_CallNoArg((PyObject *)&SdBusMessageType);
+        reply_message_object->message_ref = m;
         PyObject *return_object = PyObject_CallMethod(userdata, "set_result", "O", reply_message_object);
         if (return_object == NULL)
         {
@@ -222,8 +222,21 @@ int PySbBus_async_callback(sd_bus_message *m,
         {
             exception_to_raise = exception_generic;
         }
-        PyErr_SetObject(exception_to_raise, Py_BuildValue("(ss)", callback_error->name, callback_error->message));
-        PyObject *return_object = PyObject_CallMethod(userdata, "set_exception", "O", exception_to_raise);
+        PyObject *exception_data = Py_BuildValue("(ss)", callback_error->name, callback_error->message);
+        if (exception_data == NULL)
+        {
+            return -1;
+        }
+        PyObject *exception_to_raise_type = PyDict_GetItemString(exception_dict, callback_error->name);
+        if (exception_to_raise_type == NULL)
+        {
+            exception_to_raise_type = exception_generic;
+        }
+        PyObject *dummy_dict = PyDict_New();
+        PyObject *new_exception = PyObject_Call(exception_to_raise_type, exception_data, dummy_dict);
+        Py_XDECREF(dummy_dict);
+
+        PyObject *return_object = PyObject_CallMethod(userdata, "set_exception", "O", new_exception);
         if (return_object == NULL)
         {
             return -1;
@@ -247,34 +260,51 @@ SdBus_call_async(SdBusObject *self,
                  PyObject *const *args,
                  Py_ssize_t nargs)
 {
-    PY_SD_BUS_CHECK_ARGS_NUMBER(1);
+    PY_SD_BUS_CHECK_ARGS_NUMBER(2);
     PY_SD_BUS_CHECK_ARG_TYPE(0, SdBusMessageType);
+    PY_SD_BUS_CHECK_ARG_TYPE(1, *async_future_type);
 
     SdBusMessageObject *call_message = (SdBusMessageObject *)args[0];
-
-    PyObject *reply_future_object = create_future();
-    if (reply_future_object == NULL)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to create future");
-    }
-    sd_bus_error error __attribute__((cleanup(sd_bus_error_free))) = SD_BUS_ERROR_NULL;
 
     int return_value = sd_bus_call_async(
         self->sd_bus_ref,
         NULL, // TODO: make cancelable
         call_message->message_ref,
         PySbBus_async_callback,
-        reply_future_object,
+        args[1],
         (uint64_t)0);
 
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
 
-    return reply_future_object;
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+SdBus_drive(SdBusObject *self,
+            PyObject *Py_UNUSED(args))
+{
+    sd_bus_message *message;
+    int return_value = sd_bus_process(self->sd_bus_ref, &message);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+    return PyLong_FromLong((long)return_value);
+}
+
+static PyObject *
+SdBus_get_fd(SdBusObject *self,
+             PyObject *Py_UNUSED(args))
+{
+    int return_value = sd_bus_get_fd(self->sd_bus_ref);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+    return PyLong_FromLong((long)return_value);
 }
 
 static PyMethodDef SdBus_methods[] = {
     {"call", (void *)SdBus_call, METH_FASTCALL, "Send message and get reply"},
     {"call_async", (void *)SdBus_call_async, METH_FASTCALL, "Async send message, returns awaitable future"},
+    {"drive", (PyCFunction)SdBus_drive, METH_FASTCALL, "Drive connection"},
+    {"get_fd", (PyCFunction)SdBus_get_fd, METH_FASTCALL, "Get file descriptor to await on"},
     {"new_method_call_message", (void *)SdBus_new_method_call_message, METH_FASTCALL, NULL},
     {NULL, NULL, 0, NULL},
 };

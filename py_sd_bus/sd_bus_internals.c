@@ -200,7 +200,7 @@ SdBus_new_method_call_message(SdBusObject *self,
     return new_message_object;
 }
 
-static PyObject *
+static SdBusMessageObject *
 SdBus_call(SdBusObject *self,
            PyObject *const *args,
            Py_ssize_t nargs)
@@ -212,24 +212,24 @@ SdBus_call(SdBusObject *self,
 
     SdBusMessageObject *reply_message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
     SdBusMessageType.tp_init((PyObject *)reply_message_object, NULL, NULL);
-    SdBusErrorObject *error_object = PyObject_NEW(SdBusErrorObject, &SdBusErrorType);
-    SdBusErrorType.tp_init((PyObject *)error_object, NULL, NULL);
+
+    sd_bus_error error __attribute__((cleanup(sd_bus_error_free))) = SD_BUS_ERROR_NULL;
 
     int return_value = sd_bus_call(
         self->sd_bus_ref,
         call_message->message_ref,
         (uint64_t)0,
-        &error_object->error,
+        &error,
         &reply_message_object->message_ref);
 
-    if (error_object->error.name != NULL)
+    if (error.name != NULL)
     {
-        PyObject *exception_to_raise = PyDict_GetItemString(exception_dict, error_object->error.name);
+        PyObject *exception_to_raise = PyDict_GetItemString(exception_dict, error.name);
         if (exception_to_raise == NULL)
         {
             exception_to_raise = exception_default;
         }
-        PyErr_Format(exception_to_raise, "%s", error_object->error.message);
+        PyErr_Format(exception_to_raise, "%s", error.message);
         return NULL;
     }
     else
@@ -237,7 +237,7 @@ SdBus_call(SdBusObject *self,
         SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
     }
 
-    return PyTuple_Pack(2, reply_message_object, error_object);
+    return reply_message_object;
 }
 
 static PyMethodDef SdBus_methods[] = {

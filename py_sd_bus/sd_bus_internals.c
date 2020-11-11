@@ -68,7 +68,7 @@ typedef struct
     sd_bus_message *message_ref;
 } SdBusMessageObject;
 
-void SdBusMessage_XDecRef(SdBusMessageObject **object)
+void SdBusMessage_cleanup(SdBusMessageObject **object)
 {
     Py_XDECREF(*object);
 }
@@ -241,7 +241,7 @@ int PySbBus_async_callback(sd_bus_message *m,
     {
         // Not Error, set Future result to new message object
 
-        SdBusMessageObject *reply_message_object __attribute__((cleanup(SdBusMessage_XDecRef))) = (SdBusMessageObject *)_PyObject_CallNoArg((PyObject *)&SdBusMessageType);
+        SdBusMessageObject *reply_message_object __attribute__((cleanup(SdBusMessage_cleanup))) = (SdBusMessageObject *)_PyObject_CallNoArg((PyObject *)&SdBusMessageType);
         if (reply_message_object == NULL)
         {
             return -1;

@@ -123,11 +123,16 @@ typedef struct
 {
     PyObject_HEAD;
     sd_bus *sd_bus_ref;
+    PyObject *sd_bus_fd;
 } SdBusObject;
+
+int _SdBus_start_drive(SdBusObject *self);
+void _SdBus_stop_drive(SdBusObject *self);
 
 static void
 SdBus_free(SdBusObject *self)
 {
+    _SdBus_stop_drive(self);
     sd_bus_unref(self->sd_bus_ref);
     PyObject_Free(self);
 }
@@ -136,6 +141,7 @@ static int
 SdBus_init(SdBusObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
 {
     self->sd_bus_ref = NULL;
+    self->sd_bus_fd = NULL;
     return 0;
 }
 
@@ -230,6 +236,10 @@ int PySbBus_async_callback(sd_bus_message *m,
         // Not Error, set Future result to new message object
 
         SdBusMessageObject *reply_message_object __attribute__((cleanup(SdBusMessage_XDecRef))) = (SdBusMessageObject *)_PyObject_CallNoArg((PyObject *)&SdBusMessageType);
+        if (reply_message_object == NULL)
+        {
+            return -1;
+        }
         reply_message_object->message_ref = m;
         PyObject *return_object __attribute__((cleanup(PyObjectXDecRef))) = PyObject_CallMethod(py_future, "set_result", "O", reply_message_object);
         if (return_object == NULL)
@@ -281,13 +291,16 @@ SdBus_call_async(SdBusObject *self,
         return NULL;
     }
 
+    int return_value = _SdBus_start_drive(self);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
     PyObject *new_future = PyObject_CallMethod(running_loop, "create_future", "");
     if (new_future == NULL)
     {
         return NULL;
     }
 
-    int return_value = sd_bus_call_async(
+    return_value = sd_bus_call_async(
         self->sd_bus_ref,
         NULL, // CAVEAT: its cancelable by cancelling Future inside python but callback must happen
         call_message->message_ref,
@@ -313,7 +326,10 @@ SdBus_drive(SdBusObject *self,
         return_value = sd_bus_process(self->sd_bus_ref, &message);
         SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
     }
-
+    if (PyErr_Occurred() != NULL)
+    {
+        return NULL;
+    }
     Py_RETURN_NONE;
 }
 
@@ -325,6 +341,55 @@ SdBus_get_fd(SdBusObject *self,
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
 
     return PyLong_FromLong((long)return_value);
+}
+
+int _SdBus_start_drive(SdBusObject *self)
+{
+    if (self->sd_bus_fd != NULL)
+    {
+        return 0;
+    }
+
+    PyObject *running_loop __attribute__((cleanup(PyObjectXDecRef))) = _PyObject_CallNoArg(asyncio_get_running_loop);
+    if (running_loop == NULL)
+    {
+        return -1;
+    }
+
+    PyObject *new_fd __attribute__((cleanup(PyObjectXDecRef))) = SdBus_get_fd(self, NULL);
+    if (new_fd == NULL)
+    {
+        return -1;
+    }
+
+    PyObject *drive_method __attribute__((cleanup(PyObjectXDecRef))) = PyObject_GetAttrString((PyObject *)self, "drive");
+    if (drive_method == NULL)
+    {
+        return -1;
+    }
+
+    PyObject *should_be_none = PyObject_CallMethod(running_loop, "add_reader", "OO", new_fd, drive_method);
+    if (should_be_none == NULL)
+    {
+        return -1;
+    }
+
+    self->sd_bus_fd = new_fd;
+    return 0;
+}
+
+void _SdBus_stop_drive(SdBusObject *self)
+{
+    if (self->sd_bus_fd == NULL)
+    {
+        return;
+    }
+    PyObject *running_loop __attribute__((cleanup(PyObjectXDecRef))) = _PyObject_CallNoArg(asyncio_get_running_loop);
+    if (running_loop == NULL)
+    {
+        return;
+    }
+    PyObject_CallMethod(running_loop, "remove_reader", "O", _PyLong_AsInt(self->sd_bus_fd));
 }
 
 static PyMethodDef SdBus_methods[] = {

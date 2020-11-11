@@ -26,12 +26,12 @@
 
 //Helpers
 
-#define SD_BUS_PY_CHECK_RETURN_VALUE(_exception_to_raise)                 \
-    if (return_value < 0)                                                 \
-    {                                                                     \
-        PyErr_Format(_exception_to_raise, "sd-bus returned error %i: %s", \
-                     -return_value, strerror(-return_value));             \
-        return NULL;                                                      \
+#define SD_BUS_PY_CHECK_RETURN_VALUE(_exception_to_raise)                          \
+    if (return_value < 0)                                                          \
+    {                                                                              \
+        PyErr_Format(_exception_to_raise, "Line: %d sd-bus returned error %i: %s", \
+                     __LINE__, -return_value, strerror(-return_value));            \
+        return NULL;                                                               \
     }
 
 #define PY_SD_BUS_CHECK_ARGS_NUMBER(number_args)                                             \

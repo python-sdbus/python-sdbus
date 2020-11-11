@@ -24,6 +24,8 @@
 #include <structmember.h>
 #include <mcheck.h>
 
+//Helpers
+
 #define SD_BUS_PY_CHECK_RETURN_VALUE(_exception_to_raise)                 \
     if (return_value < 0)                                                 \
     {                                                                     \
@@ -54,6 +56,12 @@ static PyObject *asyncio_get_running_loop = NULL;
 static PyObject *dummy_dict = NULL;
 static PyObject *dummy_tuple = NULL;
 
+void PyObject_cleanup(PyObject **object)
+{
+    Py_XDECREF(*object);
+}
+
+// SdBusMessage
 typedef struct
 {
     PyObject_HEAD;
@@ -218,17 +226,12 @@ SdBus_call(SdBusObject *self,
     return reply_message_object;
 }
 
-void PyObjectXDecRef(PyObject **object)
-{
-    Py_XDECREF(*object);
-}
-
 int PySbBus_async_callback(sd_bus_message *m,
                            void *userdata, // Should be the asyncio.Future
                            sd_bus_error *Py_UNUSED(ret_error))
 {
-    PyObject *py_future __attribute__((cleanup(PyObjectXDecRef))) = userdata;
-    PyObject *is_cancelled __attribute__((cleanup(PyObjectXDecRef))) = PyObject_CallMethod(py_future, "cancelled", "");
+    PyObject *py_future __attribute__((cleanup(PyObject_cleanup))) = userdata;
+    PyObject *is_cancelled __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethod(py_future, "cancelled", "");
     if (Py_True == is_cancelled)
     {
         return 0;
@@ -244,7 +247,7 @@ int PySbBus_async_callback(sd_bus_message *m,
             return -1;
         }
         reply_message_object->message_ref = m;
-        PyObject *return_object __attribute__((cleanup(PyObjectXDecRef))) = PyObject_CallMethod(py_future, "set_result", "O", reply_message_object);
+        PyObject *return_object __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethod(py_future, "set_result", "O", reply_message_object);
         if (return_object == NULL)
         {
             return -1;
@@ -255,7 +258,7 @@ int PySbBus_async_callback(sd_bus_message *m,
         // An Error, set exception
         const sd_bus_error *callback_error = sd_bus_message_get_error(m);
 
-        PyObject *exception_data __attribute__((cleanup(PyObjectXDecRef))) = Py_BuildValue("(ss)", callback_error->name, callback_error->message);
+        PyObject *exception_data __attribute__((cleanup(PyObject_cleanup))) = Py_BuildValue("(ss)", callback_error->name, callback_error->message);
         printf("exception_data REF: %li\n", exception_data->ob_refcnt);
         if (exception_data == NULL)
         {
@@ -266,7 +269,7 @@ int PySbBus_async_callback(sd_bus_message *m,
         {
             exception_to_raise_type = exception_generic;
         }
-        PyObject *new_exception __attribute__((cleanup(PyObjectXDecRef))) = PyObject_Call(exception_to_raise_type, exception_data, dummy_dict);
+        PyObject *new_exception __attribute__((cleanup(PyObject_cleanup))) = PyObject_Call(exception_to_raise_type, exception_data, dummy_dict);
 
         PyObject *return_object = PyObject_CallMethod(py_future, "set_exception", "O", new_exception);
         if (return_object == NULL)
@@ -288,7 +291,7 @@ SdBus_call_async(SdBusObject *self,
 
     SdBusMessageObject *call_message = (SdBusMessageObject *)args[0];
 
-    PyObject *running_loop __attribute__((cleanup(PyObjectXDecRef))) = _PyObject_CallNoArg(asyncio_get_running_loop);
+    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = _PyObject_CallNoArg(asyncio_get_running_loop);
     if (running_loop == NULL)
     {
         return NULL;
@@ -353,19 +356,19 @@ int _SdBus_start_drive(SdBusObject *self)
         return 0;
     }
 
-    PyObject *running_loop __attribute__((cleanup(PyObjectXDecRef))) = _PyObject_CallNoArg(asyncio_get_running_loop);
+    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = _PyObject_CallNoArg(asyncio_get_running_loop);
     if (running_loop == NULL)
     {
         return -1;
     }
 
-    PyObject *new_fd __attribute__((cleanup(PyObjectXDecRef))) = SdBus_get_fd(self, NULL);
+    PyObject *new_fd __attribute__((cleanup(PyObject_cleanup))) = SdBus_get_fd(self, NULL);
     if (new_fd == NULL)
     {
         return -1;
     }
 
-    PyObject *drive_method __attribute__((cleanup(PyObjectXDecRef))) = PyObject_GetAttrString((PyObject *)self, "drive");
+    PyObject *drive_method __attribute__((cleanup(PyObject_cleanup))) = PyObject_GetAttrString((PyObject *)self, "drive");
     if (drive_method == NULL)
     {
         return -1;
@@ -387,7 +390,7 @@ void _SdBus_stop_drive(SdBusObject *self)
     {
         return;
     }
-    PyObject *running_loop __attribute__((cleanup(PyObjectXDecRef))) = _PyObject_CallNoArg(asyncio_get_running_loop);
+    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = _PyObject_CallNoArg(asyncio_get_running_loop);
     if (running_loop == NULL)
     {
         return;

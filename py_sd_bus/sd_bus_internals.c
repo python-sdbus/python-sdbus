@@ -105,7 +105,8 @@ SdBusMessage_add_str(SdBusMessageObject *self,
     PY_SD_BUS_CHECK_ARGS_NUMBER(1);
     PY_SD_BUS_CHECK_ARG_TYPE(0, PyUnicode_Type);
 
-    sd_bus_message_append_basic(self->message_ref, 's', PyUnicode_AsUTF8(args[0]));
+    int return_value = sd_bus_message_append_basic(self->message_ref, 's', PyUnicode_AsUTF8(args[0]));
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
     Py_RETURN_NONE;
 }
 

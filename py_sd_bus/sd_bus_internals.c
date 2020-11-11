@@ -294,11 +294,11 @@ static PyObject *
 SdBus_drive(SdBusObject *self,
             PyObject *Py_UNUSED(args))
 {
-    sd_bus_message *message;
+    sd_bus_message *message = NULL;
     int return_value = 1;
     while (return_value > 0)
     {
-        return_value = sd_bus_process(self->sd_bus_ref, message);
+        return_value = sd_bus_process(self->sd_bus_ref, &message);
         SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
     }
 

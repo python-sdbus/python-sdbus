@@ -50,6 +50,7 @@ static PyObject *exception_dict = NULL;
 static PyObject *exception_default = NULL;
 static PyObject *exception_generic = NULL;
 static PyTypeObject *async_future_type = NULL;
+static PyObject *asyncio_get_running_loop = NULL;
 static PyObject *dummy_dict = NULL;
 static PyObject *dummy_tuple = NULL;
 
@@ -360,6 +361,13 @@ static PyModuleDef sd_bus_internals_module = {
     .m_size = -1,
 };
 
+#define TEST_FAILURE(test_statement) \
+    if (test_statement)              \
+    {                                \
+        Py_DECREF(m);                \
+        return NULL;                 \
+    }
+
 PyMODINIT_FUNC
 PyInit_sd_bus_internals(void)
 {
@@ -467,21 +475,14 @@ PyInit_sd_bus_internals(void)
     }
 
     PyObject *asyncio_module = PyImport_ImportModule("asyncio");
+    TEST_FAILURE(asyncio_module == NULL);
     async_future_type = (PyTypeObject *)PyObject_GetAttrString(asyncio_module, "Future");
-    if (async_future_type == NULL)
-    {
-        Py_DECREF(m);
-        return NULL;
-    }
-    if (!PyType_Check(async_future_type))
-    {
-        Py_DECREF(m);
-        return NULL;
-    }
-    if (PyType_Ready(async_future_type) < 0)
-    {
-        return NULL;
-    }
+    TEST_FAILURE(async_future_type == NULL);
+    TEST_FAILURE(!PyType_Check(async_future_type));
+    TEST_FAILURE(PyType_Ready(async_future_type) < 0);
+
+    asyncio_get_running_loop = PyObject_GetAttrString(asyncio_module, "get_running_loop");
+    TEST_FAILURE(asyncio_get_running_loop == NULL);
 
     dummy_dict = PyDict_New();
     dummy_tuple = PyTuple_New(0);

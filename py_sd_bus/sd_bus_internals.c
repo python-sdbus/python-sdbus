@@ -22,6 +22,7 @@
 #include <Python.h>
 #include <systemd/sd-bus.h>
 #include <structmember.h>
+#include <mcheck.h>
 
 #define SD_BUS_PY_CHECK_RETURN_VALUE(_exception_to_raise)                 \
     if (return_value < 0)                                                 \
@@ -49,12 +50,19 @@ static PyObject *exception_dict = NULL;
 static PyObject *exception_default = NULL;
 static PyObject *exception_generic = NULL;
 static PyTypeObject *async_future_type = NULL;
+static PyObject *dummy_dict = NULL;
+static PyObject *dummy_tuple = NULL;
 
 typedef struct
 {
     PyObject_HEAD;
     sd_bus_message *message_ref;
 } SdBusMessageObject;
+
+void SdBusMessage_XDecRef(SdBusMessageObject **object)
+{
+    Py_XDECREF(*object);
+}
 
 static int
 SdBusMessage_init(SdBusMessageObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
@@ -67,6 +75,7 @@ static void
 SdBusMessage_free(SdBusMessageObject *self)
 {
     sd_bus_message_unref(self->message_ref);
+    PyObject_Free(self);
 }
 
 static PyObject *
@@ -119,6 +128,7 @@ static void
 SdBus_free(SdBusObject *self)
 {
     sd_bus_unref(self->sd_bus_ref);
+    PyObject_Free(self);
 }
 
 static int
@@ -144,8 +154,8 @@ SdBus_new_method_call_message(SdBusObject *self,
     const char *interface_name = PyUnicode_AsUTF8(args[2]);
     const char *member_name = PyUnicode_AsUTF8(args[3]);
 
-    SdBusMessageObject *new_message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
-    SdBusMessageType.tp_init((PyObject *)new_message_object, NULL, NULL);
+    SdBusMessageObject *new_message_object = (SdBusMessageObject *)PyObject_Call((PyObject *)&SdBusMessageType, dummy_tuple, dummy_dict);
+
     int return_value = sd_bus_message_new_method_call(
         self->sd_bus_ref,
         &new_message_object->message_ref,
@@ -162,6 +172,7 @@ SdBus_call(SdBusObject *self,
            PyObject *const *args,
            Py_ssize_t nargs)
 {
+    // TODO: Check reference counting
     PY_SD_BUS_CHECK_ARGS_NUMBER(1);
     PY_SD_BUS_CHECK_ARG_TYPE(0, SdBusMessageType);
 
@@ -207,7 +218,7 @@ int PySbBus_async_callback(sd_bus_message *m,
                            sd_bus_error *Py_UNUSED(ret_error))
 {
     PyObject *py_future __attribute__((cleanup(PyObjectXDecRef))) = userdata;
-    PyObject *is_cancelled = PyObject_CallMethod(py_future, "cancelled", "");
+    PyObject *is_cancelled __attribute__((cleanup(PyObjectXDecRef))) = PyObject_CallMethod(py_future, "cancelled", "");
     if (Py_True == is_cancelled)
     {
         return 0;
@@ -216,9 +227,10 @@ int PySbBus_async_callback(sd_bus_message *m,
     if (!sd_bus_message_is_method_error(m, NULL))
     {
         // Not Error, set Future result to new message object
-        SdBusMessageObject *reply_message_object = (SdBusMessageObject *)_PyObject_CallNoArg((PyObject *)&SdBusMessageType);
+
+        SdBusMessageObject *reply_message_object __attribute__((cleanup(SdBusMessage_XDecRef))) = (SdBusMessageObject *)_PyObject_CallNoArg((PyObject *)&SdBusMessageType);
         reply_message_object->message_ref = m;
-        PyObject *return_object = PyObject_CallMethod(py_future, "set_result", "O", reply_message_object);
+        PyObject *return_object __attribute__((cleanup(PyObjectXDecRef))) = PyObject_CallMethod(py_future, "set_result", "O", reply_message_object);
         if (return_object == NULL)
         {
             return -1;
@@ -228,12 +240,9 @@ int PySbBus_async_callback(sd_bus_message *m,
     {
         // An Error, set exception
         const sd_bus_error *callback_error = sd_bus_message_get_error(m);
-        PyObject *exception_to_raise = PyDict_GetItemString(exception_dict, callback_error->name);
-        if (exception_to_raise == NULL)
-        {
-            exception_to_raise = exception_generic;
-        }
-        PyObject *exception_data = Py_BuildValue("(ss)", callback_error->name, callback_error->message);
+
+        PyObject *exception_data __attribute__((cleanup(PyObjectXDecRef))) = Py_BuildValue("(ss)", callback_error->name, callback_error->message);
+        printf("exception_data REF: %li\n", exception_data->ob_refcnt);
         if (exception_data == NULL)
         {
             return -1;
@@ -243,9 +252,7 @@ int PySbBus_async_callback(sd_bus_message *m,
         {
             exception_to_raise_type = exception_generic;
         }
-        PyObject *dummy_dict = PyDict_New();
-        PyObject *new_exception = PyObject_Call(exception_to_raise_type, exception_data, dummy_dict);
-        Py_XDECREF(dummy_dict);
+        PyObject *new_exception __attribute__((cleanup(PyObjectXDecRef))) = PyObject_Call(exception_to_raise_type, exception_data, dummy_dict);
 
         PyObject *return_object = PyObject_CallMethod(py_future, "set_exception", "O", new_exception);
         if (return_object == NULL)
@@ -288,10 +295,14 @@ SdBus_drive(SdBusObject *self,
             PyObject *Py_UNUSED(args))
 {
     sd_bus_message *message;
-    int return_value = sd_bus_process(self->sd_bus_ref, &message);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    int return_value = 1;
+    while (return_value > 0)
+    {
+        return_value = sd_bus_process(self->sd_bus_ref, message);
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    }
 
-    return PyLong_FromLong((long)return_value);
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -471,6 +482,9 @@ PyInit_sd_bus_internals(void)
     {
         return NULL;
     }
+
+    dummy_dict = PyDict_New();
+    dummy_tuple = PyTuple_New(0);
 
     return m;
 }

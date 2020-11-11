@@ -270,25 +270,36 @@ SdBus_call_async(SdBusObject *self,
                  PyObject *const *args,
                  Py_ssize_t nargs)
 {
-    PY_SD_BUS_CHECK_ARGS_NUMBER(2);
+    PY_SD_BUS_CHECK_ARGS_NUMBER(1);
     PY_SD_BUS_CHECK_ARG_TYPE(0, SdBusMessageType);
-    PY_SD_BUS_CHECK_ARG_TYPE(1, *async_future_type);
 
     SdBusMessageObject *call_message = (SdBusMessageObject *)args[0];
+
+    PyObject *running_loop __attribute__((cleanup(PyObjectXDecRef))) = _PyObject_CallNoArg(asyncio_get_running_loop);
+    if (running_loop == NULL)
+    {
+        return NULL;
+    }
+
+    PyObject *new_future = PyObject_CallMethod(running_loop, "create_future", "");
+    if (new_future == NULL)
+    {
+        return NULL;
+    }
 
     int return_value = sd_bus_call_async(
         self->sd_bus_ref,
         NULL, // CAVEAT: its cancelable by cancelling Future inside python but callback must happen
         call_message->message_ref,
         PySbBus_async_callback,
-        args[1],
+        new_future,
         (uint64_t)0);
 
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
 
-    Py_INCREF(args[1]);
+    Py_INCREF(new_future);
 
-    Py_RETURN_NONE;
+    return new_future;
 }
 
 static PyObject *

@@ -303,7 +303,10 @@ SdBus_call_async(SdBusObject *self,
     }
 
     int return_value = _SdBus_start_drive(self);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    if (return_value < 0)
+    {
+        return NULL;
+    }
 
     PyObject *new_future = PyObject_CallMethod(running_loop, "create_future", "");
     if (new_future == NULL)

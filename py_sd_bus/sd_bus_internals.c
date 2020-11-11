@@ -132,7 +132,6 @@ void _SdBus_stop_drive(SdBusObject *self);
 static void
 SdBus_free(SdBusObject *self)
 {
-    _SdBus_stop_drive(self);
     sd_bus_unref(self->sd_bus_ref);
     PyObject_Free(self);
 }
@@ -162,6 +161,10 @@ SdBus_new_method_call_message(SdBusObject *self,
     const char *member_name = PyUnicode_AsUTF8(args[3]);
 
     SdBusMessageObject *new_message_object = (SdBusMessageObject *)PyObject_Call((PyObject *)&SdBusMessageType, dummy_tuple, dummy_dict);
+    if (new_message_object == NULL)
+    {
+        return NULL;
+    }
 
     int return_value = sd_bus_message_new_method_call(
         self->sd_bus_ref,
@@ -389,7 +392,7 @@ void _SdBus_stop_drive(SdBusObject *self)
     {
         return;
     }
-    PyObject_CallMethod(running_loop, "remove_reader", "O", _PyLong_AsInt(self->sd_bus_fd));
+    PyObject_CallMethod(running_loop, "remove_reader", "O", self->sd_bus_fd);
 }
 
 static PyMethodDef SdBus_methods[] = {

@@ -86,7 +86,7 @@ SdBusMessage_dump(SdBusMessageObject *self, PyObject *Py_UNUSED(args))
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
     return_value = sd_bus_message_rewind(self->message_ref, 1);
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *

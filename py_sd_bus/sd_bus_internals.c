@@ -88,8 +88,12 @@ SdBusMessage_free(SdBusMessageObject *self)
 }
 
 static PyObject *
-SdBusMessage_dump(SdBusMessageObject *self, PyObject *Py_UNUSED(args))
+SdBusMessage_dump(SdBusMessageObject *self,
+                  PyObject *const *Py_UNUSED(args),
+                  Py_ssize_t nargs)
 {
+    PY_SD_BUS_CHECK_ARGS_NUMBER(0);
+
     int return_value = sd_bus_message_dump(self->message_ref, 0, SD_BUS_MESSAGE_DUMP_WITH_HEADER);
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
     return_value = sd_bus_message_rewind(self->message_ref, 1);
@@ -112,7 +116,7 @@ SdBusMessage_add_str(SdBusMessageObject *self,
 
 static PyMethodDef SdBusMessage_methods[] = {
     {"add_str", (void *)SdBusMessage_add_str, METH_FASTCALL, "Add str to message"},
-    {"dump", (PyCFunction)SdBusMessage_dump, METH_NOARGS, "Dump message to stdout"},
+    {"dump", (void *)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
     {NULL, NULL, 0, NULL},
 };
 

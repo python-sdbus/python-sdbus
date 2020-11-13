@@ -339,11 +339,13 @@ SdBus_drive(SdBusObject *self,
     {
         return_value = sd_bus_process(self->sd_bus_ref, &message);
         SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+        if (PyErr_Occurred())
+        {
+            return NULL;
+        }
     }
-    if (PyErr_Occurred() != NULL)
-    {
-        return NULL;
-    }
+
     Py_RETURN_NONE;
 }
 

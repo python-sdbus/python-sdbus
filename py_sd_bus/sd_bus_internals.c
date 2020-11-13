@@ -61,6 +61,50 @@ void PyObject_cleanup(PyObject **object)
     Py_XDECREF(*object);
 }
 
+//SdBusSlot
+typedef struct
+{
+    PyObject_HEAD;
+    sd_bus_slot *slot_ref;
+} SdBusSlotObject;
+
+void SdBusSlot_cleanup(SdBusSlotObject **object)
+{
+    Py_XDECREF(*object);
+}
+
+static int
+SdBusSlot_init(SdBusSlotObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
+{
+    self->slot_ref = NULL;
+    return 0;
+}
+
+static void _SdBusSlot_set_slot(SdBusSlotObject *self, sd_bus_slot *new_slot)
+{
+    self->slot_ref = sd_bus_slot_ref(new_slot);
+}
+
+static void
+SdBusSlot_free(SdBusSlotObject *self)
+{
+    
+    sd_bus_slot_unref(self->slot_ref);
+    PyObject_Free(self);
+}
+
+static PyTypeObject SdBusSlotType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+        .tp_name = "sd_bus_internals.SdBusSlot",
+    .tp_basicsize = sizeof(SdBusSlotObject),
+    .tp_itemsize = 0,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_new = PyType_GenericNew,
+    .tp_init = (initproc)SdBusSlot_init,
+    .tp_free = (freefunc)SdBusSlot_free,
+    .tp_methods = NULL,
+};
+
 // SdBusMessage
 typedef struct
 {
@@ -78,6 +122,12 @@ SdBusMessage_init(SdBusMessageObject *self, PyObject *Py_UNUSED(args), PyObject 
 {
     self->message_ref = NULL;
     return 0;
+}
+
+static void
+_SdBusMessage_set_messsage(SdBusMessageObject *self, sd_bus_message *new_message)
+{
+    self->message_ref = sd_bus_message_ref(new_message);
 }
 
 static void
@@ -235,12 +285,12 @@ int SbBus_async_callback(sd_bus_message *m,
                          void *userdata, // Should be the asyncio.Future
                          sd_bus_error *Py_UNUSED(ret_error))
 {
-    sd_bus_message *reply_message = m;
-    sd_bus_message_ref(reply_message);
-    PyObject *py_future __attribute__((cleanup(PyObject_cleanup))) = userdata;
+    sd_bus_message *reply_message __attribute__((cleanup(sd_bus_message_unrefp))) = sd_bus_message_ref(m);
+    PyObject *py_future = userdata;
     PyObject *is_cancelled __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethod(py_future, "cancelled", "");
     if (Py_True == is_cancelled)
     {
+        // A bit unpythonic but SdBus_drive does not error out
         return 0;
     }
 
@@ -253,7 +303,7 @@ int SbBus_async_callback(sd_bus_message *m,
         {
             return -1;
         }
-        reply_message_object->message_ref = reply_message;
+        _SdBusMessage_set_messsage(reply_message_object, reply_message);
         PyObject *return_object __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethod(py_future, "set_result", "O", reply_message_object);
         if (return_object == NULL)
         {
@@ -316,9 +366,11 @@ SdBus_call_async(SdBusObject *self,
         return NULL;
     }
 
+    SdBusSlotObject *new_slot_object __attribute__((cleanup(SdBusSlot_cleanup))) = (SdBusSlotObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL);
+
     return_value = sd_bus_call_async(
         self->sd_bus_ref,
-        NULL, // CAVEAT: its cancelable by cancelling Future inside python but callback must happen
+        &new_slot_object->slot_ref,
         call_message->message_ref,
         SbBus_async_callback,
         new_future,
@@ -326,7 +378,11 @@ SdBus_call_async(SdBusObject *self,
 
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
 
-    Py_INCREF(new_future);
+    return_value = PyObject_SetAttrString(new_future, "_sd_bus_py_slot", (PyObject *)new_slot_object);
+    if (return_value < 0)
+    {
+        return NULL;
+    }
 
     return new_future;
 }
@@ -473,6 +529,10 @@ PyInit_sd_bus_internals(void)
     {
         return NULL;
     }
+    if (PyType_Ready(&SdBusSlotType) < 0)
+    {
+        return NULL;
+    }
 
     m = PyModule_Create(&sd_bus_internals_module);
     if (m == NULL)
@@ -490,6 +550,12 @@ PyInit_sd_bus_internals(void)
     if (PyModule_AddObject(m, "SdBusMessage", (PyObject *)&SdBusMessageType) < 0)
     {
         Py_DECREF(&SdBusMessageType);
+        Py_DECREF(m);
+        return NULL;
+    }
+    if (PyModule_AddObject(m, "SdBusSlot", (PyObject *)&SdBusSlotType) < 0)
+    {
+        Py_DECREF(&SdBusSlotType);
         Py_DECREF(m);
         return NULL;
     }

@@ -231,7 +231,7 @@ SdBus_call(SdBusObject *self,
     return reply_message_object;
 }
 
-int PySbBus_async_callback(sd_bus_message *m,
+int SbBus_async_callback(sd_bus_message *m,
                            void *userdata, // Should be the asyncio.Future
                            sd_bus_error *Py_UNUSED(ret_error))
 {
@@ -318,7 +318,7 @@ SdBus_call_async(SdBusObject *self,
         self->sd_bus_ref,
         NULL, // CAVEAT: its cancelable by cancelling Future inside python but callback must happen
         call_message->message_ref,
-        PySbBus_async_callback,
+        SbBus_async_callback,
         new_future,
         (uint64_t)0);
 

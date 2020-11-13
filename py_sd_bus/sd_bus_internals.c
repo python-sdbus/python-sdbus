@@ -232,9 +232,11 @@ SdBus_call(SdBusObject *self,
 }
 
 int SbBus_async_callback(sd_bus_message *m,
-                           void *userdata, // Should be the asyncio.Future
-                           sd_bus_error *Py_UNUSED(ret_error))
+                         void *userdata, // Should be the asyncio.Future
+                         sd_bus_error *Py_UNUSED(ret_error))
 {
+    sd_bus_message *reply_message = m;
+    sd_bus_message_ref(reply_message);
     PyObject *py_future __attribute__((cleanup(PyObject_cleanup))) = userdata;
     PyObject *is_cancelled __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethod(py_future, "cancelled", "");
     if (Py_True == is_cancelled)
@@ -251,7 +253,7 @@ int SbBus_async_callback(sd_bus_message *m,
         {
             return -1;
         }
-        reply_message_object->message_ref = m;
+        reply_message_object->message_ref = reply_message;
         PyObject *return_object __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethod(py_future, "set_result", "O", reply_message_object);
         if (return_object == NULL)
         {
@@ -333,11 +335,10 @@ static PyObject *
 SdBus_drive(SdBusObject *self,
             PyObject *Py_UNUSED(args))
 {
-    sd_bus_message *message = NULL;
     int return_value = 1;
     while (return_value > 0)
     {
-        return_value = sd_bus_process(self->sd_bus_ref, &message);
+        return_value = sd_bus_process(self->sd_bus_ref, NULL);
         SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
 
         if (PyErr_Occurred())

@@ -22,7 +22,6 @@
 #include <Python.h>
 #include <systemd/sd-bus.h>
 #include <structmember.h>
-#include <mcheck.h>
 
 //Helpers
 

@@ -472,8 +472,8 @@ static SdBusObject *
 get_default_sd_bus(PyObject *Py_UNUSED(self),
                    PyObject *Py_UNUSED(ignored))
 {
-    SdBusObject *new_sd_bus = PyObject_New(SdBusObject, &SdBusType);
-    SdBusType.tp_init((PyObject *)new_sd_bus, NULL, NULL);
+    SdBusObject *new_sd_bus = (SdBusObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusType, NULL);
+
     int return_value = sd_bus_default(&(new_sd_bus->sd_bus_ref));
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
     return new_sd_bus;

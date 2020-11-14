@@ -52,8 +52,6 @@ static PyObject *exception_default = NULL;
 static PyObject *exception_generic = NULL;
 static PyTypeObject *async_future_type = NULL;
 static PyObject *asyncio_get_running_loop = NULL;
-static PyObject *dummy_dict = NULL;
-static PyObject *dummy_tuple = NULL;
 
 void PyObject_cleanup(PyObject **object)
 {
@@ -87,7 +85,7 @@ static void _SdBusSlot_set_slot(SdBusSlotObject *self, sd_bus_slot *new_slot)
 static void
 SdBusSlot_free(SdBusSlotObject *self)
 {
-    
+
     sd_bus_slot_unref(self->slot_ref);
     PyObject_Free(self);
 }
@@ -222,7 +220,7 @@ SdBus_new_method_call_message(SdBusObject *self,
     const char *interface_name = PyUnicode_AsUTF8(args[2]);
     const char *member_name = PyUnicode_AsUTF8(args[3]);
 
-    SdBusMessageObject *new_message_object = (SdBusMessageObject *)PyObject_Call((PyObject *)&SdBusMessageType, dummy_tuple, dummy_dict);
+    SdBusMessageObject *new_message_object = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
     if (new_message_object == NULL)
     {
         return NULL;
@@ -325,7 +323,7 @@ int SbBus_async_callback(sd_bus_message *m,
         {
             exception_to_raise_type = exception_generic;
         }
-        PyObject *new_exception __attribute__((cleanup(PyObject_cleanup))) = PyObject_Call(exception_to_raise_type, exception_data, dummy_dict);
+        PyObject *new_exception __attribute__((cleanup(PyObject_cleanup))) = PyObject_Call(exception_to_raise_type, exception_data, NULL);
 
         PyObject *return_object = PyObject_CallMethod(py_future, "set_exception", "O", new_exception);
         if (return_object == NULL)
@@ -641,9 +639,6 @@ PyInit_sd_bus_internals(void)
 
     asyncio_get_running_loop = PyObject_GetAttrString(asyncio_module, "get_running_loop");
     TEST_FAILURE(asyncio_get_running_loop == NULL);
-
-    dummy_dict = PyDict_New();
-    dummy_tuple = PyTuple_New(0);
 
     return m;
 }

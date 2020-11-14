@@ -295,7 +295,7 @@ int SbBus_async_callback(sd_bus_message *m,
     {
         // Not Error, set Future result to new message object
 
-        SdBusMessageObject *reply_message_object __attribute__((cleanup(SdBusMessage_cleanup))) = (SdBusMessageObject *)_PyObject_CallNoArg((PyObject *)&SdBusMessageType);
+        SdBusMessageObject *reply_message_object __attribute__((cleanup(SdBusMessage_cleanup))) = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
         if (reply_message_object == NULL)
         {
             return -1;
@@ -345,7 +345,7 @@ SdBus_call_async(SdBusObject *self,
 
     SdBusMessageObject *call_message = (SdBusMessageObject *)args[0];
 
-    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = _PyObject_CallNoArg(asyncio_get_running_loop);
+    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
     if (running_loop == NULL)
     {
         return NULL;
@@ -420,7 +420,7 @@ int _SdBus_start_drive(SdBusObject *self)
         return 0;
     }
 
-    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = _PyObject_CallNoArg(asyncio_get_running_loop);
+    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
     if (running_loop == NULL)
     {
         return -1;
@@ -454,7 +454,7 @@ void _SdBus_stop_drive(SdBusObject *self)
     {
         return;
     }
-    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = _PyObject_CallNoArg(asyncio_get_running_loop);
+    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
     if (running_loop == NULL)
     {
         return;

@@ -187,7 +187,6 @@ typedef struct
 } SdBusObject;
 
 int _SdBus_start_drive(SdBusObject *self);
-void _SdBus_stop_drive(SdBusObject *self);
 
 static void
 SdBus_free(SdBusObject *self)
@@ -446,20 +445,6 @@ int _SdBus_start_drive(SdBusObject *self)
 
     self->sd_bus_fd = new_fd;
     return 0;
-}
-
-void _SdBus_stop_drive(SdBusObject *self)
-{
-    if (self->sd_bus_fd == NULL)
-    {
-        return;
-    }
-    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
-    if (running_loop == NULL)
-    {
-        return;
-    }
-    PyObject_CallMethod(running_loop, "remove_reader", "O", self->sd_bus_fd);
 }
 
 static PyMethodDef SdBus_methods[] = {

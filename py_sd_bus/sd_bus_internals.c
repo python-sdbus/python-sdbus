@@ -369,7 +369,7 @@ SdBus_call(SdBusObject *self,
     return reply_message_object;
 }
 
-int SbBus_async_callback(sd_bus_message *m,
+int SdBus_async_callback(sd_bus_message *m,
                          void *userdata, // Should be the asyncio.Future
                          sd_bus_error *Py_UNUSED(ret_error))
 {
@@ -460,7 +460,7 @@ SdBus_call_async(SdBusObject *self,
         self->sd_bus_ref,
         &new_slot_object->slot_ref,
         call_message->message_ref,
-        SbBus_async_callback,
+        SdBus_async_callback,
         new_future,
         (uint64_t)0);
 

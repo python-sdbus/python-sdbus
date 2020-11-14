@@ -161,9 +161,24 @@ SdBusMessage_add_str(SdBusMessageObject *self,
     Py_RETURN_NONE;
 }
 
+static PyObject *message_iter_type = NULL;
+
+static PyObject *
+SdBusMessage_iter_contents(SdBusMessageObject *self,
+                           PyObject *Py_UNUSED(args))
+{
+    PyObject *new_iter __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(message_iter_type, self, NULL);
+    if (new_iter == NULL)
+    {
+        return NULL;
+    }
+    return PyCallIter_New(new_iter, PyExc_BaseException);
+}
+
 static PyMethodDef SdBusMessage_methods[] = {
     {"add_str", (void *)SdBusMessage_add_str, METH_FASTCALL, "Add str to message"},
     {"dump", (void *)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
+    {"iter_contents", (PyCFunction)SdBusMessage_iter_contents, METH_NOARGS, "Iterate over message contents"},
     {NULL, NULL, 0, NULL},
 };
 
@@ -179,6 +194,84 @@ static PyTypeObject SdBusMessageType = {
     .tp_methods = SdBusMessage_methods,
 };
 
+// SdBusMessageIter
+// Iterate over message contents
+
+typedef struct
+{
+    PyObject_HEAD;
+    sd_bus_message *message_ref;
+} SdBusMessageIterObject;
+
+static int
+SdBusMessageIter_init(SdBusMessageIterObject *self, PyObject *args, PyObject *Py_UNUSED(kwds))
+{
+    SdBusMessageObject *parent_message = NULL;
+
+    if (!PyArg_ParseTuple(args, "O!", &SdBusMessageType, &parent_message))
+    {
+        return -1;
+    }
+
+    self->message_ref = sd_bus_message_ref(parent_message->message_ref);
+    return 0;
+}
+
+static void
+SdBusMessageIter_free(SdBusMessageIterObject *self)
+{
+    sd_bus_message_rewind(self->message_ref, 1);
+    sd_bus_message_unref(self->message_ref);
+    PyObject_Free(self);
+}
+
+static PyObject *
+SdBusMessageIter_call(SdBusMessageIterObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwargs))
+{
+    char peek_type = '\0';
+    const char *container_type = NULL;
+    int return_value = sd_bus_message_peek_type(self->message_ref, &peek_type, &container_type);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    if (return_value == 0)
+    {
+        PyErr_SetNone(PyExc_StopIteration);
+        return NULL;
+    }
+    const char *new_string = NULL;
+    switch (peek_type)
+    {
+    case 'o':
+        return_value = sd_bus_message_read(self->message_ref, "o", &new_string);
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        return PyUnicode_FromString(new_string);
+        break;
+    case 's':
+        return_value = sd_bus_message_read(self->message_ref, "s", &new_string);
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        return PyUnicode_FromString(new_string);
+        break;
+
+    default:
+        PyErr_SetString(PyExc_NotImplementedError, "Dbus type not implemented yet");
+        return NULL;
+        break;
+    }
+    Py_UNREACHABLE();
+}
+
+static PyTypeObject SdBusMessageIterType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+        .tp_name = "sd_bus_internals.SdBusMessageIter",
+    .tp_basicsize = sizeof(SdBusMessageIterObject),
+    .tp_itemsize = 0,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_new = PyType_GenericNew,
+    .tp_init = (initproc)SdBusMessageIter_init,
+    .tp_free = (freefunc)SdBusMessageIter_free,
+    .tp_call = (PyCFunctionWithKeywords)SdBusMessageIter_call,
+};
+
+// SdBus
 typedef struct
 {
     PyObject_HEAD;
@@ -514,6 +607,11 @@ PyInit_sd_bus_internals(void)
     {
         return NULL;
     }
+    if (PyType_Ready(&SdBusMessageIterType) < 0)
+    {
+        return NULL;
+    }
+    message_iter_type = (PyObject *)&SdBusMessageIterType;
 
     m = PyModule_Create(&sd_bus_internals_module);
     if (m == NULL)
@@ -537,6 +635,12 @@ PyInit_sd_bus_internals(void)
     if (PyModule_AddObject(m, "SdBusSlot", (PyObject *)&SdBusSlotType) < 0)
     {
         Py_DECREF(&SdBusSlotType);
+        Py_DECREF(m);
+        return NULL;
+    }
+    if (PyModule_AddObject(m, "SdBusMessageIter", (PyObject *)&SdBusMessageIterType) < 0)
+    {
+        Py_DECREF(&SdBusMessageIterType);
         Py_DECREF(m);
         return NULL;
     }

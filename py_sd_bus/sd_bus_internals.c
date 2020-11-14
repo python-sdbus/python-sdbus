@@ -247,8 +247,7 @@ SdBus_call(SdBusObject *self,
 
     SdBusMessageObject *call_message = (SdBusMessageObject *)args[0];
 
-    SdBusMessageObject *reply_message_object = PyObject_NEW(SdBusMessageObject, &SdBusMessageType);
-    SdBusMessageType.tp_init((PyObject *)reply_message_object, NULL, NULL);
+    SdBusMessageObject *reply_message_object = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
 
     sd_bus_error error __attribute__((cleanup(sd_bus_error_free))) = SD_BUS_ERROR_NULL;
 
@@ -312,11 +311,11 @@ int SbBus_async_callback(sd_bus_message *m,
         const sd_bus_error *callback_error = sd_bus_message_get_error(m);
 
         PyObject *exception_data __attribute__((cleanup(PyObject_cleanup))) = Py_BuildValue("(ss)", callback_error->name, callback_error->message);
-        printf("exception_data REF: %li\n", exception_data->ob_refcnt);
         if (exception_data == NULL)
         {
             return -1;
         }
+
         PyObject *exception_to_raise_type = PyDict_GetItemString(exception_dict, callback_error->name);
         if (exception_to_raise_type == NULL)
         {
@@ -324,7 +323,7 @@ int SbBus_async_callback(sd_bus_message *m,
         }
         PyObject *new_exception __attribute__((cleanup(PyObject_cleanup))) = PyObject_Call(exception_to_raise_type, exception_data, NULL);
 
-        PyObject *return_object = PyObject_CallMethod(py_future, "set_exception", "O", new_exception);
+        PyObject *return_object __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethod(py_future, "set_exception", "O", new_exception);
         if (return_object == NULL)
         {
             return -1;

@@ -243,15 +243,19 @@ SdBusInterface_add_method(SdBusInterfaceObject *self,
     {
         return NULL;
     }
+    return_value = PyDict_SetItem(self->method_dict, args[0], args[5]);
+    if (return_value < 0)
+    {
+        return NULL;
+    }
 
     Py_RETURN_NONE;
 }
 
-static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
-{
-    sd_bus_message_dump(m, 0, SD_BUS_MESSAGE_DUMP_WITH_HEADER);
-    return 0;
-}
+static PyObject *call_soon_str = NULL;
+static PyObject *create_task_str = NULL;
+
+static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_error *ret_error);
 
 static PyObject *
 SdBusInterface_create_vtable(SdBusInterfaceObject *self,
@@ -809,7 +813,7 @@ SdBus_add_interface(SdBusObject *self,
     int return_value = sd_bus_add_object_vtable(self->sd_bus_ref, &interface_object->interface_slot->slot_ref,
                                                 path_char_ptr, interface_name_char_ptr,
                                                 interface_object->vtable,
-                                                self);
+                                                args[0]);
 
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
 
@@ -837,6 +841,57 @@ static PyTypeObject SdBusType = {
     .tp_free = (freefunc)SdBus_free,
     .tp_methods = SdBus_methods,
 };
+
+static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
+{
+    SdBusInterfaceObject *self = userdata;
+    // Get the memeber name from the message
+    const char *member_char_ptr = sd_bus_message_get_member(m);
+    PyObject *callback_object = PyDict_GetItemString(self->method_dict, member_char_ptr);
+    if (callback_object == NULL)
+    {
+        sd_bus_error_set(ret_error, SD_BUS_ERROR_UNKNOWN_METHOD, "");
+        return -1;
+    };
+
+    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
+    if (running_loop == NULL)
+    {
+        sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
+        return -1;
+    }
+
+    PyObject *new_message __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
+    if (new_message == NULL)
+    {
+        sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
+        return -1;
+    }
+    _SdBusMessage_set_messsage((SdBusMessageObject *)new_message, m);
+
+    if (PyCoro_CheckExact(callback_object))
+    {
+        PyObject *task __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethodObjArgs(running_loop, create_task_str, callback_object, new_message, NULL);
+        if (task == NULL)
+        {
+            sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
+            return -1;
+        }
+    }
+    else
+    {
+        PyObject *handle __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethodObjArgs(running_loop, call_soon_str, callback_object, new_message, NULL);
+        if (handle == NULL)
+        {
+            sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
+            return -1;
+        }
+    }
+
+    sd_bus_error_set(ret_error, NULL, NULL);
+
+    return 0;
+}
 
 static SdBusObject *
 get_default_sd_bus(PyObject *Py_UNUSED(self),
@@ -1015,6 +1070,11 @@ PyInit_sd_bus_internals(void)
 
     asyncio_get_running_loop = PyObject_GetAttrString(asyncio_module, "get_running_loop");
     TEST_FAILURE(asyncio_get_running_loop == NULL);
+
+    call_soon_str = PyUnicode_FromString("call_soon");
+    TEST_FAILURE(call_soon_str == NULL);
+    create_task_str = PyUnicode_FromString("create_task");
+    TEST_FAILURE(create_task_str == NULL);
 
     return m;
 }

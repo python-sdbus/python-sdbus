@@ -140,6 +140,10 @@ static int
 SdBusInterface_init(SdBusInterfaceObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
 {
     self->interface_slot = (SdBusSlotObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL);
+    if (self->interface_slot == NULL)
+    {
+        return -1;
+    }
     self->interface_list = PyList_New((Py_ssize_t)0);
     if (self->interface_list == NULL)
     {

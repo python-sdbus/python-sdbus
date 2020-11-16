@@ -105,11 +105,6 @@ SdBusSlot_init(SdBusSlotObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UN
     return 0;
 }
 
-static void _SdBusSlot_set_slot(SdBusSlotObject *self, sd_bus_slot *new_slot)
-{
-    self->slot_ref = sd_bus_slot_ref(new_slot);
-}
-
 static void
 SdBusSlot_free(SdBusSlotObject *self)
 {

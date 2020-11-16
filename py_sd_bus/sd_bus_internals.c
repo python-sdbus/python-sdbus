@@ -419,10 +419,16 @@ SdBusMessage_iter_contents(SdBusMessageObject *self,
     return PyCallIter_New(new_iter, PyExc_BaseException);
 }
 
+static SdBusMessageObject *
+SdBusMessage_create_reply(SdBusMessageObject *self,
+                   PyObject *const *args,
+                   Py_ssize_t nargs);
+
 static PyMethodDef SdBusMessage_methods[] = {
     {"add_str", (void *)SdBusMessage_add_str, METH_FASTCALL, "Add str to message"},
     {"dump", (void *)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
     {"iter_contents", (PyCFunction)SdBusMessage_iter_contents, METH_NOARGS, "Iterate over message contents"},
+    {"create_reply", (void *)SdBusMessage_create_reply, METH_FASTCALL, "Create reply message"},
     {NULL, NULL, 0, NULL},
 };
 
@@ -437,6 +443,23 @@ static PyTypeObject SdBusMessageType = {
     .tp_free = (freefunc)SdBusMessage_free,
     .tp_methods = SdBusMessage_methods,
 };
+
+static SdBusMessageObject *
+SdBusMessage_create_reply(SdBusMessageObject *self,
+                   PyObject *const *Py_UNUSED(args),
+                   Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(0);
+    SdBusMessageObject *new_reply_message __attribute__((cleanup(SdBusMessage_cleanup))) = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
+    if (new_reply_message == NULL)
+    {
+        return NULL;
+    }
+    int return_value = sd_bus_message_new_method_return(self->message_ref, &new_reply_message->message_ref);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    Py_INCREF(new_reply_message);
+    return new_reply_message;
+}
 
 // SdBusMessageIter
 // Iterate over message contents

@@ -890,7 +890,7 @@ static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_er
 
     sd_bus_error_set(ret_error, NULL, NULL);
 
-    return 0;
+    return 1;
 }
 
 static SdBusObject *

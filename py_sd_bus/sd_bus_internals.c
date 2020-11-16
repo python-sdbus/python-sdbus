@@ -205,6 +205,10 @@ SdBusInterface_add_method(SdBusInterfaceObject *self,
     }
 
     PyObject *argument_name_list __attribute__((cleanup(PyObject_cleanup))) = PyList_New(0);
+    if (argument_name_list == NULL)
+    {
+        return NULL;
+    }
     PyObject *should_be_none_one __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethodObjArgs(argument_name_list, extend_string, args[2], NULL);
     if (should_be_none_one == NULL)
     {

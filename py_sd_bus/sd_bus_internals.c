@@ -421,14 +421,26 @@ SdBusMessage_iter_contents(SdBusMessageObject *self,
 
 static SdBusMessageObject *
 SdBusMessage_create_reply(SdBusMessageObject *self,
-                   PyObject *const *args,
-                   Py_ssize_t nargs);
+                          PyObject *const *args,
+                          Py_ssize_t nargs);
+
+static PyObject *
+SdBusMessage_send(SdBusMessageObject *self,
+                  PyObject *const *Py_UNUSED(args),
+                  Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(0);
+    int return_value = sd_bus_send(NULL, self->message_ref, NULL);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    Py_RETURN_NONE;
+}
 
 static PyMethodDef SdBusMessage_methods[] = {
     {"add_str", (void *)SdBusMessage_add_str, METH_FASTCALL, "Add str to message"},
     {"dump", (void *)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
     {"iter_contents", (PyCFunction)SdBusMessage_iter_contents, METH_NOARGS, "Iterate over message contents"},
     {"create_reply", (void *)SdBusMessage_create_reply, METH_FASTCALL, "Create reply message"},
+    {"send", (void *)SdBusMessage_send, METH_FASTCALL, "Queue message to be sent"},
     {NULL, NULL, 0, NULL},
 };
 
@@ -446,8 +458,8 @@ static PyTypeObject SdBusMessageType = {
 
 static SdBusMessageObject *
 SdBusMessage_create_reply(SdBusMessageObject *self,
-                   PyObject *const *Py_UNUSED(args),
-                   Py_ssize_t nargs)
+                          PyObject *const *Py_UNUSED(args),
+                          Py_ssize_t nargs)
 {
     SD_BUS_PY_CHECK_ARGS_NUMBER(0);
     SdBusMessageObject *new_reply_message __attribute__((cleanup(SdBusMessage_cleanup))) = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);

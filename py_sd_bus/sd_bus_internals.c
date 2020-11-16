@@ -552,7 +552,7 @@ SdBus_new_method_call_message(SdBusObject *self,
     const char *interface_name = PyUnicode_AsUTF8(args[2]);
     const char *member_name = PyUnicode_AsUTF8(args[3]);
 
-    SdBusMessageObject *new_message_object = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
+    SdBusMessageObject *new_message_object __attribute__((cleanup(SdBusMessage_cleanup))) = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
     if (new_message_object == NULL)
     {
         return NULL;
@@ -565,7 +565,8 @@ SdBus_new_method_call_message(SdBusObject *self,
         object_path,
         interface_name,
         member_name);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError); // TODO: decrease reference
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    Py_INCREF(new_message_object);
     return new_message_object;
 }
 

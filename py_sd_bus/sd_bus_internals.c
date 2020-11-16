@@ -877,6 +877,8 @@ static PyTypeObject SdBusType = {
     .tp_methods = SdBus_methods,
 };
 
+static PyObject *is_coroutine_function = NULL;
+
 static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
 {
     SdBusInterfaceObject *self = userdata;
@@ -904,9 +906,22 @@ static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_er
     }
     _SdBusMessage_set_messsage((SdBusMessageObject *)new_message, m);
 
-    if (PyCoro_CheckExact(callback_object))
+    PyObject *is_coroutine_test_object __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(is_coroutine_function, callback_object, NULL);
+    if (is_coroutine_test_object == NULL)
     {
-        PyObject *task __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethodObjArgs(running_loop, create_task_str, callback_object, new_message, NULL);
+        return -1;
+    }
+
+    if (Py_True == is_coroutine_test_object)
+    {
+        // Create coroutine
+        PyObject* coroutine_activated __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(callback_object, new_message, NULL);
+        if (coroutine_activated == NULL)
+        {
+            return -1;
+        }
+
+        PyObject *task __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethodObjArgs(running_loop, create_task_str, coroutine_activated, NULL);
         if (task == NULL)
         {
             sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
@@ -1110,6 +1125,11 @@ PyInit_sd_bus_internals(void)
     TEST_FAILURE(call_soon_str == NULL);
     create_task_str = PyUnicode_FromString("create_task");
     TEST_FAILURE(create_task_str == NULL);
+
+    PyObject *inspect_module = PyImport_ImportModule("inspect");
+    TEST_FAILURE(inspect_module == NULL)
+    is_coroutine_function = PyObject_GetAttrString(inspect_module, "iscoroutinefunction");
+    TEST_FAILURE(is_coroutine_function == NULL);
 
     return m;
 }

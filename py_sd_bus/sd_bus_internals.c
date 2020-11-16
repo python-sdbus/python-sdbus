@@ -125,6 +125,7 @@ static PyTypeObject SdBusSlotType = {
 };
 
 // SdBusInterface
+// TODO: adding interface to different busses, recalculating vtable
 
 typedef struct
 {

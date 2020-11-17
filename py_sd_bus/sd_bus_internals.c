@@ -373,6 +373,81 @@ SdBusMessage_dump(SdBusMessageObject *self,
 }
 
 static PyObject *
+SdBusMessage_add_int(SdBusMessageObject *self,
+                     PyObject *const *args,
+                     Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyLong_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+
+    PyObject *int_to_add_object = args[0];
+    PyObject *type_str = args[1];
+
+    if (PyUnicode_GetLength(type_str) != 1)
+    {
+        if (PyErr_Occurred())
+        {
+            return NULL;
+        }
+        PyErr_SetString(PyExc_ValueError, "Interger type string must be exactly 1 in length");
+        return NULL;
+    }
+
+    const char *type_char_ptr = PyUnicode_AsUTF8(type_str);
+    if (type_char_ptr == NULL)
+    {
+        return NULL;
+    }
+    char type_char = type_char_ptr[0];
+    int return_value = 0;
+
+#define SD_BUS_PY_INT_CASE(var_type, var_name, pylong_func)                              \
+    ;                                                                                    \
+    var_type var_name = (var_type)pylong_func(int_to_add_object);                        \
+    if (PyErr_Occurred())                                                                \
+    {                                                                                    \
+        return NULL;                                                                     \
+    }                                                                                    \
+    return_value = sd_bus_message_append_basic(self->message_ref, type_char, &var_name); \
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+    switch (type_char)
+    {
+    case 'y':
+        SD_BUS_PY_INT_CASE(uint8_t, the_byte, PyLong_AsUnsignedLong);
+        break;
+    case 'n':
+        SD_BUS_PY_INT_CASE(int16_t, the_int16, PyLong_AsLong);
+        break;
+    case 'q':
+        SD_BUS_PY_INT_CASE(uint16_t, the_uint16, PyLong_AsUnsignedLong);
+        break;
+    case 'i':
+        SD_BUS_PY_INT_CASE(int32_t, the_int, PyLong_AsLong);
+        break;
+    case 'u':
+        SD_BUS_PY_INT_CASE(uint32_t, the_uint32, PyLong_AsLong);
+        break;
+    case 'x':
+        SD_BUS_PY_INT_CASE(int64_t, the_int64, PyLong_AsLongLong);
+        break;
+    case 't':
+        SD_BUS_PY_INT_CASE(uint64_t, the_uint64, PyLong_AsUnsignedLongLong);
+        break;
+    case 'h':
+        SD_BUS_PY_INT_CASE(int, the_fd, PyLong_AsLong);
+        break;
+    default:
+        PyErr_SetString(PyExc_ValueError, "Uknown interger type");
+        return NULL;
+        break;
+    }
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 SdBusMessage_add_str(SdBusMessageObject *self,
                      PyObject *const *args,
                      Py_ssize_t nargs)
@@ -417,6 +492,7 @@ SdBusMessage_send(SdBusMessageObject *self,
 
 static PyMethodDef SdBusMessage_methods[] = {
     {"add_str", (void *)SdBusMessage_add_str, METH_FASTCALL, "Add str to message"},
+    {"add_int", (void *)SdBusMessage_add_int, METH_FASTCALL, "Add int to message. Second argument is type of int."},
     {"dump", (void *)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
     {"iter_contents", (PyCFunction)SdBusMessage_iter_contents, METH_NOARGS, "Iterate over message contents"},
     {"create_reply", (void *)SdBusMessage_create_reply, METH_FASTCALL, "Create reply message"},

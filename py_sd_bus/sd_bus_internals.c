@@ -1030,8 +1030,77 @@ get_default_sd_bus(PyObject *Py_UNUSED(self),
     return new_sd_bus;
 }
 
+void _cleanup_encode(char **ptr)
+{
+    if (*ptr != NULL)
+    {
+        free(*ptr);
+    }
+}
+
+static PyObject *
+encode_object_path(PyObject *Py_UNUSED(self),
+                   PyObject *const *args,
+                   Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+
+    PyObject *prefix_str = args[0];
+    PyObject *external_str = args[1];
+
+    SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(prefix_char_ptr, prefix_str);
+    SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(external_char_ptr, external_str);
+
+    if (!sd_bus_object_path_is_valid(prefix_char_ptr))
+    {
+        PyErr_SetString(PyExc_ValueError, "Prefix is not a valid object path");
+        return NULL;
+    }
+
+    char *new_char_ptr __attribute__((cleanup(_cleanup_encode))) = NULL;
+
+    int return_value = sd_bus_path_encode(prefix_char_ptr, external_char_ptr, &new_char_ptr);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+    return PyUnicode_FromString(new_char_ptr);
+}
+
+static PyObject *
+decode_object_path(PyObject *Py_UNUSED(self),
+                   PyObject *const *args,
+                   Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+
+    PyObject *prefix_str = args[0];
+    PyObject *full_path_str = args[1];
+
+    SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(prefix_char_ptr, prefix_str);
+    SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(full_path_char_ptr, full_path_str);
+
+    char *new_char_ptr __attribute__((cleanup(_cleanup_encode))) = NULL;
+
+    int return_value = sd_bus_path_decode(full_path_char_ptr, prefix_char_ptr, &new_char_ptr);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+    if (new_char_ptr)
+    {
+        return PyUnicode_FromString(new_char_ptr);
+    }
+    else
+    {
+        return PyUnicode_FromString("");
+    }
+}
+
 static PyMethodDef SdBusPyInternal_methods[] = {
     {"get_default_sdbus", (PyCFunction)get_default_sd_bus, METH_NOARGS, "Get default sd_bus."},
+    {"encode_object_path", (void *)encode_object_path, METH_FASTCALL, "Encode object path with object path prefix and arbitrary string"},
+    {"decode_object_path", (void *)decode_object_path, METH_FASTCALL, "Decode object path with object path prefix and arbitrary string"},
     {NULL, NULL, 0, NULL},
 };
 

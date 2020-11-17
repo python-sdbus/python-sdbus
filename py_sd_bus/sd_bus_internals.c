@@ -106,10 +106,12 @@ typedef struct
     sd_bus_slot *slot_ref;
 } SdBusSlotObject;
 
-void SdBusSlot_cleanup(SdBusSlotObject **object)
+void cleanup_SdBusSlot(SdBusSlotObject **object)
 {
     Py_XDECREF(*object);
 }
+
+#define CLEANUP_SD_BUS_SLOT __attribute__((cleanup(cleanup_SdBusSlot)))
 
 static int
 SdBusSlot_init(SdBusSlotObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
@@ -200,53 +202,53 @@ SdBusInterface_add_method(SdBusInterfaceObject *self,
     SD_BUS_PY_CHECK_ARG_CHECK_FUNC(5, PyCallable_Check);
     SD_BUS_PY_CHECK_ARG_CHECK_FUNC(6, PyLong_Check);
 
-    PyObject *null_separator __attribute__((cleanup(PyObject_cleanup))) = PyUnicode_FromStringAndSize("\0", 1);
+    PyObject *null_separator CLEANUP_PY_OBJECT = PyUnicode_FromStringAndSize("\0", 1);
     if (null_separator == NULL)
     {
         return NULL;
     }
-    PyObject *extend_string __attribute__((cleanup(PyObject_cleanup))) = PyUnicode_FromString("extend");
+    PyObject *extend_string CLEANUP_PY_OBJECT = PyUnicode_FromString("extend");
     if (extend_string == NULL)
     {
         return NULL;
     }
-    PyObject *append_string __attribute__((cleanup(PyObject_cleanup))) = PyUnicode_FromString("append");
+    PyObject *append_string CLEANUP_PY_OBJECT = PyUnicode_FromString("append");
     if (append_string == NULL)
     {
         return NULL;
     }
 
-    PyObject *argument_name_list __attribute__((cleanup(PyObject_cleanup))) = PyList_New(0);
+    PyObject *argument_name_list CLEANUP_PY_OBJECT = PyList_New(0);
     if (argument_name_list == NULL)
     {
         return NULL;
     }
-    PyObject *should_be_none_one __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethodObjArgs(argument_name_list, extend_string, args[2], NULL);
+    PyObject *should_be_none_one CLEANUP_PY_OBJECT = PyObject_CallMethodObjArgs(argument_name_list, extend_string, args[2], NULL);
     if (should_be_none_one == NULL)
     {
         return NULL;
     }
-    PyObject *should_be_none_two __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethodObjArgs(argument_name_list, extend_string, args[4], NULL);
+    PyObject *should_be_none_two CLEANUP_PY_OBJECT = PyObject_CallMethodObjArgs(argument_name_list, extend_string, args[4], NULL);
     if (should_be_none_two == NULL)
     {
         return NULL;
     }
 
     // HACK: add a null separator to the end of the array
-    PyObject *should_be_none_three __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethodObjArgs(argument_name_list, append_string, null_separator, NULL);
+    PyObject *should_be_none_three CLEANUP_PY_OBJECT = PyObject_CallMethodObjArgs(argument_name_list, append_string, null_separator, NULL);
     if (should_be_none_three == NULL)
     {
         return NULL;
     }
 
-    PyObject *argument_names_string __attribute__((cleanup(PyObject_cleanup))) = PyUnicode_Join(null_separator, argument_name_list);
+    PyObject *argument_names_string CLEANUP_PY_OBJECT = PyUnicode_Join(null_separator, argument_name_list);
     if (argument_names_string == NULL)
     {
         return NULL;
     }
 
     // Method name, input signature, return signature, arguments names, flags
-    PyObject *new_tuple __attribute__((cleanup(PyObject_cleanup))) = PyTuple_Pack(5, args[0], args[1], args[3], argument_names_string, args[6]);
+    PyObject *new_tuple CLEANUP_PY_OBJECT = PyTuple_Pack(5, args[0], args[1], args[3], argument_names_string, args[6]);
     if (new_tuple == NULL)
     {
         return NULL;
@@ -366,10 +368,12 @@ typedef struct
     sd_bus_message *message_ref;
 } SdBusMessageObject;
 
-void SdBusMessage_cleanup(SdBusMessageObject **object)
+void cleanup_SdBusMessage(SdBusMessageObject **object)
 {
     Py_XDECREF(*object);
 }
+
+#define CLEANUP_SD_BUS_MESSAGE __attribute__((cleanup(cleanup_SdBusMessage)))
 
 static int
 SdBusMessage_init(SdBusMessageObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
@@ -424,7 +428,7 @@ static PyObject *
 SdBusMessage_iter_contents(SdBusMessageObject *self,
                            PyObject *Py_UNUSED(args))
 {
-    PyObject *new_iter __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(message_iter_type, self, NULL);
+    PyObject *new_iter CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(message_iter_type, self, NULL);
     if (new_iter == NULL)
     {
         return NULL;
@@ -475,7 +479,7 @@ SdBusMessage_create_reply(SdBusMessageObject *self,
                           Py_ssize_t nargs)
 {
     SD_BUS_PY_CHECK_ARGS_NUMBER(0);
-    SdBusMessageObject *new_reply_message __attribute__((cleanup(SdBusMessage_cleanup))) = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
+    SdBusMessageObject *new_reply_message CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
     if (new_reply_message == NULL)
     {
         return NULL;
@@ -604,7 +608,7 @@ SdBus_new_method_call_message(SdBusObject *self,
     const char *interface_name = PyUnicode_AsUTF8(args[2]);
     const char *member_name = PyUnicode_AsUTF8(args[3]);
 
-    SdBusMessageObject *new_message_object __attribute__((cleanup(SdBusMessage_cleanup))) = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
+    SdBusMessageObject *new_message_object CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
     if (new_message_object == NULL)
     {
         return NULL;
@@ -697,7 +701,7 @@ int SdBus_async_callback(sd_bus_message *m,
 {
     sd_bus_message *reply_message __attribute__((cleanup(sd_bus_message_unrefp))) = sd_bus_message_ref(m);
     PyObject *py_future = userdata;
-    PyObject *is_cancelled __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethod(py_future, "cancelled", "");
+    PyObject *is_cancelled CLEANUP_PY_OBJECT = PyObject_CallMethod(py_future, "cancelled", "");
     if (Py_True == is_cancelled)
     {
         // A bit unpythonic but SdBus_drive does not error out
@@ -708,13 +712,13 @@ int SdBus_async_callback(sd_bus_message *m,
     {
         // Not Error, set Future result to new message object
 
-        SdBusMessageObject *reply_message_object __attribute__((cleanup(SdBusMessage_cleanup))) = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
+        SdBusMessageObject *reply_message_object CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
         if (reply_message_object == NULL)
         {
             return -1;
         }
         _SdBusMessage_set_messsage(reply_message_object, reply_message);
-        PyObject *return_object __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethod(py_future, "set_result", "O", reply_message_object);
+        PyObject *return_object CLEANUP_PY_OBJECT = PyObject_CallMethod(py_future, "set_result", "O", reply_message_object);
         if (return_object == NULL)
         {
             return -1;
@@ -742,7 +746,7 @@ SdBus_call_async(SdBusObject *self,
 
     SdBusMessageObject *call_message = (SdBusMessageObject *)args[0];
 
-    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
+    PyObject *running_loop CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
     if (running_loop == NULL)
     {
         return NULL;
@@ -760,7 +764,7 @@ SdBus_call_async(SdBusObject *self,
         return NULL;
     }
 
-    SdBusSlotObject *new_slot_object __attribute__((cleanup(SdBusSlot_cleanup))) = (SdBusSlotObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL);
+    SdBusSlotObject *new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL);
 
     return_value = sd_bus_call_async(
         self->sd_bus_ref,
@@ -817,19 +821,19 @@ int _SdBus_start_drive(SdBusObject *self)
         return 0;
     }
 
-    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
+    PyObject *running_loop CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
     if (running_loop == NULL)
     {
         return -1;
     }
 
-    PyObject *new_fd __attribute__((cleanup(PyObject_cleanup))) = SdBus_get_fd(self, NULL);
+    PyObject *new_fd CLEANUP_PY_OBJECT = SdBus_get_fd(self, NULL);
     if (new_fd == NULL)
     {
         return -1;
     }
 
-    PyObject *drive_method __attribute__((cleanup(PyObject_cleanup))) = PyObject_GetAttrString((PyObject *)self, "drive");
+    PyObject *drive_method CLEANUP_PY_OBJECT = PyObject_GetAttrString((PyObject *)self, "drive");
     if (drive_method == NULL)
     {
         return -1;
@@ -859,7 +863,7 @@ SdBus_add_interface(SdBusObject *self,
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(path_char_ptr, args[1]);
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(interface_name_char_ptr, args[2]);
 
-    PyObject *create_vtable_name __attribute__((cleanup(PyObject_cleanup))) = PyUnicode_FromString("_create_vtable");
+    PyObject *create_vtable_name CLEANUP_PY_OBJECT = PyUnicode_FromString("_create_vtable");
     if (create_vtable_name == NULL)
     {
         return NULL;
@@ -885,7 +889,7 @@ int _SdBus_signal_callback(sd_bus_message *m, void *userdata, sd_bus_error *Py_U
 {
     PyObject *async_queue = userdata;
 
-    SdBusMessageObject *new_message_object __attribute__((cleanup(SdBusMessage_cleanup))) = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
+    SdBusMessageObject *new_message_object CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
     if (new_message_object == NULL)
     {
         return -1;
@@ -917,7 +921,7 @@ int _SdBus_match_signal_instant_callback(sd_bus_message *m, void *userdata, sd_b
             return -1;
         }
 
-        SdBusSlotObject *slot_object __attribute__((cleanup(SdBusSlot_cleanup))) = (SdBusSlotObject *)PyObject_GetAttrString(new_queue, "_sd_bus_slot");
+        SdBusSlotObject *slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject *)PyObject_GetAttrString(new_queue, "_sd_bus_slot");
         if (slot_object == NULL)
         {
             return -1;
@@ -951,7 +955,7 @@ SdBus_get_signal_queue(SdBusObject *self,
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(interface_name_char_ptr, args[2]);
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(member_name_char_ptr, args[3]);
 
-    SdBusSlotObject *new_slot __attribute__((cleanup(SdBusSlot_cleanup))) = (SdBusSlotObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL);
+    SdBusSlotObject *new_slot CLEANUP_SD_BUS_SLOT = (SdBusSlotObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL);
     TEST_NOT_NULL(new_slot);
 
     PyObject *new_queue CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(asyncio_queue_class, NULL);
@@ -1023,14 +1027,14 @@ static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_er
         return -1;
     };
 
-    PyObject *running_loop __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
+    PyObject *running_loop CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
     if (running_loop == NULL)
     {
         sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
         return -1;
     }
 
-    PyObject *new_message __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
+    PyObject *new_message CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL);
     if (new_message == NULL)
     {
         sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
@@ -1038,7 +1042,7 @@ static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_er
     }
     _SdBusMessage_set_messsage((SdBusMessageObject *)new_message, m);
 
-    PyObject *is_coroutine_test_object __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(is_coroutine_function, callback_object, NULL);
+    PyObject *is_coroutine_test_object CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(is_coroutine_function, callback_object, NULL);
     if (is_coroutine_test_object == NULL)
     {
         return -1;
@@ -1047,13 +1051,13 @@ static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_er
     if (Py_True == is_coroutine_test_object)
     {
         // Create coroutine
-        PyObject *coroutine_activated __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallFunctionObjArgs(callback_object, new_message, NULL);
+        PyObject *coroutine_activated CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(callback_object, new_message, NULL);
         if (coroutine_activated == NULL)
         {
             return -1;
         }
 
-        PyObject *task __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethodObjArgs(running_loop, create_task_str, coroutine_activated, NULL);
+        PyObject *task CLEANUP_PY_OBJECT = PyObject_CallMethodObjArgs(running_loop, create_task_str, coroutine_activated, NULL);
         if (task == NULL)
         {
             sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
@@ -1062,7 +1066,7 @@ static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_er
     }
     else
     {
-        PyObject *handle __attribute__((cleanup(PyObject_cleanup))) = PyObject_CallMethodObjArgs(running_loop, call_soon_str, callback_object, new_message, NULL);
+        PyObject *handle CLEANUP_PY_OBJECT = PyObject_CallMethodObjArgs(running_loop, call_soon_str, callback_object, new_message, NULL);
         if (handle == NULL)
         {
             sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");

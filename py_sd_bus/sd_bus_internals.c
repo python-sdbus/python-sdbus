@@ -448,6 +448,21 @@ SdBusMessage_add_int(SdBusMessageObject *self,
 }
 
 static PyObject *
+SdBusMessage_add_bool(SdBusMessageObject *self,
+                      PyObject *const *args,
+                      Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(1);
+    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyBool_Check);
+
+    int bool_to_add = (args[0] == Py_True);
+
+    int return_value = sd_bus_message_append_basic(self->message_ref, 'b', &bool_to_add);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 SdBusMessage_add_str(SdBusMessageObject *self,
                      PyObject *const *args,
                      Py_ssize_t nargs)
@@ -493,6 +508,7 @@ SdBusMessage_send(SdBusMessageObject *self,
 static PyMethodDef SdBusMessage_methods[] = {
     {"add_str", (void *)SdBusMessage_add_str, METH_FASTCALL, "Add str to message"},
     {"add_int", (void *)SdBusMessage_add_int, METH_FASTCALL, "Add int to message. Second argument is type of int."},
+    {"add_bool", (void *)SdBusMessage_add_bool, METH_FASTCALL, "Add bool to message"},
     {"dump", (void *)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
     {"iter_contents", (PyCFunction)SdBusMessage_iter_contents, METH_NOARGS, "Iterate over message contents"},
     {"create_reply", (void *)SdBusMessage_create_reply, METH_FASTCALL, "Create reply message"},

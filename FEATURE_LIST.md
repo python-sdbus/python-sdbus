@@ -46,7 +46,7 @@
 - [X] 32 bit unsigned 'u'
 - [X] 64 bit int 'x'
 - [X] 64 bit unsigned 't'
-- [ ] double 'd'
+- [X] double 'd'
 - [X] string 's'
 - [ ] object path 'o'
 - [ ] signature 'g'

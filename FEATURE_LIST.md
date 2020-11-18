@@ -50,7 +50,7 @@
 - [X] string 's'
 - [ ] object path 'o'
 - [ ] signature 'g'
-- [ ] file descriptor 'h'
+- [X] file descriptor 'h'
 - [ ] array 'a'
 - [ ] variant 'v'
 - [ ] struct '()'

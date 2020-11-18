@@ -39,7 +39,7 @@
 
 ### SdBusMessage add types
 - [X] byte 'y'
-- [ ] boolean 'b'
+- [X] boolean 'b'
 - [X] 16 bit int 'n'
 - [X] 16 bit unsigned 'q'
 - [X] 32 bit int 'i'

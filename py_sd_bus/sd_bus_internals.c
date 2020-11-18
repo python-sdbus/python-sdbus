@@ -494,6 +494,52 @@ SdBusMessage_add_str(SdBusMessageObject *self,
     Py_RETURN_NONE;
 }
 
+static PyObject *
+SdBusMessage_add_bytes_array(SdBusMessageObject *self,
+                             PyObject *const *args,
+                             Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(1);
+    PyObject *bytes_or_b_array = args[0];
+    char *char_ptr_to_add = NULL;
+    ssize_t size_of_array = 0;
+    if (PyByteArray_Check(bytes_or_b_array))
+    {
+        char_ptr_to_add = PyByteArray_AsString(bytes_or_b_array);
+        if (char_ptr_to_add == NULL)
+        {
+            return NULL;
+        }
+        size_of_array = PyByteArray_Size(bytes_or_b_array);
+        if (size_of_array == -1)
+        {
+            return NULL;
+        }
+    }
+    else if (PyBytes_Check(bytes_or_b_array))
+    {
+        char_ptr_to_add = PyBytes_AsString(bytes_or_b_array);
+        if (char_ptr_to_add == NULL)
+        {
+            return NULL;
+        }
+        size_of_array = PyBytes_Size(bytes_or_b_array);
+        if (size_of_array == -1)
+        {
+            return NULL;
+        }
+    }
+    else
+    {
+        PyErr_SetString(PyExc_TypeError, "Not a bytes or byte array object passed.");
+        return NULL;
+    }
+
+    int return_value = sd_bus_message_append_array(self->message_ref, 'y', char_ptr_to_add, (size_t)size_of_array);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    Py_RETURN_NONE;
+}
+
 static PyObject *message_iter_type = NULL;
 
 static PyObject *
@@ -529,6 +575,7 @@ static PyMethodDef SdBusMessage_methods[] = {
     {"add_int", (void *)SdBusMessage_add_int, METH_FASTCALL, "Add int to message. Second argument is type of int."},
     {"add_bool", (void *)SdBusMessage_add_bool, METH_FASTCALL, "Add bool to message"},
     {"add_float", (void *)SdBusMessage_add_float, METH_FASTCALL, "Add float to message"},
+    {"add_bytes_array", (void *)SdBusMessage_add_bytes_array, METH_FASTCALL, "Add bytes array to message. Takes either bytes or byte array object"},
     {"dump", (void *)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
     {"iter_contents", (PyCFunction)SdBusMessage_iter_contents, METH_NOARGS, "Iterate over message contents"},
     {"create_reply", (void *)SdBusMessage_create_reply, METH_FASTCALL, "Create reply message"},

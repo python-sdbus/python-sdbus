@@ -540,6 +540,62 @@ SdBusMessage_add_bytes_array(SdBusMessageObject *self,
     Py_RETURN_NONE;
 }
 
+static PyObject *
+SdBusMessage_open_container(SdBusMessageObject *self,
+                            PyObject *const *args,
+                            Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+
+    SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_type_char_ptr, args[0]);
+    SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_contents_char_ptr, args[1]);
+
+    int return_value = sd_bus_message_open_container(self->message_ref, container_contents_char_ptr[0], container_contents_char_ptr);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+SdBusMessage_close_container(SdBusMessageObject *self,
+                             PyObject *const *Py_UNUSED(args),
+                             Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(0);
+    int return_value = sd_bus_message_close_container(self->message_ref);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+SdBusMessage_enter_container(SdBusMessageObject *self,
+                             PyObject *const *args,
+                             Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+
+    SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_type_char_ptr, args[0]);
+    SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_contents_char_ptr, args[1]);
+
+    int return_value = sd_bus_message_enter_container(self->message_ref, container_contents_char_ptr[0], container_contents_char_ptr);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+SdBusMessage_exit_container(SdBusMessageObject *self,
+                            PyObject *const *Py_UNUSED(args),
+                            Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(0);
+    int return_value = sd_bus_message_exit_container(self->message_ref);
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    Py_RETURN_NONE;
+}
+
 static PyObject *message_iter_type = NULL;
 
 static PyObject *
@@ -576,6 +632,10 @@ static PyMethodDef SdBusMessage_methods[] = {
     {"add_bool", (void *)SdBusMessage_add_bool, METH_FASTCALL, "Add bool to message"},
     {"add_float", (void *)SdBusMessage_add_float, METH_FASTCALL, "Add float to message"},
     {"add_bytes_array", (void *)SdBusMessage_add_bytes_array, METH_FASTCALL, "Add bytes array to message. Takes either bytes or byte array object"},
+    {"open_container", (void *)SdBusMessage_open_container, METH_FASTCALL, "Open container for writting"},
+    {"close_container", (void *)SdBusMessage_close_container, METH_FASTCALL, "Close container"},
+    {"enter_container", (void *)SdBusMessage_enter_container, METH_FASTCALL, "Enter container for reading"},
+    {"exit_container", (void *)SdBusMessage_exit_container, METH_FASTCALL, "Exit container"},
     {"dump", (void *)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
     {"iter_contents", (PyCFunction)SdBusMessage_iter_contents, METH_NOARGS, "Iterate over message contents"},
     {"create_reply", (void *)SdBusMessage_create_reply, METH_FASTCALL, "Create reply message"},

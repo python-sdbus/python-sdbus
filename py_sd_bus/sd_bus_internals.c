@@ -373,128 +373,6 @@ SdBusMessage_dump(SdBusMessageObject *self,
 }
 
 static PyObject *
-SdBusMessage_add_int(SdBusMessageObject *self,
-                     PyObject *const *args,
-                     Py_ssize_t nargs)
-{
-    SD_BUS_PY_CHECK_ARGS_NUMBER(2);
-    SD_BUS_PY_CHECK_ARG_TYPE(0, PyLong_Type);
-    SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
-
-    PyObject *int_to_add_object = args[0];
-    PyObject *type_str = args[1];
-
-    if (PyUnicode_GetLength(type_str) != 1)
-    {
-        if (PyErr_Occurred())
-        {
-            return NULL;
-        }
-        PyErr_SetString(PyExc_ValueError, "Interger type string must be exactly 1 in length");
-        return NULL;
-    }
-
-    const char *type_char_ptr = PyUnicode_AsUTF8(type_str);
-    if (type_char_ptr == NULL)
-    {
-        return NULL;
-    }
-    char type_char = type_char_ptr[0];
-    int return_value = 0;
-
-#define SD_BUS_PY_INT_CASE(var_type, var_name, pylong_func)                              \
-    ;                                                                                    \
-    var_type var_name = (var_type)pylong_func(int_to_add_object);                        \
-    if (PyErr_Occurred())                                                                \
-    {                                                                                    \
-        return NULL;                                                                     \
-    }                                                                                    \
-    return_value = sd_bus_message_append_basic(self->message_ref, type_char, &var_name); \
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
-
-    switch (type_char)
-    {
-    case 'y':
-        SD_BUS_PY_INT_CASE(uint8_t, the_byte, PyLong_AsUnsignedLong);
-        break;
-    case 'n':
-        SD_BUS_PY_INT_CASE(int16_t, the_int16, PyLong_AsLong);
-        break;
-    case 'q':
-        SD_BUS_PY_INT_CASE(uint16_t, the_uint16, PyLong_AsUnsignedLong);
-        break;
-    case 'i':
-        SD_BUS_PY_INT_CASE(int32_t, the_int, PyLong_AsLong);
-        break;
-    case 'u':
-        SD_BUS_PY_INT_CASE(uint32_t, the_uint32, PyLong_AsLong);
-        break;
-    case 'x':
-        SD_BUS_PY_INT_CASE(int64_t, the_int64, PyLong_AsLongLong);
-        break;
-    case 't':
-        SD_BUS_PY_INT_CASE(uint64_t, the_uint64, PyLong_AsUnsignedLongLong);
-        break;
-    case 'h':
-        SD_BUS_PY_INT_CASE(int, the_fd, PyLong_AsLong);
-        break;
-    default:
-        PyErr_SetString(PyExc_ValueError, "Uknown interger type");
-        return NULL;
-        break;
-    }
-
-    Py_RETURN_NONE;
-}
-
-static PyObject *
-SdBusMessage_add_bool(SdBusMessageObject *self,
-                      PyObject *const *args,
-                      Py_ssize_t nargs)
-{
-    SD_BUS_PY_CHECK_ARGS_NUMBER(1);
-    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyBool_Check);
-
-    int bool_to_add = (args[0] == Py_True);
-
-    int return_value = sd_bus_message_append_basic(self->message_ref, 'b', &bool_to_add);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
-    Py_RETURN_NONE;
-}
-
-static PyObject *
-SdBusMessage_add_float(SdBusMessageObject *self,
-                       PyObject *const *args,
-                       Py_ssize_t nargs)
-{
-    SD_BUS_PY_CHECK_ARGS_NUMBER(1);
-    SD_BUS_PY_CHECK_ARG_TYPE(0, PyFloat_Type);
-
-    double double_to_add = PyFloat_AsDouble(args[0]);
-    if (PyErr_Occurred())
-    {
-        return NULL;
-    }
-
-    int return_value = sd_bus_message_append_basic(self->message_ref, 'd', &double_to_add);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
-    Py_RETURN_NONE;
-}
-
-static PyObject *
-SdBusMessage_add_str(SdBusMessageObject *self,
-                     PyObject *const *args,
-                     Py_ssize_t nargs)
-{
-    SD_BUS_PY_CHECK_ARGS_NUMBER(1);
-    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-
-    int return_value = sd_bus_message_append_basic(self->message_ref, 's', PyUnicode_AsUTF8(args[0]));
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
-    Py_RETURN_NONE;
-}
-
-static PyObject *
 SdBusMessage_add_bytes_array(SdBusMessageObject *self,
                              PyObject *const *args,
                              Py_ssize_t nargs)
@@ -540,6 +418,123 @@ SdBusMessage_add_bytes_array(SdBusMessageObject *self,
     Py_RETURN_NONE;
 }
 
+#define SD_BUS_PY_APPEND_INT_CASE(var_type, var_name, pylong_func)                       \
+    ;                                                                                    \
+    var_type var_name = (var_type)pylong_func(current_arg);                              \
+    if (PyErr_Occurred())                                                                \
+    {                                                                                    \
+        return NULL;                                                                     \
+    }                                                                                    \
+    return_value = sd_bus_message_append_basic(self->message_ref, type_char, &var_name); \
+    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+static PyObject *
+SdBusMessage_append_basic(SdBusMessageObject *self,
+                          PyObject *const *args,
+                          Py_ssize_t nargs)
+{
+    if (nargs < 2)
+    {
+        PyErr_SetString(PyExc_TypeError, "Minimum 2 arguments required");
+        return NULL;
+    }
+    // Get the string iterator
+    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+    PyObject *type_str_iter CLEANUP_PY_OBJECT = PyObject_GetIter(args[0]);
+
+    int return_value = 0;
+
+    int current_index = 1;
+    PyObject *current_arg = args[current_index];
+
+    for (;;)
+    {
+        //Get the string
+        PyObject *next_type_str = PyIter_Next(type_str_iter);
+        if (next_type_str == NULL)
+        {
+            if (PyErr_Occurred())
+            {
+                return NULL;
+            }
+            else
+            {
+                Py_RETURN_NONE;
+            }
+        }
+
+        if (!PyUnicode_Check(next_type_str))
+        {
+            PyErr_SetString(PyExc_TypeError, "Dbus type character is not a string");
+            return NULL;
+        }
+        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(next_type_char_ptr, next_type_str);
+        const char type_char = next_type_char_ptr[0];
+
+        switch (type_char)
+        {
+        case 'y':
+            SD_BUS_PY_APPEND_INT_CASE(uint8_t, the_byte, PyLong_AsUnsignedLong);
+            break;
+        case 'n':
+            SD_BUS_PY_APPEND_INT_CASE(int16_t, the_int16, PyLong_AsLong);
+            break;
+        case 'q':
+            SD_BUS_PY_APPEND_INT_CASE(uint16_t, the_uint16, PyLong_AsUnsignedLong);
+            break;
+        case 'i':
+            SD_BUS_PY_APPEND_INT_CASE(int32_t, the_int, PyLong_AsLong);
+            break;
+        case 'u':
+            SD_BUS_PY_APPEND_INT_CASE(uint32_t, the_uint32, PyLong_AsLong);
+            break;
+        case 'x':
+            SD_BUS_PY_APPEND_INT_CASE(int64_t, the_int64, PyLong_AsLongLong);
+            break;
+        case 't':
+            SD_BUS_PY_APPEND_INT_CASE(uint64_t, the_uint64, PyLong_AsUnsignedLongLong);
+            break;
+        case 'h':
+            SD_BUS_PY_APPEND_INT_CASE(int, the_fd, PyLong_AsLong);
+            break;
+
+        case 'b':;
+            if (!PyBool_Check(current_arg))
+            {
+                PyErr_SetString(PyExc_TypeError, "Expected boolean");
+                return NULL;
+            }
+            int bool_to_add = (current_arg == Py_True);
+            return_value = sd_bus_message_append_basic(self->message_ref, type_char, &bool_to_add);
+            SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+            break;
+        case 'd':;
+            double double_to_add = PyFloat_AsDouble(current_arg);
+            if (PyErr_Occurred())
+            {
+                return NULL;
+            }
+            return_value = sd_bus_message_append_basic(self->message_ref, type_char, &double_to_add);
+            SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+            break;
+        case 'o':
+        case 'g':
+        case 's':;
+            SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(the_string, current_arg);
+            return_value = sd_bus_message_append_basic(self->message_ref, type_char, the_string);
+            SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+            break;
+        default:
+            PyErr_SetString(PyExc_ValueError, "Uknown type");
+            return NULL;
+            break;
+        }
+        ++current_index;
+        current_arg = args[current_index];
+    }
+    Py_UNREACHABLE();
+}
+
 static PyObject *
 SdBusMessage_open_container(SdBusMessageObject *self,
                             PyObject *const *args,
@@ -552,7 +547,7 @@ SdBusMessage_open_container(SdBusMessageObject *self,
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_type_char_ptr, args[0]);
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_contents_char_ptr, args[1]);
 
-    int return_value = sd_bus_message_open_container(self->message_ref, container_contents_char_ptr[0], container_contents_char_ptr);
+    int return_value = sd_bus_message_open_container(self->message_ref, container_type_char_ptr[0], container_contents_char_ptr);
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
     Py_RETURN_NONE;
 }
@@ -580,7 +575,7 @@ SdBusMessage_enter_container(SdBusMessageObject *self,
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_type_char_ptr, args[0]);
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_contents_char_ptr, args[1]);
 
-    int return_value = sd_bus_message_enter_container(self->message_ref, container_contents_char_ptr[0], container_contents_char_ptr);
+    int return_value = sd_bus_message_enter_container(self->message_ref, container_type_char_ptr[0], container_contents_char_ptr);
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
     Py_RETURN_NONE;
 }
@@ -627,11 +622,8 @@ SdBusMessage_send(SdBusMessageObject *self,
 }
 
 static PyMethodDef SdBusMessage_methods[] = {
-    {"add_str", (void *)SdBusMessage_add_str, METH_FASTCALL, "Add str to message"},
-    {"add_int", (void *)SdBusMessage_add_int, METH_FASTCALL, "Add int to message. Second argument is type of int."},
-    {"add_bool", (void *)SdBusMessage_add_bool, METH_FASTCALL, "Add bool to message"},
-    {"add_float", (void *)SdBusMessage_add_float, METH_FASTCALL, "Add float to message"},
     {"add_bytes_array", (void *)SdBusMessage_add_bytes_array, METH_FASTCALL, "Add bytes array to message. Takes either bytes or byte array object"},
+    {"append_basic", (void *)SdBusMessage_append_basic, METH_FASTCALL, "Append basic data based on signature."},
     {"open_container", (void *)SdBusMessage_open_container, METH_FASTCALL, "Open container for writting"},
     {"close_container", (void *)SdBusMessage_close_container, METH_FASTCALL, "Close container"},
     {"enter_container", (void *)SdBusMessage_enter_container, METH_FASTCALL, "Enter container for reading"},

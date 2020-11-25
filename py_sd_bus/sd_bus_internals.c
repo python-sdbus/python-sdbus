@@ -716,23 +716,22 @@ PyObject *_iter_message_array(SdBusMessageIterObject *self, const char *array_ty
 
     switch (array_type[0])
     {
-    case 's':;
-        const char *new_char_ptr;
+    default:;
         CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, 'a', array_type));
-        while (CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, array_type[0], &new_char_ptr)) > 0)
+        for (;;)
         {
-            PyObject *new_str CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString(new_char_ptr));
+            PyObject *new_str CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, array_type[0]));
+
+            if (new_str == Py_None)
+            {
+                break;
+            }
+
             if (PyList_Append(new_list, new_str) < 0)
             {
                 return NULL;
             }
         }
-        break;
-
-    default:
-        PyErr_SetString(PyExc_NotImplementedError, "Dbus type unknown or not implemented yet");
-        return NULL;
-        break;
         break;
     }
     Py_INCREF(new_list);
@@ -757,47 +756,53 @@ PyObject *_iter_message_variant(SdBusMessageIterObject *Py_UNUSED(self), const c
     return NULL;
 }
 
+#define _ITER_RETURN_NONE_ON_ZERO(other_func) \
+    if (other_func == 0)                      \
+    {                                         \
+        Py_RETURN_NONE;                       \
+    }
+
 PyObject *_iter_message_basic_type(SdBusMessageIterObject *self, char basic_type)
 {
     switch (basic_type)
     {
     case 'b':;
         int new_int = 0;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_int));
+        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_int)));
         return PyBool_FromLong(new_int);
         break;
 
     case 'y':;
         int8_t new_char = 0;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_char));
+        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_char)));
         return PyLong_FromLong((long)new_char);
         break;
     case 'n':;
         int16_t new_short = 0;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_short));
+        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_short)));
         return PyLong_FromLong((long)new_short);
         break;
 
     case 'i':;
         int32_t new_long = 0;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_long));
+        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_long)));
         return PyLong_FromLong((long)new_long);
         break;
 
     case 'x':;
         int64_t new_long_long = 0;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_long_long));
+        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_long_long)));
         return PyLong_FromLongLong((long long)new_long_long);
         break;
 
     case 'q':;
         uint16_t new_u_short = 0;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_u_short));
+        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_u_short)));
         return PyLong_FromUnsignedLong((unsigned long)new_u_short);
         break;
     case 'u':;
         uint32_t new_u_long = 0;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_u_long));
+        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_u_long)));
         return PyLong_FromUnsignedLong((unsigned long)new_u_long);
         break;
     case 't':;
@@ -808,12 +813,12 @@ PyObject *_iter_message_basic_type(SdBusMessageIterObject *self, char basic_type
 
     case 'd':;
         double new_double = 0.0;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_double));
+        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_double)));
         return PyFloat_FromDouble(new_double);
         break;
     case 'h':;
         int new_fd = 0;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_fd));
+        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_fd)));
         return PyLong_FromLong((long)new_fd);
         break;
 
@@ -821,7 +826,7 @@ PyObject *_iter_message_basic_type(SdBusMessageIterObject *self, char basic_type
     case 'o':
     case 's':;
         const char *new_string = NULL;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_string));
+        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_string)));
         return PyUnicode_FromString(new_string);
         break;
 

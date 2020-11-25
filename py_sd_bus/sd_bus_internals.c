@@ -704,16 +704,75 @@ SdBusMessageIter_call(SdBusMessageIterObject *self, PyObject *Py_UNUSED(args), P
         PyErr_SetNone(PyExc_StopIteration);
         return NULL;
     }
-    const char *new_string = NULL;
+
     switch (peek_type)
     {
-    case 'o':
-        return_value = sd_bus_message_read(self->message_ref, "o", &new_string);
+    case 'b':;
+        int new_int = 0;
+        return_value = sd_bus_message_read_basic(self->message_ref, peek_type, &new_int);
         SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
-        return PyUnicode_FromString(new_string);
+        return PyBool_FromLong(new_int);
         break;
-    case 's':
-        return_value = sd_bus_message_read(self->message_ref, "s", &new_string);
+
+    case 'y':;
+        char new_char = 0;
+        return_value = sd_bus_message_read_basic(self->message_ref, peek_type, &new_char);
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        return PyLong_FromLong((long)new_char);
+        break;
+    case 'n':;
+        short new_short = 0;
+        return_value = sd_bus_message_read_basic(self->message_ref, peek_type, &new_short);
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        return PyLong_FromLongLong(new_short);
+        break;
+
+    case 'i':
+    case 'h':;
+        long new_long = 0;
+        return_value = sd_bus_message_read_basic(self->message_ref, peek_type, &new_long);
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        return PyLong_FromLong(new_long);
+        break;
+
+    case 'x':;
+        long long new_long_long = 0;
+        return_value = sd_bus_message_read_basic(self->message_ref, peek_type, &new_long_long);
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        return PyLong_FromLongLong(new_long_long);
+        break;
+
+    case 'q':;
+        unsigned short new_u_short = 0;
+        return_value = sd_bus_message_read_basic(self->message_ref, peek_type, &new_u_short);
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        return PyLong_FromUnsignedLong((unsigned long)new_u_short);
+        break;
+    case 'u':;
+        unsigned long new_u_long = 0;
+        return_value = sd_bus_message_read_basic(self->message_ref, peek_type, &new_u_long);
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        return PyLong_FromUnsignedLong(new_u_long);
+        break;
+    case 't':;
+        unsigned long long new_u_long_long = 0;
+        return_value = sd_bus_message_read_basic(self->message_ref, peek_type, &new_u_long_long);
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        return PyLong_FromUnsignedLongLong(new_u_long_long);
+        break;
+
+    case 'd':;
+        double new_double = 0.0;
+        return_value = sd_bus_message_read_basic(self->message_ref, peek_type, &new_double);
+        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        return PyFloat_FromDouble(new_double);
+        break;
+
+    case 'g':
+    case 'o':
+    case 's':;
+        const char *new_string = NULL;
+        return_value = sd_bus_message_read_basic(self->message_ref, peek_type, &new_string);
         SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
         return PyUnicode_FromString(new_string);
         break;

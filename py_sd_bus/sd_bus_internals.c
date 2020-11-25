@@ -371,6 +371,16 @@ SdBusMessage_free(SdBusMessageObject *self)
 }
 
 static PyObject *
+SdBusMessage_seal(SdBusMessageObject *self,
+                  PyObject *const *Py_UNUSED(args),
+                  Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(0);
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_seal(self->message_ref, 0, 0));
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 SdBusMessage_dump(SdBusMessageObject *self,
                   PyObject *const *Py_UNUSED(args),
                   Py_ssize_t nargs)
@@ -641,6 +651,7 @@ static PyMethodDef SdBusMessage_methods[] = {
     {"enter_container", (void *)SdBusMessage_enter_container, METH_FASTCALL, "Enter container for reading"},
     {"exit_container", (void *)SdBusMessage_exit_container, METH_FASTCALL, "Exit container"},
     {"dump", (void *)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
+    {"seal", (void *)SdBusMessage_seal, METH_FASTCALL, "Seal message contents"},
     {"iter_contents", (PyCFunction)SdBusMessage_iter_contents, METH_NOARGS, "Iterate over message contents"},
     {"create_reply", (void *)SdBusMessage_create_reply, METH_FASTCALL, "Create reply message"},
     {"send", (void *)SdBusMessage_send, METH_FASTCALL, "Queue message to be sent"},

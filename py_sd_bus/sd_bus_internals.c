@@ -508,7 +508,7 @@ SdBusMessage_append_basic(SdBusMessageObject *self,
             SD_BUS_PY_APPEND_INT_CASE(int32_t, the_int, PyLong_AsLong);
             break;
         case 'u':
-            SD_BUS_PY_APPEND_INT_CASE(uint32_t, the_uint32, PyLong_AsLong);
+            SD_BUS_PY_APPEND_INT_CASE(uint32_t, the_uint32, PyLong_AsUnsignedLong);
             break;
         case 'x':
             SD_BUS_PY_APPEND_INT_CASE(int64_t, the_int64, PyLong_AsLongLong);

@@ -8,3 +8,6 @@
 2). Canceling future or not awaiting on it will cause a memory leak.
     This can be fixed by a simple await sleep(0) after calling subroutine
     that awaits on cancelled future.
+
+3). Integer types smaller than 64 bits will silently overflow and underflow. Needs a custom
+    overflow/underflow detector.

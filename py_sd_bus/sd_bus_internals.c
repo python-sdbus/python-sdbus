@@ -1469,7 +1469,7 @@ decode_object_path(PyObject *Py_UNUSED(self),
 }
 
 static PyMethodDef SdBusPyInternal_methods[] = {
-    {"get_default_sdbus", (PyCFunction)get_default_sd_bus, METH_NOARGS, "Get default sd_bus."},
+    {"get_default_bus", (PyCFunction)get_default_sd_bus, METH_NOARGS, "Get default bus. Session bus running as user or system bus as daemon"},
     {"encode_object_path", (void *)encode_object_path, METH_FASTCALL, "Encode object path with object path prefix and arbitrary string"},
     {"decode_object_path", (void *)decode_object_path, METH_FASTCALL, "Decode object path with object path prefix and arbitrary string"},
     {NULL, NULL, 0, NULL},

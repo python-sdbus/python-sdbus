@@ -784,9 +784,9 @@ PyObject *_iter_message_basic_type(SdBusMessageIterObject *self, char basic_type
         break;
 
     case 'y':;
-        int8_t new_char = 0;
+        uint8_t new_char = 0;
         _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_char)));
-        return PyLong_FromLong((long)new_char);
+        return PyLong_FromUnsignedLong((unsigned long)new_char);
         break;
     case 'n':;
         int16_t new_short = 0;

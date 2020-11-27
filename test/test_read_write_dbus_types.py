@@ -97,6 +97,25 @@ class TestDbusTypes(TestCase):
         self.message.seal()
         self.assertEqual(tuple(self.message.iter_contents()), (test_double,))
 
+    def test_array(self) -> None:
+        test_string_array = ["Ttest", "serawer", "asdadcxzc"]
+        self.message.open_container("a", "s")
+        self.message.append_basic("sss", *test_string_array)
+        self.message.close_container()
+
+        test_bytes_array = b"asdasrddjkmlh\ngnmflkdtgh\0oer27852y4785823"
+        self.message.add_bytes_array(test_bytes_array)
+
+        test_int_list = [1234, 123123, 764523]
+        self.message.open_container("a", "i")
+        self.message.append_basic("iii", *test_int_list)
+        self.message.close_container()
+
+        self.message.seal()
+
+        self.assertEqual(tuple(self.message.iter_contents()),
+                         (test_string_array, test_bytes_array, test_int_list))
+
 
 if __name__ == "__main__":
     main()

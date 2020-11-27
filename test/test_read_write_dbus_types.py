@@ -49,7 +49,7 @@ class TestDbusTypes(TestCase):
             OverflowError, self.message.append_basic, "t", -1)
 
         self.message.seal()
-        return_integers = tuple(self.message.iter_contents())
+        return_integers = self.message.get_contents()
         self.assertEqual(unsigned_integers, return_integers)
 
     def test_signed(self) -> None:
@@ -73,7 +73,7 @@ class TestDbusTypes(TestCase):
             OverflowError, self.message.append_basic, "x", int_x_min - 1)
 
         self.message.seal()
-        return_integers = tuple(self.message.iter_contents())
+        return_integers = self.message.get_contents()
         self.assertEqual(signed_integers_positive +
                          signed_integers_negative, return_integers)
 
@@ -87,7 +87,7 @@ class TestDbusTypes(TestCase):
         self.message.append_basic("g", test_signature)
 
         self.message.seal()
-        self.assertEqual(tuple(self.message.iter_contents()),
+        self.assertEqual(self.message.get_contents(),
                          (test_string, test_path, test_signature))
 
     def test_double(self) -> None:
@@ -95,7 +95,7 @@ class TestDbusTypes(TestCase):
         self.message.append_basic("d", test_double)
 
         self.message.seal()
-        self.assertEqual(tuple(self.message.iter_contents()), (test_double,))
+        self.assertEqual(self.message.get_contents(), (test_double,))
 
     def test_array(self) -> None:
         test_string_array = ["Ttest", "serawer", "asdadcxzc"]
@@ -113,7 +113,7 @@ class TestDbusTypes(TestCase):
 
         self.message.seal()
 
-        self.assertEqual(tuple(self.message.iter_contents()),
+        self.assertEqual(self.message.get_contents(),
                          (test_string_array, test_bytes_array, test_int_list))
 
     def test_nested_array(self) -> None:
@@ -133,8 +133,26 @@ class TestDbusTypes(TestCase):
 
         self.message.seal()
 
-        self.assertEqual(tuple(self.message.iter_contents()),
+        self.assertEqual(self.message.get_contents(),
                          ([test_string_array_one, test_string_array_two], ))
+
+    def test_struct(self) -> None:
+        struct_data = (123123, "test")
+        self.message.open_container("r", "xs")
+        self.message.append_basic("xs", *struct_data)
+        self.message.close_container()
+
+        self.message.seal()
+
+        self.assertEqual(self.message.get_contents(), (struct_data, ))
+
+
+def mem_test() -> None:
+    while True:
+        try:
+            main()
+        except SystemExit:
+            ...
 
 
 if __name__ == "__main__":

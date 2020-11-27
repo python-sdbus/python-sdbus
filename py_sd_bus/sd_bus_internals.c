@@ -85,16 +85,16 @@
         new_object;                         \
     })
 
-#define CALL_SD_BUS_AND_CHECK(sd_bus_function)                                        \
-    ({                                                                                \
-        int return_int = sd_bus_function;                                             \
-        if (return_int < 0)                                                           \
-        {                                                                             \
-            PyErr_Format(PyExc_RuntimeError, "Line: %d. %s returned error %i: %s",    \
-                         __LINE__, __FUNCTION__, -return_int, strerror(-return_int)); \
-            return NULL;                                                              \
-        }                                                                             \
-        return_int;                                                                   \
+#define CALL_SD_BUS_AND_CHECK(sd_bus_function)                                                                   \
+    ({                                                                                                           \
+        int return_int = sd_bus_function;                                                                        \
+        if (return_int < 0)                                                                                      \
+        {                                                                                                        \
+            PyErr_Format(PyExc_RuntimeError, "Line: %d. " #sd_bus_function " in function %s returned error: %s", \
+                         __LINE__, __FUNCTION__, strerrorname_np(-return_int));                                  \
+            return NULL;                                                                                         \
+        }                                                                                                        \
+        return_int;                                                                                              \
     })
 
 static PyObject *exception_dict = NULL;

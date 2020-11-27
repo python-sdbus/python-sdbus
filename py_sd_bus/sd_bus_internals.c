@@ -727,6 +727,17 @@ PyObject *_iter_message_array(SdBusMessageIterObject *self, const char *array_ty
 
     switch (array_type[0])
     {
+    case 'a':
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, array_type[0], array_type));
+        while (CALL_SD_BUS_AND_CHECK(sd_bus_message_at_end(self->message_ref, 0)) == 0)
+        {
+            if (PyList_Append(new_list, CALL_PYTHON_AND_CHECK(_iter_message_array(self, array_type + 1))) < 0)
+            {
+                return NULL;
+            }
+        }
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
+        break;
     default:;
 
         if (strcmp(array_type, "y"))

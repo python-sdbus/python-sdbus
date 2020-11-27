@@ -743,6 +743,7 @@ PyObject *_iter_message_array(SdBusMessageIterObject *self, const char *array_ty
                 return NULL;
             }
         }
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
         break;
     }
     Py_INCREF(new_list);

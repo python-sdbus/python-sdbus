@@ -728,22 +728,35 @@ PyObject *_iter_message_array(SdBusMessageIterObject *self, const char *array_ty
     switch (array_type[0])
     {
     default:;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, 'a', array_type));
-        for (;;)
+
+        if (strcmp(array_type, "y"))
         {
-            PyObject *new_str CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, array_type[0]));
-
-            if (new_str == Py_None)
+            CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, 'a', array_type));
+            for (;;)
             {
-                break;
-            }
+                PyObject *new_str CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, array_type[0]));
 
-            if (PyList_Append(new_list, new_str) < 0)
-            {
-                return NULL;
+                if (new_str == Py_None)
+                {
+                    break;
+                }
+
+                if (PyList_Append(new_list, new_str) < 0)
+                {
+                    return NULL;
+                }
             }
+            CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
         }
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
+        else
+        {
+            // Array of bytes will be converted to Bytes object
+            const void *char_array = NULL;
+            size_t array_size = 0;
+            CALL_SD_BUS_AND_CHECK(sd_bus_message_read_array(self->message_ref, 'y', &char_array, &array_size));
+            return PyBytes_FromStringAndSize(char_array, (Py_ssize_t)array_size);
+        }
+
         break;
     }
     Py_INCREF(new_list);

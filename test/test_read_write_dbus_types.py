@@ -116,6 +116,26 @@ class TestDbusTypes(TestCase):
         self.assertEqual(tuple(self.message.iter_contents()),
                          (test_string_array, test_bytes_array, test_int_list))
 
+    def test_nested_array(self) -> None:
+        self.message.open_container("a", "as")
+
+        test_string_array_one = ["Ttest", "serawer", "asdadcxzc"]
+        self.message.open_container("a", "s")
+        self.message.append_basic("sss", *test_string_array_one)
+        self.message.close_container()
+
+        test_string_array_two = ["asdaf", "seragdsfrgdswer", "sdfsdgg"]
+        self.message.open_container("a", "s")
+        self.message.append_basic("sss", *test_string_array_two)
+        self.message.close_container()
+
+        self.message.close_container()
+
+        self.message.seal()
+
+        self.assertEqual(tuple(self.message.iter_contents()),
+                         ([test_string_array_one, test_string_array_two], ))
+
 
 if __name__ == "__main__":
     main()

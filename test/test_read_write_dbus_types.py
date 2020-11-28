@@ -160,6 +160,30 @@ class TestDbusTypes(TestCase):
 
         self.assertEqual(self.message.get_contents(), (test_dict, ))
 
+    def test_dict_nested_array(self) -> None:
+        test_array_one = [12, 1234234, 5, 2345, 24, 5623, 46, 2546, 68798]
+        test_array_two = [124, 5, 356, 3, 57, 35,
+                          67, 356, 2, 647, 36, 5784, 8, 809]
+        test_dict = {'test': test_array_one, 'asdaefd': test_array_two}
+        self.message.open_container("a", "{sax}")
+        for key, value in test_dict.items():
+            self.message.open_container("e", "sax")
+            self.message.append_basic("s", key)
+
+            self.message.open_container("a", "x")
+            for x in value:
+                self.message.append_basic("x", x)
+
+            self.message.close_container()
+
+            self.message.close_container()
+
+        self.message.close_container()
+
+        self.message.seal()
+
+        self.assertEqual(self.message.get_contents(), (test_dict, ))
+
 
 if __name__ == "__main__":
     main()

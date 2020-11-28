@@ -630,7 +630,7 @@ SdBusMessage_send(SdBusMessageObject *self,
 }
 
 PyObject *_iter_message_array(SdBusMessageObject *self, const char *array_type);
-PyObject *_iter_message_structure(SdBusMessageObject *self);
+PyObject *_iter_message_structure(SdBusMessageObject *self, int force_tuple);
 PyObject *_iter_message_dictionary(SdBusMessageObject *self);
 PyObject *_iter_message_variant(SdBusMessageObject *Py_UNUSED(self), const char *Py_UNUSED(variant_type));
 PyObject *_iter_message_basic_type(SdBusMessageObject *self, char basic_type);
@@ -644,7 +644,7 @@ PyObject *_iter_message_array(SdBusMessageObject *self, const char *array_type)
     case SD_BUS_TYPE_DICT_ENTRY_BEGIN:
     {
         CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, 'a', array_type));
-        PyObject *new_dict = _iter_message_dictionary(self);
+        PyObject *new_dict = CALL_PYTHON_AND_CHECK(_iter_message_dictionary(self));
         CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
         return new_dict;
     }
@@ -699,7 +699,7 @@ PyObject *_iter_message_array(SdBusMessageObject *self, const char *array_type)
     return new_list;
 }
 
-PyObject *_iter_message_structure(SdBusMessageObject *self)
+PyObject *_iter_message_structure(SdBusMessageObject *self, int force_tuple)
 {
     PyObject *new_structure_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
 
@@ -731,7 +731,7 @@ PyObject *_iter_message_structure(SdBusMessageObject *self)
         case SD_BUS_TYPE_STRUCT:
         {
             CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, peek_type, container_type));
-            PyObject *new_struct CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_structure(self));
+            PyObject *new_struct CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_structure(self, 1));
             if (PyList_Append(new_structure_list, new_struct) < 0)
             {
                 return NULL;
@@ -760,7 +760,16 @@ PyObject *_iter_message_structure(SdBusMessageObject *self)
         }
     }
 
-    return PySequence_Tuple(new_structure_list);
+    if (force_tuple || (PyList_GET_SIZE(new_structure_list) > 1))
+    {
+        return PySequence_Tuple(new_structure_list);
+    }
+    else
+    {
+        PyObject *first_item = CALL_PYTHON_AND_CHECK(PyList_GetItem(new_structure_list, 0));
+        Py_INCREF(first_item);
+        return first_item;
+    }
 }
 
 PyObject *_iter_message_dictionary(SdBusMessageObject *self)
@@ -778,16 +787,7 @@ PyObject *_iter_message_dictionary(SdBusMessageObject *self)
         }
         CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, peek_type, container_type));
         PyObject *key_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, container_type[0]));
-        PyObject *value_object CLEANUP_PY_OBJECT = NULL;
-        if (strlen(container_type) > 2)
-        {
-            value_object = CALL_PYTHON_AND_CHECK(_iter_message_structure(self));
-        }
-        else
-        {
-            value_object = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, container_type[1]));
-        }
-
+        PyObject *value_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_structure(self, 0));
         CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
         if (PyDict_SetItem(new_dict, key_object, value_object) < 0)
         {
@@ -890,7 +890,7 @@ static PyObject *
 SdBusMessage_get_contents(SdBusMessageObject *self,
                           PyObject *Py_UNUSED(args))
 {
-    return _iter_message_structure(self);
+    return _iter_message_structure(self, 1);
 }
 
 static PyMethodDef SdBusMessage_methods[] = {

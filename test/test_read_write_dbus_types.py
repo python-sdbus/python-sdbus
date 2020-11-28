@@ -217,7 +217,6 @@ class TestDbusTypes(TestCase):
         self.message.close_container()
 
         self.message.seal()
-        self.message.dump()
         self.assertEqual(self.message.get_contents(),
                          ([(test_signature_one, test_int),
                            (test_signature_two, test_array)

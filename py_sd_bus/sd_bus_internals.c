@@ -632,7 +632,7 @@ SdBusMessage_send(SdBusMessageObject *self,
 PyObject *_iter_message_array(SdBusMessageObject *self, const char *array_type);
 PyObject *_iter_message_structure(SdBusMessageObject *self, int force_tuple);
 PyObject *_iter_message_dictionary(SdBusMessageObject *self);
-PyObject *_iter_message_variant(SdBusMessageObject *Py_UNUSED(self), const char *Py_UNUSED(variant_type));
+PyObject *_iter_message_variant(SdBusMessageObject *self, const char *container_type);
 PyObject *_iter_message_basic_type(SdBusMessageObject *self, char basic_type);
 
 PyObject *_iter_message_array(SdBusMessageObject *self, const char *array_type)
@@ -741,7 +741,9 @@ PyObject *_iter_message_structure(SdBusMessageObject *self, int force_tuple)
         }
         case SD_BUS_TYPE_VARIANT:
         {
+            CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, peek_type, container_type));
             PyObject *new_variant CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_variant(self, container_type));
+            CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
             if (PyList_Append(new_structure_list, new_variant) < 0)
             {
                 return NULL;
@@ -799,10 +801,10 @@ PyObject *_iter_message_dictionary(SdBusMessageObject *self)
     return new_dict;
 }
 
-PyObject *_iter_message_variant(SdBusMessageObject *Py_UNUSED(self), const char *Py_UNUSED(variant_type))
+PyObject *_iter_message_variant(SdBusMessageObject *self, const char *container_type)
 {
-    PyErr_SetString(PyExc_NotImplementedError, "Dbus type unknown or not implemented yet");
-    return NULL;
+    PyObject *value_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_structure(self, 0));
+    return PyTuple_Pack(2, CALL_PYTHON_AND_CHECK(PyUnicode_FromString(container_type)), value_object);
 }
 
 #define _ITER_RETURN_NONE_ON_ZERO(other_func) \

@@ -662,21 +662,42 @@ PyObject *_iter_message_array(SdBusMessageObject *self, const char *array_type)
         CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
         break;
     }
+    case 'v':
+    {
+        char peek_type = '\0';
+        const char *container_type = NULL;
+
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, 'a', "v"));
+        while (CALL_SD_BUS_AND_CHECK(sd_bus_message_peek_type(self->message_ref, &peek_type, &container_type)) > 0)
+        {
+            CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, peek_type, container_type));
+            PyObject *new_variant CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_variant(self, container_type));
+
+            if (PyList_Append(new_list, new_variant) < 0)
+            {
+                return NULL;
+            }
+            CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
+        }
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
+
+        break;
+    }
     default:
     {
-        if (strcmp(array_type, "y"))
+        if (strcmp(array_type, "y") != 0)
         {
             CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, 'a', array_type));
             for (;;)
             {
-                PyObject *new_str CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, array_type[0]));
+                PyObject *new_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, array_type[0]));
 
-                if (new_str == Py_None)
+                if (new_object == Py_None)
                 {
                     break;
                 }
 
-                if (PyList_Append(new_list, new_str) < 0)
+                if (PyList_Append(new_list, new_object) < 0)
                 {
                     return NULL;
                 }

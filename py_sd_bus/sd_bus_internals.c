@@ -631,7 +631,7 @@ SdBusMessage_send(SdBusMessageObject *self,
 
 PyObject *_iter_message_array(SdBusMessageObject *self, const char *array_type);
 PyObject *_iter_message_structure(SdBusMessageObject *self);
-PyObject *_iter_message_dictionary(SdBusMessageObject *Py_UNUSED(self), const char *Py_UNUSED(dict_type));
+PyObject *_iter_message_dictionary(SdBusMessageObject *self);
 PyObject *_iter_message_variant(SdBusMessageObject *Py_UNUSED(self), const char *Py_UNUSED(variant_type));
 PyObject *_iter_message_basic_type(SdBusMessageObject *self, char basic_type);
 
@@ -641,6 +641,13 @@ PyObject *_iter_message_array(SdBusMessageObject *self, const char *array_type)
 
     switch (array_type[0])
     {
+    case SD_BUS_TYPE_DICT_ENTRY_BEGIN:
+    {
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, 'a', array_type));
+        PyObject *new_dict = _iter_message_dictionary(self);
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
+        return new_dict;
+    }
     case 'a':
     {
         CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, array_type[0], array_type));
@@ -714,7 +721,7 @@ PyObject *_iter_message_structure(SdBusMessageObject *self)
         }
         case SD_BUS_TYPE_DICT_ENTRY:
         {
-            PyObject *new_dict CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_dictionary(self, container_type));
+            PyObject *new_dict CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_dictionary(self));
             if (PyList_Append(new_structure_list, new_dict) < 0)
             {
                 return NULL;
@@ -756,10 +763,40 @@ PyObject *_iter_message_structure(SdBusMessageObject *self)
     return PySequence_Tuple(new_structure_list);
 }
 
-PyObject *_iter_message_dictionary(SdBusMessageObject *Py_UNUSED(self), const char *Py_UNUSED(dict_type))
+PyObject *_iter_message_dictionary(SdBusMessageObject *self)
 {
-    PyErr_SetString(PyExc_NotImplementedError, "Dbus type unknown or not implemented yet");
-    return NULL;
+    PyObject *new_dict CLEANUP_PY_OBJECT = PyDict_New();
+
+    char peek_type = '\0';
+    const char *container_type = NULL;
+    while (CALL_SD_BUS_AND_CHECK(sd_bus_message_peek_type(self->message_ref, &peek_type, &container_type)) > 0)
+    {
+        if (peek_type != SD_BUS_TYPE_DICT_ENTRY)
+        {
+            PyErr_SetString(PyExc_TypeError, "Expected dict entry.");
+            return NULL;
+        }
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, peek_type, container_type));
+        PyObject *key_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, container_type[0]));
+        PyObject *value_object CLEANUP_PY_OBJECT = NULL;
+        if (strlen(container_type) > 2)
+        {
+            value_object = CALL_PYTHON_AND_CHECK(_iter_message_structure(self));
+        }
+        else
+        {
+            value_object = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, container_type[1]));
+        }
+
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
+        if (PyDict_SetItem(new_dict, key_object, value_object) < 0)
+        {
+            return NULL;
+        }
+    }
+
+    Py_INCREF(new_dict);
+    return new_dict;
 }
 
 PyObject *_iter_message_variant(SdBusMessageObject *Py_UNUSED(self), const char *Py_UNUSED(variant_type))

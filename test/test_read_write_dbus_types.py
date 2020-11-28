@@ -146,13 +146,19 @@ class TestDbusTypes(TestCase):
 
         self.assertEqual(self.message.get_contents(), (struct_data, ))
 
+    def test_dict(self) -> None:
+        test_dict = {'test': 'a', 'asdaefd': 'cvbcfg'}
+        self.message.open_container("a", "{ss}")
+        for key, value in test_dict.items():
+            self.message.open_container("e", "ss")
+            self.message.append_basic("ss", key, value)
+            self.message.close_container()
 
-def mem_test() -> None:
-    while True:
-        try:
-            main()
-        except SystemExit:
-            ...
+        self.message.close_container()
+
+        self.message.seal()
+
+        self.assertEqual(self.message.get_contents(), (test_dict, ))
 
 
 if __name__ == "__main__":

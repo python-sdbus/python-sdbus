@@ -45,3 +45,6 @@ class TestPing(TempDbusTest):
         )
         r = await self.bus.call_async(m)
         self.assertIsNotNone(r.get_contents())
+
+    async def request_name(self) -> None:
+        await self.bus.request_name("org.example.test", 0)

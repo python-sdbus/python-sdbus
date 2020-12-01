@@ -37,3 +37,11 @@ class TestPing(TempDbusTest):
         )
         return_code = await busctl_process.wait()
         self.assertEqual(return_code, 0)
+
+    async def test_ping(self) -> None:
+        m = self.bus.new_method_call_message(
+            'org.freedesktop.DBus', '/org/freedesktop/DBus',
+            'org.freedesktop.DBus.Peer', 'Ping',
+        )
+        r = await self.bus.call_async(m)
+        self.assertIsNotNone(r.get_contents())

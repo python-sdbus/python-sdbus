@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from asyncio.subprocess import DEVNULL, create_subprocess_exec
-from os import kill
+from os import kill, environ
 from pathlib import Path
 from signal import SIGKILL
 from tempfile import TemporaryDirectory
@@ -83,6 +83,8 @@ class TempDbusTest(IsolatedAsyncioTestCase):
             stdin=DEVNULL,
         )
         await self.dbus_process.wait()
+        environ[
+            'DBUS_SESSION_BUS_ADDRESS'] = f"unix:path={self.dbus_socket_path}"
 
     async def asyncTearDown(self) -> None:
         with open(self.pid_path) as pid_file:

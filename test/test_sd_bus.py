@@ -30,7 +30,7 @@ class TestPing(TempDbusTest):
     async def test_ping_with_busctl(self) -> None:
         busctl_process = await create_subprocess_exec(
             '/usr/bin/busctl',
-            f'--address=unix:path={self.dbus_socket_path}',
+            '--user',
             'call',
             'org.freedesktop.DBus', '/org/freedesktop/DBus',
             'org.freedesktop.DBus.Peer', 'Ping',

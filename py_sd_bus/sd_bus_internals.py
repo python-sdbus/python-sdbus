@@ -119,6 +119,9 @@ class SdBus:
     ) -> Future[Queue[SdBusMessage]]:
         ...
 
+    def request_name(self, name: str, flags: int, /) -> Future[None]:
+        ...
+
 
 def sd_bus_default() -> SdBus:
     ...

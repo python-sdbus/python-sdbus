@@ -1310,6 +1310,72 @@ SdBus_get_signal_queue(SdBusObject *self,
     return new_future;
 }
 
+int SdBus_request_callback(sd_bus_message *m,
+                           void *userdata, // Should be the asyncio.Future
+                           sd_bus_error *Py_UNUSED(ret_error))
+{
+    PyObject *py_future = userdata;
+    PyObject *is_cancelled CLEANUP_PY_OBJECT = PyObject_CallMethod(py_future, "cancelled", "");
+    if (Py_True == is_cancelled)
+    {
+        // A bit unpythonic but SdBus_drive does not error out
+        return 0;
+    }
+
+    if (!sd_bus_message_is_method_error(m, NULL))
+    {
+        // Not Error, set Future result to new message object
+        PyObject *return_object CLEANUP_PY_OBJECT = PyObject_CallMethod(py_future, "set_result", "O", Py_None);
+        if (return_object == NULL)
+        {
+            return -1;
+        }
+    }
+    else
+    {
+        // An Error, set exception
+        if (future_set_exception_from_message(py_future, m) < 0)
+        {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static PyObject *
+SdBus_request_name_async(SdBusObject *self,
+                         PyObject *const *args,
+                         Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(1, PyLong_Type);
+
+    SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(name_char_ptr, args[0]);
+    uint64_t flags = PyLong_AsUnsignedLongLong(args[1]);
+    if (PyErr_Occurred())
+    {
+        return NULL;
+    }
+
+    PyObject *running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
+    PyObject *new_future = CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "create_future", ""));
+    SdBusSlotObject *new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL));
+
+    CALL_SD_BUS_AND_CHECK(sd_bus_request_name_async(
+        self->sd_bus_ref,
+        &new_slot_object->slot_ref,
+        name_char_ptr, flags, SdBus_request_callback, new_future));
+
+    if (PyObject_SetAttrString(new_future, "_sd_bus_py_slot", (PyObject *)new_slot_object) < 0)
+    {
+        return NULL;
+    }
+
+    return new_future;
+}
+
 static PyMethodDef SdBus_methods[] = {
     {"call", (void *)SdBus_call, METH_FASTCALL, "Send message and get reply"},
     {"call_async", (void *)SdBus_call_async, METH_FASTCALL, "Async send message, returns awaitable future"},
@@ -1318,6 +1384,7 @@ static PyMethodDef SdBus_methods[] = {
     {"new_method_call_message", (void *)SdBus_new_method_call_message, METH_FASTCALL, NULL},
     {"add_interface", (void *)SdBus_add_interface, METH_FASTCALL, "Add interface to the bus"},
     {"get_signal_queue_async", (void *)SdBus_get_signal_queue, METH_FASTCALL, "Returns a future that returns a queue that queues signal messages"},
+    {"request_name_async", (void *)SdBus_request_name_async, METH_FASTCALL, "Request dbus name"},
     {NULL, NULL, 0, NULL},
 };
 

@@ -124,6 +124,14 @@ def sd_bus_default() -> SdBus:
     ...
 
 
+def sd_bus_default_user() -> SdBus:
+    ...
+
+
+def sd_bus_default_system() -> SdBus:
+    ...
+
+
 def encode_object_path(prefix: str, external: str) -> str:
     ...
 

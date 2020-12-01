@@ -1458,6 +1458,24 @@ get_sd_bus_default(PyObject *Py_UNUSED(self),
     return new_sd_bus;
 }
 
+static SdBusObject *
+get_sd_bus_default_user(PyObject *Py_UNUSED(self),
+                        PyObject *Py_UNUSED(ignored))
+{
+    SdBusObject *new_sd_bus = (SdBusObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusType, NULL));
+    CALL_SD_BUS_AND_CHECK(sd_bus_default_user(&(new_sd_bus->sd_bus_ref)));
+    return new_sd_bus;
+}
+
+static SdBusObject *
+get_sd_bus_default_system(PyObject *Py_UNUSED(self),
+                          PyObject *Py_UNUSED(ignored))
+{
+    SdBusObject *new_sd_bus = (SdBusObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusType, NULL));
+    CALL_SD_BUS_AND_CHECK(sd_bus_default_system(&(new_sd_bus->sd_bus_ref)));
+    return new_sd_bus;
+}
+
 void _cleanup_encode(char **ptr)
 {
     if (*ptr != NULL)
@@ -1527,6 +1545,8 @@ decode_object_path(PyObject *Py_UNUSED(self),
 
 static PyMethodDef SdBusPyInternal_methods[] = {
     {"sd_bus_default", (PyCFunction)get_sd_bus_default, METH_NOARGS, "Get default bus. Session bus running as user or system bus as daemon"},
+    {"sd_bus_default_user", (PyCFunction)get_sd_bus_default_user, METH_NOARGS, "Get default user session dbus"},
+    {"sd_bus_default_system", (PyCFunction)get_sd_bus_default_system, METH_NOARGS, "Get default system dbus"},
     {"encode_object_path", (void *)encode_object_path, METH_FASTCALL, "Encode object path with object path prefix and arbitrary string"},
     {"decode_object_path", (void *)decode_object_path, METH_FASTCALL, "Decode object path with object path prefix and arbitrary string"},
     {NULL, NULL, 0, NULL},

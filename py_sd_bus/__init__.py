@@ -18,6 +18,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-from .sd_bus_internals import sd_bus_default
+from .sd_bus_internals import (
+    sd_bus_default, sd_bus_default_user, sd_bus_default_system)
 
-__all__ = ['sd_bus_default']
+__all__ = ['sd_bus_default', 'sd_bus_default_user', 'sd_bus_default_system']

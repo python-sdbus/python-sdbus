@@ -107,6 +107,7 @@ static PyObject *asyncio_queue_class = NULL;
 static PyObject *set_result_str = NULL;
 static PyObject *set_exception_str = NULL;
 static PyObject *put_no_wait_str = NULL;
+static PyObject *remove_reader_str = NULL;
 
 void PyObject_cleanup(PyObject **object)
 {
@@ -962,10 +963,7 @@ typedef struct
 {
     PyObject_HEAD;
     sd_bus *sd_bus_ref;
-    PyObject *sd_bus_fd;
 } SdBusObject;
-
-int _SdBus_start_drive(SdBusObject *self);
 
 static void
 SdBus_free(SdBusObject *self)
@@ -978,7 +976,6 @@ static int
 SdBus_init(SdBusObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
 {
     self->sd_bus_ref = NULL;
-    self->sd_bus_fd = NULL;
     return 0;
 }
 
@@ -1134,32 +1131,20 @@ SdBus_call_async(SdBusObject *self,
 
     PyObject *running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
 
-    int return_value = _SdBus_start_drive(self);
-    if (return_value < 0)
-    {
-        return NULL;
-    }
-
     PyObject *new_future = CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "create_future", ""));
-    if (new_future == NULL)
-    {
-        return NULL;
-    }
 
     SdBusSlotObject *new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL));
 
-    return_value = sd_bus_call_async(
-        self->sd_bus_ref,
-        &new_slot_object->slot_ref,
-        call_message->message_ref,
-        SdBus_async_callback,
-        new_future,
-        (uint64_t)0);
+    CALL_SD_BUS_AND_CHECK(
+        sd_bus_call_async(
+            self->sd_bus_ref,
+            &new_slot_object->slot_ref,
+            call_message->message_ref,
+            SdBus_async_callback,
+            new_future,
+            (uint64_t)0));
 
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
-
-    return_value = PyObject_SetAttrString(new_future, "_sd_bus_py_slot", (PyObject *)new_slot_object);
-    if (return_value < 0)
+    if (PyObject_SetAttrString(new_future, "_sd_bus_py_slot", (PyObject *)new_slot_object) < 0)
     {
         return NULL;
     }
@@ -1194,41 +1179,6 @@ SdBus_get_fd(SdBusObject *self,
     SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
 
     return PyLong_FromLong((long)return_value);
-}
-
-int _SdBus_start_drive(SdBusObject *self)
-{
-    if (self->sd_bus_fd != NULL)
-    {
-        return 0;
-    }
-
-    PyObject *running_loop CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
-    if (running_loop == NULL)
-    {
-        return -1;
-    }
-
-    PyObject *new_fd CLEANUP_PY_OBJECT = SdBus_get_fd(self, NULL);
-    if (new_fd == NULL)
-    {
-        return -1;
-    }
-
-    PyObject *drive_method CLEANUP_PY_OBJECT = PyObject_GetAttrString((PyObject *)self, "drive");
-    if (drive_method == NULL)
-    {
-        return -1;
-    }
-
-    PyObject *should_be_none = PyObject_CallMethod(running_loop, "add_reader", "OO", new_fd, drive_method);
-    if (should_be_none == NULL)
-    {
-        return -1;
-    }
-
-    self->sd_bus_fd = new_fd;
-    return 0;
 }
 
 static PyObject *
@@ -1717,6 +1667,8 @@ PyInit_sd_bus_internals(void)
     TEST_FAILURE(call_soon_str == NULL);
     create_task_str = PyUnicode_FromString("create_task");
     TEST_FAILURE(create_task_str == NULL);
+    remove_reader_str = PyUnicode_FromString("remove_reader");
+    TEST_FAILURE(remove_reader_str == NULL);
 
     PyObject *inspect_module = PyImport_ImportModule("inspect");
     TEST_FAILURE(inspect_module == NULL)

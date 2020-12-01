@@ -120,7 +120,7 @@ class SdBus:
         ...
 
 
-def get_default_bus() -> SdBus:
+def sd_bus_default() -> SdBus:
     ...
 
 

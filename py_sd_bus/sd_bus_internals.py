@@ -108,7 +108,8 @@ class SdBus:
             /) -> SdBusMessage:
         ...
 
-    def add_interface(self, new_interface: SdBusInterface, /) -> None:
+    def add_interface(self, new_interface: SdBusInterface,
+                      object_path: str, interface_name: str, /) -> None:
         ...
 
     def get_signal_queue_async(

@@ -230,14 +230,14 @@ SdBusInterface_add_method(SdBusInterfaceObject *self,
 
     PyObject *argument_names_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_Join(null_separator, argument_name_list));
     // Method name, input signature, return signature, arguments names, flags
-    PyObject *new_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(5, args[0], args[1], args[3], argument_names_string, args[6]));
+    PyObject *new_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(5, args[0], args[1], args[3], argument_names_string, args[5]));
 
     int return_value = PyList_Append(self->interface_list, new_tuple);
     if (return_value < 0)
     {
         return NULL;
     }
-    return_value = PyDict_SetItem(self->method_dict, args[0], args[5]);
+    return_value = PyDict_SetItem(self->method_dict, args[0], args[6]);
     if (return_value < 0)
     {
         return NULL;

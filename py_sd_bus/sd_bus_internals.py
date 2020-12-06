@@ -121,7 +121,7 @@ class SdBus:
     ) -> Future[Queue[SdBusMessage]]:
         ...
 
-    def request_name(self, name: str, flags: int, /) -> Future[None]:
+    def request_name_async(self, name: str, flags: int, /) -> Future[None]:
         ...
 
 

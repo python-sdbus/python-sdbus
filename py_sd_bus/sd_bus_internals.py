@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from asyncio import Future, Queue
-from typing import Any, Dict, List, Sequence, Tuple, Union
+from typing import Any, Dict, List, Sequence, Tuple, Union, Callable
 
 DbusBasicTypes = Union[str, int, bytes, float, Any]
 DbusStructType = Tuple[DbusBasicTypes, ...]
@@ -43,7 +43,8 @@ class SdBusInterface:
         member_name: str,
         signature: str, input_args_names: Sequence[str],
         result_signature: str, result_args_names: Sequence[str],
-        flags: int, /
+        flags: int,
+        callback: Callable[..., None], /
     ) -> None:
         ...
 

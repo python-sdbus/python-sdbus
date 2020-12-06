@@ -216,8 +216,8 @@ SdBusInterface_add_method(SdBusInterfaceObject *self,
     SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, PySequence_Check);
     SD_BUS_PY_CHECK_ARG_TYPE(3, PyUnicode_Type);
     SD_BUS_PY_CHECK_ARG_CHECK_FUNC(4, PySequence_Check);
-    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(5, PyCallable_Check);
-    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(6, PyLong_Check);
+    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(5, PyLong_Check);
+    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(6, PyCallable_Check);
 
     PyObject *null_separator CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromStringAndSize("\0", 1));
     PyObject *extend_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("extend"));

@@ -98,11 +98,14 @@ class DbusMethod:
         outer_self: DbusInterfaceBase,
     ) -> Callable[[SdBusMessage], Coroutine[Any, Any, None]]:
 
+        outer_method = getattr(outer_self, self.original_method.__name__)
+
         async def serve_handler(request_message: SdBusMessage) -> None:
             request_data = request_message.get_contents()
 
             reply_message = request_message.create_reply()
-            reply_data = await self.original_method(outer_self, *request_data)
+
+            reply_data = await outer_method(*request_data)
 
             if isinstance(reply_data, tuple):
                 reply_message.append_basic(self.result_signature, *reply_data)
@@ -112,9 +115,6 @@ class DbusMethod:
             reply_message.send()
 
         return serve_handler
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        return self.original_method(*args, **kwargs)
 
 
 T_input = TypeVar('T_input')
@@ -136,7 +136,10 @@ def dbus_method(
             result_args_names=result_args_names,
             flags=flags,
         )
-        return cast(T_input, new_wrapper)
+        # TODO: can probably be optimized by creating
+        # a new subclass of function that has attribute
+        setattr(async_function, '_dbus_wrapper', new_wrapper)
+        return async_function
 
     return dbus_method_decorator
 
@@ -160,8 +163,11 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
     _dbus_interface_name: Optional[str]
     _dbus_serving_enabled: bool
 
+    def __init__(self) -> None:
+        self.activated_interfaces: List[SdBusInterface] = []
+
     async def start_serving(
-            self, bus: SdBus, object_path: str) -> List[SdBusInterface]:
+            self, bus: SdBus, object_path: str) -> None:
 
         interfaces_list: List[SdBusInterface] = []
 
@@ -183,22 +189,27 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
             new_interface = SdBusInterface()
 
             for method_def in class_dict.values():
-                if isinstance(method_def, DbusMethod):
+                try:
+                    dbus_wrapper = getattr(method_def, '_dbus_wrapper')
+                except AttributeError:
+                    continue
+
+                if isinstance(dbus_wrapper, DbusMethod):
                     new_interface.add_method(
-                        method_def.method_name,
-                        method_def.input_signature,
-                        method_def.input_args_names,
-                        method_def.result_signature,
-                        method_def.result_args_names,
-                        method_def.flags,
-                        method_def.serve(self),
+                        dbus_wrapper.method_name,
+                        dbus_wrapper.input_signature,
+                        dbus_wrapper.input_args_names,
+                        dbus_wrapper.result_signature,
+                        dbus_wrapper.result_args_names,
+                        dbus_wrapper.flags,
+                        dbus_wrapper.serve(self),
                     )
 
             bus.add_interface(new_interface, object_path,
                               mro_entry._dbus_interface_name)
             interfaces_list.append(new_interface)
 
-        return interfaces_list
+        self.activated_interfaces = interfaces_list
 
     @classmethod
     def connect(
@@ -228,9 +239,14 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
             class_dict = mro_entry.__dict__
 
             for attr_key, attr_value in class_dict.items():
-                if isinstance(attr_value, DbusMethod):
+                try:
+                    dbus_wrapper = getattr(attr_value, '_dbus_wrapper')
+                except AttributeError:
+                    continue
+
+                if isinstance(dbus_wrapper, DbusMethod):
                     setattr(
-                        new_object, attr_key, attr_value.bind(
+                        new_object, attr_key, dbus_wrapper.bind(
                             bus,
                             service_name,
                             mro_entry._dbus_interface_name,

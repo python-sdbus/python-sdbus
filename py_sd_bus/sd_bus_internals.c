@@ -795,7 +795,7 @@ PyObject *_iter_message_structure(SdBusMessageObject *self, int force_tuple)
         }
     }
 
-    if (force_tuple || (PyList_GET_SIZE(new_structure_list) > 1))
+    if (force_tuple || (PyList_GET_SIZE(new_structure_list) != 1))
     {
         return PySequence_Tuple(new_structure_list);
     }
@@ -925,7 +925,15 @@ static PyObject *
 SdBusMessage_get_contents(SdBusMessageObject *self,
                           PyObject *Py_UNUSED(args))
 {
-    return _iter_message_structure(self, 0);
+    PyObject *tuple_or_single = CALL_PYTHON_AND_CHECK(_iter_message_structure(self, 0));
+    if (PyTuple_Check(tuple_or_single))
+    {
+        if (PyTuple_GET_SIZE(tuple_or_single) == 0)
+        {
+            Py_RETURN_NONE;
+        }
+    }
+    return tuple_or_single;
 }
 
 static PyMethodDef SdBusMessage_methods[] = {

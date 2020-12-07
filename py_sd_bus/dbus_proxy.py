@@ -20,10 +20,13 @@
 from __future__ import annotations
 
 from typing import (TYPE_CHECKING, Any, Callable, Coroutine, Dict, Iterator,
-                    List, Optional, Sequence, Tuple, Type, TypeVar, cast)
+                    List, Optional, Sequence, Tuple, Type, TypeVar, cast,
+                    Awaitable)
 
 from .sd_bus_internals import (SdBus, SdBusInterface, SdBusMessage,
                                sd_bus_open)
+
+from types import FunctionType
 
 if TYPE_CHECKING:
     from .sd_bus_internals import DbusCompleteTypes
@@ -147,6 +150,79 @@ def dbus_method(
     return dbus_method_decorator
 
 
+class DbusProperty:
+
+    def __init__(
+            self,
+            bus: SdBus,
+            service_name: str,
+            object_path: str,
+            interface_name: str,
+            property_name: str,
+            property_signature: str,
+            property_args_names: Sequence[str],
+            flags: int):
+        self.bus = bus
+        self.service_name = service_name
+        self.object_path = object_path
+        self.interface_name = interface_name
+        self.property_name = property_name
+        self.property_signature = property_signature
+        self.property_args_names = property_args_names
+        self.flags = flags
+
+    def __await__(self) -> Any:
+        async def get_coro() -> object:
+            new_call_message = self.bus.new_property_get_message(
+                self.service_name, self.object_path,
+                self.interface_name, self.property_name,
+            )
+
+            reply_message = await self.bus.call_async(new_call_message)
+            return reply_message.get_contents()[1]
+
+        return get_coro().__await__()
+
+
+class DbusPropertyProto:
+    def __init__(
+            self,
+            property_name: str,
+            property_signature: str,
+            property_args_names: Sequence[str],) -> None:
+        self.property_name = property_name
+        self.property_signature = property_signature
+        self.property_args_names = property_args_names
+
+
+def dbus_property(
+        property_name: Optional[str] = None,
+        property_signature: str = "",
+        property_args_names: Sequence[str] = (),
+) -> Callable[[Awaitable[T_input]], Awaitable[T_input]]:
+
+    def property_decorator(function: Awaitable[T_input]) -> Awaitable[T_input]:
+        nonlocal property_name
+
+        if property_name is None:
+            property_name = ''.join(
+                _method_name_converter(
+                    cast(FunctionType, function).__name__
+                )
+            )
+
+        new_wrapper = DbusPropertyProto(
+            property_name,
+            property_signature,
+            property_args_names,
+        )
+
+        setattr(function, '_dbus_wrapper', new_wrapper)
+        return function
+
+    return property_decorator
+
+
 class DbusInterfaceMeta(type):
     def __new__(cls, name: str,
                 bases: Tuple[type, ...],
@@ -256,6 +332,20 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
                             service_name,
                             mro_entry._dbus_interface_name,
                             object_path
+                        )
+                    )
+                elif isinstance(dbus_wrapper, DbusPropertyProto):
+                    setattr(
+                        new_object, attr_key,
+                        DbusProperty(
+                            bus,
+                            service_name,
+                            object_path,
+                            mro_entry._dbus_interface_name,
+                            dbus_wrapper.property_name,
+                            dbus_wrapper.property_signature,
+                            dbus_wrapper.property_args_names,
+                            0
                         )
                     )
                 else:

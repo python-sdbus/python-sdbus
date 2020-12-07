@@ -204,6 +204,8 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
                         dbus_wrapper.flags,
                         dbus_wrapper.serve(self),
                     )
+                else:
+                    raise TypeError('Unknown dbus wrapper type')
 
             bus.add_interface(new_interface, object_path,
                               mro_entry._dbus_interface_name)
@@ -253,6 +255,8 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
                             object_path
                         )
                     )
+                else:
+                    raise TypeError('Unknown dbus wrapper type')
 
         assert isinstance(new_object, cls)
         return new_object

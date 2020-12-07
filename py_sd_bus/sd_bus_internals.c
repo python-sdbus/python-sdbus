@@ -925,7 +925,7 @@ static PyObject *
 SdBusMessage_get_contents(SdBusMessageObject *self,
                           PyObject *Py_UNUSED(args))
 {
-    return _iter_message_structure(self, 1);
+    return _iter_message_structure(self, 0);
 }
 
 static PyMethodDef SdBusMessage_methods[] = {

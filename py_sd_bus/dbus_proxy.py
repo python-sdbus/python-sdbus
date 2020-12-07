@@ -19,14 +19,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import (TYPE_CHECKING, Any, Callable, Coroutine, Dict, Iterator,
-                    List, Optional, Sequence, Tuple, Type, TypeVar, cast,
-                    Awaitable,)
-
-from .sd_bus_internals import (SdBus, SdBusInterface, SdBusMessage,
-                               sd_bus_open)
-
 from types import FunctionType
+from typing import (TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, Dict,
+                    Iterator, List, Optional, Sequence, Tuple, Type, TypeVar,
+                    cast)
+
+from .sd_bus_internals import SdBus, SdBusInterface, SdBusMessage, sd_bus_open
 
 if TYPE_CHECKING:
     from .sd_bus_internals import DbusCompleteTypes

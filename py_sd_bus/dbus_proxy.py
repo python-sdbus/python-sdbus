@@ -19,11 +19,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import (TYPE_CHECKING, Any, Callable, Iterator, Optional, Sequence,
-                    TypeVar, cast, Coroutine, List)
+from typing import (TYPE_CHECKING, Any, Callable, Coroutine, Dict, Iterator,
+                    List, Optional, Sequence, Tuple, TypeVar, cast)
 
-from .sd_bus_internals import (SdBus, sd_bus_default,
-                               SdBusInterface, SdBusMessage)
+from .sd_bus_internals import (SdBus, SdBusInterface, SdBusMessage,
+                               sd_bus_default)
 
 if TYPE_CHECKING:
     from .sd_bus_internals import DbusCompleteTypes
@@ -95,7 +95,7 @@ class DbusMethod:
 
     def serve(
         self,
-        outer_self: DbusInterface,
+        outer_self: DbusInterfaceBase,
     ) -> Callable[[SdBusMessage], Coroutine[Any, Any, None]]:
 
         async def serve_handler(request_message: SdBusMessage) -> None:
@@ -141,8 +141,24 @@ def dbus_method(
     return dbus_method_decorator
 
 
-class DbusInterface:
-    interface_name: Optional[str] = None
+class DbusInterfaceMeta(type):
+    def __new__(cls, name: str,
+                bases: Tuple[type, ...],
+                namespace: Dict[str, Any],
+                interface_name: Optional[str] = None,
+                serving_enabled: bool = True,
+                ) -> DbusInterfaceMeta:
+
+        namespace['_dbus_interface_name'] = interface_name
+        namespace['_dbus_serving_enabled'] = serving_enabled
+        new_cls = super().__new__(cls, name, bases, namespace)
+
+        return cast(DbusInterfaceMeta, new_cls)
+
+
+class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
+    _dbus_interface_name: Optional[str]
+    _dbus_serving_enabled: bool
 
     async def start_serving(
             self, bus: SdBus, object_path: str) -> List[SdBusInterface]:
@@ -150,14 +166,20 @@ class DbusInterface:
         interfaces_list: List[SdBusInterface] = []
 
         for mro_entry in self.__class__.__mro__:
-            if not issubclass(mro_entry, DbusInterface):
+            if not issubclass(mro_entry, DbusInterfaceBase):
                 continue
 
-            if mro_entry is DbusInterface:
-                break
+            if mro_entry is DbusInterfaceBase:
+                continue
+
+            if not mro_entry._dbus_serving_enabled:
+                continue
+
+            if mro_entry._dbus_interface_name is None:
+                continue
 
             class_dict = mro_entry.__dict__
-            assert mro_entry.interface_name is not None
+
             new_interface = SdBusInterface()
 
             for method_def in class_dict.values():
@@ -173,7 +195,7 @@ class DbusInterface:
                     )
 
             bus.add_interface(new_interface, object_path,
-                              mro_entry.interface_name)
+                              mro_entry._dbus_interface_name)
             interfaces_list.append(new_interface)
 
         return interfaces_list
@@ -184,7 +206,7 @@ class DbusInterface:
         service_name: str = 'org.freedesktop.DBus',
         object_path: str = '/org/freedesktop/DBus',
         bus: Optional[SdBus] = None,
-    ) -> DbusInterface:
+    ) -> DbusInterfaceBase:
 
         if bus is None:
             bus = sd_bus_default()
@@ -194,14 +216,16 @@ class DbusInterface:
         class_mro = cls.__mro__
 
         for mro_entry in class_mro:
-            if not issubclass(mro_entry, DbusInterface):
+            if not issubclass(mro_entry, DbusInterfaceBase):
                 continue
 
-            if mro_entry is DbusInterface:
+            if mro_entry is DbusInterfaceBase:
                 break
 
+            if mro_entry._dbus_interface_name is None:
+                continue
+
             class_dict = mro_entry.__dict__
-            assert mro_entry.interface_name is not None
 
             for attr_key, attr_value in class_dict.items():
                 if isinstance(attr_value, DbusMethod):
@@ -209,7 +233,7 @@ class DbusInterface:
                         new_object, attr_key, attr_value.bind(
                             bus,
                             service_name,
-                            mro_entry.interface_name,
+                            mro_entry._dbus_interface_name,
                             object_path
                         )
                     )
@@ -218,21 +242,29 @@ class DbusInterface:
         return new_object
 
 
-class DbusPeerInterface(DbusInterface):
-    interface_name = 'org.freedesktop.DBus.Peer'
+class DbusPeerInterface(DbusInterfaceBase,
+                        interface_name='org.freedesktop.DBus.Peer',
+                        serving_enabled=False,
+                        ):
 
     @dbus_method()
     async def ping(self) -> None:
-        ...
+        raise NotImplementedError
 
     @dbus_method()
     async def get_machine_id(self) -> str:
-        ...
+        raise NotImplementedError
 
 
-class DbusIntrospectable(DbusInterface):
-    interface_name = 'org.freedesktop.DBus.Introspectable'
+class DbusIntrospectable(DbusInterfaceBase,
+                         interface_name='org.freedesktop.DBus.Introspectable',
+                         serving_enabled=False,
+                         ):
 
     @dbus_method()
     async def introspect(self) -> str:
-        ...
+        raise NotImplementedError
+
+
+class DbusInterfaceCommon(DbusPeerInterface, DbusIntrospectable):
+    ...

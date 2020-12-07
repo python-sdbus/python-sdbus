@@ -96,6 +96,7 @@ class TempDbusTest(IsolatedAsyncioTestCase):
 
         kill(dbus_pid, SIGKILL)
         self.temp_dir.cleanup()
+        environ.pop('DBUS_SESSION_BUS_ADDRESS')
 
 
 def mem_test() -> None:

@@ -19,9 +19,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from asyncio import get_running_loop
 from asyncio.subprocess import DEVNULL, create_subprocess_exec
-from os import kill, environ
+from os import environ, kill
 from pathlib import Path
 from signal import SIGKILL
 from tempfile import TemporaryDirectory
@@ -90,11 +89,8 @@ class TempDbusTest(IsolatedAsyncioTestCase):
             'DBUS_SESSION_BUS_ADDRESS'] = f"unix:path={self.dbus_socket_path}"
 
         self.bus = sd_bus_default_user()
-        get_running_loop().add_reader(self.bus.get_fd(), self.bus.drive)
 
     async def asyncTearDown(self) -> None:
-        get_running_loop().remove_reader(self.bus.get_fd())
-
         with open(self.pid_path) as pid_file:
             dbus_pid = int(pid_file.read())
 

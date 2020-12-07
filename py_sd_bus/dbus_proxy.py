@@ -111,11 +111,16 @@ class DbusMethod:
 
             reply_message = request_message.create_reply()
 
-            reply_data = await outer_method(*request_data)
+            if isinstance(request_data, tuple):
+                reply_data = await outer_method(*request_data)
+            elif request_data is None:
+                reply_data = await outer_method()
+            else:
+                reply_data = await outer_method(request_data)
 
             if isinstance(reply_data, tuple):
                 reply_message.append_basic(self.result_signature, *reply_data)
-            else:
+            elif reply_data is not None:
                 reply_message.append_basic(self.result_signature, reply_data)
 
             reply_message.send()

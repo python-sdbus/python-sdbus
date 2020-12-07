@@ -19,12 +19,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from unittest import TestCase, main
 
-from py_sd_bus import sd_bus_default
+from py_sd_bus import sd_bus_open_user
 
 
 class TestDbusTypes(TestCase):
     def setUp(self) -> None:
-        self.bus = sd_bus_default()
+        self.bus = sd_bus_open_user()
         self.message = self.bus.new_method_call_message(
             'org.freedesktop.systemd1',
             '/org/freedesktop/systemd1',

@@ -23,7 +23,7 @@ from typing import (TYPE_CHECKING, Any, Callable, Coroutine, Dict, Iterator,
                     List, Optional, Sequence, Tuple, Type, TypeVar, cast)
 
 from .sd_bus_internals import (SdBus, SdBusInterface, SdBusMessage,
-                               sd_bus_default)
+                               sd_bus_open)
 
 if TYPE_CHECKING:
     from .sd_bus_internals import DbusCompleteTypes
@@ -225,7 +225,7 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
     ) -> T_input:
 
         if bus is None:
-            bus = sd_bus_default()
+            bus = sd_bus_open()
 
         new_object = cls.__new__(cls)
 

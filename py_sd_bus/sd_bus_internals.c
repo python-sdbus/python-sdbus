@@ -1504,29 +1504,29 @@ static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_er
 }
 
 static SdBusObject *
-get_sd_bus_default(PyObject *Py_UNUSED(self),
-                   PyObject *Py_UNUSED(ignored))
+sd_bus_py_open(PyObject *Py_UNUSED(self),
+               PyObject *Py_UNUSED(ignored))
 {
     SdBusObject *new_sd_bus = (SdBusObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusType, NULL));
-    CALL_SD_BUS_AND_CHECK(sd_bus_default(&(new_sd_bus->sd_bus_ref)));
+    CALL_SD_BUS_AND_CHECK(sd_bus_open(&(new_sd_bus->sd_bus_ref)));
     return new_sd_bus;
 }
 
 static SdBusObject *
-get_sd_bus_default_user(PyObject *Py_UNUSED(self),
-                        PyObject *Py_UNUSED(ignored))
+sd_bus_py_open_user(PyObject *Py_UNUSED(self),
+                    PyObject *Py_UNUSED(ignored))
 {
     SdBusObject *new_sd_bus = (SdBusObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusType, NULL));
-    CALL_SD_BUS_AND_CHECK(sd_bus_default_user(&(new_sd_bus->sd_bus_ref)));
+    CALL_SD_BUS_AND_CHECK(sd_bus_open_user(&(new_sd_bus->sd_bus_ref)));
     return new_sd_bus;
 }
 
 static SdBusObject *
-get_sd_bus_default_system(PyObject *Py_UNUSED(self),
-                          PyObject *Py_UNUSED(ignored))
+sd_bus_py_open_system(PyObject *Py_UNUSED(self),
+                      PyObject *Py_UNUSED(ignored))
 {
     SdBusObject *new_sd_bus = (SdBusObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusType, NULL));
-    CALL_SD_BUS_AND_CHECK(sd_bus_default_system(&(new_sd_bus->sd_bus_ref)));
+    CALL_SD_BUS_AND_CHECK(sd_bus_open_system(&(new_sd_bus->sd_bus_ref)));
     return new_sd_bus;
 }
 
@@ -1598,9 +1598,9 @@ decode_object_path(PyObject *Py_UNUSED(self),
 }
 
 static PyMethodDef SdBusPyInternal_methods[] = {
-    {"sd_bus_default", (PyCFunction)get_sd_bus_default, METH_NOARGS, "Get default bus. Session bus running as user or system bus as daemon"},
-    {"sd_bus_default_user", (PyCFunction)get_sd_bus_default_user, METH_NOARGS, "Get default user session dbus"},
-    {"sd_bus_default_system", (PyCFunction)get_sd_bus_default_system, METH_NOARGS, "Get default system dbus"},
+    {"sd_bus_open", (PyCFunction)sd_bus_py_open, METH_NOARGS, "Open dbus connection. Session bus running as user or system bus as daemon"},
+    {"sd_bus_open_user", (PyCFunction)sd_bus_py_open_user, METH_NOARGS, "Open user session dbus"},
+    {"sd_bus_open_system", (PyCFunction)sd_bus_py_open_system, METH_NOARGS, "Open system dbus"},
     {"encode_object_path", (void *)encode_object_path, METH_FASTCALL, "Encode object path with object path prefix and arbitrary string"},
     {"decode_object_path", (void *)decode_object_path, METH_FASTCALL, "Decode object path with object path prefix and arbitrary string"},
     {NULL, NULL, 0, NULL},

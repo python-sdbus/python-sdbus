@@ -125,15 +125,15 @@ class SdBus:
         ...
 
 
-def sd_bus_default() -> SdBus:
+def sd_bus_open() -> SdBus:
     ...
 
 
-def sd_bus_default_user() -> SdBus:
+def sd_bus_open_user() -> SdBus:
     ...
 
 
-def sd_bus_default_system() -> SdBus:
+def sd_bus_open_system() -> SdBus:
     ...
 
 

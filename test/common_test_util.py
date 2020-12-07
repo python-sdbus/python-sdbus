@@ -26,7 +26,7 @@ from signal import SIGKILL
 from tempfile import TemporaryDirectory
 from unittest import IsolatedAsyncioTestCase, main
 
-from py_sd_bus import sd_bus_default_user
+from py_sd_bus import sd_bus_open_user
 
 dbus_config = '''
 <!DOCTYPE busconfig PUBLIC
@@ -88,7 +88,7 @@ class TempDbusTest(IsolatedAsyncioTestCase):
         environ[
             'DBUS_SESSION_BUS_ADDRESS'] = f"unix:path={self.dbus_socket_path}"
 
-        self.bus = sd_bus_default_user()
+        self.bus = sd_bus_open_user()
 
     async def asyncTearDown(self) -> None:
         with open(self.pid_path) as pid_file:

@@ -95,7 +95,7 @@ class TestDbusTypes(TestCase):
         self.message.append_basic("d", test_double)
 
         self.message.seal()
-        self.assertEqual(self.message.get_contents(), (test_double,))
+        self.assertEqual(self.message.get_contents(), test_double)
 
     def test_array(self) -> None:
         test_string_array = ["Ttest", "serawer", "asdadcxzc"]
@@ -134,7 +134,7 @@ class TestDbusTypes(TestCase):
         self.message.seal()
 
         self.assertEqual(self.message.get_contents(),
-                         ([test_string_array_one, test_string_array_two], ))
+                         [test_string_array_one, test_string_array_two])
 
     def test_struct(self) -> None:
         struct_data = (123123, "test")
@@ -144,7 +144,7 @@ class TestDbusTypes(TestCase):
 
         self.message.seal()
 
-        self.assertEqual(self.message.get_contents(), (struct_data, ))
+        self.assertEqual(self.message.get_contents(), struct_data)
 
     def test_dict(self) -> None:
         test_dict = {'test': 'a', 'asdaefd': 'cvbcfg'}
@@ -158,7 +158,7 @@ class TestDbusTypes(TestCase):
 
         self.message.seal()
 
-        self.assertEqual(self.message.get_contents(), (test_dict, ))
+        self.assertEqual(self.message.get_contents(), test_dict)
 
     def test_dict_nested_array(self) -> None:
         test_array_one = [12, 1234234, 5, 2345, 24, 5623, 46, 2546, 68798]
@@ -182,7 +182,7 @@ class TestDbusTypes(TestCase):
 
         self.message.seal()
 
-        self.assertEqual(self.message.get_contents(), (test_dict, ))
+        self.assertEqual(self.message.get_contents(), test_dict)
 
     def test_variant(self) -> None:
         test_signature = "x"
@@ -194,7 +194,7 @@ class TestDbusTypes(TestCase):
         self.message.seal()
 
         self.assertEqual(self.message.get_contents(),
-                         ((test_signature, test_int), ))
+                         (test_signature, test_int))
 
     def test_array_of_variant(self) -> None:
         self.message.open_container("a", "v")
@@ -218,9 +218,9 @@ class TestDbusTypes(TestCase):
 
         self.message.seal()
         self.assertEqual(self.message.get_contents(),
-                         ([(test_signature_one, test_int),
-                           (test_signature_two, test_array)
-                           ], ))
+                         [(test_signature_one, test_int),
+                          (test_signature_two, test_array)
+                          ])
 
 
 if __name__ == "__main__":

@@ -46,7 +46,7 @@ class TestPing(TempDbusTest):
             'org.freedesktop.DBus.Peer', 'Ping',
         )
         r = await self.bus.call_async(m)
-        self.assertIsNotNone(r.get_contents())
+        self.assertIsNone(r.get_contents())
 
 
 class TestRequestName(TempDbusTest):
@@ -79,6 +79,5 @@ class TestProxy(TempDbusTest):
         self.assertEqual(test_string.upper(),
                          await test_object.upper(test_string))
         # Test python-dbus-python
-        # TODO: change after fixing the return of dbus calls
-        self.assertEqual((test_string.upper(), ),
+        self.assertEqual(test_string.upper(),
                          await test_object_connection.upper(test_string))

@@ -83,11 +83,14 @@ class DbusMethod:
             interface_name: str,
             object_path: str) -> Any:
 
-        async def dbus_call() -> DbusCompleteTypes:
+        async def dbus_call(*args: Any) -> DbusCompleteTypes:
             new_call_message = bus.new_method_call_message(
                 service_name, object_path,
                 interface_name, self.method_name,
             )
+            if args:
+                new_call_message.append_basic(self.input_signature, *args)
+
             reply_message = await bus.call_async(new_call_message)
             return reply_message.get_contents()
 

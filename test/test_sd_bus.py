@@ -22,6 +22,8 @@ from __future__ import annotations
 
 from asyncio.subprocess import create_subprocess_exec
 
+from py_sd_bus.dbus_proxy import DbusInterfaceCommon, dbus_method
+
 from .common_test_util import TempDbusTest
 
 
@@ -46,5 +48,37 @@ class TestPing(TempDbusTest):
         r = await self.bus.call_async(m)
         self.assertIsNotNone(r.get_contents())
 
-    async def request_name(self) -> None:
+
+class TestRequestName(TempDbusTest):
+    async def test_request_name(self) -> None:
         await self.bus.request_name_async("org.example.test", 0)
+
+
+class TestProxy(TempDbusTest):
+    async def test_proxy(self) -> None:
+        test_string = 'asdarfaetfwsergtdhfgyhjtygji'
+
+        await self.bus.request_name_async("org.example.test", 0)
+
+        class TestInterface(DbusInterfaceCommon,
+                            interface_name='org.test.test',
+                            ):
+
+            @dbus_method(input_signature="s", result_signature="s")
+            async def upper(self, string: str) -> str:
+                return string.upper()
+
+        test_object = TestInterface()
+        await test_object.start_serving(self.bus, '/')
+        test_object_connection = TestInterface.connect(
+            "org.example.test", '/', self.bus)
+
+        await test_object_connection.ping()
+
+        # Test python-to-python
+        self.assertEqual(test_string.upper(),
+                         await test_object.upper(test_string))
+        # Test python-dbus-python
+        # TODO: change after fixing the return of dbus calls
+        self.assertEqual((test_string.upper(), ),
+                         await test_object_connection.upper(test_string))

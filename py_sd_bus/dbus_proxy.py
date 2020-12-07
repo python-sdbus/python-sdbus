@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from typing import (TYPE_CHECKING, Any, Callable, Coroutine, Dict, Iterator,
-                    List, Optional, Sequence, Tuple, TypeVar, cast)
+                    List, Optional, Sequence, Tuple, Type, TypeVar, cast)
 
 from .sd_bus_internals import (SdBus, SdBusInterface, SdBusMessage,
                                sd_bus_default)
@@ -215,11 +215,11 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
 
     @classmethod
     def connect(
-        cls,
+        cls: Type[T_input],
         service_name: str = 'org.freedesktop.DBus',
         object_path: str = '/org/freedesktop/DBus',
         bus: Optional[SdBus] = None,
-    ) -> DbusInterfaceBase:
+    ) -> T_input:
 
         if bus is None:
             bus = sd_bus_default()

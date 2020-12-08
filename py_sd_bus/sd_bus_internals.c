@@ -569,6 +569,94 @@ SdBusMessage_append_basic(SdBusMessageObject *self,
     Py_UNREACHABLE();
 }
 
+PyObject *_parse_basic(SdBusMessageObject *self, PyObject *const *args, Py_ssize_t *current_index, char basic_type)
+{
+    switch (basic_type)
+    {
+    case 'o':
+    case 'g':
+    case 's':
+    {
+        const char *char_ptr_to_append = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[*current_index++]);
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, char_ptr_to_append));
+        break;
+    }
+    default:
+        PyErr_Format(PyExc_ValueError, "Unknown message append type: %c", (int)basic_type);
+        return NULL;
+        break;
+    }
+    Py_RETURN_NONE;
+}
+
+PyObject *_parse_complete(SdBusMessageObject *self, PyObject *const *args, Py_ssize_t *current_index, PyObject *complete_signature)
+{
+    PyObject *signature_iter CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetIter(complete_signature));
+    for (;;)
+    {
+        //Get the next character
+        PyObject *next_py_char CLEANUP_PY_OBJECT = PyIter_Next(signature_iter);
+        if (next_py_char == NULL)
+        {
+            if (PyErr_Occurred())
+            {
+                return NULL;
+            }
+            else
+            {
+                Py_RETURN_NONE;
+            }
+        }
+        const char *next_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(next_py_char);
+        assert(PyUnicode_GetLength(next_py_char) == 1);
+        switch (next_char_ptr[0])
+        {
+        case '(':
+        {
+            // Struct == Tuple
+            break;
+        }
+        case '{':
+        {
+            // Dict
+            break;
+        }
+        case 'a':
+        {
+            // Array
+            break;
+        }
+        case 'v':
+        {
+            // Variant == (signature, (data, ))
+            break;
+        }
+        default:
+        {
+            // Basic type
+            _parse_basic(self, args, current_index, next_char_ptr[0]);
+            break;
+        }
+        }
+    }
+}
+
+static PyObject *
+SdBusMessage_append_data(SdBusMessageObject *self,
+                         PyObject *const *args,
+                         Py_ssize_t nargs)
+{
+    if (nargs < 2)
+    {
+        PyErr_SetString(PyExc_TypeError, "Minimum 2 args required");
+        return NULL;
+    }
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    Py_ssize_t current_index = 1;
+    CALL_PYTHON_AND_CHECK(_parse_complete(self, args, &current_index, args[0]));
+    Py_RETURN_NONE;
+}
+
 static PyObject *
 SdBusMessage_open_container(SdBusMessageObject *self,
                             PyObject *const *args,
@@ -939,6 +1027,7 @@ SdBusMessage_get_contents(SdBusMessageObject *self,
 static PyMethodDef SdBusMessage_methods[] = {
     {"add_bytes_array", (void *)SdBusMessage_add_bytes_array, METH_FASTCALL, "Add bytes array to message. Takes either bytes or byte array object"},
     {"append_basic", (void *)SdBusMessage_append_basic, METH_FASTCALL, "Append basic data based on signature."},
+    {"append_data", (void *)SdBusMessage_append_data, METH_FASTCALL, "Append basic data based on signature."},
     {"open_container", (void *)SdBusMessage_open_container, METH_FASTCALL, "Open container for writting"},
     {"close_container", (void *)SdBusMessage_close_container, METH_FASTCALL, "Close container"},
     {"enter_container", (void *)SdBusMessage_enter_container, METH_FASTCALL, "Enter container for reading"},

@@ -82,9 +82,9 @@ class TestDbusTypes(TestCase):
         test_path = "/test/object"
         test_signature = "say(xsai)o"
 
-        self.message.append_basic("s", test_string)
-        self.message.append_basic("o", test_path)
-        self.message.append_basic("g", test_signature)
+        self.message.append_data("s", test_string)
+        self.message.append_data("o", test_path)
+        self.message.append_data("g", test_signature)
 
         self.message.seal()
         self.assertEqual(self.message.get_contents(),

@@ -34,19 +34,28 @@ class TestDbusTypes(TestCase):
     def test_unsigned(self) -> None:
         int_t_max = 2**64
         unsigned_integers = ((2**8)-1, (2**16)-1, (2**32)-1, int_t_max-1)
-        self.message.append_basic("yqut", *unsigned_integers)
+        self.message.append_data("yqut", *unsigned_integers)
         # Test overflows
         self.assertRaises(
-            OverflowError, self.message.append_basic, "t", 2**64)
+            OverflowError, self.message.append_data, "y", 2**8)
 
         self.assertRaises(
-            OverflowError, self.message.append_basic, "y", -1)
+            OverflowError, self.message.append_data, "q", 2**16)
+
         self.assertRaises(
-            OverflowError, self.message.append_basic, "q", -1)
+            OverflowError, self.message.append_data, "u", 2**32)
+
         self.assertRaises(
-            OverflowError, self.message.append_basic, "u", -1)
+            OverflowError, self.message.append_data, "t", 2**64)
+
         self.assertRaises(
-            OverflowError, self.message.append_basic, "t", -1)
+            OverflowError, self.message.append_data, "y", -1)
+        self.assertRaises(
+            OverflowError, self.message.append_data, "q", -1)
+        self.assertRaises(
+            OverflowError, self.message.append_data, "u", -1)
+        self.assertRaises(
+            OverflowError, self.message.append_data, "t", -1)
 
         self.message.seal()
         return_integers = self.message.get_contents()
@@ -57,20 +66,32 @@ class TestDbusTypes(TestCase):
         int_i_max = (2**(32-1))-1
         int_x_max = (2**(64-1))-1
         signed_integers_positive = (int_n_max, int_i_max, int_x_max)
-        self.message.append_basic("nix", *signed_integers_positive)
+        self.message.append_data("nix", *signed_integers_positive)
 
         self.assertRaises(
-            OverflowError, self.message.append_basic, "x", int_x_max + 1)
+            OverflowError, self.message.append_data, "n", int_n_max + 1)
+
+        self.assertRaises(
+            OverflowError, self.message.append_data, "i", int_i_max + 1)
+
+        self.assertRaises(
+            OverflowError, self.message.append_data, "x", int_x_max + 1)
 
         int_n_min = -(2**(16-1))
         int_i_min = -(2**(32-1))
         int_x_min = -(2**(64-1))
         signed_integers_negative = (int_n_min, int_i_min, int_x_min)
-        self.message.append_basic("n", int_n_min)
-        self.message.append_basic("i", int_i_min)
-        self.message.append_basic("x", int_x_min)
+        self.message.append_data("n", int_n_min)
         self.assertRaises(
-            OverflowError, self.message.append_basic, "x", int_x_min - 1)
+            OverflowError, self.message.append_data, "n", int_n_min - 1)
+
+        self.message.append_data("i", int_i_min)
+        self.assertRaises(
+            OverflowError, self.message.append_data, "i", int_i_min - 1)
+
+        self.message.append_data("x", int_x_min)
+        self.assertRaises(
+            OverflowError, self.message.append_data, "x", int_x_min - 1)
 
         self.message.seal()
         return_integers = self.message.get_contents()
@@ -108,7 +129,7 @@ class TestDbusTypes(TestCase):
     def test_array(self) -> None:
         test_string_array = ["Ttest", "serawer", "asdadcxzc"]
         self.message.open_container("a", "s")
-        self.message.append_basic("sss", *test_string_array)
+        self.message.append_data("sss", *test_string_array)
         self.message.close_container()
 
         test_bytes_array = b"asdasrddjkmlh\ngnmflkdtgh\0oer27852y4785823"
@@ -116,7 +137,7 @@ class TestDbusTypes(TestCase):
 
         test_int_list = [1234, 123123, 764523]
         self.message.open_container("a", "i")
-        self.message.append_basic("iii", *test_int_list)
+        self.message.append_data("iii", *test_int_list)
         self.message.close_container()
 
         self.message.seal()
@@ -129,12 +150,12 @@ class TestDbusTypes(TestCase):
 
         test_string_array_one = ["Ttest", "serawer", "asdadcxzc"]
         self.message.open_container("a", "s")
-        self.message.append_basic("sss", *test_string_array_one)
+        self.message.append_data("sss", *test_string_array_one)
         self.message.close_container()
 
         test_string_array_two = ["asdaf", "seragdsfrgdswer", "sdfsdgg"]
         self.message.open_container("a", "s")
-        self.message.append_basic("sss", *test_string_array_two)
+        self.message.append_data("sss", *test_string_array_two)
         self.message.close_container()
 
         self.message.close_container()
@@ -147,7 +168,7 @@ class TestDbusTypes(TestCase):
     def test_struct(self) -> None:
         struct_data = (123123, "test")
         self.message.open_container("r", "xs")
-        self.message.append_basic("xs", *struct_data)
+        self.message.append_data("xs", *struct_data)
         self.message.close_container()
 
         self.message.seal()
@@ -159,7 +180,7 @@ class TestDbusTypes(TestCase):
         self.message.open_container("a", "{ss}")
         for key, value in test_dict.items():
             self.message.open_container("e", "ss")
-            self.message.append_basic("ss", key, value)
+            self.message.append_data("ss", key, value)
             self.message.close_container()
 
         self.message.close_container()
@@ -176,11 +197,11 @@ class TestDbusTypes(TestCase):
         self.message.open_container("a", "{sax}")
         for key, value in test_dict.items():
             self.message.open_container("e", "sax")
-            self.message.append_basic("s", key)
+            self.message.append_data("s", key)
 
             self.message.open_container("a", "x")
             for x in value:
-                self.message.append_basic("x", x)
+                self.message.append_data("x", x)
 
             self.message.close_container()
 
@@ -196,7 +217,7 @@ class TestDbusTypes(TestCase):
         test_signature = "x"
         test_int = 1241354
         self.message.open_container("v", test_signature)
-        self.message.append_basic("x", test_int)
+        self.message.append_data("x", test_int)
         self.message.close_container()
 
         self.message.seal()
@@ -210,7 +231,7 @@ class TestDbusTypes(TestCase):
         test_signature_one = "x"
         test_int = 1241354
         self.message.open_container("v", test_signature_one)
-        self.message.append_basic("x", test_int)
+        self.message.append_data("x", test_int)
         self.message.close_container()
 
         test_signature_two = "ai"
@@ -218,7 +239,7 @@ class TestDbusTypes(TestCase):
         self.message.open_container("v", test_signature_two)
         self.message.open_container("a", "i")
         for i in test_array:
-            self.message.append_basic("i", i)
+            self.message.append_data("i", i)
         self.message.close_container()
         self.message.close_container()
 

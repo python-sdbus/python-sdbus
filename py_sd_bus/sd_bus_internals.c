@@ -573,6 +573,32 @@ PyObject *_parse_basic(SdBusMessageObject *self, PyObject *basic_obj, char basic
 {
     switch (basic_type)
     {
+    case 'b':
+    {
+        if (!PyBool_Check(basic_obj))
+        {
+            PyErr_Format(PyExc_TypeError, "Message append error, expected bool got %R", basic_obj);
+            return NULL;
+        }
+        int bool_to_add = (basic_obj == Py_True);
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &bool_to_add));
+        break;
+    }
+    case 'd':
+    {
+        if (!PyFloat_Check(basic_obj))
+        {
+            PyErr_Format(PyExc_TypeError, "Message append error, expected double got %R", basic_obj);
+            return NULL;
+        }
+        double double_to_add = PyFloat_AsDouble(basic_obj);
+        if (PyErr_Occurred())
+        {
+            return NULL;
+        }
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &double_to_add));
+        break;
+    }
     case 'o':
     case 'g':
     case 's':

@@ -95,6 +95,16 @@ class TestDbusTypes(TestCase):
         self.message.seal()
         self.assertEqual(self.message.get_contents(), test_double)
 
+    def test_bool(self) -> None:
+        test_booleans = (True, False, False, True, 1 == 1)
+
+        self.message.append_data("bbbbb", *test_booleans)
+
+        self.assertRaises(TypeError, self.message.append_data, 'b', 'asdasad')
+
+        self.message.seal()
+        self.assertEqual(self.message.get_contents(), test_booleans)
+
     def test_array(self) -> None:
         test_string_array = ["Ttest", "serawer", "asdadcxzc"]
         self.message.open_container("a", "s")

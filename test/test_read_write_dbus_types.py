@@ -90,7 +90,7 @@ class TestDbusTypes(TestCase):
 
     def test_double(self) -> None:
         test_double = 1.0
-        self.message.append_basic("d", test_double)
+        self.message.append_data("d", test_double)
 
         self.message.seal()
         self.assertEqual(self.message.get_contents(), test_double)

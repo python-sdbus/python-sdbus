@@ -663,7 +663,7 @@ PyObject *_parse_complete(SdBusMessageObject *self, PyObject *complete_obj, PyOb
     default:
     {
         // Basic type
-        _parse_basic(self, complete_obj, next_char_ptr[0]);
+        CALL_PYTHON_AND_CHECK(_parse_basic(self, complete_obj, next_char_ptr[0]));
         break;
     }
     }

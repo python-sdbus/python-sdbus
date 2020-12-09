@@ -85,6 +85,12 @@
         new_object;                         \
     })
 
+#define PYTHON_ERR_OCCURED \
+    if (PyErr_Occurred())  \
+    {                      \
+        return NULL;       \
+    }
+
 #define CALL_SD_BUS_AND_CHECK(sd_bus_function)                                                                   \
     ({                                                                                                           \
         int return_int = sd_bus_function;                                                                        \
@@ -573,6 +579,99 @@ PyObject *_parse_basic(SdBusMessageObject *self, PyObject *basic_obj, char basic
 {
     switch (basic_type)
     {
+    // Unsigned
+    case 'y':
+    {
+        unsigned long long the_ulong_long = PyLong_AsUnsignedLongLong(basic_obj);
+        PYTHON_ERR_OCCURED;
+        if (UINT8_MAX < the_ulong_long)
+        {
+            PyErr_Format(PyExc_OverflowError, "Cannot convert int to 'y' type, overflow. 'y' is max %llu", (unsigned long long)UINT8_MAX);
+            return NULL;
+        }
+        uint8_t byte_to_add = the_ulong_long;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &byte_to_add));
+        break;
+    }
+    case 'q':
+    {
+        unsigned long long the_ulong_long = PyLong_AsUnsignedLongLong(basic_obj);
+        PYTHON_ERR_OCCURED;
+        if (UINT16_MAX < the_ulong_long)
+        {
+            PyErr_Format(PyExc_OverflowError, "Cannot convert int to 'q' type, overflow. 'q' is max %llu", (unsigned long long)UINT16_MAX);
+            return NULL;
+        }
+        uint16_t q_to_add = the_ulong_long;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &q_to_add));
+        break;
+    }
+    case 'u':
+    {
+        unsigned long long the_ulong_long = PyLong_AsUnsignedLongLong(basic_obj);
+        PYTHON_ERR_OCCURED;
+        if (UINT32_MAX < the_ulong_long)
+        {
+            PyErr_Format(PyExc_OverflowError, "Cannot convert int to 'u' type, overflow. 'u' is max %lu", (unsigned long)UINT32_MAX);
+            return NULL;
+        }
+        uint32_t u_to_add = the_ulong_long;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &u_to_add));
+        break;
+    }
+    case 't':
+    {
+        unsigned long long the_ulong_long = PyLong_AsUnsignedLongLong(basic_obj);
+        PYTHON_ERR_OCCURED;
+        uint64_t t_to_add = the_ulong_long;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &t_to_add));
+        break;
+    }
+    //Signed
+    case 'n':
+    {
+        long long the_long_long = PyLong_AsLongLong(basic_obj);
+        PYTHON_ERR_OCCURED;
+        if (INT16_MAX < the_long_long)
+        {
+            PyErr_Format(PyExc_OverflowError, "Cannot convert int to 'n' type, overflow. 'n' is max %lli", (long long)INT16_MAX);
+            return NULL;
+        }
+        if (INT16_MIN > the_long_long)
+        {
+            PyErr_Format(PyExc_OverflowError, "Cannot convert int to 'n' type, underflow. 'n' is min %lli", (long long)INT16_MIN);
+            return NULL;
+        }
+        int16_t n_to_add = the_long_long;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &n_to_add));
+        break;
+    }
+    case 'i':
+    {
+        long long the_long_long = PyLong_AsLongLong(basic_obj);
+        PYTHON_ERR_OCCURED;
+        if (INT32_MAX < the_long_long)
+        {
+            PyErr_Format(PyExc_OverflowError, "Cannot convert int to 'i' type, overflow. 'i' is max %lli", (long long)INT32_MAX);
+            return NULL;
+        }
+        if (INT32_MIN > the_long_long)
+        {
+            PyErr_Format(PyExc_OverflowError, "Cannot convert int to 'i' type, underflow. 'i' is min %lli", (long long)INT32_MIN);
+            return NULL;
+        }
+        int32_t i_to_add = the_long_long;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &i_to_add));
+        break;
+    }
+    case 'x':
+    {
+        long long the_long_long = PyLong_AsLongLong(basic_obj);
+        PYTHON_ERR_OCCURED;
+        int64_t x_to_add = the_long_long;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &x_to_add));
+        break;
+    }
     case 'b':
     {
         if (!PyBool_Check(basic_obj))
@@ -592,10 +691,7 @@ PyObject *_parse_basic(SdBusMessageObject *self, PyObject *basic_obj, char basic
             return NULL;
         }
         double double_to_add = PyFloat_AsDouble(basic_obj);
-        if (PyErr_Occurred())
-        {
-            return NULL;
-        }
+        PYTHON_ERR_OCCURED;
         CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &double_to_add));
         break;
     }

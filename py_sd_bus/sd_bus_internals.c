@@ -569,7 +569,7 @@ SdBusMessage_append_basic(SdBusMessageObject *self,
     Py_UNREACHABLE();
 }
 
-PyObject *_parse_basic(SdBusMessageObject *self, PyObject *const *args, Py_ssize_t *current_index, char basic_type)
+PyObject *_parse_basic(SdBusMessageObject *self, PyObject *basic_obj, char basic_type)
 {
     switch (basic_type)
     {
@@ -577,7 +577,13 @@ PyObject *_parse_basic(SdBusMessageObject *self, PyObject *const *args, Py_ssize
     case 'g':
     case 's':
     {
-        const char *char_ptr_to_append = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[*current_index++]);
+        if (!PyUnicode_Check(basic_obj))
+        {
+            PyErr_Format(PyExc_TypeError, "Message append error, expected str got %R", basic_obj);
+            return NULL;
+        }
+
+        const char *char_ptr_to_append = SD_BUS_PY_UNICODE_AS_CHAR_PTR(basic_obj);
         CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, char_ptr_to_append));
         break;
     }
@@ -589,56 +595,53 @@ PyObject *_parse_basic(SdBusMessageObject *self, PyObject *const *args, Py_ssize
     Py_RETURN_NONE;
 }
 
-PyObject *_parse_complete(SdBusMessageObject *self, PyObject *const *args, Py_ssize_t *current_index, PyObject *complete_signature)
+PyObject *_parse_complete(SdBusMessageObject *self, PyObject *complete_obj, PyObject *signature_iter)
 {
-    PyObject *signature_iter CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetIter(complete_signature));
-    for (;;)
+
+    //Get the next character
+    PyObject *next_py_char CLEANUP_PY_OBJECT = PyIter_Next(signature_iter);
+    if (next_py_char == NULL)
     {
-        //Get the next character
-        PyObject *next_py_char CLEANUP_PY_OBJECT = PyIter_Next(signature_iter);
-        if (next_py_char == NULL)
+        if (PyErr_Occurred())
         {
-            if (PyErr_Occurred())
-            {
-                return NULL;
-            }
-            else
-            {
-                Py_RETURN_NONE;
-            }
+            return NULL;
         }
-        const char *next_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(next_py_char);
-        assert(PyUnicode_GetLength(next_py_char) == 1);
-        switch (next_char_ptr[0])
+        else
         {
-        case '(':
-        {
-            // Struct == Tuple
-            break;
-        }
-        case '{':
-        {
-            // Dict
-            break;
-        }
-        case 'a':
-        {
-            // Array
-            break;
-        }
-        case 'v':
-        {
-            // Variant == (signature, (data, ))
-            break;
-        }
-        default:
-        {
-            // Basic type
-            _parse_basic(self, args, current_index, next_char_ptr[0]);
-            break;
-        }
+            Py_RETURN_NONE;
         }
     }
+    const char *next_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(next_py_char);
+    switch (next_char_ptr[0])
+    {
+    case '(':
+    {
+        // Struct == Tuple
+        break;
+    }
+    case '{':
+    {
+        // Dict
+        break;
+    }
+    case 'a':
+    {
+        // Array
+        break;
+    }
+    case 'v':
+    {
+        // Variant == (signature, (data, ))
+        break;
+    }
+    default:
+    {
+        // Basic type
+        _parse_basic(self, complete_obj, next_char_ptr[0]);
+        break;
+    }
+    }
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -652,8 +655,11 @@ SdBusMessage_append_data(SdBusMessageObject *self,
         return NULL;
     }
     SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-    Py_ssize_t current_index = 1;
-    CALL_PYTHON_AND_CHECK(_parse_complete(self, args, &current_index, args[0]));
+    PyObject *signature_iter CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetIter(args[0]));
+    for (Py_ssize_t i = 1; i < nargs; ++i)
+    {
+        PyObject *should_be_none CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_parse_complete(self, args[i], signature_iter));
+    }
     Py_RETURN_NONE;
 }
 

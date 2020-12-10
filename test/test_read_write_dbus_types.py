@@ -136,6 +136,25 @@ class TestDbusTypes(TestCase):
         test_int_list = [1234, 123123, 764523]
         self.message.append_data("ai", test_int_list)
 
+        self.message.append_data("ax", [])
+
+        self.assertRaises(TypeError, self.message.append_data,
+                          "a", test_int_list)
+
+        self.message.seal()
+
+        self.assertEqual(
+            self.message.get_contents(),
+            (test_string_array, test_bytes_array, test_int_list, []))
+
+    def test_array_compound(self) -> None:
+        test_string_array = ["Ttest", "serawer", "asdadcxzc"]
+        test_bytes_array = b"asdasrddjkmlh\ngnmflkdtgh\0oer27852y4785823"
+        test_int_list = [1234, 123123, 764523]
+
+        self.message.append_data(
+            "asayai", test_string_array, test_bytes_array, test_int_list)
+
         self.message.seal()
 
         self.assertEqual(self.message.get_contents(),

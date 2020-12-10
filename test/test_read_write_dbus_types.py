@@ -174,9 +174,7 @@ class TestDbusTypes(TestCase):
 
     def test_struct(self) -> None:
         struct_data = (123123, "test")
-        self.message.open_container("r", "xs")
-        self.message.append_data("xs", *struct_data)
-        self.message.close_container()
+        self.message.append_data("(xs)", struct_data)
 
         self.message.seal()
 

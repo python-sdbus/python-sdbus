@@ -703,6 +703,14 @@ PyObject *_parse_basic(SdBusMessageObject *self, PyObject *basic_obj, char basic
         CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &x_to_add));
         break;
     }
+    case 'h':
+    {
+        long long the_long_long = PyLong_AsLongLong(basic_obj);
+        PYTHON_ERR_OCCURED;
+        int h_to_add = the_long_long;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(self->message_ref, basic_type, &h_to_add));
+        break;
+    }
     case 'b':
     {
         if (!PyBool_Check(basic_obj))

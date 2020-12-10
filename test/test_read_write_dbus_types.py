@@ -182,10 +182,9 @@ class TestDbusTypes(TestCase):
 
     def test_dict(self) -> None:
         test_dict = {'test': 'a', 'asdaefd': 'cvbcfg'}
-        self.message.append_data("{ss}", test_dict)
+        self.message.append_data("a{ss}", test_dict)
 
         self.message.seal()
-
         self.assertEqual(self.message.get_contents(), test_dict)
 
     def test_dict_nested_array(self) -> None:
@@ -193,7 +192,7 @@ class TestDbusTypes(TestCase):
         test_array_two = [124, 5, 356, 3, 57, 35,
                           67, 356, 2, 647, 36, 5784, 8, 809]
         test_dict = {'test': test_array_one, 'asdaefd': test_array_two}
-        self.message.append_data("{sax}", test_dict)
+        self.message.append_data("a{sax}", test_dict)
 
         self.message.seal()
 
@@ -228,11 +227,87 @@ class TestDbusTypes(TestCase):
         )
 
         self.message.seal()
+
         self.assertEqual(
             self.message.get_contents(),
             [(test_signature_one, (test_str_1, test_str_2, test_int)),
              (test_signature_two, test_array)
              ])
+
+    def test_array_of_dict(self) -> None:
+        test_data = [
+            {'asdasd': 'asdasd'},
+            {'asdasdsg': 'asdasfdaf'},
+            {},
+        ]
+
+        self.message.append_data("aa{ss}", test_data)
+        self.message.seal()
+
+        self.assertEqual(
+            self.message.get_contents(),
+            test_data)
+
+    def test_dict_of_struct(self) -> None:
+        test_dict = {
+            1: ('asdasd', 'xcvghtrh'),
+            2: ('rjhtyjdg', 'gbdtsret'),
+            3: ('gvsgdthgdeth', 'gsgderfgd'),
+        }
+
+        self.message.append_data("a{n(ss)}", test_dict)
+        self.message.seal()
+
+        self.assertEqual(
+            self.message.get_contents(),
+            test_dict)
+
+    def test_struct_with_dict(self) -> None:
+        test_struct = (
+            'asdasdag',
+            {
+                'asdasd': 25,
+                'dfasf': 63
+            },
+            542524,
+            True
+        )
+
+        self.message.append_data("(sa{sq}ib)", test_struct)
+        self.message.seal()
+
+        self.assertEqual(
+            self.message.get_contents(),
+            test_struct
+        )
+
+    def test_dict_of_array(self) -> None:
+        test_dict = {
+            '/': [341, 134, 764, 8986],
+            '/test': [-245, -245, -1, 25],
+        }
+
+        self.message.append_data("a{oai}", test_dict)
+        self.message.seal()
+
+        self.assertEqual(
+            self.message.get_contents(),
+            test_dict
+        )
+
+    def test_array_of_array(self) -> None:
+        test_array = [
+            ['asda', 'afgrfyhgdr', 'adffgvfdrfg'],
+            ['afhryfjh', 'sgffgddrhg'],
+            []
+        ]
+        self.message.append_data("aas", test_array)
+        self.message.seal()
+
+        self.assertEqual(
+            self.message.get_contents(),
+            test_array
+        )
 
 
 if __name__ == "__main__":

@@ -128,17 +128,13 @@ class TestDbusTypes(TestCase):
 
     def test_array(self) -> None:
         test_string_array = ["Ttest", "serawer", "asdadcxzc"]
-        self.message.open_container("a", "s")
-        self.message.append_data("sss", *test_string_array)
-        self.message.close_container()
+        self.message.append_data("as", test_string_array)
 
         test_bytes_array = b"asdasrddjkmlh\ngnmflkdtgh\0oer27852y4785823"
-        self.message.add_bytes_array(test_bytes_array)
+        self.message.append_data("ay", test_bytes_array)
 
         test_int_list = [1234, 123123, 764523]
-        self.message.open_container("a", "i")
-        self.message.append_data("iii", *test_int_list)
-        self.message.close_container()
+        self.message.append_data("ai", test_int_list)
 
         self.message.seal()
 

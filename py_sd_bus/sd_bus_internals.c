@@ -944,6 +944,31 @@ PyObject *_parse_struct(SdBusMessageObject *self, PyObject *tuple_object, PyObje
     Py_RETURN_NONE;
 }
 
+PyObject *_parse_variant(SdBusMessageObject *self, PyObject *tuple_object)
+{
+    if (!PyTuple_Check(tuple_object))
+    {
+        PyErr_Format(PyExc_TypeError, "Message append error, expected tuple got %R", tuple_object);
+        return NULL;
+    }
+    if (PyTuple_GET_SIZE(tuple_object) != 2)
+    {
+        PyErr_Format(PyExc_TypeError, "Expected tuple of only 2 elemetns got %zi", PyTuple_GET_SIZE(tuple_object));
+        return NULL;
+    }
+    PyObject *variant_signature = PyTuple_GET_ITEM(tuple_object, 0);
+    PyObject *variant_sig_iter = CALL_PYTHON_AND_CHECK(PyObject_GetIter(variant_signature));
+    const char *variant_signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(variant_signature);
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(self->message_ref, 'v', variant_signature_char_ptr));
+
+    PyObject *variant_body = PyTuple_GET_ITEM(tuple_object, 1);
+    PyObject *should_be_none CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_parse_complete(self, variant_body, variant_sig_iter));
+
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_close_container(self->message_ref));
+
+    Py_RETURN_NONE;
+}
+
 PyObject *_parse_dict(SdBusMessageObject *self, PyObject *dict_object, PyObject *signature_iter)
 {
     if (!PyDict_Check(dict_object))
@@ -1006,7 +1031,8 @@ PyObject *_parse_complete(SdBusMessageObject *self, PyObject *complete_obj, PyOb
     }
     case 'v':
     {
-        // Variant == (signature, (data, ))
+        // Variant == (signature, *data))
+        PyObject *should_be_none CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_parse_variant(self, complete_obj));
         break;
     }
     default:

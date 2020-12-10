@@ -833,7 +833,7 @@ PyObject *_parse_array(SdBusMessageObject *self, PyObject *array_object, PyObjec
     for (Py_ssize_t i = 0; i < PyList_GET_SIZE(array_object); ++i)
     {
         PyObject *container_sig_iter CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetIter(array_signature));
-        CALL_PYTHON_AND_CHECK(_parse_complete(self, PyList_GET_ITEM(array_object, i), container_sig_iter));
+        CALL_PYTHON_EXPECT_NONE(_parse_complete(self, PyList_GET_ITEM(array_object, i), container_sig_iter));
     }
     CALL_SD_BUS_AND_CHECK(sd_bus_message_close_container(self->message_ref));
 
@@ -873,7 +873,7 @@ PyObject *_parse_variant(SdBusMessageObject *self, PyObject *tuple_object)
         return NULL;
     }
     PyObject *variant_signature = PyTuple_GET_ITEM(tuple_object, 0);
-    PyObject *variant_sig_iter = CALL_PYTHON_AND_CHECK(PyObject_GetIter(variant_signature));
+    PyObject *variant_sig_iter CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetIter(variant_signature));
     const char *variant_signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(variant_signature);
     CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(self->message_ref, 'v', variant_signature_char_ptr));
 
@@ -1216,7 +1216,8 @@ PyObject *_iter_message_dictionary(SdBusMessageObject *self)
 PyObject *_iter_message_variant(SdBusMessageObject *self, const char *container_type)
 {
     PyObject *value_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_structure(self, 0));
-    return PyTuple_Pack(2, CALL_PYTHON_AND_CHECK(PyUnicode_FromString(container_type)), value_object);
+    PyObject *variant_sig_str CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString(container_type));
+    return PyTuple_Pack(2, variant_sig_str, value_object);
 }
 
 #define _ITER_RETURN_NONE_ON_ZERO(other_func) \

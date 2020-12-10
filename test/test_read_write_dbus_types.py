@@ -230,9 +230,11 @@ class TestDbusTypes(TestCase):
 
         self.assertEqual(
             self.message.get_contents(),
-            [(test_signature_one, (test_str_1, test_str_2, test_int)),
-             (test_signature_two, test_array)
-             ])
+            [
+                (test_signature_one, (test_str_1, test_str_2, test_int)),
+                (test_signature_two, test_array)
+            ]
+        )
 
     def test_array_of_dict(self) -> None:
         test_data = [

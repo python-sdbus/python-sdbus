@@ -105,3 +105,10 @@ def mem_test() -> None:
             main()
         except SystemExit:
             ...
+
+
+def mem_test_single(test_class: type, test_name: str) -> None:
+    while True:
+        t = test_class()
+        t.setUp()
+        getattr(t, test_name)()

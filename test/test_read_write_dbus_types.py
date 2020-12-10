@@ -182,13 +182,7 @@ class TestDbusTypes(TestCase):
 
     def test_dict(self) -> None:
         test_dict = {'test': 'a', 'asdaefd': 'cvbcfg'}
-        self.message.open_container("a", "{ss}")
-        for key, value in test_dict.items():
-            self.message.open_container("e", "ss")
-            self.message.append_data("ss", key, value)
-            self.message.close_container()
-
-        self.message.close_container()
+        self.message.append_data("{ss}", test_dict)
 
         self.message.seal()
 
@@ -199,20 +193,7 @@ class TestDbusTypes(TestCase):
         test_array_two = [124, 5, 356, 3, 57, 35,
                           67, 356, 2, 647, 36, 5784, 8, 809]
         test_dict = {'test': test_array_one, 'asdaefd': test_array_two}
-        self.message.open_container("a", "{sax}")
-        for key, value in test_dict.items():
-            self.message.open_container("e", "sax")
-            self.message.append_data("s", key)
-
-            self.message.open_container("a", "x")
-            for x in value:
-                self.message.append_data("x", x)
-
-            self.message.close_container()
-
-            self.message.close_container()
-
-        self.message.close_container()
+        self.message.append_data("{sax}", test_dict)
 
         self.message.seal()
 

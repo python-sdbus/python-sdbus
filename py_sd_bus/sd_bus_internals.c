@@ -113,6 +113,34 @@
         new_char_ptr;                                           \
     })
 
+#define CALL_PYTHON_ITER(iter, iter_end)                     \
+    ({                                                       \
+        PyObject *next_object = PyIter_Next(signature_iter); \
+        if (next_object == NULL)                             \
+                                                             \
+        {                                                    \
+            if (PyErr_Occurred())                            \
+            {                                                \
+                return NULL;                                 \
+            }                                                \
+            else                                             \
+            {                                                \
+                iter_end;                                    \
+            }                                                \
+        }                                                    \
+        next_object;                                         \
+    })
+
+#define CALL_PYTHON_INT_CHECK(py_function) \
+    ({                                     \
+        int return_int = py_function;      \
+        if (return_int < 0)                \
+        {                                  \
+            return NULL;                   \
+        }                                  \
+        return_int;                        \
+    })
+
 static PyObject *exception_dict = NULL;
 static PyObject *exception_default = NULL;
 static PyObject *exception_generic = NULL;
@@ -125,6 +153,7 @@ static PyObject *set_exception_str = NULL;
 static PyObject *put_no_wait_str = NULL;
 static PyObject *add_reader_str = NULL;
 static PyObject *remove_reader_str = NULL;
+static PyObject *empty_str = NULL;
 
 void PyObject_cleanup(PyObject **object)
 {
@@ -575,6 +604,8 @@ SdBusMessage_append_basic(SdBusMessageObject *self,
     Py_UNREACHABLE();
 }
 
+PyObject *_parse_complete(SdBusMessageObject *self, PyObject *complete_obj, PyObject *signature_iter);
+
 PyObject *_parse_basic(SdBusMessageObject *self, PyObject *basic_obj, char basic_type)
 {
     switch (basic_type)
@@ -717,23 +748,113 @@ PyObject *_parse_basic(SdBusMessageObject *self, PyObject *basic_obj, char basic
     Py_RETURN_NONE;
 }
 
+PyObject *_parse_struct_find_end(PyObject *accumulartor, PyObject *signature_iter)
+{
+    Py_UNREACHABLE();
+}
+
+PyObject *_parse_dict_find_end(PyObject *accumulartor, PyObject *signature_iter)
+{
+    Py_UNREACHABLE();
+}
+
+PyObject *_parse_array_find_end(PyObject *signature_iter)
+{
+    PyObject *acc_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
+    for (;;)
+    {
+        PyObject *next_str CLEANUP_PY_OBJECT = CALL_PYTHON_ITER(
+            signature_iter,
+            (
+                {
+                    PyErr_SetString(PyExc_TypeError, "Could not find array end");
+                    return NULL;
+                }));
+
+        CALL_PYTHON_INT_CHECK(PyList_Append(acc_list, next_str));
+        if (PyUnicode_CompareWithASCIIString(next_str, "a") == 0)
+        {
+            continue;
+        }
+        else if (PyUnicode_CompareWithASCIIString(next_str, "(") == 0)
+        {
+            Py_UNREACHABLE();
+        }
+        else if (PyUnicode_CompareWithASCIIString(next_str, "{") == 0)
+        {
+            Py_UNREACHABLE();
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return PyUnicode_Join(empty_str, acc_list);
+}
+
+PyObject *_parse_array(SdBusMessageObject *self, PyObject *array_object, PyObject *signature_iter)
+{
+    PyObject *array_signature = CALL_PYTHON_AND_CHECK(_parse_array_find_end(signature_iter));
+
+    if (PyUnicode_CompareWithASCIIString(array_signature, "y") == 0)
+    {
+        char *char_ptr_to_add = NULL;
+        ssize_t size_of_array = 0;
+        if (PyByteArray_Check(array_object))
+        {
+            char_ptr_to_add = PyByteArray_AsString(array_object);
+            if (char_ptr_to_add == NULL)
+            {
+                return NULL;
+            }
+            size_of_array = PyByteArray_Size(array_object);
+            if (size_of_array == -1)
+            {
+                return NULL;
+            }
+        }
+        else if (PyBytes_Check(array_object))
+        {
+            char_ptr_to_add = PyBytes_AsString(array_object);
+            if (char_ptr_to_add == NULL)
+            {
+                return NULL;
+            }
+            size_of_array = PyBytes_Size(array_object);
+            if (size_of_array == -1)
+            {
+                return NULL;
+            }
+        }
+        else
+        {
+            PyErr_Format(PyExc_TypeError, "Expected bytes or byte array, got %R", array_object);
+            return NULL;
+        }
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_append_array(self->message_ref, 'y', char_ptr_to_add, (size_t)size_of_array));
+        Py_RETURN_NONE;
+    }
+
+    const char *array_sig_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(array_signature);
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(self->message_ref, 'a', array_sig_char_ptr));
+    for (Py_ssize_t i = 0; i < PyList_GET_SIZE(array_object); ++i)
+    {
+        PyObject *container_sig_iter CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetIter(array_signature));
+        CALL_PYTHON_AND_CHECK(_parse_complete(self, PyList_GET_ITEM(array_object, i), container_sig_iter));
+    }
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_close_container(self->message_ref));
+
+    Py_RETURN_NONE;
+}
+
 PyObject *_parse_complete(SdBusMessageObject *self, PyObject *complete_obj, PyObject *signature_iter)
 {
 
     //Get the next character
-    PyObject *next_py_char CLEANUP_PY_OBJECT = PyIter_Next(signature_iter);
-    if (next_py_char == NULL)
-    {
-        if (PyErr_Occurred())
-        {
-            return NULL;
-        }
-        else
-        {
-            Py_RETURN_NONE;
-        }
-    }
+    PyObject *next_py_char CLEANUP_PY_OBJECT = CALL_PYTHON_ITER(signature_iter, Py_RETURN_NONE);
     const char *next_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(next_py_char);
+
     switch (next_char_ptr[0])
     {
     case '(':
@@ -749,6 +870,7 @@ PyObject *_parse_complete(SdBusMessageObject *self, PyObject *complete_obj, PyOb
     case 'a':
     {
         // Array
+        CALL_PYTHON_AND_CHECK(_parse_array(self, complete_obj, signature_iter));
         break;
     }
     case 'v':
@@ -2045,6 +2167,8 @@ PyInit_sd_bus_internals(void)
     TEST_FAILURE(remove_reader_str == NULL);
     add_reader_str = PyUnicode_FromString("add_reader");
     TEST_FAILURE(add_reader_str == NULL);
+    empty_str = PyUnicode_FromString("");
+    TEST_FAILURE(empty_str == NULL)
 
     PyObject *inspect_module = PyImport_ImportModule("inspect");
     TEST_FAILURE(inspect_module == NULL)

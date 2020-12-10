@@ -748,14 +748,84 @@ PyObject *_parse_basic(SdBusMessageObject *self, PyObject *basic_obj, char basic
     Py_RETURN_NONE;
 }
 
-PyObject *_parse_struct_find_end(PyObject *accumulartor, PyObject *signature_iter)
+PyObject *_parse_struct_find_end(PyObject *signature_iter)
 {
-    Py_UNREACHABLE();
+    PyObject *acc_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
+    int round_bracket_count = 1;
+    for (;;)
+    {
+        PyObject *next_str CLEANUP_PY_OBJECT = CALL_PYTHON_ITER(
+            signature_iter,
+            (
+                {
+                    PyErr_SetString(PyExc_TypeError, "Could not find dict end");
+                    return NULL;
+                }));
+
+        if (PyUnicode_CompareWithASCIIString(next_str, ")") == 0)
+        {
+            --round_bracket_count;
+        }
+
+        if (PyUnicode_CompareWithASCIIString(next_str, "(") == 0)
+        {
+            ++round_bracket_count;
+        }
+
+        if (round_bracket_count == 0)
+        {
+            break;
+        }
+
+        if (round_bracket_count < 0)
+        {
+            PyErr_SetString(PyExc_TypeError, "Round braces count <0. Check your signature.");
+            return NULL;
+        }
+
+        CALL_PYTHON_INT_CHECK(PyList_Append(acc_list, next_str));
+    }
+    return PyUnicode_Join(empty_str, acc_list);
 }
 
-PyObject *_parse_dict_find_end(PyObject *accumulartor, PyObject *signature_iter)
+PyObject *_parse_dict_find_end(PyObject *signature_iter)
 {
-    Py_UNREACHABLE();
+    PyObject *acc_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
+    int curly_bracket_count = 1;
+    for (;;)
+    {
+        PyObject *next_str CLEANUP_PY_OBJECT = CALL_PYTHON_ITER(
+            signature_iter,
+            (
+                {
+                    PyErr_SetString(PyExc_TypeError, "Could not find dict end");
+                    return NULL;
+                }));
+
+        if (PyUnicode_CompareWithASCIIString(next_str, "}") == 0)
+        {
+            --curly_bracket_count;
+        }
+
+        if (PyUnicode_CompareWithASCIIString(next_str, "{") == 0)
+        {
+            ++curly_bracket_count;
+        }
+
+        if (curly_bracket_count == 0)
+        {
+            break;
+        }
+
+        if (curly_bracket_count < 0)
+        {
+            PyErr_SetString(PyExc_TypeError, "Curly braces count <0. Check your signature.");
+            return NULL;
+        }
+
+        CALL_PYTHON_INT_CHECK(PyList_Append(acc_list, next_str));
+    }
+    return PyUnicode_Join(empty_str, acc_list);
 }
 
 PyObject *_parse_array_find_end(PyObject *signature_iter)
@@ -795,6 +865,7 @@ PyObject *_parse_array_find_end(PyObject *signature_iter)
 
 PyObject *_parse_array(SdBusMessageObject *self, PyObject *array_object, PyObject *signature_iter)
 {
+
     PyObject *array_signature = CALL_PYTHON_AND_CHECK(_parse_array_find_end(signature_iter));
 
     if (PyUnicode_CompareWithASCIIString(array_signature, "y") == 0)
@@ -836,12 +907,37 @@ PyObject *_parse_array(SdBusMessageObject *self, PyObject *array_object, PyObjec
         Py_RETURN_NONE;
     }
 
+    if (!PyList_Check(array_object))
+    {
+        PyErr_Format(PyExc_TypeError, "Message append error, expected array got %R", array_object);
+        return NULL;
+    }
     const char *array_sig_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(array_signature);
     CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(self->message_ref, 'a', array_sig_char_ptr));
     for (Py_ssize_t i = 0; i < PyList_GET_SIZE(array_object); ++i)
     {
         PyObject *container_sig_iter CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetIter(array_signature));
         CALL_PYTHON_AND_CHECK(_parse_complete(self, PyList_GET_ITEM(array_object, i), container_sig_iter));
+    }
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_close_container(self->message_ref));
+
+    Py_RETURN_NONE;
+}
+
+PyObject *_parse_struct(SdBusMessageObject *self, PyObject *tuple_object, PyObject *signature_iter)
+{
+    if (!PyTuple_Check(tuple_object))
+    {
+        PyErr_Format(PyExc_TypeError, "Message append error, expected tuple got %R", tuple_object);
+        return NULL;
+    }
+    PyObject *struct_signature = CALL_PYTHON_AND_CHECK(_parse_struct_find_end(signature_iter));
+    const char *struct_sig_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(struct_signature);
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(self->message_ref, 'r', struct_sig_char_ptr));
+    PyObject *container_sig_iter CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetIter(struct_signature));
+    for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(tuple_object); ++i)
+    {
+        PyObject *should_be_none CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_parse_complete(self, PyTuple_GET_ITEM(tuple_object, i), container_sig_iter));
     }
     CALL_SD_BUS_AND_CHECK(sd_bus_message_close_container(self->message_ref));
 
@@ -860,6 +956,7 @@ PyObject *_parse_complete(SdBusMessageObject *self, PyObject *complete_obj, PyOb
     case '(':
     {
         // Struct == Tuple
+        PyObject *should_be_none CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_parse_struct(self, complete_obj, signature_iter));
         break;
     }
     case '{':
@@ -870,7 +967,7 @@ PyObject *_parse_complete(SdBusMessageObject *self, PyObject *complete_obj, PyOb
     case 'a':
     {
         // Array
-        CALL_PYTHON_AND_CHECK(_parse_array(self, complete_obj, signature_iter));
+        PyObject *should_be_none CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_parse_array(self, complete_obj, signature_iter));
         break;
     }
     case 'v':
@@ -881,7 +978,7 @@ PyObject *_parse_complete(SdBusMessageObject *self, PyObject *complete_obj, PyOb
     default:
     {
         // Basic type
-        CALL_PYTHON_AND_CHECK(_parse_basic(self, complete_obj, next_char_ptr[0]));
+        PyObject *should_be_none CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_parse_basic(self, complete_obj, next_char_ptr[0]));
         break;
     }
     }

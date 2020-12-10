@@ -202,9 +202,8 @@ class TestDbusTypes(TestCase):
     def test_variant(self) -> None:
         test_signature = "x"
         test_int = 1241354
-        self.message.open_container("v", test_signature)
-        self.message.append_data("x", test_int)
-        self.message.close_container()
+
+        self.message.append_data("v", (test_signature, test_int))
 
         self.message.seal()
 
@@ -212,30 +211,28 @@ class TestDbusTypes(TestCase):
                          (test_signature, test_int))
 
     def test_array_of_variant(self) -> None:
-        self.message.open_container("a", "v")
-
-        test_signature_one = "x"
+        test_signature_one = "(ssx)"
+        test_str_1 = 'asdasdasd'
+        test_str_2 = 'asdasdaddasdasdzc'
         test_int = 1241354
-        self.message.open_container("v", test_signature_one)
-        self.message.append_data("x", test_int)
-        self.message.close_container()
 
         test_signature_two = "ai"
         test_array = [12, 1234234, 5, 2345, 24, 5623, 46, 2546, 68798]
-        self.message.open_container("v", test_signature_two)
-        self.message.open_container("a", "i")
-        for i in test_array:
-            self.message.append_data("i", i)
-        self.message.close_container()
-        self.message.close_container()
 
-        self.message.close_container()
+        self.message.append_data(
+            "av",
+            [
+                (test_signature_one, (test_str_1, test_str_2, test_int)),
+                (test_signature_two, test_array)
+            ]
+        )
 
         self.message.seal()
-        self.assertEqual(self.message.get_contents(),
-                         [(test_signature_one, test_int),
-                          (test_signature_two, test_array)
-                          ])
+        self.assertEqual(
+            self.message.get_contents(),
+            [(test_signature_one, (test_str_1, test_str_2, test_int)),
+             (test_signature_two, test_array)
+             ])
 
 
 if __name__ == "__main__":

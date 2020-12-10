@@ -142,19 +142,11 @@ class TestDbusTypes(TestCase):
                          (test_string_array, test_bytes_array, test_int_list))
 
     def test_nested_array(self) -> None:
-        self.message.open_container("a", "as")
-
         test_string_array_one = ["Ttest", "serawer", "asdadcxzc"]
-        self.message.open_container("a", "s")
-        self.message.append_data("sss", *test_string_array_one)
-        self.message.close_container()
-
         test_string_array_two = ["asdaf", "seragdsfrgdswer", "sdfsdgg"]
-        self.message.open_container("a", "s")
-        self.message.append_data("sss", *test_string_array_two)
-        self.message.close_container()
 
-        self.message.close_container()
+        self.message.append_data(
+            "aas", [test_string_array_one, test_string_array_two])
 
         self.message.seal()
 

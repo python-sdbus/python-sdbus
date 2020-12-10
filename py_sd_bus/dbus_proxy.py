@@ -90,7 +90,7 @@ class DbusMethod:
                 interface_name, self.method_name,
             )
             if args:
-                new_call_message.append_basic(self.input_signature, *args)
+                new_call_message.append_data(self.input_signature, *args)
 
             reply_message = await bus.call_async(new_call_message)
             return reply_message.get_contents()
@@ -117,9 +117,9 @@ class DbusMethod:
                 reply_data = await outer_method(request_data)
 
             if isinstance(reply_data, tuple):
-                reply_message.append_basic(self.result_signature, *reply_data)
+                reply_message.append_data(self.result_signature, *reply_data)
             elif reply_data is not None:
-                reply_message.append_basic(self.result_signature, reply_data)
+                reply_message.append_data(self.result_signature, reply_data)
 
             reply_message.send()
 

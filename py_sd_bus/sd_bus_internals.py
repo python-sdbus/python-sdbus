@@ -50,13 +50,7 @@ class SdBusInterface:
 
 
 class SdBusMessage:
-    def add_bytes_array(self, the_bytes: Union[bytes, bytearray], /) -> None:
-        ...
-
-    def append_data(self, signature: str, *args: DbusBasicTypes) -> None:
-        ...
-
-    def append_basic(self, signature: str, *args: DbusBasicTypes) -> None:
+    def append_data(self, signature: str, *args: DbusCompleteTypes) -> None:
         ...
 
     def open_container(self, container_type: str,

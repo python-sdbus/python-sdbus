@@ -253,6 +253,19 @@ class TestDbusTypes(TestCase):
             self.message.get_contents(),
             test_data)
 
+    def test_array_of_struct(self) -> None:
+        test_data = [
+            ('asdasd', 34636),
+            ('asdasdads', -5425),
+        ]
+
+        self.message.append_data("a(si)", test_data)
+        self.message.seal()
+
+        self.assertEqual(
+            self.message.get_contents(),
+            test_data)
+
     def test_dict_of_struct(self) -> None:
         test_dict = {
             1: ('asdasd', 'xcvghtrh'),

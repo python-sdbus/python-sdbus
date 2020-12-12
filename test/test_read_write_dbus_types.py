@@ -184,6 +184,9 @@ class TestDbusTypes(TestCase):
         test_dict = {'test': 'a', 'asdaefd': 'cvbcfg'}
         self.message.append_data("a{ss}", test_dict)
 
+        self.assertRaises(
+            TypeError, self.message.append_data, "{ss}", test_dict)
+
         self.message.seal()
         self.assertEqual(self.message.get_contents(), test_dict)
 

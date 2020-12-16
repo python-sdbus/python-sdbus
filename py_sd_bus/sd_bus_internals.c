@@ -929,9 +929,6 @@ PyObject *_parse_struct(PyObject *tuple_object, _Parse_state *parser_state)
         PyErr_Format(PyExc_TypeError, "Message append error, expected tuple got %R", tuple_object);
         return NULL;
     }
-#ifdef DEBUG
-    assert(parser_state->container_char_ptr[parser_state->index] == '(');
-#endif
     parser_state->index++;
     // "...(...)..."
     //      ^
@@ -958,9 +955,6 @@ PyObject *_parse_struct(PyObject *tuple_object, _Parse_state *parser_state)
         CALL_PYTHON_EXPECT_NONE(_parse_complete(PyTuple_GET_ITEM(tuple_object, i), parser_state));
     }
     CALL_SD_BUS_AND_CHECK(sd_bus_message_close_container(parser_state->message));
-#ifdef DEBUG
-    assert(parser_state->container_char_ptr[parser_state->index] == ')');
-#endif
     // "...(...)..."
     //         ^
     parser_state->index++;
@@ -1157,189 +1151,160 @@ SdBusMessage_send(SdBusMessageObject *self,
     Py_RETURN_NONE;
 }
 
-PyObject *_iter_message_array(SdBusMessageObject *self, const char *array_type);
-PyObject *_iter_message_structure(SdBusMessageObject *self, int force_tuple);
-PyObject *_iter_message_dictionary(SdBusMessageObject *self);
-PyObject *_iter_message_variant(SdBusMessageObject *self, const char *container_type);
-PyObject *_iter_message_basic_type(SdBusMessageObject *self, char basic_type);
-
-PyObject *_iter_message_array(SdBusMessageObject *self, const char *array_type)
+size_t _container_size(const char *container_sig)
 {
-    PyObject *new_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
+    size_t container_size = 0;
+    size_t index = 0;
 
-    switch (array_type[0])
+    while ((container_sig[index]) != '\0')
     {
-    case SD_BUS_TYPE_DICT_ENTRY_BEGIN:
-    {
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, 'a', array_type));
-        PyObject *new_dict = CALL_PYTHON_AND_CHECK(_iter_message_dictionary(self));
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
-        return new_dict;
-    }
-    case 'a':
-    {
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, array_type[0], array_type));
-        while (CALL_SD_BUS_AND_CHECK(sd_bus_message_at_end(self->message_ref, 0)) == 0)
+        char current_char = container_sig[index];
+        index++;
+        if (current_char == 'a')
         {
-            PyObject *new_nested_array CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_array(self, array_type + 1));
-            if (PyList_Append(new_list, new_nested_array) < 0)
-            {
-                return NULL;
-            }
+            index = _find_array_end(container_sig, index);
+            index++;
         }
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
+
+        if (current_char == '(')
+        {
+            index = _find_struct_end(container_sig, index);
+            index++;
+        }
+
+        if (index == 0)
+        {
+            PyErr_SetString(PyExc_TypeError, "Failed to find container size");
+            return 0;
+        }
+
+        container_size++;
+    }
+    return container_size;
+}
+
+PyObject *_iter_complete(_Parse_state *parser);
+
+PyObject *_iter_basic(sd_bus_message *message, char basic_type)
+{
+    switch (basic_type)
+    {
+    case 'b':
+    {
+        int new_int = 0;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_int));
+        return PyBool_FromLong(new_int);
         break;
     }
-    case 'v':
+    case 'y':
     {
-        char peek_type = '\0';
-        const char *container_type = NULL;
+        uint8_t new_char = 0;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_char));
+        return PyLong_FromUnsignedLong((unsigned long)new_char);
+        break;
+    }
+    case 'n':;
+        int16_t new_short = 0;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_short));
+        return PyLong_FromLong((long)new_short);
+        break;
 
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, 'a', "v"));
-        while (CALL_SD_BUS_AND_CHECK(sd_bus_message_peek_type(self->message_ref, &peek_type, &container_type)) > 0)
-        {
-            CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, peek_type, container_type));
-            PyObject *new_variant CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_variant(self, container_type));
+    case 'i':
+    {
+        int32_t new_long = 0;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_long));
+        return PyLong_FromLong((long)new_long);
+        break;
+    }
+    case 'x':
+    {
+        int64_t new_long_long = 0;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_long_long));
+        return PyLong_FromLongLong((long long)new_long_long);
+        break;
+    }
+    case 'q':
+    {
+        uint16_t new_u_short = 0;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_u_short));
+        return PyLong_FromUnsignedLong((unsigned long)new_u_short);
+        break;
+    }
+    case 'u':
+    {
+        uint32_t new_u_long = 0;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_u_long));
+        return PyLong_FromUnsignedLong((unsigned long)new_u_long);
+        break;
+    }
+    case 't':
+    {
+        uint64_t new_u_long_long = 0;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_u_long_long));
+        return PyLong_FromUnsignedLongLong((unsigned long long)new_u_long_long);
+        break;
+    }
 
-            if (PyList_Append(new_list, new_variant) < 0)
-            {
-                return NULL;
-            }
-            CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
-        }
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
-
+    case 'd':
+    {
+        double new_double = 0.0;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_double));
+        return PyFloat_FromDouble(new_double);
+        break;
+    }
+    case 'h':
+    {
+        int new_fd = 0;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_fd));
+        return PyLong_FromLong((long)new_fd);
+        break;
+    }
+    case 'g':
+    case 'o':
+    case 's':
+    {
+        const char *new_string = NULL;
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_string));
+        return PyUnicode_FromString(new_string);
         break;
     }
     default:
     {
-        if (strcmp(array_type, "y") != 0)
-        {
-            CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, 'a', array_type));
-            for (;;)
-            {
-                PyObject *new_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, array_type[0]));
-
-                if (new_object == Py_None)
-                {
-                    break;
-                }
-
-                if (PyList_Append(new_list, new_object) < 0)
-                {
-                    return NULL;
-                }
-            }
-            CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
-        }
-        else
-        {
-            // Array of bytes will be converted to Bytes object
-            const void *char_array = NULL;
-            size_t array_size = 0;
-            CALL_SD_BUS_AND_CHECK(sd_bus_message_read_array(self->message_ref, 'y', &char_array, &array_size));
-            return PyBytes_FromStringAndSize(char_array, (Py_ssize_t)array_size);
-        }
-
+        int code = (int)basic_type;
+        PyObject *error_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromFormat("%c", code));
+        PyErr_Format(PyExc_TypeError, "Dbus type %R is unknown", error_string);
+        return NULL;
         break;
     }
     }
-    Py_INCREF(new_list);
-    return new_list;
 }
 
-PyObject *_iter_message_structure(SdBusMessageObject *self, int force_tuple)
+PyObject *_iter_bytes_array(_Parse_state *parser)
 {
-    PyObject *new_structure_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
-
-    char peek_type = '\0';
-    const char *container_type = NULL;
-    while (CALL_SD_BUS_AND_CHECK(sd_bus_message_peek_type(self->message_ref, &peek_type, &container_type)) > 0)
-    {
-        switch (peek_type)
-        {
-
-        case SD_BUS_TYPE_ARRAY:
-        {
-            PyObject *new_array_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_array(self, container_type));
-            if (PyList_Append(new_structure_list, new_array_list) < 0)
-            {
-                return NULL;
-            }
-            break;
-        }
-        case SD_BUS_TYPE_DICT_ENTRY:
-        {
-            PyObject *new_dict CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_dictionary(self));
-            if (PyList_Append(new_structure_list, new_dict) < 0)
-            {
-                return NULL;
-            }
-            break;
-        }
-        case SD_BUS_TYPE_STRUCT:
-        {
-            CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, peek_type, container_type));
-            PyObject *new_struct CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_structure(self, 1));
-            if (PyList_Append(new_structure_list, new_struct) < 0)
-            {
-                return NULL;
-            }
-            CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
-            break;
-        }
-        case SD_BUS_TYPE_VARIANT:
-        {
-            CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, peek_type, container_type));
-            PyObject *new_variant CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_variant(self, container_type));
-            CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
-            if (PyList_Append(new_structure_list, new_variant) < 0)
-            {
-                return NULL;
-            }
-            break;
-        }
-        default:
-        {
-            PyObject *new_basic CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, peek_type));
-            if (PyList_Append(new_structure_list, new_basic) < 0)
-            {
-                return NULL;
-            }
-            break;
-        }
-        }
-    }
-
-    if (force_tuple || (PyList_GET_SIZE(new_structure_list) != 1))
-    {
-        return PySequence_Tuple(new_structure_list);
-    }
-    else
-    {
-        PyObject *first_item = CALL_PYTHON_AND_CHECK(PyList_GetItem(new_structure_list, 0));
-        Py_INCREF(first_item);
-        return first_item;
-    }
+    // Byte array
+    const void *char_array = NULL;
+    size_t array_size = 0;
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_read_array(parser->message, 'y', &char_array, &array_size));
+    return PyBytes_FromStringAndSize(char_array, (Py_ssize_t)array_size);
 }
 
-PyObject *_iter_message_dictionary(SdBusMessageObject *self)
+PyObject *_iter_dict(_Parse_state *parser)
 {
     PyObject *new_dict CLEANUP_PY_OBJECT = PyDict_New();
 
     char peek_type = '\0';
     const char *container_type = NULL;
-    while (CALL_SD_BUS_AND_CHECK(sd_bus_message_peek_type(self->message_ref, &peek_type, &container_type)) > 0)
+    while (CALL_SD_BUS_AND_CHECK(sd_bus_message_peek_type(parser->message, &peek_type, &container_type)) > 0)
     {
         if (peek_type != SD_BUS_TYPE_DICT_ENTRY)
         {
             PyErr_SetString(PyExc_TypeError, "Expected dict entry.");
             return NULL;
         }
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, peek_type, container_type));
-        PyObject *key_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_basic_type(self, container_type[0]));
-        PyObject *value_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_structure(self, 0));
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(parser->message, peek_type, container_type));
+        PyObject *key_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_basic(parser->message, container_type[0]));
+        PyObject *value_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_complete(parser));
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(parser->message));
         if (PyDict_SetItem(new_dict, key_object, value_object) < 0)
         {
             return NULL;
@@ -1350,107 +1315,155 @@ PyObject *_iter_message_dictionary(SdBusMessageObject *self)
     return new_dict;
 }
 
-PyObject *_iter_message_variant(SdBusMessageObject *self, const char *container_type)
+PyObject *_iter_array(_Parse_state *parser)
 {
-    PyObject *value_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_message_structure(self, 0));
-    PyObject *variant_sig_str CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString(container_type));
+    PyObject *new_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
+    char peek_type = '\0';
+    const char *container_type = NULL;
+
+    while (CALL_SD_BUS_AND_CHECK(sd_bus_message_peek_type(parser->message, &peek_type, &container_type)) > 0)
+    {
+        PyObject *new_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_complete(parser));
+        if (PyList_Append(new_list, new_object) < 0)
+        {
+            return NULL;
+        }
+    }
+    Py_INCREF(new_list);
+    return new_list;
+}
+
+PyObject *_iter_struct(_Parse_state *parser)
+{
+    const char *container_sig = sd_bus_message_get_signature(parser->message, 0);
+    if (container_sig == NULL)
+    {
+        PyErr_SetString(PyExc_TypeError, "Failed to get container signature");
+        return NULL;
+    }
+    size_t tuple_size = _container_size(container_sig);
+
+    if (tuple_size == 0)
+    {
+        return NULL;
+    }
+
+    PyObject *new_tuple CLEANUP_PY_OBJECT = PyTuple_New((Py_ssize_t)tuple_size);
+    for (size_t i = 0; i < tuple_size; ++i)
+    {
+        PyObject *new_complete = CALL_PYTHON_AND_CHECK(_iter_complete(parser));
+        PyTuple_SET_ITEM(new_tuple, i, new_complete);
+    }
+    Py_INCREF(new_tuple);
+    return new_tuple;
+}
+
+PyObject *_iter_variant(_Parse_state *parser)
+{
+    const char *container_sig = sd_bus_message_get_signature(parser->message, 0);
+    PyObject *value_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_complete(parser));
+    PyObject *variant_sig_str CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString(container_sig));
     return PyTuple_Pack(2, variant_sig_str, value_object);
 }
 
-#define _ITER_RETURN_NONE_ON_ZERO(other_func) \
-    if (other_func == 0)                      \
-    {                                         \
-        Py_RETURN_NONE;                       \
-    }
-
-PyObject *_iter_message_basic_type(SdBusMessageObject *self, char basic_type)
+PyObject *_iter_complete(_Parse_state *parser)
 {
-    switch (basic_type)
+    const char *container_signature = NULL;
+    char complete_type = '\0';
+    // TODO: can be optimized with custom parser instead of constantly peeking
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_peek_type(parser->message, &complete_type, &container_signature));
+    switch (complete_type)
     {
-    case 'b':;
-        int new_int = 0;
-        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_int)));
-        return PyBool_FromLong(new_int);
-        break;
+    case 'a':
+    {
+        if (strcmp(container_signature, "y") == 0)
+        {
+            return _iter_bytes_array(parser);
+        }
 
-    case 'y':;
-        uint8_t new_char = 0;
-        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_char)));
-        return PyLong_FromUnsignedLong((unsigned long)new_char);
+        if (container_signature[0] == '{')
+        {
+            CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(parser->message, complete_type, container_signature));
+            PyObject *new_dict = CALL_PYTHON_AND_CHECK(_iter_dict(parser));
+            CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(parser->message));
+            return new_dict;
+        }
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(parser->message, complete_type, container_signature));
+        PyObject *new_array = CALL_PYTHON_AND_CHECK(_iter_array(parser));
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(parser->message));
+        return new_array;
         break;
-    case 'n':;
-        int16_t new_short = 0;
-        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_short)));
-        return PyLong_FromLong((long)new_short);
+    }
+    case 'v':
+    {
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(parser->message, complete_type, container_signature));
+        PyObject *new_variant = CALL_PYTHON_AND_CHECK(_iter_variant(parser));
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(parser->message));
+        return new_variant;
         break;
-
-    case 'i':;
-        int32_t new_long = 0;
-        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_long)));
-        return PyLong_FromLong((long)new_long);
+    }
+    case 'r':
+    {
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(parser->message, complete_type, container_signature));
+        PyObject *new_tuple = CALL_PYTHON_AND_CHECK(_iter_struct(parser));
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(parser->message));
+        return new_tuple;
         break;
-
-    case 'x':;
-        int64_t new_long_long = 0;
-        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_long_long)));
-        return PyLong_FromLongLong((long long)new_long_long);
-        break;
-
-    case 'q':;
-        uint16_t new_u_short = 0;
-        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_u_short)));
-        return PyLong_FromUnsignedLong((unsigned long)new_u_short);
-        break;
-    case 'u':;
-        uint32_t new_u_long = 0;
-        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_u_long)));
-        return PyLong_FromUnsignedLong((unsigned long)new_u_long);
-        break;
-    case 't':;
-        uint64_t new_u_long_long = 0;
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_u_long_long));
-        return PyLong_FromUnsignedLongLong((unsigned long long)new_u_long_long);
-        break;
-
-    case 'd':;
-        double new_double = 0.0;
-        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_double)));
-        return PyFloat_FromDouble(new_double);
-        break;
-    case 'h':;
-        int new_fd = 0;
-        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_fd)));
-        return PyLong_FromLong((long)new_fd);
-        break;
-
-    case 'g':
-    case 'o':
-    case 's':;
-        const char *new_string = NULL;
-        _ITER_RETURN_NONE_ON_ZERO(CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(self->message_ref, basic_type, &new_string)));
-        return PyUnicode_FromString(new_string);
-        break;
-
+    }
     default:
-        PyErr_SetString(PyExc_NotImplementedError, "Dbus type unknown or not implemented yet");
-        return NULL;
+    {
+        return _iter_basic(parser->message, complete_type);
         break;
+    }
     }
 }
 
-static PyObject *
-SdBusMessage_get_contents(SdBusMessageObject *self,
-                          PyObject *Py_UNUSED(args))
+PyObject *iter_tuple_or_single(_Parse_state *parser)
 {
-    PyObject *tuple_or_single = CALL_PYTHON_AND_CHECK(_iter_message_structure(self, 0));
-    if (PyTuple_Check(tuple_or_single))
+    // Calculate the lenght of message data
+    size_t container_size = _container_size(parser->container_char_ptr);
+    if (container_size == 0)
     {
-        if (PyTuple_GET_SIZE(tuple_or_single) == 0)
-        {
-            Py_RETURN_NONE;
-        }
+        return NULL;
     }
-    return tuple_or_single;
+
+    if (container_size == 1)
+    {
+        return _iter_complete(parser);
+    }
+    else
+    {
+        return _iter_struct(parser);
+    }
+}
+
+PyObject *
+SdBusMessage_get_contents2(SdBusMessageObject *self, PyObject *Py_UNUSED(args))
+{
+    const char *message_signature = sd_bus_message_get_signature(self->message_ref, 1);
+
+    if (message_signature == NULL)
+    {
+        PyErr_SetString(PyExc_TypeError, "Failed to get message signature.");
+        return NULL;
+    }
+    if (message_signature[0] == '\0')
+    {
+        // Empty message
+        Py_RETURN_NONE;
+    }
+
+    _Parse_state read_parser = {
+        .message = self->message_ref,
+        .container_char_ptr = message_signature,
+        .index = 0,
+        .max_index = strlen(message_signature),
+    };
+    /* Parsing strategy
+     Either return a single object (single string, single int, single array)
+     or a tuple of single objects. This mirrows the python function returns.
+    */
+    return iter_tuple_or_single(&read_parser);
 }
 
 static PyMethodDef SdBusMessage_methods[] = {
@@ -1461,7 +1474,7 @@ static PyMethodDef SdBusMessage_methods[] = {
     {"exit_container", (void *)SdBusMessage_exit_container, METH_FASTCALL, "Exit container"},
     {"dump", (void *)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
     {"seal", (void *)SdBusMessage_seal, METH_FASTCALL, "Seal message contents"},
-    {"get_contents", (PyCFunction)SdBusMessage_get_contents, METH_NOARGS, "Iterate over message contents"},
+    {"get_contents", (PyCFunction)SdBusMessage_get_contents2, METH_NOARGS, "Iterate over message contents"},
     {"create_reply", (void *)SdBusMessage_create_reply, METH_FASTCALL, "Create reply message"},
     {"send", (void *)SdBusMessage_send, METH_FASTCALL, "Queue message to be sent"},
     {NULL, NULL, 0, NULL},

@@ -17,14 +17,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
-from unittest import TestCase, main
+from unittest import main
 
-from py_sd_bus import sd_bus_open_user
+from .common_test_util import TempDbusTest
 
 
-class TestDbusTypes(TestCase):
-    def setUp(self) -> None:
-        self.bus = sd_bus_open_user()
+class TestDbusTypes(TempDbusTest):
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
+
         self.message = self.bus.new_method_call_message(
             'org.freedesktop.systemd1',
             '/org/freedesktop/systemd1',

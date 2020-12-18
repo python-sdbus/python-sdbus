@@ -19,7 +19,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from asyncio import get_running_loop
 
 from py_sd_bus.proxies import FreedesktopDbus
 
@@ -28,23 +27,8 @@ from .common_test_util import TempDbusTest
 
 class TestFreedesktopDbus(TempDbusTest):
     async def test_connection(self) -> None:
-        dbus_object = FreedesktopDbus.connect_to_dbus(self.bus)
+        dbus_object = FreedesktopDbus(self.bus)
 
         await dbus_object.ping()
+        self.assertIsInstance(await dbus_object.get_id(), str)
         self.assertIsInstance(await dbus_object.features, list)
-
-    async def test_incorrect(self) -> None:
-        dbus_object_wrong = FreedesktopDbus()
-
-        async def should_raise() -> None:
-            await dbus_object_wrong.features
-
-        loop = get_running_loop()
-        task = loop.create_task(should_raise())
-
-        try:
-            await task
-        except NotImplementedError:
-            ...
-
-        self.assertRaises(NotImplementedError, task.result)

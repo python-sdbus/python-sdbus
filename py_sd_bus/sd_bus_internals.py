@@ -113,6 +113,13 @@ class SdBus:
             /) -> SdBusMessage:
         ...
 
+    def new_property_set_message(
+            self,
+            destination_service_name: str, object_path: str,
+            interface_name: str, member_name: str,
+            /) -> SdBusMessage:
+        ...
+
     def add_interface(self, new_interface: SdBusInterface,
                       object_path: str, interface_name: str, /) -> None:
         ...

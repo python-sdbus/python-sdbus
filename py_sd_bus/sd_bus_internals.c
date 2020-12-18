@@ -1595,6 +1595,40 @@ SdBus_new_property_get_message(SdBusObject *self,
 }
 
 static SdBusMessageObject *
+SdBus_new_property_set_message(SdBusObject *self,
+                               PyObject *const *args,
+                               Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(4);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(2, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(3, PyUnicode_Type);
+
+    const char *destination_service_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+    const char *object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
+    const char *interface_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[2]);
+    const char *property_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[3]);
+
+    SdBusMessageObject *new_message_object CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL));
+    CALL_SD_BUS_AND_CHECK(
+        sd_bus_message_new_method_call(
+            self->sd_bus_ref,
+            &new_message_object->message_ref,
+            destination_service_name,
+            object_path,
+            "org.freedesktop.DBus.Properties",
+            "Set"));
+
+    // Add property_name
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(new_message_object->message_ref, 's', interface_name));
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(new_message_object->message_ref, 's', property_name));
+
+    Py_INCREF(new_message_object);
+    return new_message_object;
+}
+
+static SdBusMessageObject *
 SdBus_call(SdBusObject *self,
            PyObject *const *args,
            Py_ssize_t nargs)
@@ -2001,6 +2035,7 @@ static PyMethodDef SdBus_methods[] = {
     {"get_fd", (void *)SdBus_get_fd, METH_FASTCALL, "Get file descriptor to await on"},
     {"new_method_call_message", (void *)SdBus_new_method_call_message, METH_FASTCALL, NULL},
     {"new_property_get_message", (void *)SdBus_new_property_get_message, METH_FASTCALL, NULL},
+    {"new_property_set_message", (void *)SdBus_new_property_set_message, METH_FASTCALL, "Set object/interface property. User must add variant data to message"},
     {"add_interface", (void *)SdBus_add_interface, METH_FASTCALL, "Add interface to the bus"},
     {"get_signal_queue_async", (void *)SdBus_get_signal_queue, METH_FASTCALL, "Returns a future that returns a queue that queues signal messages"},
     {"request_name_async", (void *)SdBus_request_name_async, METH_FASTCALL, "Request dbus name"},

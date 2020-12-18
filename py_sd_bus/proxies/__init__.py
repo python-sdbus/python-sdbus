@@ -17,25 +17,28 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Optional, List
 
-from ..dbus_proxy import DbusInterfaceCommon, dbus_property
+from ..dbus_proxy import (DbusInterfaceCommon, dbus_method,
+                          get_bus, dbus_property)
 from ..sd_bus_internals import SdBus
 
 
 class FreedesktopDbus(DbusInterfaceCommon,
                       interface_name='org.freedesktop.DBus'):
 
-    @classmethod
-    def connect_to_dbus(cls, bus: Optional[SdBus] = None,) -> FreedesktopDbus:
-        new_connection = cls.connect(
-            service_name='org.freedesktop.DBus',
-            object_path='/org/freedesktop/DBus',
-            bus=bus,
+    def __init__(self, bus: Optional[SdBus] = None):
+        self.bus: SdBus = bus if bus is not None else get_bus()
+        self._connect(
+            self.bus,
+            'org.freedesktop.DBus',
+            '/org/freedesktop/DBus'
         )
-        assert isinstance(new_connection, FreedesktopDbus)
-        return new_connection
 
-    @dbus_property()
+    @dbus_method()
+    async def get_id(self) -> str:
+        raise NotImplementedError
+
+    @dbus_property(property_signature='as')
     async def features(self) -> List[str]:
         raise NotImplementedError

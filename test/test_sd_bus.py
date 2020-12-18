@@ -70,8 +70,8 @@ class TestProxy(TempDbusTest):
 
         test_object = TestInterface()
         await test_object.start_serving(self.bus, '/')
-        test_object_connection = TestInterface.connect(
-            "org.example.test", '/', self.bus)
+        test_object_connection = TestInterface.new_connect(
+            self.bus, "org.example.test", '/', )
 
         await test_object_connection.ping()
 

@@ -54,19 +54,24 @@ class TestRequestName(TempDbusTest):
         await self.bus.request_name_async("org.example.test", 0)
 
 
+class TestInterface(DbusInterfaceCommon,
+                    interface_name='org.test.test',
+                    ):
+
+    @dbus_method(input_signature="s", result_signature="s")
+    async def upper(self, string: str) -> str:
+        return string.upper()
+
+    @dbus_method(input_signature='x', result_signature='x')
+    async def test_int(self) -> int:
+        return 1
+
+
 class TestProxy(TempDbusTest):
     async def test_proxy(self) -> None:
         test_string = 'asdarfaetfwsergtdhfgyhjtygji'
 
         await self.bus.request_name_async("org.example.test", 0)
-
-        class TestInterface(DbusInterfaceCommon,
-                            interface_name='org.test.test',
-                            ):
-
-            @dbus_method(input_signature="s", result_signature="s")
-            async def upper(self, string: str) -> str:
-                return string.upper()
 
         test_object = TestInterface()
         await test_object.start_serving(self.bus, '/')
@@ -81,3 +86,16 @@ class TestProxy(TempDbusTest):
         # Test python-dbus-python
         self.assertEqual(test_string.upper(),
                          await test_object_connection.upper(test_string))
+
+    async def test_subclass(self) -> None:
+        class TestInheritnce(TestInterface):
+            async def test_int(self) -> int:
+                return 2
+
+        test_object = TestInheritnce()
+        await test_object.start_serving(self.bus, '/')
+
+        test_object_connection = TestInheritnce.new_connect(
+            self.bus, "org.example.test", '/', )
+
+        self.assertEqual(await test_object_connection.test_int(), 2)

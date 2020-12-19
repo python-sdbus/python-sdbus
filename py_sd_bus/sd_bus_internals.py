@@ -77,6 +77,9 @@ class SdBusMessage:
                      ) -> Tuple[DbusCompleteTypes, ...]:
         ...
 
+    def get_member(self) -> str:
+        ...
+
     def create_reply(self) -> SdBusMessage:
         ...
 

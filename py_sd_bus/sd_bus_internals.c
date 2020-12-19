@@ -1466,6 +1466,17 @@ SdBusMessage_get_contents2(SdBusMessageObject *self, PyObject *Py_UNUSED(args))
     return iter_tuple_or_single(&read_parser);
 }
 
+static PyObject *SdBusMessage_get_member(SdBusMessageObject *self, PyObject *Py_UNUSED(args))
+{
+    const char *member_char_ptr = sd_bus_message_get_member(self->message_ref);
+    if (member_char_ptr == NULL)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Failed to get message member field");
+        return NULL;
+    }
+    return PyUnicode_FromString(member_char_ptr);
+}
+
 static PyMethodDef SdBusMessage_methods[] = {
     {"append_data", (void *)SdBusMessage_append_data, METH_FASTCALL, "Append basic data based on signature."},
     {"open_container", (void *)SdBusMessage_open_container, METH_FASTCALL, "Open container for writting"},
@@ -1475,6 +1486,7 @@ static PyMethodDef SdBusMessage_methods[] = {
     {"dump", (void *)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
     {"seal", (void *)SdBusMessage_seal, METH_FASTCALL, "Seal message contents"},
     {"get_contents", (PyCFunction)SdBusMessage_get_contents2, METH_NOARGS, "Iterate over message contents"},
+    {"get_member", (PyCFunction)SdBusMessage_get_member, METH_NOARGS, "Get message member field"},
     {"create_reply", (void *)SdBusMessage_create_reply, METH_FASTCALL, "Create reply message"},
     {"send", (void *)SdBusMessage_send, METH_FASTCALL, "Queue message to be sent"},
     {NULL, NULL, 0, NULL},

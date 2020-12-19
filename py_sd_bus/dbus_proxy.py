@@ -76,14 +76,6 @@ class DbusBind:
         self.parent_interface: Optional[DbusInterfaceBase] = None
         self.binded = False
 
-    def __get__(self,
-                obj: object,
-                obj_type: Optional[Type[object]] = None
-                ) -> Any:
-        assert isinstance(obj, DbusInterfaceBase)
-        self.parent_interface = obj
-        return self
-
     def bind(
         self,
         bus: SdBus,
@@ -169,6 +161,15 @@ class DbusMethod(DbusBind):
         reply_message = await self.attached_bus.call_async(new_call_message)
         return reply_message.get_contents()
 
+    def __get__(self,
+                obj: DbusInterfaceBase,
+                obj_class: Optional[Type[DbusInterfaceBase]] = None,
+                ) -> Callable[..., Any]:
+        if obj.is_binded:
+            return DbusMethodBinded(self, obj)
+        else:
+            return self.original_method.__get__(obj, obj_class)
+
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         if not self.binded:
             return self.original_method(self.parent_interface, *args, **kwargs)
@@ -211,6 +212,34 @@ class DbusMethod(DbusBind):
             raise ValueError("Can't serve binded method")
 
         return self._call_from_dbus
+
+
+class DbusMethodBinded:
+    def __init__(self, dbus_method: DbusMethod, interface: DbusInterfaceBase):
+        self.dbus_method = dbus_method
+        self.interface = interface
+
+    async def _call_dbus(self, *args: Any, **kwargs: Any) -> Any:
+        assert self.interface.attached_bus is not None
+        assert self.interface.remote_service_name is not None
+        assert self.interface.remote_object_path is not None
+        assert self.dbus_method.remote_interface_name is not None
+        new_call_message = self.interface.attached_bus.new_method_call_message(
+            self.interface.remote_service_name,
+            self.interface.remote_object_path,
+            self.dbus_method.remote_interface_name,
+            self.dbus_method.method_name,
+        )
+        if args:
+            new_call_message.append_data(
+                self.dbus_method.input_signature, *args)
+
+        reply_message = await self.interface.attached_bus.call_async(
+            new_call_message)
+        return reply_message.get_contents()
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        return self._call_dbus(*args, **kwargs)
 
 
 def dbus_method(
@@ -328,6 +357,9 @@ class DbusInterfaceMeta(type):
                 serving_enabled: bool = True,
                 ) -> DbusInterfaceMeta:
 
+        for base in bases:
+            ...
+
         namespace['_dbus_interface_name'] = interface_name
         namespace['_dbus_serving_enabled'] = serving_enabled
         new_cls = super().__new__(cls, name, bases, namespace)
@@ -341,6 +373,12 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
 
     def __init__(self) -> None:
         self.activated_interfaces: List[SdBusInterface] = []
+        self.is_binded: bool = False
+        self.remote_service_name: Optional[str] = None
+        self.remote_object_path: Optional[str] = None
+        self.attached_bus: Optional[SdBus] = None
+
+        self._serve_map: Dict[str, Tuple[DbusMethod, Callable[..., Any]]] = {}
 
     def _yield_dbus_mro(self
                         ) -> Generator[Type[DbusInterfaceBase], None, None]:
@@ -355,6 +393,32 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
                 continue
 
             yield mro_entry
+
+    async def _call_from_dbus(
+            self,
+            request_message: SdBusMessage) -> None:
+        request_data = request_message.get_contents()
+
+        reply_message = request_message.create_reply()
+
+        method_def, local_method = self._serve_map[
+            request_message.get_member()]
+
+        assert local_method is not None
+
+        if isinstance(request_data, tuple):
+            reply_data = await local_method(*request_data)
+        elif request_data is None:
+            reply_data = await local_method()
+        else:
+            reply_data = await local_method(request_data)
+
+        if isinstance(reply_data, tuple):
+            reply_message.append_data(method_def.result_signature, *reply_data)
+        elif reply_data is not None:
+            reply_message.append_data(method_def.result_signature, reply_data)
+
+        reply_message.send()
 
     async def start_serving(
             self, bus: SdBus, object_path: str) -> None:
@@ -372,8 +436,13 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
 
             new_interface = SdBusInterface()
 
-            for method_def in class_dict.values():
+            for key, method_def in class_dict.items():
+
                 if isinstance(method_def, DbusMethod):
+                    self._serve_map[
+                        method_def.method_name] = (
+                            method_def, getattr(self, key))
+
                     new_interface.add_method(
                         method_def.method_name,
                         method_def.input_signature,
@@ -381,7 +450,7 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
                         method_def.result_signature,
                         method_def.result_args_names,
                         method_def.flags,
-                        method_def.serve(self),
+                        self._call_from_dbus,
                     )
 
             bus.add_interface(new_interface, object_path,
@@ -396,6 +465,11 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
         service_name: str,
         object_path: str,
     ) -> None:
+
+        self.is_binded = True
+        self.attached_bus = bus
+        self.remote_service_name = service_name
+        self.remote_object_path = object_path
 
         for mro_entry in self._yield_dbus_mro():
             assert mro_entry._dbus_interface_name is not None

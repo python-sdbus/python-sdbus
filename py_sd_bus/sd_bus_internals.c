@@ -151,6 +151,16 @@
         Py_DECREF(none_obj);                 \
     })
 
+#define CALL_PYTHON_CHECK_RETURN_NEG1(py_function) \
+    ({                                             \
+        PyObject *py_object = py_function;         \
+        if (py_object == NULL)                     \
+        {                                          \
+            return -1;                             \
+        }                                          \
+        py_object;                                 \
+    })
+
 static PyObject *exception_dict = NULL;
 static PyObject *exception_default = NULL;
 static PyObject *exception_generic = NULL;
@@ -229,29 +239,19 @@ typedef struct
 {
     PyObject_HEAD;
     SdBusSlotObject *interface_slot;
-    PyObject *interface_list;
+    PyObject *method_list;
     PyObject *method_dict;
+    PyObject *property_dict;
     sd_bus_vtable *vtable;
 } SdBusInterfaceObject;
 
 static int
 SdBusInterface_init(SdBusInterfaceObject *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
 {
-    self->interface_slot = (SdBusSlotObject *)PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL);
-    if (self->interface_slot == NULL)
-    {
-        return -1;
-    }
-    self->interface_list = PyList_New((Py_ssize_t)0);
-    if (self->interface_list == NULL)
-    {
-        return -1;
-    }
-    self->method_dict = PyDict_New();
-    if (self->method_dict == NULL)
-    {
-        return -1;
-    }
+    self->interface_slot = (SdBusSlotObject *)CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL));
+    self->method_list = CALL_PYTHON_CHECK_RETURN_NEG1(PyList_New((Py_ssize_t)0));
+    self->method_dict = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_New());
+    self->property_dict = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_New());
     self->vtable = NULL;
     return 0;
 }
@@ -260,13 +260,23 @@ static void
 SdBusInterface_free(SdBusInterfaceObject *self)
 {
     Py_XDECREF(self->interface_slot);
-    Py_XDECREF(self->interface_list);
+    Py_XDECREF(self->method_list);
     Py_XDECREF(self->method_dict);
+    Py_XDECREF(self->property_dict);
     if (self->vtable)
     {
         free(self->vtable);
     }
     PyObject_Free(self);
+}
+
+static PyObject *
+SdBusInterface_add_property(SdBusInterfaceObject *self,
+                            PyObject *const *args,
+                            Py_ssize_t nargs)
+{
+    PyErr_SetString(PyExc_NotImplementedError, "");
+    return NULL;
 }
 
 static PyObject *
@@ -289,25 +299,17 @@ SdBusInterface_add_method(SdBusInterfaceObject *self,
     PyObject *extend_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("extend"));
     PyObject *append_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("append"));
     PyObject *argument_name_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
-    PyObject *should_be_none_one CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(argument_name_list, extend_string, args[2], NULL));
-    PyObject *should_be_none_two CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(argument_name_list, extend_string, args[4], NULL));
+    CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, extend_string, args[2], NULL));
+    CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, extend_string, args[4], NULL));
     // HACK: add a null separator to the end of the array
-    PyObject *should_be_none_three CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(argument_name_list, append_string, null_separator, NULL));
+    CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, append_string, null_separator, NULL));
 
     PyObject *argument_names_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_Join(null_separator, argument_name_list));
     // Method name, input signature, return signature, arguments names, flags
     PyObject *new_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(5, args[0], args[1], args[3], argument_names_string, args[5]));
 
-    int return_value = PyList_Append(self->interface_list, new_tuple);
-    if (return_value < 0)
-    {
-        return NULL;
-    }
-    return_value = PyDict_SetItem(self->method_dict, args[0], args[6]);
-    if (return_value < 0)
-    {
-        return NULL;
-    }
+    CALL_PYTHON_INT_CHECK(PyList_Append(self->method_list, new_tuple));
+    CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->method_dict, args[0], args[6]));
 
     Py_RETURN_NONE;
 }
@@ -329,7 +331,7 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
         Py_RETURN_NONE;
     }
 
-    unsigned num_of_methods = (unsigned)PyList_Size(self->interface_list);
+    unsigned num_of_methods = (unsigned)PyList_Size(self->method_list);
 
     self->vtable = malloc(sizeof(sd_bus_vtable) * (num_of_methods + 2));
     if (self->vtable == NULL)
@@ -340,28 +342,25 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
     sd_bus_vtable start_vtable = SD_BUS_VTABLE_START(0);
     self->vtable[0] = start_vtable;
     Py_ssize_t current_index = 1;
+    // Iter method defenitions
     for (; current_index < num_of_methods + 1; ++current_index)
     {
-        PyObject *method_tuple = CALL_PYTHON_AND_CHECK(PyList_GetItem(self->interface_list, current_index - 1));
+        PyObject *method_tuple = CALL_PYTHON_AND_CHECK(PyList_GetItem(self->method_list, current_index - 1));
 
-        SD_BUS_PY_TUPLE_GET_ITEM_AND_CHECK(method_name_object, method_tuple, 0);
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(method_name_char_ptr, method_name_object);
+        PyObject *method_name_object = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 0));
+        const char *method_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(method_name_object);
 
-        SD_BUS_PY_TUPLE_GET_ITEM_AND_CHECK(input_signature_object, method_tuple, 1);
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(input_signature_char_ptr, input_signature_object);
+        PyObject *input_signature_object = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 1));
+        const char *input_signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(input_signature_object);
 
-        SD_BUS_PY_TUPLE_GET_ITEM_AND_CHECK(result_signature_object, method_tuple, 2);
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(result_signature_char_ptr, result_signature_object);
+        PyObject *result_signature_object = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 2));
+        const char *result_signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(result_signature_object);
 
-        SD_BUS_PY_TUPLE_GET_ITEM_AND_CHECK(argument_names_string, method_tuple, 3);
+        PyObject *argument_names_string = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 3));
 
-        const char *argument_names_char_ptr = PyUnicode_AsUTF8(argument_names_string);
-        if (argument_names_char_ptr == NULL)
-        {
-            return NULL;
-        }
+        const char *argument_names_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(argument_names_string);
 
-        SD_BUS_PY_TUPLE_GET_ITEM_AND_CHECK(flags_object, method_tuple, 4);
+        PyObject *flags_object = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 4));
         unsigned long long flags_long = PyLong_AsUnsignedLongLong(flags_object);
         if (PyErr_Occurred())
         {
@@ -379,6 +378,7 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
             flags_long);
         self->vtable[current_index] = temp_vtable;
     }
+
     sd_bus_vtable end_vtable = SD_BUS_VTABLE_END;
     self->vtable[current_index] = end_vtable;
 
@@ -387,6 +387,7 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
 
 static PyMethodDef SdBusInterface_methods[] = {
     {"add_method", (void *)SdBusInterface_add_method, METH_FASTCALL, "Add method to the dbus interface"},
+    {"add_property", (void *)SdBusInterface_add_property, METH_FASTCALL, "Add property to the dbus interface"},
     {"_create_vtable", (void *)SdBusInterface_create_vtable, METH_FASTCALL, "Creates the vtable"},
     {NULL, NULL, 0, NULL},
 };

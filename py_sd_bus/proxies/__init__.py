@@ -28,6 +28,7 @@ class FreedesktopDbus(DbusInterfaceCommon,
                       interface_name='org.freedesktop.DBus'):
 
     def __init__(self, bus: Optional[SdBus] = None):
+        super().__init__()
         self.bus: SdBus = bus if bus is not None else get_bus()
         self._connect(
             self.bus,

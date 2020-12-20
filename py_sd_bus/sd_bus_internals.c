@@ -241,7 +241,9 @@ typedef struct
     SdBusSlotObject *interface_slot;
     PyObject *method_list;
     PyObject *method_dict;
-    PyObject *property_dict;
+    PyObject *property_list;
+    PyObject *property_get_dict;
+    PyObject *property_set_dict;
     sd_bus_vtable *vtable;
 } SdBusInterfaceObject;
 
@@ -251,7 +253,9 @@ SdBusInterface_init(SdBusInterfaceObject *self, PyObject *Py_UNUSED(args), PyObj
     self->interface_slot = (SdBusSlotObject *)CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL));
     self->method_list = CALL_PYTHON_CHECK_RETURN_NEG1(PyList_New((Py_ssize_t)0));
     self->method_dict = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_New());
-    self->property_dict = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_New());
+    self->property_list = CALL_PYTHON_CHECK_RETURN_NEG1(PyList_New((Py_ssize_t)0));
+    self->property_get_dict = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_New());
+    self->property_set_dict = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_New());
     self->vtable = NULL;
     return 0;
 }
@@ -262,7 +266,8 @@ SdBusInterface_free(SdBusInterfaceObject *self)
     Py_XDECREF(self->interface_slot);
     Py_XDECREF(self->method_list);
     Py_XDECREF(self->method_dict);
-    Py_XDECREF(self->property_dict);
+    Py_XDECREF(self->property_get_dict);
+    Py_XDECREF(self->property_set_dict);
     if (self->vtable)
     {
         free(self->vtable);
@@ -270,13 +275,33 @@ SdBusInterface_free(SdBusInterfaceObject *self)
     PyObject_Free(self);
 }
 
+inline int _check_callable_or_none(PyObject *some_object)
+{
+    return PyCallable_Check(some_object) || (Py_None == some_object);
+}
+
 static PyObject *
 SdBusInterface_add_property(SdBusInterfaceObject *self,
                             PyObject *const *args,
                             Py_ssize_t nargs)
 {
-    PyErr_SetString(PyExc_NotImplementedError, "");
-    return NULL;
+    // Arguments
+    // Name, Signature, Get, Set, Flags
+    SD_BUS_PY_CHECK_ARGS_NUMBER(5);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, PyCallable_Check);
+    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(3, _check_callable_or_none);
+    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(4, PyLong_Check);
+
+    PyObject *new_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(4, args[0], args[1], args[4], args[3]));
+    PyObject *get_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(2, args[1], args[2]));
+
+    CALL_PYTHON_INT_CHECK(PyList_Append(self->property_list, new_tuple));
+    CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->property_get_dict, args[0], get_tuple));
+    CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->property_set_dict, args[0], args[3]));
+
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -319,6 +344,22 @@ static PyObject *create_task_str = NULL;
 
 static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_error *ret_error);
 
+static int _SdBusInterface_property_get_callback(
+    sd_bus *bus,
+    const char *path, const char *interface,
+    const char *property,
+    sd_bus_message *reply,
+    void *userdata,
+    sd_bus_error *ret_error);
+
+static int _SdBusInterface_property_set_callback(
+    sd_bus *bus,
+    const char *path,
+    const char *interface, const char *property,
+    sd_bus_message *value,
+    void *userdata,
+    sd_bus_error *ret_error);
+
 static PyObject *
 SdBusInterface_create_vtable(SdBusInterfaceObject *self,
                              PyObject *const *Py_UNUSED(args),
@@ -331,9 +372,10 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
         Py_RETURN_NONE;
     }
 
-    unsigned num_of_methods = (unsigned)PyList_Size(self->method_list);
+    Py_ssize_t num_of_methods = PyList_Size(self->method_list);
+    Py_ssize_t num_of_properties = PyList_Size(self->property_list);
 
-    self->vtable = malloc(sizeof(sd_bus_vtable) * (num_of_methods + 2));
+    self->vtable = malloc(sizeof(sd_bus_vtable) * (num_of_properties + num_of_methods + 2));
     if (self->vtable == NULL)
     {
         return PyErr_NoMemory();
@@ -343,9 +385,9 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
     self->vtable[0] = start_vtable;
     Py_ssize_t current_index = 1;
     // Iter method defenitions
-    for (; current_index < num_of_methods + 1; ++current_index)
+    for (Py_ssize_t i = 0; current_index < num_of_methods; ({++i; ++current_index; }))
     {
-        PyObject *method_tuple = CALL_PYTHON_AND_CHECK(PyList_GetItem(self->method_list, current_index - 1));
+        PyObject *method_tuple = CALL_PYTHON_AND_CHECK(PyList_GetItem(self->method_list, i));
 
         PyObject *method_name_object = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 0));
         const char *method_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(method_name_object);
@@ -377,6 +419,49 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
             0,
             flags_long);
         self->vtable[current_index] = temp_vtable;
+    }
+
+    for (Py_ssize_t i = 0; i < num_of_properties; ({++i; ++current_index; }))
+    {
+        PyObject *property_tuple = PyList_GET_ITEM(self->property_list, i);
+
+        PyObject *property_name_str = PyTuple_GET_ITEM(property_tuple, 0);
+        PyObject *property_signature_str = PyTuple_GET_ITEM(property_tuple, 1);
+        PyObject *property_flags = PyTuple_GET_ITEM(property_tuple, 2);
+        PyObject *setter_or_none = PyTuple_GET_ITEM(property_tuple, 3);
+
+        const char *property_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(property_name_str);
+        const char *property_signature_const_char = SD_BUS_PY_UNICODE_AS_CHAR_PTR(property_signature_str);
+
+        unsigned long long flags_long = PyLong_AsUnsignedLongLong(property_flags);
+        if (PyErr_Occurred())
+        {
+            return NULL;
+        }
+
+        if (setter_or_none == Py_None)
+        {
+            sd_bus_vtable temp_vtable = SD_BUS_PROPERTY(
+                property_name_char_ptr,                // Name
+                property_signature_const_char,         // Signature
+                _SdBusInterface_property_get_callback, // Get
+                0,                                     // Offset
+                flags_long                             // Flags
+            );
+            self->vtable[current_index] = temp_vtable;
+        }
+        else
+        {
+            sd_bus_vtable temp_vtable = SD_BUS_WRITABLE_PROPERTY(
+                property_name_char_ptr,                // Name
+                property_signature_const_char,         // Signature
+                _SdBusInterface_property_get_callback, // Get
+                _SdBusInterface_property_set_callback, // Set
+                0,                                     // Offset
+                flags_long                             // Flags
+            );
+            self->vtable[current_index] = temp_vtable;
+        }
     }
 
     sd_bus_vtable end_vtable = SD_BUS_VTABLE_END;
@@ -2131,6 +2216,70 @@ static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_er
     sd_bus_error_set(ret_error, NULL, NULL);
 
     return 1;
+}
+
+static int _SdBusInterface_property_get_callback(
+    sd_bus *Py_UNUSED(bus),
+    const char *Py_UNUSED(path),
+    const char *Py_UNUSED(interface),
+    const char *property,
+    sd_bus_message *reply,
+    void *userdata,
+    sd_bus_error *Py_UNUSED(ret_error))
+{
+    SdBusInterfaceObject *self = userdata;
+    PyObject *get_tuple = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItemString(self->property_get_dict, property));
+
+    PyObject *signature_str = PyTuple_GET_ITEM(get_tuple, 0);
+    PyObject *get_call = PyTuple_GET_ITEM(get_tuple, 1);
+
+    PyObject *property_object CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(get_call, NULL));
+
+    const char *property_signature_char_ptr = PyUnicode_AsUTF8(signature_str);
+    if (property_signature_char_ptr == NULL)
+    {
+        return -1;
+    }
+
+    _Parse_state parser = {
+        .container_char_ptr = property_signature_char_ptr,
+        .index = 0,
+        .message = reply,
+        .max_index = strlen(property_signature_char_ptr),
+    };
+
+    PyObject *return_obj CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(_parse_complete(property_object, &parser));
+
+    return 0;
+}
+
+static int _SdBusInterface_property_set_callback(
+    sd_bus *Py_UNUSED(bus),
+    const char *Py_UNUSED(path),
+    const char *Py_UNUSED(interface),
+    const char *property,
+    sd_bus_message *value,
+    void *userdata,
+    sd_bus_error *Py_UNUSED(ret_error))
+{
+    SdBusInterfaceObject *self = userdata;
+    PyObject *set_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItemString(self->property_set_dict, property));
+
+    const char *sig = sd_bus_message_get_signature(value, 0);
+    if (sig == NULL)
+    {
+        return -1;
+    }
+    _Parse_state new_parser = {
+        .container_char_ptr = sig,
+        .index = 0,
+        .message = value,
+        .max_index = strlen(sig),
+    };
+    PyObject *complete CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(_iter_complete(&new_parser));
+
+    CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(set_call, complete, NULL));
+    return 0;
 }
 
 static SdBusObject *

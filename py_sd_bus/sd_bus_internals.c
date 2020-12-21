@@ -477,6 +477,14 @@ static PyMethodDef SdBusInterface_methods[] = {
     {NULL, NULL, 0, NULL},
 };
 
+static PyMemberDef SdBusInterface_members[] = {
+    {"method_list", T_OBJECT, offsetof(SdBusInterfaceObject, method_list), READONLY, NULL},
+    {"method_dict", T_OBJECT, offsetof(SdBusInterfaceObject, method_dict), READONLY, NULL},
+    {"property_list", T_OBJECT, offsetof(SdBusInterfaceObject, property_list), READONLY, NULL},
+    {"property_get_dict", T_OBJECT, offsetof(SdBusInterfaceObject, property_get_dict), READONLY, NULL},
+    {"property_set_dict", T_OBJECT, offsetof(SdBusInterfaceObject, property_set_dict), READONLY, NULL},
+    {NULL}};
+
 static PyTypeObject SdBusInterfaceType = {
     PyVarObject_HEAD_INIT(NULL, 0)
         .tp_name = "sd_bus_internals.SdBusInterface",
@@ -487,6 +495,7 @@ static PyTypeObject SdBusInterfaceType = {
     .tp_init = (initproc)SdBusInterface_init,
     .tp_free = (freefunc)SdBusInterface_free,
     .tp_methods = SdBusInterface_methods,
+    .tp_members = SdBusInterface_members,
 };
 
 // SdBusMessage

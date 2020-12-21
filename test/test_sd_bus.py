@@ -22,7 +22,8 @@ from __future__ import annotations
 
 from asyncio.subprocess import create_subprocess_exec
 
-from py_sd_bus.dbus_proxy import DbusInterfaceCommon, dbus_method
+from py_sd_bus.dbus_proxy import (DbusInterfaceCommon, dbus_method,
+                                  dbus_property)
 
 from .common_test_util import TempDbusTest
 
@@ -58,6 +59,11 @@ class TestInterface(DbusInterfaceCommon,
                     interface_name='org.test.test',
                     ):
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.test_string = 'test_property'
+        self.test_string_read = 'read'
+
     @dbus_method(input_signature="s", result_signature="s")
     async def upper(self, string: str) -> str:
         return string.upper()
@@ -65,6 +71,18 @@ class TestInterface(DbusInterfaceCommon,
     @dbus_method(input_signature='x', result_signature='x')
     async def test_int(self) -> int:
         return 1
+
+    @dbus_property("s")
+    def test_property(self) -> str:
+        return self.test_string
+
+    @test_property.setter
+    def test_property_set(self, new_property: str) -> None:
+        self.test_string = new_property
+
+    @dbus_property("s")
+    def test_property_read_only(self) -> str:
+        return self.test_string_read
 
 
 class TestProxy(TempDbusTest):
@@ -99,3 +117,41 @@ class TestProxy(TempDbusTest):
             self.bus, "org.example.test", '/', )
 
         self.assertEqual(await test_object_connection.test_int(), 2)
+
+    async def test_properties(self) -> None:
+        await self.bus.request_name_async("org.example.test", 0)
+        test_object = TestInterface()
+
+        await test_object.start_serving(self.bus, '/')
+
+        test_object_connection = TestInterface.new_connect(
+            self.bus, "org.example.test", '/', )
+
+        self.assertEqual(
+            'test_property', await test_object.test_property.get_async())
+
+        self.assertEqual(
+            'test_property', await test_object.test_property)
+
+        self.assertEqual(
+            await test_object_connection.test_property,
+            await test_object.test_property)
+
+        self.assertEqual(
+            'test_property',
+            await test_object_connection.test_property)
+
+        self.assertEqual(
+            await test_object.test_property_read_only,
+            await test_object_connection.test_property_read_only)
+
+        new_string = 'asdsgrghdthdth'
+
+        await test_object_connection.test_property.set_async(new_string)
+
+        self.assertEqual(
+            new_string, await test_object.test_property)
+
+        self.assertEqual(
+            new_string,
+            await test_object_connection.test_property)

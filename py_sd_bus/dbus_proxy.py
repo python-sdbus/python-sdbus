@@ -169,21 +169,28 @@ class DbusProperty(DbusSomething, Generic[T]):
             self,
             property_name: str,
             property_signature: str,
-            property_args_names: Sequence[str],
+            property_get: Callable[[DbusInterfaceBase], T],
+            property_set: Optional[Callable[[DbusInterfaceBase, T], None]],
+            flags: int,
 
     ) -> None:
         super().__init__()
         self.property_name = property_name
         self.property_signature = property_signature
-        self.property_args_names = property_args_names
-
-        self.parent: Optional[object] = None
+        self.property_get = property_get
+        self.property_set = property_set
+        self.flags = flags
 
     def __get__(self,
                 obj: DbusInterfaceBase,
                 obj_class: Optional[Type[DbusInterfaceBase]] = None,
                 ) -> DbusPropertyBinded:
         return DbusPropertyBinded(self, obj)
+
+    def setter(self,
+               new_set_function: Callable[[Any, T], None]
+               ) -> None:
+        self.property_set = new_set_function
 
 
 class DbusPropertyBinded(DbusBinded):
@@ -194,12 +201,22 @@ class DbusPropertyBinded(DbusBinded):
         self.interface = interface
 
     def __await__(self) -> Generator[Any, None, T]:
-        if not self.interface.is_binded:
-            raise NotImplementedError
-        else:
-            return self.get_coro().__await__()
+        return self.get_async().__await__()
 
-    async def get_coro(self) -> T:
+    def get_sync(self) -> T:
+        return self.dbus_property.property_get(self.interface)
+
+    def set_sync(self, complete_object: T) -> None:
+        if self.dbus_property.property_set is None:
+            raise ValueError('Property has no setter')
+
+        self.dbus_property.property_set(self.interface, complete_object)
+        return
+
+    async def get_async(self) -> T:
+        if not self.interface.is_binded:
+            return self.dbus_property.property_get(self.interface)
+
         assert self.interface.attached_bus is not None
         assert self.interface.remote_service_name is not None
         assert self.interface.remote_object_path is not None
@@ -217,7 +234,14 @@ class DbusPropertyBinded(DbusBinded):
             call_async(new_call_message)
         return cast(T, reply_message.get_contents()[1])
 
-    async def set_coro(self, complete_object: T) -> None:
+    async def set_async(self, complete_object: T) -> None:
+        if not self.interface.is_binded:
+            if self.dbus_property.property_set is None:
+                raise ValueError('Property has no setter')
+
+            self.dbus_property.property_set(self.interface, complete_object)
+            return
+
         assert self.interface.attached_bus is not None
         assert self.interface.remote_service_name is not None
         assert self.interface.remote_object_path is not None
@@ -238,11 +262,11 @@ class DbusPropertyBinded(DbusBinded):
 
 
 def dbus_property(
-        property_name: Optional[str] = None,
         property_signature: str = "",
-        property_args_names: Sequence[str] = (),
+        property_name: Optional[str] = None,
+        flags: int = 0,
 ) -> Callable[
-    [Callable[..., Coroutine[Any, Any, T]]],
+    [Callable[[Any], T]],
         DbusProperty[T]]:
 
     def property_decorator(
@@ -260,7 +284,9 @@ def dbus_property(
         new_wrapper: DbusProperty[T] = DbusProperty(
             property_name,
             property_signature,
-            property_args_names,
+            function,
+            None,
+            flags,
         )
 
         return new_wrapper
@@ -298,7 +324,8 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
         self.remote_object_path: Optional[str] = None
         self.attached_bus: Optional[SdBus] = None
 
-        self._serve_map: Dict[str, Tuple[DbusMethod, Callable[..., Any]]] = {}
+        self._serve_method_map: \
+            Dict[str, Tuple[DbusMethod, Callable[..., Any]]] = {}
 
     def _yield_dbus_mro(self
                         ) -> Generator[Type[DbusInterfaceBase], None, None]:
@@ -321,7 +348,7 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
 
         reply_message = request_message.create_reply()
 
-        method_def, local_method = self._serve_map[
+        method_def, local_method = self._serve_method_map[
             request_message.get_member()]
 
         assert local_method is not None
@@ -356,21 +383,36 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
 
             new_interface = SdBusInterface()
 
-            for key, method_def in class_dict.items():
+            for attr_name, attr_value in class_dict.items():
 
-                if isinstance(method_def, DbusMethod):
-                    self._serve_map[
-                        method_def.method_name] = (
-                            method_def, getattr(self, key))
+                if isinstance(attr_value, DbusMethod):
+                    self._serve_method_map[
+                        attr_value.method_name] = (
+                            attr_value, getattr(self, attr_name))
 
                     new_interface.add_method(
-                        method_def.method_name,
-                        method_def.input_signature,
-                        method_def.input_args_names,
-                        method_def.result_signature,
-                        method_def.result_args_names,
-                        method_def.flags,
+                        attr_value.method_name,
+                        attr_value.input_signature,
+                        attr_value.input_args_names,
+                        attr_value.result_signature,
+                        attr_value.result_args_names,
+                        attr_value.flags,
                         self._call_from_dbus,
+                    )
+                elif isinstance(attr_value, DbusProperty):
+
+                    property_object: DbusPropertyBinded \
+                        = getattr(self, attr_name)
+
+                    new_interface.add_property(
+                        attr_value.property_name,
+                        attr_value.property_signature,
+                        property_object.get_sync,
+                        property_object.set_sync
+                        if property_object.dbus_property.
+                        property_set is not None
+                        else None,
+                        attr_value.flags,
                     )
 
             bus.add_interface(new_interface, object_path,

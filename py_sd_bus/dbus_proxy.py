@@ -19,10 +19,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from copy import deepcopy
+from inspect import getmembers
 from types import FunctionType
 from typing import (Any, Callable, Coroutine, Dict, Generator, Generic,
-                    Iterator, List, Optional, Sequence, Tuple, Type, TypeVar,
-                    cast)
+                    Iterator, List, Optional, Sequence, Set, Tuple, Type,
+                    TypeVar, cast)
 
 from .sd_bus_internals import SdBus, SdBusInterface, SdBusMessage, sd_bus_open
 
@@ -67,6 +69,7 @@ T_obj = TypeVar('T_obj')
 class DbusSomething:
     def __init__(self) -> None:
         self.interface_name: Optional[str] = None
+        self.serving_enabled: bool = True
 
 
 class DbusBinded:
@@ -104,10 +107,7 @@ class DbusMethod(DbusSomething):
                 obj: DbusInterfaceBase,
                 obj_class: Optional[Type[DbusInterfaceBase]] = None,
                 ) -> Callable[..., Any]:
-        if obj.is_binded:
-            return DbusMethodBinded(self, obj)
-        else:
-            return self.original_method.__get__(obj, obj_class)
+        return DbusMethodBinded(self, obj)
 
 
 class DbusMethodBinded(DbusBinded):
@@ -135,7 +135,40 @@ class DbusMethodBinded(DbusBinded):
         return reply_message.get_contents()
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        return self._call_dbus(*args, **kwargs)
+        if self.interface.is_binded:
+            return self._call_dbus(*args, **kwargs)
+        else:
+            return self.dbus_method.original_method(
+                self.interface, *args, **kwargs)
+
+    async def _call_from_dbus(
+            self,
+            request_message: SdBusMessage) -> None:
+        request_data = request_message.get_contents()
+
+        reply_message = request_message.create_reply()
+
+        method_name = self.dbus_method.original_method.__name__
+
+        local_method = getattr(self.interface, method_name)
+
+        assert local_method is not None
+
+        if isinstance(request_data, tuple):
+            reply_data = await local_method(*request_data)
+        elif request_data is None:
+            reply_data = await local_method()
+        else:
+            reply_data = await local_method(request_data)
+
+        if isinstance(reply_data, tuple):
+            reply_message.append_data(
+                self.dbus_method.result_signature, *reply_data)
+        elif reply_data is not None:
+            reply_message.append_data(
+                self.dbus_method.result_signature, reply_data)
+
+        reply_message.send()
 
 
 def dbus_method(
@@ -302,9 +335,43 @@ class DbusInterfaceMeta(type):
                 serving_enabled: bool = True,
                 ) -> DbusInterfaceMeta:
 
+        declared_interfaces = set()
+        # Set interface name
         for key, value in namespace.items():
             if isinstance(value, DbusSomething):
                 value.interface_name = interface_name
+                value.serving_enabled = serving_enabled
+                declared_interfaces.add(key)
+
+        super_declared_interfaces = set()
+        for base in bases:
+            if issubclass(base, DbusInterfaceBase):
+                super_declared_interfaces.update(
+                    base._dbus_declared_interfaces)
+
+        for key in super_declared_interfaces & namespace.keys():
+            if isinstance(namespace[key], DbusOverload):
+                for base in bases:
+                    try:
+                        sc_dbus_def = base.__dict__[key]
+                        break
+                    except KeyError:
+                        continue
+
+                assert isinstance(sc_dbus_def, DbusSomething)
+                new_dbus_def = deepcopy(sc_dbus_def)
+                if isinstance(new_dbus_def, DbusMethod):
+                    new_dbus_def.original_method = namespace[key].original
+                else:
+                    raise TypeError
+
+                namespace[key] = new_dbus_def
+                declared_interfaces.add(key)
+            else:
+                raise TypeError("Attempted to overload dbus defenition"
+                                " without using @dbus_overload decorator")
+
+        namespace['_dbus_declared_interfaces'] = declared_interfaces
 
         namespace['_dbus_interface_name'] = interface_name
         namespace['_dbus_serving_enabled'] = serving_enabled
@@ -313,7 +380,17 @@ class DbusInterfaceMeta(type):
         return cast(DbusInterfaceMeta, new_cls)
 
 
+class DbusOverload:
+    def __init__(self, original: T):
+        self.original = original
+
+
+def dbus_overload(new_function: T) -> T:
+    return cast(T, DbusOverload(new_function))
+
+
 class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
+    _dbus_declared_interfaces: Set[str]
     _dbus_interface_name: Optional[str]
     _dbus_serving_enabled: bool
 
@@ -327,99 +404,64 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
         self._serve_method_map: \
             Dict[str, Tuple[DbusMethod, Callable[..., Any]]] = {}
 
-    def _yield_dbus_mro(self
-                        ) -> Generator[Type[DbusInterfaceBase], None, None]:
-        for mro_entry in self.__class__.__mro__:
-            if not issubclass(mro_entry, DbusInterfaceBase):
+    async def start_serving(self, bus: SdBus, object_path: str) -> None:
+        # TODO: can be optimized with a single loop
+        interface_map: Dict[str, List[DbusBinded]] = {}
+
+        for key, value in getmembers(self):
+            assert not isinstance(value, DbusSomething)
+
+            if isinstance(value, DbusMethodBinded):
+                interface_name = value.dbus_method.interface_name
+                if not value.dbus_method.serving_enabled:
+                    continue
+            elif isinstance(value, DbusPropertyBinded):
+                interface_name = value.dbus_property.interface_name
+                if not value.dbus_property.serving_enabled:
+                    continue
+            else:
                 continue
 
-            if mro_entry is DbusInterfaceBase:
-                return
+            assert interface_name is not None
 
-            if mro_entry._dbus_interface_name is None:
-                continue
+            try:
+                interface_member_list = interface_map[interface_name]
+            except KeyError:
+                interface_member_list = []
+                interface_map[interface_name] = interface_member_list
 
-            yield mro_entry
+            interface_member_list.append(value)
 
-    async def _call_from_dbus(
-            self,
-            request_message: SdBusMessage) -> None:
-        request_data = request_message.get_contents()
-
-        reply_message = request_message.create_reply()
-
-        method_def, local_method = self._serve_method_map[
-            request_message.get_member()]
-
-        assert local_method is not None
-
-        if isinstance(request_data, tuple):
-            reply_data = await local_method(*request_data)
-        elif request_data is None:
-            reply_data = await local_method()
-        else:
-            reply_data = await local_method(request_data)
-
-        if isinstance(reply_data, tuple):
-            reply_message.append_data(method_def.result_signature, *reply_data)
-        elif reply_data is not None:
-            reply_message.append_data(method_def.result_signature, reply_data)
-
-        reply_message.send()
-
-    async def start_serving(
-            self, bus: SdBus, object_path: str) -> None:
-
-        interfaces_list: List[SdBusInterface] = []
-
-        for mro_entry in self._yield_dbus_mro():
-
-            assert mro_entry._dbus_interface_name is not None
-
-            if not mro_entry._dbus_serving_enabled:
-                continue
-
-            class_dict = mro_entry.__dict__
-
+        for interface_name, member_list in interface_map.items():
             new_interface = SdBusInterface()
-
-            for attr_name, attr_value in class_dict.items():
-
-                if isinstance(attr_value, DbusMethod):
-                    self._serve_method_map[
-                        attr_value.method_name] = (
-                            attr_value, getattr(self, attr_name))
-
+            for dbus_something in member_list:
+                if isinstance(dbus_something, DbusMethodBinded):
                     new_interface.add_method(
-                        attr_value.method_name,
-                        attr_value.input_signature,
-                        attr_value.input_args_names,
-                        attr_value.result_signature,
-                        attr_value.result_args_names,
-                        attr_value.flags,
-                        self._call_from_dbus,
+                        dbus_something.dbus_method.method_name,
+                        dbus_something.dbus_method.input_signature,
+                        dbus_something.dbus_method.input_args_names,
+                        dbus_something.dbus_method.result_signature,
+                        dbus_something.dbus_method.result_args_names,
+                        dbus_something.dbus_method.flags,
+                        dbus_something._call_from_dbus,
                     )
-                elif isinstance(attr_value, DbusProperty):
-
-                    property_object: DbusPropertyBinded \
-                        = getattr(self, attr_name)
-
+                elif isinstance(dbus_something, DbusPropertyBinded):
                     new_interface.add_property(
-                        attr_value.property_name,
-                        attr_value.property_signature,
-                        property_object.get_sync,
-                        property_object.set_sync
-                        if property_object.dbus_property.
+                        dbus_something.dbus_property.property_name,
+                        dbus_something.dbus_property.property_signature,
+                        dbus_something.get_sync,
+                        dbus_something.set_sync
+                        if dbus_something.dbus_property.
                         property_set is not None
                         else None,
-                        attr_value.flags,
+                        dbus_something.dbus_property.flags,
                     )
+                else:
+                    raise TypeError
 
             bus.add_interface(new_interface, object_path,
-                              mro_entry._dbus_interface_name)
-            interfaces_list.append(new_interface)
-
-        self.activated_interfaces = interfaces_list
+                              interface_name)
+            self.activated_interfaces.append(new_interface)
 
     def _connect(
         self,

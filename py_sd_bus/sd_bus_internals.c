@@ -385,7 +385,7 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
     self->vtable[0] = start_vtable;
     Py_ssize_t current_index = 1;
     // Iter method defenitions
-    for (Py_ssize_t i = 0; current_index < num_of_methods; ({++i; ++current_index; }))
+    for (Py_ssize_t i = 0; i < num_of_methods; ({++i; ++current_index; }))
     {
         PyObject *method_tuple = CALL_PYTHON_AND_CHECK(PyList_GetItem(self->method_list, i));
 

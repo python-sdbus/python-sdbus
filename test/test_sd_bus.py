@@ -129,6 +129,14 @@ class TestProxy(TempDbusTest):
         with self.subTest('Subclass test: python-dbus-python'):
             self.assertEqual(await test_object_connection.test_int(), 2)
 
+    async def test_bad_subclass(self) -> None:
+        def bad_call() -> None:
+            class TestInheritnce(TestInterface):
+                async def test_int(self) -> int:
+                    return 2
+
+        self.assertRaises(TypeError, bad_call)
+
     async def test_properties(self) -> None:
         await self.bus.request_name_async("org.example.test", 0)
         test_object = TestInterface()

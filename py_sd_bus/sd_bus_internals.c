@@ -269,6 +269,7 @@ SdBusInterface_free(SdBusInterfaceObject *self)
     Py_XDECREF(self->interface_slot);
     Py_XDECREF(self->method_list);
     Py_XDECREF(self->method_dict);
+    Py_XDECREF(self->property_list);
     Py_XDECREF(self->property_get_dict);
     Py_XDECREF(self->property_set_dict);
     if (self->vtable)

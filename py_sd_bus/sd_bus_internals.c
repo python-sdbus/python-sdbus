@@ -247,6 +247,7 @@ typedef struct
     PyObject *property_list;
     PyObject *property_get_dict;
     PyObject *property_set_dict;
+    PyObject *signal_list;
     sd_bus_vtable *vtable;
 } SdBusInterfaceObject;
 
@@ -259,6 +260,7 @@ SdBusInterface_init(SdBusInterfaceObject *self, PyObject *Py_UNUSED(args), PyObj
     self->property_list = CALL_PYTHON_CHECK_RETURN_NEG1(PyList_New((Py_ssize_t)0));
     self->property_get_dict = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_New());
     self->property_set_dict = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_New());
+    self->signal_list = CALL_PYTHON_CHECK_RETURN_NEG1(PyList_New((Py_ssize_t)0));
     self->vtable = NULL;
     return 0;
 }
@@ -272,6 +274,7 @@ SdBusInterface_free(SdBusInterfaceObject *self)
     Py_XDECREF(self->property_list);
     Py_XDECREF(self->property_get_dict);
     Py_XDECREF(self->property_set_dict);
+    Py_XDECREF(self->signal_list);
     if (self->vtable)
     {
         free(self->vtable);
@@ -340,6 +343,33 @@ SdBusInterface_add_method(SdBusInterfaceObject *self,
     Py_RETURN_NONE;
 }
 
+static PyObject *
+SdBusInterface_add_signal(SdBusInterfaceObject *self,
+                          PyObject *const *args,
+                          Py_ssize_t nargs)
+{
+    // Arguments
+    // Signal name, signature, names of input values, flags
+    SD_BUS_PY_CHECK_ARGS_NUMBER(4);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, PySequence_Check);
+    SD_BUS_PY_CHECK_ARG_CHECK_FUNC(3, PyLong_Check);
+
+    PyObject *argument_name_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
+    CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, extend_str, args[2], NULL));
+    // HACK: add a null separator to the end of the array
+    CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, append_str, null_str, NULL));
+
+    PyObject *argument_names_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_Join(null_str, argument_name_list));
+    // Signal name, signature, names of input values, flags
+    PyObject *new_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(4, args[0], args[1], argument_names_string, args[3]));
+
+    CALL_PYTHON_INT_CHECK(PyList_Append(self->signal_list, new_tuple));
+
+    Py_RETURN_NONE;
+}
+
 static PyObject *call_soon_str = NULL;
 static PyObject *create_task_str = NULL;
 
@@ -375,8 +405,9 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
 
     Py_ssize_t num_of_methods = PyList_Size(self->method_list);
     Py_ssize_t num_of_properties = PyList_Size(self->property_list);
+    Py_ssize_t num_of_signals = PyList_Size(self->signal_list);
 
-    self->vtable = malloc(sizeof(sd_bus_vtable) * (num_of_properties + num_of_methods + 2));
+    self->vtable = malloc(sizeof(sd_bus_vtable) * (num_of_signals + num_of_properties + num_of_methods + 2));
     if (self->vtable == NULL)
     {
         return PyErr_NoMemory();
@@ -465,6 +496,33 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
         }
     }
 
+    for (Py_ssize_t i = 0; i < num_of_signals; ({++i; ++current_index; }))
+    {
+        PyObject *signal_tuple = PyList_GET_ITEM(self->signal_list, i);
+
+        PyObject *signal_name_str = PyTuple_GET_ITEM(signal_tuple, 0);
+        PyObject *signal_signature_str = PyTuple_GET_ITEM(signal_tuple, 1);
+        PyObject *signal_input_names = PyTuple_GET_ITEM(signal_tuple, 2);
+        PyObject *signal_flags = PyTuple_GET_ITEM(signal_tuple, 3);
+
+        const char *signal_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(signal_name_str);
+        const char *signal_signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(signal_signature_str);
+        const char *signal_args_names_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(signal_input_names);
+
+        unsigned long long flags_long = PyLong_AsUnsignedLongLong(signal_flags);
+        if (PyErr_Occurred())
+        {
+            return NULL;
+        }
+
+        sd_bus_vtable temp_vtable = SD_BUS_SIGNAL_WITH_NAMES(
+            signal_name_char_ptr,
+            signal_signature_char_ptr,
+            signal_args_names_char_ptr,
+            flags_long);
+        self->vtable[current_index] = temp_vtable;
+    }
+
     sd_bus_vtable end_vtable = SD_BUS_VTABLE_END;
     self->vtable[current_index] = end_vtable;
 
@@ -474,6 +532,7 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
 static PyMethodDef SdBusInterface_methods[] = {
     {"add_method", (void *)SdBusInterface_add_method, METH_FASTCALL, "Add method to the dbus interface"},
     {"add_property", (void *)SdBusInterface_add_property, METH_FASTCALL, "Add property to the dbus interface"},
+    {"add_signal", (void *)SdBusInterface_add_signal, METH_FASTCALL, "Add signal to the dbus interface"},
     {"_create_vtable", (void *)SdBusInterface_create_vtable, METH_FASTCALL, "Creates the vtable"},
     {NULL, NULL, 0, NULL},
 };
@@ -484,6 +543,7 @@ static PyMemberDef SdBusInterface_members[] = {
     {"property_list", T_OBJECT, offsetof(SdBusInterfaceObject, property_list), READONLY, NULL},
     {"property_get_dict", T_OBJECT, offsetof(SdBusInterfaceObject, property_get_dict), READONLY, NULL},
     {"property_set_dict", T_OBJECT, offsetof(SdBusInterfaceObject, property_set_dict), READONLY, NULL},
+    {"signal_list", T_OBJECT, offsetof(SdBusInterfaceObject, signal_list), READONLY, NULL},
     {NULL}};
 
 static PyTypeObject SdBusInterfaceType = {

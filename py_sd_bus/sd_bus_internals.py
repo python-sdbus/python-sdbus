@@ -59,6 +59,15 @@ class SdBusInterface:
     ) -> None:
         ...
 
+    def add_signal(
+        self,
+        signal_name: str,
+        signal_signature: str,
+        signal_args_names: Sequence[str],
+        flags: int, /
+    ) -> None:
+        ...
+
 
 class SdBusMessage:
     def append_data(self, signature: str, *args: DbusCompleteTypes) -> None:

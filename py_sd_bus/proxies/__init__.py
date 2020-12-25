@@ -17,10 +17,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 from ..dbus_proxy import (DbusInterfaceCommon, dbus_method,
-                          get_bus, dbus_property)
+                          get_bus, dbus_property, DbusSignal)
 from ..sd_bus_internals import SdBus
 
 
@@ -43,3 +43,8 @@ class FreedesktopDbus(DbusInterfaceCommon,
     @dbus_property(property_signature='as')
     async def features(self) -> List[str]:
         raise NotImplementedError
+
+    name_acquired: DbusSignal[str] = DbusSignal('NameAcquired')
+    name_lost: DbusSignal[str] = DbusSignal('NameLost')
+    name_owner_changed: DbusSignal[Tuple[str, str, str]] = \
+        DbusSignal('NameOwnerChanged')

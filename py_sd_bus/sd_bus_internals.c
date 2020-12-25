@@ -174,6 +174,9 @@ static PyObject *put_no_wait_str = NULL;
 static PyObject *add_reader_str = NULL;
 static PyObject *remove_reader_str = NULL;
 static PyObject *empty_str = NULL;
+static PyObject *null_str = NULL;
+static PyObject *extend_str = NULL;
+static PyObject *append_str = NULL;
 
 void _cleanup_char_ptr(const char **ptr)
 {
@@ -320,16 +323,13 @@ SdBusInterface_add_method(SdBusInterfaceObject *self,
     SD_BUS_PY_CHECK_ARG_CHECK_FUNC(5, PyLong_Check);
     SD_BUS_PY_CHECK_ARG_CHECK_FUNC(6, PyCallable_Check);
 
-    PyObject *null_separator CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromStringAndSize("\0", 1));
-    PyObject *extend_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("extend"));
-    PyObject *append_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("append"));
     PyObject *argument_name_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
-    CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, extend_string, args[2], NULL));
-    CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, extend_string, args[4], NULL));
+    CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, extend_str, args[2], NULL));
+    CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, extend_str, args[4], NULL));
     // HACK: add a null separator to the end of the array
-    CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, append_string, null_separator, NULL));
+    CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, append_str, null_str, NULL));
 
-    PyObject *argument_names_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_Join(null_separator, argument_name_list));
+    PyObject *argument_names_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_Join(null_str, argument_name_list));
     // Method name, input signature, return signature, arguments names, flags
     PyObject *new_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(5, args[0], args[1], args[3], argument_names_string, args[5]));
 
@@ -2556,7 +2556,13 @@ PyInit_sd_bus_internals(void)
     add_reader_str = PyUnicode_FromString("add_reader");
     TEST_FAILURE(add_reader_str == NULL);
     empty_str = PyUnicode_FromString("");
-    TEST_FAILURE(empty_str == NULL)
+    TEST_FAILURE(empty_str == NULL);
+    null_str = PyUnicode_FromStringAndSize("\0", 1);
+    TEST_FAILURE(null_str == NULL);
+    extend_str = PyUnicode_FromString("extend");
+    TEST_FAILURE(null_str == NULL);
+    append_str = PyUnicode_FromString("append");
+    TEST_FAILURE(append_str == NULL);
 
     PyObject *inspect_module = PyImport_ImportModule("inspect");
     TEST_FAILURE(inspect_module == NULL)

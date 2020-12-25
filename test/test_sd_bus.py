@@ -20,9 +20,11 @@
 
 from __future__ import annotations
 
+from asyncio import get_running_loop, wait_for
 from asyncio.subprocess import create_subprocess_exec
+from typing import Tuple
 
-from py_sd_bus.dbus_proxy import (DbusInterfaceCommon, dbus_method,
+from py_sd_bus.dbus_proxy import (DbusInterfaceCommon, DbusSignal, dbus_method,
                                   dbus_overload, dbus_property)
 
 from .common_test_util import TempDbusTest
@@ -83,6 +85,9 @@ class TestInterface(DbusInterfaceCommon,
     @dbus_property("s")
     def test_property_read_only(self) -> str:
         return self.test_string_read
+
+    test_signal: DbusSignal[Tuple[str, str]] =\
+        DbusSignal('TestSignal', "ss")
 
 
 class TestProxy(TempDbusTest):
@@ -177,3 +182,22 @@ class TestProxy(TempDbusTest):
             self.assertEqual(
                 new_string,
                 await test_object_connection.test_property)
+
+    async def test_signal(self) -> None:
+        loop = get_running_loop()
+        await self.bus.request_name_async("org.example.test", 0)
+        test_object = TestInterface()
+
+        await test_object.start_serving(self.bus, '/')
+
+        test_object_connection = TestInterface.new_connect(
+            self.bus, "org.example.test", '/', )
+
+        test_tuple = ('sgfsretg', 'asd')
+
+        ai = test_object_connection.test_signal.__aiter__()
+        aw = ai.__anext__()
+
+        loop.call_at(0, test_object.test_signal.emit, test_tuple)
+
+        self.assertEqual(test_tuple, await wait_for(aw, timeout=1))

@@ -22,9 +22,9 @@ from __future__ import annotations
 from copy import deepcopy
 from inspect import getmembers
 from types import FunctionType
-from typing import (Any, Callable, Coroutine, Dict, Generator, Generic,
-                    Iterator, List, Optional, Sequence, Set, Tuple, Type,
-                    TypeVar, cast)
+from typing import (Any, AsyncGenerator, Callable, Coroutine, Dict, Generator,
+                    Generic, Iterator, List, Optional, Sequence, Set, Tuple,
+                    Type, TypeVar, cast)
 
 from .sd_bus_internals import SdBus, SdBusInterface, SdBusMessage, sd_bus_open
 
@@ -327,6 +327,77 @@ def dbus_property(
     return property_decorator
 
 
+class DbusSignal(Generic[T], DbusSomething):
+    def __init__(
+        self,
+        signal_name: str,
+        signature: str = "",
+        args_names: Sequence[str] = (),
+        flags: int = 0,
+    ):
+        super().__init__()
+        self.signal_name = signal_name
+        self.signature = signature
+        self.args_names = args_names
+        self.flags = flags
+
+    def __get__(self,
+                obj: DbusInterfaceBase,
+                obj_class: Optional[Type[DbusInterfaceBase]] = None,
+                ) -> DbusSignalBinded[T]:
+        return DbusSignalBinded(self, obj)
+
+
+class DbusSignalBinded(Generic[T], DbusBinded):
+    def __init__(self,
+                 dbus_signal: DbusSignal[T],
+                 interface: DbusInterfaceBase):
+        self.dbus_signal = dbus_signal
+        self.interface = interface
+
+    async def __aiter__(self) -> AsyncGenerator[T, None]:
+        if not self.interface.is_binded:
+            raise ValueError('Signal is not binded')
+
+        assert self.interface.attached_bus is not None
+        assert self.interface.remote_service_name is not None
+        assert self.interface.remote_object_path is not None
+        assert self.dbus_signal.interface_name is not None
+        assert self.dbus_signal.signal_name is not None
+
+        new_queue = await self.interface.attached_bus.get_signal_queue_async(
+            self.interface.remote_service_name,
+            self.interface.remote_object_path,
+            self.dbus_signal.interface_name,
+            self.dbus_signal.signal_name,
+        )
+
+        while True:
+            next_signal_message = await new_queue.get()
+            yield cast(T, next_signal_message.get_contents())
+
+    def emit(self, args: T) -> None:
+        assert self.interface.attached_bus is not None
+        assert self.interface.serving_object_path is not None
+        assert self.dbus_signal.interface_name is not None
+        assert self.dbus_signal.signal_name is not None
+
+        signal_message = self.interface.attached_bus.new_signal_message(
+            self.interface.serving_object_path,
+            self.dbus_signal.interface_name,
+            self.dbus_signal.signal_name,
+        )
+
+        if ((not self.dbus_signal.signature.startswith('('))
+            and
+                isinstance(args, tuple)):
+            signal_message.append_data(self.dbus_signal.signature, *args)
+        else:
+            signal_message.append_data(self.dbus_signal.signature, args)
+
+        signal_message.send()
+
+
 class DbusOverload:
     def __init__(self, original: T):
         self.original = original
@@ -400,11 +471,15 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
         self.remote_service_name: Optional[str] = None
         self.remote_object_path: Optional[str] = None
         self.attached_bus: Optional[SdBus] = None
+        self.serving_object_path: Optional[str] = None
 
         self._serve_method_map: \
             Dict[str, Tuple[DbusMethod, Callable[..., Any]]] = {}
 
     async def start_serving(self, bus: SdBus, object_path: str) -> None:
+        # TODO: Being able to serve multiple busses and object
+        self.attached_bus = bus
+        self.serving_object_path = object_path
         # TODO: can be optimized with a single loop
         interface_map: Dict[str, List[DbusBinded]] = {}
 
@@ -455,6 +530,13 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
                         property_set is not None
                         else None,
                         dbus_something.dbus_property.flags,
+                    )
+                elif isinstance(dbus_something, DbusSignalBinded):
+                    new_interface.add_signal(
+                        dbus_something.dbus_signal.signal_name,
+                        dbus_something.dbus_signal.signature,
+                        dbus_something.dbus_signal.args_names,
+                        dbus_something.dbus_signal.flags,
                     )
                 else:
                     raise TypeError

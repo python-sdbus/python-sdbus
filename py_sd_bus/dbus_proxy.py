@@ -327,6 +327,15 @@ def dbus_property(
     return property_decorator
 
 
+class DbusOverload:
+    def __init__(self, original: T):
+        self.original = original
+
+
+def dbus_overload(new_function: T) -> T:
+    return cast(T, DbusOverload(new_function))
+
+
 class DbusInterfaceMeta(type):
     def __new__(cls, name: str,
                 bases: Tuple[type, ...],
@@ -378,15 +387,6 @@ class DbusInterfaceMeta(type):
         new_cls = super().__new__(cls, name, bases, namespace)
 
         return cast(DbusInterfaceMeta, new_cls)
-
-
-class DbusOverload:
-    def __init__(self, original: T):
-        self.original = original
-
-
-def dbus_overload(new_function: T) -> T:
-    return cast(T, DbusOverload(new_function))
 
 
 class DbusInterfaceBase(metaclass=DbusInterfaceMeta):

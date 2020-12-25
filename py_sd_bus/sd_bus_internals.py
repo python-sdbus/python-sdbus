@@ -143,6 +143,14 @@ class SdBus:
             /) -> SdBusMessage:
         ...
 
+    def new_signal_message(
+            self,
+            object_path: str,
+            interface_name: str,
+            member_name: str,
+            /) -> SdBusMessage:
+        ...
+
     def add_interface(self, new_interface: SdBusInterface,
                       object_path: str, interface_name: str, /) -> None:
         ...

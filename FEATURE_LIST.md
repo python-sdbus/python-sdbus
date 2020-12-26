@@ -28,9 +28,9 @@
 ### Attributes that can be declared
 
 - [X] Method calls
-- [ ] Signals
-- [ ] Property
-- [ ] Writable property
+- [X] Signals
+- [X] Property
+- [X] Writable property
 
 ## SdBusMessage
 - [ ] Reply with error (by passing exception)
@@ -70,7 +70,7 @@
 - [X] object path 'o'
 - [X] signature 'g'
 - [X] file descriptor 'h'
-- [ ] array 'a'
-- [ ] variant 'v'
-- [ ] struct '()'
-- [ ] dict '{}'
+- [X] array 'a'
+- [X] variant 'v'
+- [X] struct '()'
+- [X] dict '{}'

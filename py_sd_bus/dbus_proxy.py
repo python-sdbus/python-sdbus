@@ -18,6 +18,8 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
+from weakref import ref as weak_ref
+from asyncio import Queue
 
 from copy import deepcopy
 from inspect import getmembers
@@ -355,28 +357,56 @@ class DbusSignalBinded(Generic[T], DbusBinded):
         self.dbus_signal = dbus_signal
         self.interface = interface
 
-    async def __aiter__(self) -> AsyncGenerator[T, None]:
-        if not self.interface.is_binded:
-            raise ValueError('Signal is not binded')
-
+    async def _get_dbus_queue(self) -> Queue[SdBusMessage]:
         assert self.interface.attached_bus is not None
         assert self.interface.remote_service_name is not None
         assert self.interface.remote_object_path is not None
         assert self.dbus_signal.interface_name is not None
         assert self.dbus_signal.signal_name is not None
 
-        new_queue = await self.interface.attached_bus.get_signal_queue_async(
+        return await self.interface.attached_bus.get_signal_queue_async(
             self.interface.remote_service_name,
             self.interface.remote_object_path,
             self.dbus_signal.interface_name,
             self.dbus_signal.signal_name,
         )
 
-        while True:
-            next_signal_message = await new_queue.get()
-            yield cast(T, next_signal_message.get_contents())
+    def _cleanup_local_queue(
+            self,
+            queue_ref: weak_ref[Queue[T]]) -> None:
+        self.interface._local_signal_queues[self.dbus_signal].remove(queue_ref)
 
-    def emit(self, args: T) -> None:
+    def _get_local_queue(self) -> Queue[T]:
+        try:
+            list_of_queues = self.interface._local_signal_queues[
+                self.dbus_signal]
+        except KeyError:
+            list_of_queues = []
+            self.interface._local_signal_queues[
+                self.dbus_signal] = list_of_queues
+
+        new_queue: Queue[T] = Queue()
+
+        list_of_queues.append(weak_ref(new_queue, self._cleanup_local_queue))
+
+        return new_queue
+
+    async def __aiter__(self) -> AsyncGenerator[T, None]:
+
+        if self.interface.is_binded:
+            message_queue = await self._get_dbus_queue()
+
+            while True:
+                next_signal_message = await message_queue.get()
+                yield cast(T, next_signal_message.get_contents())
+        else:
+            data_queue = self._get_local_queue()
+
+            while True:
+                next_data = await data_queue.get()
+                yield next_data
+
+    def _emit_message(self, args: T) -> None:
         assert self.interface.attached_bus is not None
         assert self.interface.serving_object_path is not None
         assert self.dbus_signal.interface_name is not None
@@ -396,6 +426,21 @@ class DbusSignalBinded(Generic[T], DbusBinded):
             signal_message.append_data(self.dbus_signal.signature, args)
 
         signal_message.send()
+
+    def emit(self, args: T) -> None:
+        if self.interface.activated_interfaces:
+            self._emit_message(args)
+
+        try:
+            list_of_queues = self.interface._local_signal_queues[
+                self.dbus_signal]
+        except KeyError:
+            return
+
+        for local_queue_ref in list_of_queues:
+            local_queue = local_queue_ref()
+            assert local_queue is not None
+            local_queue.put_nowait(args)
 
 
 class DbusOverload:
@@ -472,9 +517,8 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
         self.remote_object_path: Optional[str] = None
         self.attached_bus: Optional[SdBus] = None
         self.serving_object_path: Optional[str] = None
-
-        self._serve_method_map: \
-            Dict[str, Tuple[DbusMethod, Callable[..., Any]]] = {}
+        self._local_signal_queues: \
+            Dict[DbusSignal[Any], List[weak_ref[Queue[Any]]]] = {}
 
     async def start_serving(self, bus: SdBus, object_path: str) -> None:
         # TODO: Being able to serve multiple busses and object

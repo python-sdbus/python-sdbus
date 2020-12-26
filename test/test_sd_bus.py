@@ -86,11 +86,64 @@ class TestInterface(DbusInterfaceCommon,
     def test_property_read_only(self) -> str:
         return self.test_string_read
 
+    @dbus_method(input_signature="sb", result_signature="s")
+    async def kwargs_function(
+            self,
+            input: str = 'test',
+            is_upper: bool = True) -> str:
+        if is_upper:
+            return input.upper()
+        else:
+            return input.lower()
+
     test_signal: DbusSignal[Tuple[str, str]] =\
         DbusSignal('TestSignal', "ss")
 
 
 class TestProxy(TempDbusTest):
+    async def test_method_kwargs(self) -> None:
+        await self.bus.request_name_async("org.example.test", 0)
+
+        test_object = TestInterface()
+        await test_object.start_serving(self.bus, '/')
+        test_object_connection = TestInterface.new_connect(
+            self.bus, "org.example.test", '/', )
+
+        await test_object_connection.ping()
+
+        with self.subTest('Only Args'):
+            self.assertEqual(
+                'TEST',
+                await test_object_connection.kwargs_function('test', True))
+
+        with self.subTest('Only defaults'):
+            self.assertEqual(
+                'TEST', await test_object_connection.kwargs_function())
+
+        with self.subTest('Default with kwarg'):
+            self.assertEqual(
+                'test', await test_object_connection.kwargs_function(
+                    is_upper=False))
+
+        with self.subTest('Arg with default'):
+            self.assertEqual(
+                'ASD', await test_object_connection.kwargs_function('asd'))
+
+        with self.subTest('Kwarg with default'):
+            self.assertEqual(
+                'ASD',
+                await test_object_connection.kwargs_function(input='asd'))
+
+        with self.subTest('Arg with kwarg'):
+            self.assertEqual(
+                'asd', await test_object_connection.kwargs_function(
+                    'ASD', is_upper=False))
+
+        with self.subTest('Only kwargs'):
+            self.assertEqual(
+                'asd', await test_object_connection.kwargs_function(
+                    input='ASD', is_upper=False))
+
     async def test_proxy(self) -> None:
         test_string = 'asdarfaetfwsergtdhfgyhjtygji'
 

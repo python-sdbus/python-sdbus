@@ -510,6 +510,34 @@ class DbusSignalBinded(Generic[T], DbusBinded):
             local_queue.put_nowait(args)
 
 
+def dbus_signal(
+        signal_signature: str = '',
+        signal_args_names: Sequence[str] = (),
+        flags: int = 0,
+        signal_name: Optional[str] = None,
+) -> Callable[
+    [Callable[[Any], T]],
+    DbusSignal[T]
+]:
+
+    def signal_decorator(pseudo_function: Callable[[Any], T]) -> DbusSignal[T]:
+        nonlocal signal_name
+
+        if signal_name is None:
+            signal_name = ''.join(
+                _method_name_converter(
+                    cast(FunctionType, pseudo_function).__name__
+                )
+            )
+
+        return DbusSignal(
+            signal_name, signal_signature,
+            signal_args_names, flags,
+        )
+
+    return signal_decorator
+
+
 class DbusOverload:
     def __init__(self, original: T):
         self.original = original

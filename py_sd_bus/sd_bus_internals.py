@@ -185,3 +185,123 @@ def encode_object_path(prefix: str, external: str) -> str:
 
 def decode_object_path(prefix: str, full_path: str) -> str:
     ...
+
+
+class DbusBaseError(Exception):
+    ...
+
+
+class DbusFailedError(DbusBaseError):
+    ...
+
+
+class DbusNoMemoryError(DbusBaseError):
+    ...
+
+
+class DbusServiceUnknownError(DbusBaseError):
+    ...
+
+
+class DbusNameHasNoOwnerError(DbusBaseError):
+    ...
+
+
+class DbusNoReplyError(DbusBaseError):
+    ...
+
+
+class DbusIOError(DbusBaseError):
+    ...
+
+
+class DbusBadAddressError(DbusBaseError):
+    ...
+
+
+class DbusNotSupportedError(DbusBaseError):
+    ...
+
+
+class DbusLimitsExceededError(DbusBaseError):
+    ...
+
+
+class DbusAccessDeniedError(DbusBaseError):
+    ...
+
+
+class DbusAuthFailedError(DbusBaseError):
+    ...
+
+
+class DbusNoServerError(DbusBaseError):
+    ...
+
+
+class DbusTimeoutError(DbusBaseError):
+    ...
+
+
+class DbusNoNetworkError(DbusBaseError):
+    ...
+
+
+class DbusAddressInUseError(DbusBaseError):
+    ...
+
+
+class DbusDisconnectedError(DbusBaseError):
+    ...
+
+
+class DbusInvalidArgsError(DbusBaseError):
+    ...
+
+
+class DbusFileExistsError(DbusBaseError):
+    ...
+
+
+class DbusUnknownMethodError(DbusBaseError):
+    ...
+
+
+class DbusUnknownObjectError(DbusBaseError):
+    ...
+
+
+class DbusUnknownInterfaceError(DbusBaseError):
+    ...
+
+
+class DbusUnknownPropertyError(DbusBaseError):
+    ...
+
+
+class DbusPropertyReadOnlyError(DbusBaseError):
+    ...
+
+
+class DbusUnixProcessIdUnknownError(DbusBaseError):
+    ...
+
+
+class DbusInvalidSignatureError(DbusBaseError):
+    ...
+
+
+class DbusInconsistentMessageError(DbusBaseError):
+    ...
+
+
+class DbusMatchRuleNotFound(DbusBaseError):
+    ...
+
+
+class DbusMatchRuleInvalidError(DbusBaseError):
+    ...
+
+
+class DbusInteractiveAuthorizationRequiredError(DbusBaseError):
+    ...

@@ -24,8 +24,8 @@ from asyncio import get_running_loop, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 
-from py_sd_bus.dbus_proxy import (DbusInterfaceCommon, DbusSignal, dbus_method,
-                                  dbus_overload, dbus_property)
+from py_sd_bus.dbus_proxy import (DbusInterfaceCommon, dbus_method,
+                                  dbus_overload, dbus_property, dbus_signal)
 
 from .common_test_util import TempDbusTest
 
@@ -96,8 +96,9 @@ class TestInterface(DbusInterfaceCommon,
         else:
             return input.lower()
 
-    test_signal: DbusSignal[Tuple[str, str]] =\
-        DbusSignal('TestSignal', "ss")
+    @dbus_signal('ss')
+    def test_signal(self) -> Tuple[str, str]:
+        raise NotImplementedError
 
 
 class TestProxy(TempDbusTest):

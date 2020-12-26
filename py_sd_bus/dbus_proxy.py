@@ -18,6 +18,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
+from inspect import getfullargspec
 from weakref import ref as weak_ref
 from asyncio import Queue
 
@@ -91,6 +92,14 @@ class DbusMethod(DbusSomething):
 
         super().__init__()
         self.original_method = async_function
+        self.args_spec = getfullargspec(async_function)
+        self.args_names = self.args_spec.args[1:]  # 1: because of self
+        self.num_of_args = len(self.args_names)
+        self.args_defaults = (
+            self.args_spec.defaults
+            if self.args_spec.defaults is not None
+            else ())
+        self.default_args_start_at = self.num_of_args - len(self.args_defaults)
         self.dbus_method: Optional[DbusMethodType] = None
 
         if method_name is None:
@@ -117,7 +126,7 @@ class DbusMethodBinded(DbusBinded):
         self.dbus_method = dbus_method
         self.interface = interface
 
-    async def _call_dbus(self, *args: Any, **kwargs: Any) -> Any:
+    async def _call_dbus(self, *args: Any) -> Any:
         assert self.interface.attached_bus is not None
         assert self.interface.remote_service_name is not None
         assert self.interface.remote_object_path is not None
@@ -138,10 +147,72 @@ class DbusMethodBinded(DbusBinded):
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         if self.interface.is_binded:
-            return self._call_dbus(*args, **kwargs)
+            if len(args) == self.dbus_method.num_of_args:
+                assert not kwargs
+                return self._call_dbus(*args)
+
+            rebuilt_args = self._rebuild_args(
+                self.dbus_method.original_method,
+                *args,
+                **kwargs)
+
+            return self._call_dbus(*rebuilt_args)
         else:
             return self.dbus_method.original_method(
                 self.interface, *args, **kwargs)
+
+    def _rebuild_args(
+            self,
+            function: FunctionType,
+            *args: Any,
+            **kwargs: Dict[str, Any]) -> List[Any]:
+        # 3 types of arguments
+        # *args - should be passed directly
+        # **kwargs - should be put in a proper order
+        # defaults - should be retrived and put in proper order
+
+        # Strategy:
+        # Iterate over arg names
+        # Use:
+        # 1. Arg
+        # 2. Kwarg
+        # 3. Default
+
+        # a, b, c, d, e
+        #       ^ defaults start here
+        # 5 - 3 = [2]
+        # ^ total args
+        #     ^ number of default args
+        # First arg that supports default is
+        # (total args - number of default args)
+        passed_args_iter = iter(args)
+        default_args_iter = iter(self.dbus_method.args_defaults)
+
+        new_args_list: List[Any] = []
+
+        for i, a_name in enumerate(self.dbus_method.args_spec.args[1:]):
+            try:
+                next_arg = next(passed_args_iter)
+            except StopIteration:
+                next_arg = None
+
+            if i >= self.dbus_method.default_args_start_at:
+                next_default_arg = next(default_args_iter)
+            else:
+                next_default_arg = None
+
+            next_kwarg = kwargs.get(a_name)
+
+            if next_arg is not None:
+                new_args_list.append(next_arg)
+            elif next_kwarg is not None:
+                new_args_list.append(next_kwarg)
+            elif next_default_arg is not None:
+                new_args_list.append(next_default_arg)
+            else:
+                raise TypeError('Could not flatten the args')
+
+        return new_args_list
 
     async def _call_from_dbus(
             self,
@@ -150,11 +221,8 @@ class DbusMethodBinded(DbusBinded):
 
         reply_message = request_message.create_reply()
 
-        method_name = self.dbus_method.original_method.__name__
-
-        local_method = getattr(self.interface, method_name)
-
-        assert local_method is not None
+        local_method = self.dbus_method.original_method.__get__(
+            self.interface, None)
 
         if isinstance(request_data, tuple):
             reply_data = await local_method(*request_data)

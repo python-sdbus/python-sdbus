@@ -18,16 +18,15 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
-from inspect import getfullargspec
-from weakref import ref as weak_ref
-from asyncio import Queue
 
+from asyncio import Queue
 from copy import deepcopy
-from inspect import getmembers
+from inspect import getfullargspec, getmembers
 from types import FunctionType
 from typing import (Any, AsyncGenerator, Callable, Coroutine, Dict, Generator,
                     Generic, Iterator, List, Optional, Sequence, Set, Tuple,
                     Type, TypeVar, cast)
+from weakref import ref as weak_ref
 
 from .sd_bus_internals import SdBus, SdBusInterface, SdBusMessage, sd_bus_open
 

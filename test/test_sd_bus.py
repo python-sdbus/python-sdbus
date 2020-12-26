@@ -101,91 +101,92 @@ class TestInterface(DbusInterfaceCommon,
 
 
 class TestProxy(TempDbusTest):
-    async def test_method_kwargs(self) -> None:
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         await self.bus.request_name_async("org.example.test", 0)
 
-        test_object = TestInterface()
-        await test_object.start_serving(self.bus, '/')
-        test_object_connection = TestInterface.new_connect(
+        self.test_object = TestInterface()
+        await self.test_object.start_serving(self.bus, '/')
+        self.test_object_connection = TestInterface.new_connect(
             self.bus, "org.example.test", '/', )
 
-        await test_object_connection.ping()
+        await self.test_object_connection.ping()
+
+    async def test_method_kwargs(self) -> None:
 
         with self.subTest('Only Args'):
             self.assertEqual(
                 'TEST',
-                await test_object_connection.kwargs_function('test', True))
+                await self.test_object_connection.kwargs_function(
+                    'test', True)
+            )
 
         with self.subTest('Only defaults'):
             self.assertEqual(
-                'TEST', await test_object_connection.kwargs_function())
+                'TEST',
+                await self.test_object_connection.kwargs_function())
 
         with self.subTest('Default with kwarg'):
             self.assertEqual(
-                'test', await test_object_connection.kwargs_function(
+                'test',
+                await self.test_object_connection.kwargs_function(
                     is_upper=False))
 
         with self.subTest('Arg with default'):
             self.assertEqual(
-                'ASD', await test_object_connection.kwargs_function('asd'))
+                'ASD',
+                await self.test_object_connection.kwargs_function('asd'))
 
         with self.subTest('Kwarg with default'):
             self.assertEqual(
                 'ASD',
-                await test_object_connection.kwargs_function(input='asd'))
+                await self.test_object_connection.kwargs_function(input='asd'))
 
         with self.subTest('Arg with kwarg'):
             self.assertEqual(
-                'asd', await test_object_connection.kwargs_function(
+                'asd',
+                await self.test_object_connection.kwargs_function(
                     'ASD', is_upper=False))
 
         with self.subTest('Only kwargs'):
             self.assertEqual(
-                'asd', await test_object_connection.kwargs_function(
+                'asd',
+                await self.test_object_connection.kwargs_function(
                     input='ASD', is_upper=False))
 
-    async def test_proxy(self) -> None:
-        test_string = 'asdarfaetfwsergtdhfgyhjtygji'
-
-        await self.bus.request_name_async("org.example.test", 0)
-
-        test_object = TestInterface()
-        await test_object.start_serving(self.bus, '/')
-        test_object_connection = TestInterface.new_connect(
-            self.bus, "org.example.test", '/', )
-
-        await test_object_connection.ping()
+    async def test_method(self) -> None:
+        test_string = 'asdafsrfgdrtuhrytuj'
 
         with self.subTest("Test python-to-python"):
             self.assertEqual(test_string.upper(),
-                             await test_object.upper(test_string))
+                             await self.test_object.upper(test_string))
 
         with self.subTest("Test python-dbus-python"):
-            self.assertEqual(1, await test_object_connection.test_int())
+            self.assertEqual(1, await self.test_object_connection.test_int())
 
-            self.assertEqual(test_string.upper(),
-                             await test_object_connection.upper(test_string))
+            self.assertEqual(
+                test_string.upper(),
+                await self.test_object_connection.upper(test_string))
 
     async def test_subclass(self) -> None:
-        await self.bus.request_name_async("org.example.test", 0)
 
         class TestInheritnce(TestInterface):
             @dbus_overload
             async def test_int(self) -> int:
                 return 2
 
-        test_object = TestInheritnce()
+        test_subclass = TestInheritnce()
 
-        await test_object.start_serving(self.bus, '/')
+        await test_subclass.start_serving(self.bus, '/subclass')
 
         with self.subTest('Subclass test: python-python'):
-            self.assertEqual(await test_object.test_int(), 2)
+            self.assertEqual(await test_subclass.test_int(), 2)
 
-        test_object_connection = TestInheritnce.new_connect(
-            self.bus, "org.example.test", '/', )
+        test_subclass_connection = TestInheritnce.new_connect(
+            self.bus, "org.example.test", '/subclass', )
 
         with self.subTest('Subclass test: python-dbus-python'):
-            self.assertEqual(await test_object_connection.test_int(), 2)
+            self.assertEqual(await test_subclass_connection.test_int(), 2)
 
     async def test_bad_subclass(self) -> None:
         def bad_call() -> None:
@@ -196,63 +197,54 @@ class TestProxy(TempDbusTest):
         self.assertRaises(TypeError, bad_call)
 
     async def test_properties(self) -> None:
-        await self.bus.request_name_async("org.example.test", 0)
-        test_object = TestInterface()
-
-        await test_object.start_serving(self.bus, '/')
-
-        test_object_connection = TestInterface.new_connect(
-            self.bus, "org.example.test", '/', )
 
         with self.subTest('Property read: python-python'):
             self.assertEqual(
-                'test_property', await test_object.test_property.get_async())
+                'test_property',
+                await self.test_object.test_property.get_async())
 
             self.assertEqual(
-                'test_property', await test_object.test_property)
+                'test_property', await self.test_object.test_property)
 
         with self.subTest('Property read: python-dbus-python'):
             self.assertEqual(
-                await test_object_connection.test_property,
-                await test_object.test_property)
+                await self.test_object_connection.test_property,
+                await self.test_object.test_property)
 
             self.assertEqual(
                 'test_property',
-                await test_object_connection.test_property)
+                await self.test_object_connection.test_property)
 
             self.assertEqual(
-                await test_object.test_property_read_only,
-                await test_object_connection.test_property_read_only)
+                await self.test_object.test_property_read_only,
+                await self.test_object_connection.test_property_read_only)
 
         with self.subTest('Property write'):
             new_string = 'asdsgrghdthdth'
 
-            await test_object_connection.test_property.set_async(new_string)
+            await self.test_object_connection.test_property.set_async(
+                new_string)
 
             self.assertEqual(
-                new_string, await test_object.test_property)
+                new_string, await self.test_object.test_property)
 
             self.assertEqual(
                 new_string,
-                await test_object_connection.test_property)
+                await self.test_object_connection.test_property)
 
     async def test_signal(self) -> None:
         loop = get_running_loop()
-        await self.bus.request_name_async("org.example.test", 0)
-        test_object = TestInterface()
-
-        await test_object.start_serving(self.bus, '/')
-
-        test_object_connection = TestInterface.new_connect(
-            self.bus, "org.example.test", '/', )
 
         test_tuple = ('sgfsretg', 'asd')
 
-        ai_dbus = test_object_connection.test_signal.__aiter__()
+        ai_dbus = self.test_object_connection.test_signal.__aiter__()
         aw_dbus = ai_dbus.__anext__()
-        q = test_object.test_signal._get_local_queue()
+        q = self.test_object.test_signal._get_local_queue()
 
-        loop.call_at(0, test_object.test_signal.emit, test_tuple)
+        loop.call_at(0, self.test_object.test_signal.emit, test_tuple)
 
-        self.assertEqual(test_tuple, await wait_for(aw_dbus, timeout=1))
-        self.assertEqual(test_tuple, await wait_for(q.get(), timeout=1))
+        with self.subTest('Python-dbus-python'):
+            self.assertEqual(test_tuple, await wait_for(aw_dbus, timeout=1))
+
+        with self.subTest('Python-python'):
+            self.assertEqual(test_tuple, await wait_for(q.get(), timeout=1))

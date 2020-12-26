@@ -195,9 +195,11 @@ class TestProxy(TempDbusTest):
 
         test_tuple = ('sgfsretg', 'asd')
 
-        ai = test_object_connection.test_signal.__aiter__()
-        aw = ai.__anext__()
+        ai_dbus = test_object_connection.test_signal.__aiter__()
+        aw_dbus = ai_dbus.__anext__()
+        q = test_object.test_signal._get_local_queue()
 
         loop.call_at(0, test_object.test_signal.emit, test_tuple)
 
-        self.assertEqual(test_tuple, await wait_for(aw, timeout=1))
+        self.assertEqual(test_tuple, await wait_for(aw_dbus, timeout=1))
+        self.assertEqual(test_tuple, await wait_for(q.get(), timeout=1))

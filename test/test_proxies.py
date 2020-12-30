@@ -19,8 +19,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from unittest import IsolatedAsyncioTestCase, SkipTest, main
 
-from py_sd_bus.proxies import FreedesktopDbus
+from py_sd_bus.proxies import FreedesktopDbus, FreedesktopNotifications
+from py_sd_bus.sd_bus_internals import DbusServiceUnknownError
 
 from .common_test_util import TempDbusTest
 
@@ -32,3 +34,17 @@ class TestFreedesktopDbus(TempDbusTest):
         await dbus_object.ping()
         self.assertIsInstance(await dbus_object.get_id(), str)
         self.assertIsInstance(await dbus_object.features, list)
+
+
+class TestFreedesktopNotifications(IsolatedAsyncioTestCase):
+
+    async def test_capabilities(self) -> None:
+        notifications = FreedesktopNotifications()
+        try:
+            self.assertIsInstance(await notifications.get_capabilities(), list)
+        except DbusServiceUnknownError:
+            raise SkipTest
+
+
+if __name__ == "__main__":
+    main()

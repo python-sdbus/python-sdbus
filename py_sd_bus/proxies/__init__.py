@@ -40,7 +40,7 @@ class FreedesktopDbus(DbusInterfaceCommon,
     async def get_id(self) -> str:
         raise NotImplementedError
 
-    @dbus_property(property_signature='as')
+    @dbus_property('as')
     async def features(self) -> List[str]:
         raise NotImplementedError
 
@@ -54,7 +54,7 @@ class NotificationsInterface(DbusInterfaceCommon,
                              interface_name='org.freedesktop.Notifications'
                              ):
 
-    @dbus_method(input_signature="u")
+    @dbus_method('u')
     async def close_notification(self, notif_id: int) -> None:
         raise NotImplementedError
 
@@ -66,7 +66,7 @@ class NotificationsInterface(DbusInterfaceCommon,
     async def get_server_infomation(self) -> Tuple[str, str, str, str]:
         raise NotImplementedError
 
-    @dbus_method(input_signature="susssasa{sv}i")
+    @dbus_method("susssasa{sv}i")
     async def notify(
             self,
             app_name: str,

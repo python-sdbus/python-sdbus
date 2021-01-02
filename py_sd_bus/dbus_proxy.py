@@ -82,16 +82,30 @@ class DbusMethod(DbusSomething):
 
     def __init__(
             self,
-            async_function: FunctionType,
+            original_method: FunctionType,
             method_name: Optional[str],
             input_signature: str,
+            input_args_names: Sequence[str],
             result_signature: str,
             result_args_names: Sequence[str],
             flags: int):
 
+        assert not isinstance(input_args_names, str), (
+            "Passed a string as input args"
+            " names. Did you forget to put"
+            " it in to a tuple ('string', ) ?")
+
+        assert not any(' ' in x for x in input_args_names), (
+            "Can't have spaces in argument input names"
+            f"Args: {input_args_names}")
+
+        assert not any(' ' in x for x in result_args_names), (
+            "Can't have spaces in argument result names."
+            f"Args: {result_args_names}")
+
         super().__init__()
-        self.original_method = async_function
-        self.args_spec = getfullargspec(async_function)
+        self.original_method = original_method
+        self.args_spec = getfullargspec(original_method)
         self.args_names = self.args_spec.args[1:]  # 1: because of self
         self.num_of_args = len(self.args_names)
         self.args_defaults = (
@@ -103,12 +117,16 @@ class DbusMethod(DbusSomething):
 
         if method_name is None:
             self.method_name = ''.join(
-                _method_name_converter(async_function.__name__))
+                _method_name_converter(original_method.__name__))
         else:
             self.method_name = method_name
 
         self.input_signature = input_signature
-        self.input_args_names = ""
+        self.input_args_names: Sequence[str] = (
+            self.args_names
+            if result_args_names and not input_args_names
+            else input_args_names)
+
         self.result_signature = result_signature
         self.result_args_names = result_args_names
         self.flags = flags
@@ -241,20 +259,23 @@ class DbusMethodBinded(DbusBinded):
 
 
 def dbus_method(
-        method_name: Optional[str] = None,
-        input_signature: str = "",
-        result_signature: str = "",
-        result_args_names: Sequence[str] = (),
-        flags: int = 0) -> Callable[[T_input], T_input]:
+    input_signature: str = "",
+    result_signature: str = "",
+    flags: int = 0,
+    result_args_names: Sequence[str] = (),
+    input_args_names: Sequence[str] = (),
+    method_name: Optional[str] = None,
+) -> Callable[[T_input], T_input]:
 
-    def dbus_method_decorator(async_function: T_input) -> T_input:
-        assert isinstance(async_function, FunctionType)
+    def dbus_method_decorator(original_method: T_input) -> T_input:
+        assert isinstance(original_method, FunctionType)
         new_wrapper = DbusMethod(
-            async_function=async_function,
+            original_method=original_method,
             method_name=method_name,
             input_signature=input_signature,
             result_signature=result_signature,
             result_args_names=result_args_names,
+            input_args_names=input_args_names,
             flags=flags,
         )
 
@@ -365,8 +386,8 @@ class DbusPropertyBinded(DbusBinded):
 
 def dbus_property(
         property_signature: str = "",
-        property_name: Optional[str] = None,
         flags: int = 0,
+        property_name: Optional[str] = None,
 ) -> Callable[
     [Callable[[Any], T]],
         DbusProperty[T]]:

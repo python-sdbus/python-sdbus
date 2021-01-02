@@ -66,12 +66,16 @@ class TestInterface(DbusInterfaceCommon,
         self.test_string = 'test_property'
         self.test_string_read = 'read'
 
-    @dbus_method(input_signature="s", result_signature="s")
+    @dbus_method("s", "s")
     async def upper(self, string: str) -> str:
         return string.upper()
 
     @dbus_method(result_signature='x')
     async def test_int(self) -> int:
+        return 1
+
+    @dbus_method(result_signature='x', result_args_names=('an_int', ))
+    async def int_annotated(self) -> int:
         return 1
 
     @dbus_property("s")
@@ -86,8 +90,18 @@ class TestInterface(DbusInterfaceCommon,
     def test_property_read_only(self) -> str:
         return self.test_string_read
 
-    @dbus_method(input_signature="sb", result_signature="s")
+    @dbus_method("sb", "s")
     async def kwargs_function(
+            self,
+            input: str = 'test',
+            is_upper: bool = True) -> str:
+        if is_upper:
+            return input.upper()
+        else:
+            return input.lower()
+
+    @dbus_method("sb", "s", 0, ('string_result', ))
+    async def kwargs_function_annotated(
             self,
             input: str = 'test',
             is_upper: bool = True) -> str:

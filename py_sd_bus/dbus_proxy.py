@@ -654,6 +654,10 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
                 interface_name = value.dbus_property.interface_name
                 if not value.dbus_property.serving_enabled:
                     continue
+            elif isinstance(value, DbusSignalBinded):
+                interface_name = value.dbus_signal.interface_name
+                if not value.dbus_signal.serving_enabled:
+                    continue
             else:
                 continue
 

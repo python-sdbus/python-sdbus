@@ -108,7 +108,7 @@ class SdBusMessage:
 
 
 class SdBus:
-    def call(self, message: SdBusMessage, /) -> None:
+    def call(self, message: SdBusMessage, /) -> SdBusMessage:
         ...
 
     def call_async(

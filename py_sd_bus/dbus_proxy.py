@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from asyncio import Queue
 from copy import deepcopy
-from inspect import getfullargspec, getmembers
+from inspect import getfullargspec, getmembers, iscoroutinefunction
 from types import FunctionType
 from typing import (Any, AsyncGenerator, Callable, Coroutine, Dict, Generator,
                     Generic, Iterator, List, Optional, Sequence, Set, Tuple,
@@ -114,6 +114,7 @@ class DbusMethod(DbusSomething):
             else ())
         self.default_args_start_at = self.num_of_args - len(self.args_defaults)
         self.dbus_method: Optional[DbusMethodType] = None
+        self.is_async_method = iscoroutinefunction(original_method)
 
         if method_name is None:
             self.method_name = ''.join(
@@ -143,7 +144,7 @@ class DbusMethodBinded(DbusBinded):
         self.dbus_method = dbus_method
         self.interface = interface
 
-    async def _call_dbus(self, *args: Any) -> Any:
+    async def _call_dbus_async(self, *args: Any) -> Any:
         assert self.interface.attached_bus is not None
         assert self.interface.remote_service_name is not None
         assert self.interface.remote_object_path is not None
@@ -162,18 +163,43 @@ class DbusMethodBinded(DbusBinded):
             new_call_message)
         return reply_message.get_contents()
 
+    def _call_dbus_sync(self, *args: Any) -> Any:
+        assert self.interface.attached_bus is not None
+        assert self.interface.remote_service_name is not None
+        assert self.interface.remote_object_path is not None
+        assert self.dbus_method.interface_name is not None
+        new_call_message = self.interface.attached_bus.new_method_call_message(
+            self.interface.remote_service_name,
+            self.interface.remote_object_path,
+            self.dbus_method.interface_name,
+            self.dbus_method.method_name,
+        )
+        if args:
+            new_call_message.append_data(
+                self.dbus_method.input_signature, *args)
+
+        reply_message = self.interface.attached_bus.call(
+            new_call_message)
+        return reply_message.get_contents()
+
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         if self.interface.is_binded:
+
             if len(args) == self.dbus_method.num_of_args:
-                assert not kwargs
-                return self._call_dbus(*args)
+                assert not kwargs, (
+                    "Passed more arguments than method supports"
+                    f"Extra args: {kwargs}")
+                rebuilt_args: Sequence[Any] = args
+            else:
+                rebuilt_args = self._rebuild_args(
+                    self.dbus_method.original_method,
+                    *args,
+                    **kwargs)
 
-            rebuilt_args = self._rebuild_args(
-                self.dbus_method.original_method,
-                *args,
-                **kwargs)
-
-            return self._call_dbus(*rebuilt_args)
+            if self.dbus_method.is_async_method:
+                return self._call_dbus_async(*rebuilt_args)
+            else:
+                return self._call_dbus_sync(*rebuilt_args)
         else:
             return self.dbus_method.original_method(
                 self.interface, *args, **kwargs)

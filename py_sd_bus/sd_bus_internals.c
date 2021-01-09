@@ -1835,32 +1835,31 @@ SdBus_call(SdBusObject *self,
 
     SdBusMessageObject *call_message = (SdBusMessageObject *)args[0];
 
-    SdBusMessageObject *reply_message_object = (SdBusMessageObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL));
+    SdBusMessageObject *reply_message_object CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL));
 
     sd_bus_error error __attribute__((cleanup(sd_bus_error_free))) = SD_BUS_ERROR_NULL;
 
-    int return_value = sd_bus_call(
-        self->sd_bus_ref,
-        call_message->message_ref,
-        (uint64_t)0,
-        &error,
-        &reply_message_object->message_ref);
+    CALL_SD_BUS_AND_CHECK(
+        sd_bus_call(
+            self->sd_bus_ref,
+            call_message->message_ref,
+            (uint64_t)0,
+            &error,
+            &reply_message_object->message_ref););
 
-    if (error.name != NULL)
+    if (sd_bus_error_get_errno(&error))
     {
         PyObject *exception_to_raise = PyDict_GetItemString(exception_dict, error.name);
         if (exception_to_raise == NULL)
         {
             exception_to_raise = exception_generic;
         }
-        PyErr_SetObject(exception_to_raise, Py_BuildValue("(ss)", error.name, error.message));
+        PyObject *exception_tuple CLEANUP_PY_OBJECT = Py_BuildValue("(ss)", error.name, error.message);
+        PyErr_SetObject(exception_to_raise, exception_tuple);
         return NULL;
     }
-    else
-    {
-        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
-    }
 
+    Py_INCREF(reply_message_object);
     return reply_message_object;
 }
 

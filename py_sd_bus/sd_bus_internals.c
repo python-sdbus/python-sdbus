@@ -1839,13 +1839,12 @@ SdBus_call(SdBusObject *self,
 
     sd_bus_error error __attribute__((cleanup(sd_bus_error_free))) = SD_BUS_ERROR_NULL;
 
-    CALL_SD_BUS_AND_CHECK(
-        sd_bus_call(
-            self->sd_bus_ref,
-            call_message->message_ref,
-            (uint64_t)0,
-            &error,
-            &reply_message_object->message_ref););
+    int return_value = sd_bus_call(
+        self->sd_bus_ref,
+        call_message->message_ref,
+        (uint64_t)0,
+        &error,
+        &reply_message_object->message_ref);
 
     if (sd_bus_error_get_errno(&error))
     {
@@ -1858,6 +1857,8 @@ SdBus_call(SdBusObject *self,
         PyErr_SetObject(exception_to_raise, exception_tuple);
         return NULL;
     }
+
+    CALL_SD_BUS_AND_CHECK(return_value);
 
     Py_INCREF(reply_message_object);
     return reply_message_object;

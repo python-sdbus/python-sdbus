@@ -383,25 +383,30 @@ class DbusPropertyAsyncBinded(DbusBinded):
 
         reply_message = await self.interface.attached_bus. \
             call_async(new_call_message)
+        # Get method returns variant but we only need contents of variant
         return cast(T, reply_message.get_contents()[1])
 
     async def _reply_get_async(self, message: SdBusMessage) -> None:
         reply_data: Any = await self.get_async()
         message.append_data(self.dbus_property.property_signature, reply_data)
-
+        message.close_container()
         message.send()
 
     async def _reply_set_async(self, message: SdBusMessage) -> None:
-        set_data: Any = message.get_contents()
+        data_to_set_to: Any = message.get_contents()
 
-        await self.set_async(set_data)
+        await self.set_async(data_to_set_to)
+
+        reply_message = message.create_reply()
+        reply_message.send()
 
     async def set_async(self, complete_object: T) -> None:
         if not self.interface.is_binded:
             if self.dbus_property.property_setter is None:
                 raise ValueError('Property has no setter')
 
-            self.dbus_property.property_setter(self.interface, complete_object)
+            await self.dbus_property.property_setter(
+                self.interface, complete_object)
             return
 
         assert self.interface.attached_bus is not None

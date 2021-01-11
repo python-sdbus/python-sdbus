@@ -1596,7 +1596,7 @@ PyObject *iter_tuple_or_single(_Parse_state *parser)
 PyObject *
 SdBusMessage_get_contents2(SdBusMessageObject *self, PyObject *Py_UNUSED(args))
 {
-    const char *message_signature = sd_bus_message_get_signature(self->message_ref, 1);
+    const char *message_signature = sd_bus_message_get_signature(self->message_ref, 0);
 
     if (message_signature == NULL)
     {

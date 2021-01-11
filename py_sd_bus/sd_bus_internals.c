@@ -2328,27 +2328,17 @@ static int _SdBusInterface_property_get_callback(
     SdBusInterfaceObject *self = userdata;
     PyObject *get_tuple = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItemString(self->property_get_dict, property));
 
-    PyObject *signature_str = PyTuple_GET_ITEM(get_tuple, 0);
     PyObject *get_call = PyTuple_GET_ITEM(get_tuple, 1);
 
-    PyObject *property_object CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(get_call, NULL));
+    PyObject *new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL));
+    _SdBusMessage_set_messsage((SdBusMessageObject *)new_message, reply);
 
-    const char *property_signature_char_ptr = PyUnicode_AsUTF8(signature_str);
-    if (property_signature_char_ptr == NULL)
-    {
-        return -1;
-    }
+    PyObject *running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
+    PyObject *get_coroutine CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(get_call, new_message, NULL));
 
-    _Parse_state parser = {
-        .container_char_ptr = property_signature_char_ptr,
-        .index = 0,
-        .message = reply,
-        .max_index = strlen(property_signature_char_ptr),
-    };
+    PyObject *task CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(running_loop, create_task_str, get_coroutine, NULL));
 
-    PyObject *return_obj CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(_parse_complete(property_object, &parser));
-
-    return 0;
+    return 1;
 }
 
 static int _SdBusInterface_property_set_callback(
@@ -2363,21 +2353,15 @@ static int _SdBusInterface_property_set_callback(
     SdBusInterfaceObject *self = userdata;
     PyObject *set_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItemString(self->property_set_dict, property));
 
-    const char *sig = sd_bus_message_get_signature(value, 0);
-    if (sig == NULL)
-    {
-        return -1;
-    }
-    _Parse_state new_parser = {
-        .container_char_ptr = sig,
-        .index = 0,
-        .message = value,
-        .max_index = strlen(sig),
-    };
-    PyObject *complete CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(_iter_complete(&new_parser));
+    PyObject *new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL));
+    _SdBusMessage_set_messsage((SdBusMessageObject *)new_message, value);
 
-    CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(set_call, complete, NULL));
-    return 0;
+    PyObject *running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
+    PyObject *set_coroutine CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(set_call, new_message, NULL));
+
+    PyObject *task CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(running_loop, create_task_str, set_coroutine, NULL));
+
+    return 1;
 }
 
 static SdBusObject *

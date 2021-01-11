@@ -84,7 +84,7 @@ class TestInterface(DbusInterfaceCommon,
         return self.test_string
 
     @test_property.setter
-    def test_property_set(self, new_property: str) -> None:
+    async def test_property_set(self, new_property: str) -> None:
         self.test_string = new_property
 
     @dbus_property_async("s")
@@ -224,29 +224,33 @@ class TestProxy(TempDbusTest):
 
         with self.subTest('Property read: python-dbus-python'):
             self.assertEqual(
-                await self.test_object_connection.test_property,
+                await wait_for(self.test_object_connection.test_property, 0.5),
                 await self.test_object.test_property)
 
             self.assertEqual(
                 'test_property',
-                await self.test_object_connection.test_property)
+                await wait_for(self.test_object_connection.test_property, 0.5))
 
             self.assertEqual(
                 await self.test_object.test_property_read_only,
-                await self.test_object_connection.test_property_read_only)
+                await wait_for(
+                    self.test_object_connection.test_property_read_only, 0.5))
 
         with self.subTest('Property write'):
             new_string = 'asdsgrghdthdth'
 
-            await self.test_object_connection.test_property.set_async(
-                new_string)
+            await wait_for(
+                self.test_object_connection.test_property.set_async(
+                    new_string),
+                0.5)
 
             self.assertEqual(
                 new_string, await self.test_object.test_property)
 
             self.assertEqual(
                 new_string,
-                await self.test_object_connection.test_property)
+                await wait_for(self.test_object_connection.test_property, 0.5)
+            )
 
     async def test_signal(self) -> None:
         loop = get_running_loop()

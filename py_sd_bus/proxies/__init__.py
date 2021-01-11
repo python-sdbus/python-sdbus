@@ -20,7 +20,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..dbus_proxy import (DbusInterfaceCommon, DbusSignal, dbus_method,
-                          dbus_property, dbus_signal, get_bus)
+                          dbus_property_async, dbus_signal, get_bus)
 from ..sd_bus_internals import SdBus
 
 
@@ -40,7 +40,7 @@ class FreedesktopDbus(DbusInterfaceCommon,
     async def get_id(self) -> str:
         raise NotImplementedError
 
-    @dbus_property('as')
+    @dbus_property_async('as')
     async def features(self) -> List[str]:
         raise NotImplementedError
 

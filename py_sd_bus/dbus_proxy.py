@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from asyncio import Queue
+from asyncio import Queue, get_running_loop
 from copy import deepcopy
 from inspect import getfullargspec, getmembers, iscoroutinefunction
 from types import FunctionType
@@ -318,33 +318,45 @@ class DbusProperty(DbusSomething, Generic[T]):
             self,
             property_name: str,
             property_signature: str,
-            property_get: Callable[[DbusInterfaceBase], T],
-            property_set: Optional[Callable[[DbusInterfaceBase, T], None]],
+            property_getter: Callable[[DbusInterfaceBase],
+                                      Coroutine[Any, Any, T]],
+            property_setter: Optional[Callable[[DbusInterfaceBase, T],
+                                               Coroutine[Any, Any, None]]],
             flags: int,
 
     ) -> None:
         super().__init__()
         self.property_name = property_name
         self.property_signature = property_signature
-        self.property_get = property_get
-        self.property_set = property_set
+        self.property_getter = property_getter
+        self.property_setter = property_setter
         self.flags = flags
 
+
+class DbusPropertyAsync(DbusProperty[T]):
     def __get__(self,
                 obj: DbusInterfaceBase,
                 obj_class: Optional[Type[DbusInterfaceBase]] = None,
-                ) -> DbusPropertyBinded:
-        return DbusPropertyBinded(self, obj)
+                ) -> DbusPropertyAsyncBinded:
+        return DbusPropertyAsyncBinded(self, obj)
 
     def setter(self,
-               new_set_function: Callable[[Any, T], None]
+               new_set_function: Callable[[Any, T], Coroutine[Any, Any, None]]
                ) -> None:
-        self.property_set = new_set_function
+        self.property_setter = new_set_function
 
 
-class DbusPropertyBinded(DbusBinded):
+def _check_sync_in_async_env() -> bool:
+    try:
+        get_running_loop()
+        return False
+    except RuntimeError:
+        return True
+
+
+class DbusPropertyAsyncBinded(DbusBinded):
     def __init__(self,
-                 dbus_property: DbusProperty[T],
+                 dbus_property: DbusPropertyAsync[T],
                  interface: DbusInterfaceBase):
         self.dbus_property = dbus_property
         self.interface = interface
@@ -352,19 +364,9 @@ class DbusPropertyBinded(DbusBinded):
     def __await__(self) -> Generator[Any, None, T]:
         return self.get_async().__await__()
 
-    def get_sync(self) -> T:
-        return self.dbus_property.property_get(self.interface)
-
-    def set_sync(self, complete_object: T) -> None:
-        if self.dbus_property.property_set is None:
-            raise ValueError('Property has no setter')
-
-        self.dbus_property.property_set(self.interface, complete_object)
-        return
-
     async def get_async(self) -> T:
         if not self.interface.is_binded:
-            return self.dbus_property.property_get(self.interface)
+            return await self.dbus_property.property_getter(self.interface)
 
         assert self.interface.attached_bus is not None
         assert self.interface.remote_service_name is not None
@@ -383,12 +385,23 @@ class DbusPropertyBinded(DbusBinded):
             call_async(new_call_message)
         return cast(T, reply_message.get_contents()[1])
 
+    async def _reply_get_async(self, message: SdBusMessage) -> None:
+        reply_data: Any = await self.get_async()
+        message.append_data(self.dbus_property.property_signature, reply_data)
+
+        message.send()
+
+    async def _reply_set_async(self, message: SdBusMessage) -> None:
+        set_data: Any = message.get_contents()
+
+        await self.set_async(set_data)
+
     async def set_async(self, complete_object: T) -> None:
         if not self.interface.is_binded:
-            if self.dbus_property.property_set is None:
+            if self.dbus_property.property_setter is None:
                 raise ValueError('Property has no setter')
 
-            self.dbus_property.property_set(self.interface, complete_object)
+            self.dbus_property.property_setter(self.interface, complete_object)
             return
 
         assert self.interface.attached_bus is not None
@@ -410,17 +423,18 @@ class DbusPropertyBinded(DbusBinded):
         await self.interface.attached_bus.call_async(new_call_message)
 
 
-def dbus_property(
+def dbus_property_async(
         property_signature: str = "",
         flags: int = 0,
         property_name: Optional[str] = None,
 ) -> Callable[
-    [Callable[[Any], T]],
-        DbusProperty[T]]:
+    [Callable[[Any], Coroutine[Any, Any, T]]],
+        DbusPropertyAsync[T]]:
 
     def property_decorator(
         function: Callable[..., Any]
-    ) -> DbusProperty[T]:
+    ) -> DbusPropertyAsync[T]:
+        assert iscoroutinefunction(function), "Expected coroutine function"
         nonlocal property_name
 
         if property_name is None:
@@ -430,7 +444,98 @@ def dbus_property(
                 )
             )
 
-        new_wrapper: DbusProperty[T] = DbusProperty(
+        new_wrapper: DbusPropertyAsync[T] = DbusPropertyAsync(
+            property_name,
+            property_signature,
+            function,
+            None,
+            flags,
+        )
+
+        return new_wrapper
+
+    return property_decorator
+
+
+class DbusPropertySync(DbusProperty[T]):
+    def __get__(self,
+                obj: DbusInterfaceBase,
+                obj_class: Optional[Type[DbusInterfaceBase]] = None,
+                ) -> T:
+        assert _check_sync_in_async_env(), (
+            "Used sync __get__ method in async environment. "
+            "This is probably an error as it will block "
+            "other asyncio methods for considerable time."
+        )
+
+        if not obj.is_binded:
+            raise ValueError
+
+        assert obj.attached_bus is not None
+        assert obj.remote_service_name is not None
+        assert obj.remote_object_path is not None
+        assert self.property_name is not None
+        assert self.interface_name is not None
+        new_call_message = obj.attached_bus. \
+            new_property_get_message(
+                obj.remote_service_name,
+                obj.remote_object_path,
+                self.interface_name,
+                self.property_name,
+            )
+
+        reply_message = obj.attached_bus. \
+            call(new_call_message)
+        return cast(T, reply_message.get_contents()[1])
+
+    def __set__(self, obj: DbusInterfaceBase, value: T) -> None:
+        assert _check_sync_in_async_env(), (
+            "Used sync __set__ method in async environment. "
+            "This is probably an error as it will block "
+            "other asyncio methods for considerable time."
+        )
+
+        assert obj.attached_bus is not None
+        assert obj.remote_service_name is not None
+        assert obj.remote_object_path is not None
+        assert self.property_name is not None
+        assert self.interface_name is not None
+        new_call_message = obj.attached_bus. \
+            new_property_set_message(
+                obj.remote_service_name,
+                obj.remote_object_path,
+                self.interface_name,
+                self.property_name,
+            )
+
+        new_call_message.append_data(
+            'v', (self.property_signature, value))
+
+        obj.attached_bus.call(new_call_message)
+
+
+def dbus_property(
+    property_signature: str = "",
+    flags: int = 0,
+    property_name: Optional[str] = None,
+) -> Callable[
+    [Callable[[Any], T]],
+        DbusPropertySync[T]]:
+
+    def property_decorator(
+        function: Callable[..., Any]
+    ) -> DbusPropertySync[T]:
+        assert not iscoroutinefunction(function), "Expected regular function"
+        nonlocal property_name
+
+        if property_name is None:
+            property_name = ''.join(
+                _method_name_converter(
+                    cast(FunctionType, function).__name__
+                )
+            )
+
+        new_wrapper: DbusPropertySync[T] = DbusPropertySync(
             property_name,
             property_signature,
             function,
@@ -676,7 +781,7 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
                 interface_name = value.dbus_method.interface_name
                 if not value.dbus_method.serving_enabled:
                     continue
-            elif isinstance(value, DbusPropertyBinded):
+            elif isinstance(value, DbusPropertyAsyncBinded):
                 interface_name = value.dbus_property.interface_name
                 if not value.dbus_property.serving_enabled:
                     continue
@@ -710,14 +815,14 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
                         dbus_something.dbus_method.flags,
                         dbus_something._call_from_dbus,
                     )
-                elif isinstance(dbus_something, DbusPropertyBinded):
+                elif isinstance(dbus_something, DbusPropertyAsyncBinded):
                     new_interface.add_property(
                         dbus_something.dbus_property.property_name,
                         dbus_something.dbus_property.property_signature,
-                        dbus_something.get_sync,
-                        dbus_something.set_sync
-                        if dbus_something.dbus_property.
-                        property_set is not None
+                        dbus_something._reply_get_async,
+                        dbus_something._reply_set_async
+                        if dbus_something.dbus_property.property_setter
+                        is not None
                         else None,
                         dbus_something.dbus_property.flags,
                     )

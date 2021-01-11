@@ -1943,7 +1943,7 @@ SdBus_drive(SdBusObject *self,
             CALL_PYTHON_AND_CHECK(unregister_reader(self));
             Py_RETURN_NONE;
         }
-        SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        CALL_SD_BUS_AND_CHECK(return_value);
 
         if (PyErr_Occurred())
         {

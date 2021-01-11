@@ -25,7 +25,8 @@ from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 
 from py_sd_bus.dbus_proxy import (DbusInterfaceCommon, dbus_method,
-                                  dbus_overload, dbus_property, dbus_signal)
+                                  dbus_overload, dbus_property_async,
+                                  dbus_signal)
 
 from .common_test_util import TempDbusTest
 
@@ -78,16 +79,16 @@ class TestInterface(DbusInterfaceCommon,
     async def int_annotated(self) -> int:
         return 1
 
-    @dbus_property("s")
-    def test_property(self) -> str:
+    @dbus_property_async("s")
+    async def test_property(self) -> str:
         return self.test_string
 
     @test_property.setter
     def test_property_set(self, new_property: str) -> None:
         self.test_string = new_property
 
-    @dbus_property("s")
-    def test_property_read_only(self) -> str:
+    @dbus_property_async("s")
+    async def test_property_read_only(self) -> str:
         return self.test_string_read
 
     @dbus_method("sb", "s")

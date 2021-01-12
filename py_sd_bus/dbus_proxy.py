@@ -22,7 +22,7 @@ from __future__ import annotations
 from asyncio import Queue, get_running_loop
 from copy import deepcopy
 from inspect import getfullargspec, getmembers, iscoroutinefunction
-from types import FunctionType
+from types import FunctionType, MethodType
 from typing import (Any, AsyncGenerator, Callable, Coroutine, Dict, Generator,
                     Generic, Iterator, List, Optional, Sequence, Set, Tuple,
                     Type, TypeVar, cast)
@@ -706,10 +706,19 @@ def dbus_signal(
 class DbusOverload:
     def __init__(self, original: T):
         self.original = original
+        self.setter_overload: Optional[Callable[[Any, T], None]] = None
+
+    def setter(self, new_setter: Optional[Callable[[Any, T], None]]) -> None:
+        self.setter_overload = new_setter
 
 
-def dbus_overload(new_function: T) -> T:
+def dbus_method_async_overload(new_function: T) -> T:
     return cast(T, DbusOverload(new_function))
+
+
+def dbus_property_async_overload(
+        new_property: Callable[[Any], T]) -> DbusPropertyAsync[T]:
+    return cast(DbusPropertyAsync[T], DbusOverload(new_property))
 
 
 class DbusInterfaceMeta(type):
@@ -735,7 +744,8 @@ class DbusInterfaceMeta(type):
                     base._dbus_declared_interfaces)
 
         for key in super_declared_interfaces & namespace.keys():
-            if isinstance(namespace[key], DbusOverload):
+            value = namespace[key]
+            if isinstance(value, DbusOverload):
                 for base in bases:
                     try:
                         sc_dbus_def = base.__dict__[key]
@@ -746,9 +756,16 @@ class DbusInterfaceMeta(type):
                 assert isinstance(sc_dbus_def, DbusSomething)
                 new_dbus_def = deepcopy(sc_dbus_def)
                 if isinstance(new_dbus_def, DbusMethod):
-                    new_dbus_def.original_method = namespace[key].original
+                    new_dbus_def.original_method = cast(
+                        MethodType, value.original)
+                elif isinstance(new_dbus_def, DbusPropertyAsync):
+                    new_dbus_def.property_getter = cast(
+                        Callable[[DbusInterfaceBase], Any],
+                        value.original)
+                    if value.setter_overload is not None:
+                        new_dbus_def.property_setter = value.setter_overload
                 else:
-                    raise TypeError
+                    raise TypeError('Unknown overload')
 
                 namespace[key] = new_dbus_def
                 declared_interfaces.add(key)

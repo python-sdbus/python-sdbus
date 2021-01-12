@@ -25,7 +25,9 @@ from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 
 from py_sd_bus.dbus_proxy import (DbusInterfaceCommon, dbus_method,
-                                  dbus_overload, dbus_property_async,
+                                  dbus_method_async_overload,
+                                  dbus_property_async,
+                                  dbus_property_async_overload,
                                   dbus_signal)
 
 from .common_test_util import TempDbusTest
@@ -186,10 +188,21 @@ class TestProxy(TempDbusTest):
 
     async def test_subclass(self) -> None:
 
+        test_var = ['asdasd']
+
         class TestInheritnce(TestInterface):
-            @dbus_overload
+            @dbus_method_async_overload
             async def test_int(self) -> int:
                 return 2
+
+            @dbus_property_async_overload
+            def test_property(self) -> str:
+                return test_var[0]
+
+            @test_property.setter
+            def test_property_setter(self, var: str) -> None:
+                nonlocal test_var
+                test_var.insert(0, var)
 
         test_subclass = TestInheritnce()
 
@@ -203,6 +216,14 @@ class TestProxy(TempDbusTest):
 
         with self.subTest('Subclass test: python-dbus-python'):
             self.assertEqual(await test_subclass_connection.test_int(), 2)
+
+        with self.subTest('Subclass property overload'):
+            self.assertEqual(test_var[0], await test_subclass.test_property)
+
+            await test_subclass.test_property.set_async('12345')
+
+            self.assertEqual(test_var[0], await test_subclass.test_property)
+            self.assertEqual('12345', await test_subclass.test_property)
 
     async def test_bad_subclass(self) -> None:
         def bad_call() -> None:

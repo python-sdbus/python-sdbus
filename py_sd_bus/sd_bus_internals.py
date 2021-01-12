@@ -53,9 +53,8 @@ class SdBusInterface:
         self,
         property_name: str,
         property_signature: str,
-        get_function: Callable[[SdBusMessage], Coroutine[Any, Any, Any]],
-        set_function: Optional[Callable[[SdBusMessage],
-                                        Coroutine[Any, Any, None]]],
+        get_function: Callable[[SdBusMessage], Any],
+        set_function: Optional[Callable[[SdBusMessage], None]],
         flags: int, /
     ) -> None:
         ...

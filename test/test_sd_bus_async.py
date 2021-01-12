@@ -80,15 +80,15 @@ class TestInterface(DbusInterfaceCommon,
         return 1
 
     @dbus_property_async("s")
-    async def test_property(self) -> str:
+    def test_property(self) -> str:
         return self.test_string
 
     @test_property.setter
-    async def test_property_set(self, new_property: str) -> None:
+    def test_property_set(self, new_property: str) -> None:
         self.test_string = new_property
 
     @dbus_property_async("s")
-    async def test_property_read_only(self) -> str:
+    def test_property_read_only(self) -> str:
         return self.test_string_read
 
     @dbus_method("sb", "s")

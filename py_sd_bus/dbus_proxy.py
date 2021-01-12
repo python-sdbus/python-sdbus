@@ -319,9 +319,10 @@ class DbusProperty(DbusSomething, Generic[T]):
             property_name: str,
             property_signature: str,
             property_getter: Callable[[DbusInterfaceBase],
-                                      Coroutine[Any, Any, T]],
-            property_setter: Optional[Callable[[DbusInterfaceBase, T],
-                                               Coroutine[Any, Any, None]]],
+                                      T],
+            property_setter: Optional[
+                Callable[[DbusInterfaceBase, T],
+                         None]],
             flags: int,
 
     ) -> None:
@@ -341,8 +342,13 @@ class DbusPropertyAsync(DbusProperty[T]):
         return DbusPropertyAsyncBinded(self, obj)
 
     def setter(self,
-               new_set_function: Callable[[Any, T], Coroutine[Any, Any, None]]
+               new_set_function: Callable[
+                   [Any, T],
+                   None]
                ) -> None:
+        assert not iscoroutinefunction(new_set_function), (
+            "Property setter can't be coroutine",
+        )
         self.property_setter = new_set_function
 
 
@@ -366,7 +372,8 @@ class DbusPropertyAsyncBinded(DbusBinded):
 
     async def get_async(self) -> T:
         if not self.interface.is_binded:
-            return await self.dbus_property.property_getter(self.interface)
+            return self.dbus_property.property_getter(
+                self.interface)
 
         assert self.interface.attached_bus is not None
         assert self.interface.remote_service_name is not None
@@ -386,27 +393,24 @@ class DbusPropertyAsyncBinded(DbusBinded):
         # Get method returns variant but we only need contents of variant
         return cast(T, reply_message.get_contents()[1])
 
-    async def _reply_get_async(self, message: SdBusMessage) -> None:
-        reply_data: Any = await self.get_async()
+    def _reply_get_sync(self, message: SdBusMessage) -> None:
+        reply_data: Any = self.dbus_property.property_getter(self.interface)
         message.append_data(self.dbus_property.property_signature, reply_data)
-        message.close_container()
-        message.send()
 
-    async def _reply_set_async(self, message: SdBusMessage) -> None:
+    def _reply_set_sync(self, message: SdBusMessage) -> None:
+        assert self.dbus_property.property_setter is not None
         data_to_set_to: Any = message.get_contents()
 
-        await self.set_async(data_to_set_to)
-
-        reply_message = message.create_reply()
-        reply_message.send()
+        self.dbus_property.property_setter(self.interface, data_to_set_to)
 
     async def set_async(self, complete_object: T) -> None:
         if not self.interface.is_binded:
             if self.dbus_property.property_setter is None:
                 raise ValueError('Property has no setter')
 
-            await self.dbus_property.property_setter(
+            self.dbus_property.property_setter(
                 self.interface, complete_object)
+
             return
 
         assert self.interface.attached_bus is not None
@@ -433,13 +437,17 @@ def dbus_property_async(
         flags: int = 0,
         property_name: Optional[str] = None,
 ) -> Callable[
-    [Callable[[Any], Coroutine[Any, Any, T]]],
+    [Callable[[Any], T]],
         DbusPropertyAsync[T]]:
 
     def property_decorator(
         function: Callable[..., Any]
     ) -> DbusPropertyAsync[T]:
-        assert iscoroutinefunction(function), "Expected coroutine function"
+
+        assert not iscoroutinefunction(function), (
+            "Property setter can't be coroutine",
+        )
+
         nonlocal property_name
 
         if property_name is None:
@@ -821,14 +829,18 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
                         dbus_something._call_from_dbus,
                     )
                 elif isinstance(dbus_something, DbusPropertyAsyncBinded):
+                    getter = dbus_something._reply_get_sync
+
+                    setter = (dbus_something._reply_set_sync
+                              if dbus_something.dbus_property.property_setter
+                              is not None
+                              else None)
+
                     new_interface.add_property(
                         dbus_something.dbus_property.property_name,
                         dbus_something.dbus_property.property_signature,
-                        dbus_something._reply_get_async,
-                        dbus_something._reply_set_async
-                        if dbus_something.dbus_property.property_setter
-                        is not None
-                        else None,
+                        getter,
+                        setter,
                         dbus_something.dbus_property.flags,
                     )
                 elif isinstance(dbus_something, DbusSignalBinded):

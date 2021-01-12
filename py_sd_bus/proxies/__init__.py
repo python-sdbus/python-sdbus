@@ -41,7 +41,7 @@ class FreedesktopDbus(DbusInterfaceCommon,
         raise NotImplementedError
 
     @dbus_property_async('as')
-    async def features(self) -> List[str]:
+    def features(self) -> List[str]:
         raise NotImplementedError
 
     name_acquired: DbusSignal[str] = DbusSignal('NameAcquired')

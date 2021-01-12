@@ -167,6 +167,7 @@ static PyObject *exception_generic = NULL;
 static PyTypeObject *async_future_type = NULL;
 static PyObject *asyncio_get_running_loop = NULL;
 static PyObject *asyncio_queue_class = NULL;
+static PyObject *is_coroutine_function = NULL;
 // Str objects
 static PyObject *set_result_str = NULL;
 static PyObject *set_exception_str = NULL;
@@ -302,10 +303,9 @@ SdBusInterface_add_property(SdBusInterfaceObject *self,
     SD_BUS_PY_CHECK_ARG_CHECK_FUNC(4, PyLong_Check);
 
     PyObject *new_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(4, args[0], args[1], args[4], args[3]));
-    PyObject *get_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(2, args[1], args[2]));
 
     CALL_PYTHON_INT_CHECK(PyList_Append(self->property_list, new_tuple));
-    CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->property_get_dict, args[0], get_tuple));
+    CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->property_get_dict, args[0], args[2]));
     CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->property_set_dict, args[0], args[3]));
 
     Py_RETURN_NONE;
@@ -2251,8 +2251,6 @@ static PyTypeObject SdBusType = {
     .tp_methods = SdBus_methods,
 };
 
-static PyObject *is_coroutine_function = NULL;
-
 static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
 {
     SdBusInterfaceObject *self = userdata;
@@ -2327,19 +2325,13 @@ static int _SdBusInterface_property_get_callback(
     sd_bus_error *Py_UNUSED(ret_error))
 {
     SdBusInterfaceObject *self = userdata;
-    PyObject *get_tuple = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItemString(self->property_get_dict, property));
-
-    PyObject *get_call = PyTuple_GET_ITEM(get_tuple, 1);
+    PyObject *get_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItemString(self->property_get_dict, property));
 
     PyObject *new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL));
     _SdBusMessage_set_messsage((SdBusMessageObject *)new_message, reply);
 
-    PyObject *running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
-    PyObject *get_coroutine CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(get_call, new_message, NULL));
-
-    PyObject *task CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(running_loop, create_task_str, get_coroutine, NULL));
-
-    return 1;
+    PyObject *return_obj CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(get_call, new_message, NULL));
+    return 0;
 }
 
 static int _SdBusInterface_property_set_callback(
@@ -2352,17 +2344,14 @@ static int _SdBusInterface_property_set_callback(
     sd_bus_error *Py_UNUSED(ret_error))
 {
     SdBusInterfaceObject *self = userdata;
+
     PyObject *set_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItemString(self->property_set_dict, property));
 
     PyObject *new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL));
     _SdBusMessage_set_messsage((SdBusMessageObject *)new_message, value);
 
-    PyObject *running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
-    PyObject *set_coroutine CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(set_call, new_message, NULL));
-
-    PyObject *task CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(running_loop, create_task_str, set_coroutine, NULL));
-
-    return 1;
+    PyObject *return_obj CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(set_call, new_message, NULL));
+    return 0;
 }
 
 static SdBusObject *

@@ -28,7 +28,7 @@ from py_sd_bus.dbus_proxy import (DbusInterfaceCommon, dbus_method,
                                   dbus_method_async_overload,
                                   dbus_property_async,
                                   dbus_property_async_overload,
-                                  dbus_signal)
+                                  dbus_signal_async)
 
 from .common_test_util import TempDbusTest
 
@@ -113,7 +113,7 @@ class TestInterface(DbusInterfaceCommon,
         else:
             return input.lower()
 
-    @dbus_signal('ss')
+    @dbus_signal_async('ss')
     def test_signal(self) -> Tuple[str, str]:
         raise NotImplementedError
 

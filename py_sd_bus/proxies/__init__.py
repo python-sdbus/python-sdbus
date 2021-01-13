@@ -19,8 +19,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..dbus_proxy import (DbusInterfaceCommon, DbusSignal, dbus_method,
-                          dbus_property_async, dbus_signal, get_bus)
+from ..dbus_proxy import (DbusInterfaceCommon, dbus_method,
+                          dbus_property_async, dbus_signal_async, get_bus)
 from ..sd_bus_internals import SdBus
 
 
@@ -44,10 +44,17 @@ class FreedesktopDbus(DbusInterfaceCommon,
     def features(self) -> List[str]:
         raise NotImplementedError
 
-    name_acquired: DbusSignal[str] = DbusSignal('NameAcquired')
-    name_lost: DbusSignal[str] = DbusSignal('NameLost')
-    name_owner_changed: DbusSignal[Tuple[str, str, str]] = \
-        DbusSignal('NameOwnerChanged')
+    @dbus_signal_async()
+    def name_acquired(self) -> str:
+        raise NotImplementedError
+
+    @dbus_signal_async()
+    def name_lost(self) -> str:
+        raise NotImplementedError
+
+    @dbus_signal_async()
+    def name_owner_changed(self) -> Tuple[str, str, str]:
+        raise NotImplementedError
 
 
 class NotificationsInterface(DbusInterfaceCommon,
@@ -80,11 +87,11 @@ class NotificationsInterface(DbusInterfaceCommon,
 
         raise NotImplementedError
 
-    @dbus_signal()
+    @dbus_signal_async()
     def action_invoked(self) -> Tuple[int, int]:
         raise NotImplementedError
 
-    @dbus_signal()
+    @dbus_signal_async()
     def notification_closed(self) -> Tuple[int, int]:
         raise NotImplementedError
 

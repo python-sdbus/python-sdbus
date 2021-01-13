@@ -675,7 +675,7 @@ class DbusSignalBinded(Generic[T], DbusBinded):
             local_queue.put_nowait(args)
 
 
-def dbus_signal(
+def dbus_signal_async(
         signal_signature: str = '',
         signal_args_names: Sequence[str] = (),
         flags: int = 0,

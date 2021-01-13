@@ -19,12 +19,12 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..dbus_proxy import (DbusInterfaceCommon, dbus_method,
+from ..dbus_proxy import (DbusInterfaceCommonAsync, dbus_method_async,
                           dbus_property_async, dbus_signal_async, get_bus)
 from ..sd_bus_internals import SdBus
 
 
-class FreedesktopDbus(DbusInterfaceCommon,
+class FreedesktopDbus(DbusInterfaceCommonAsync,
                       interface_name='org.freedesktop.DBus'):
 
     def __init__(self, bus: Optional[SdBus] = None):
@@ -36,7 +36,7 @@ class FreedesktopDbus(DbusInterfaceCommon,
             '/org/freedesktop/DBus'
         )
 
-    @dbus_method()
+    @dbus_method_async()
     async def get_id(self) -> str:
         raise NotImplementedError
 
@@ -57,23 +57,23 @@ class FreedesktopDbus(DbusInterfaceCommon,
         raise NotImplementedError
 
 
-class NotificationsInterface(DbusInterfaceCommon,
+class NotificationsInterface(DbusInterfaceCommonAsync,
                              interface_name='org.freedesktop.Notifications'
                              ):
 
-    @dbus_method('u')
+    @dbus_method_async('u')
     async def close_notification(self, notif_id: int) -> None:
         raise NotImplementedError
 
-    @dbus_method()
+    @dbus_method_async()
     async def get_capabilities(self) -> List[str]:
         raise NotImplementedError
 
-    @dbus_method()
+    @dbus_method_async()
     async def get_server_infomation(self) -> Tuple[str, str, str, str]:
         raise NotImplementedError
 
-    @dbus_method("susssasa{sv}i")
+    @dbus_method_async("susssasa{sv}i")
     async def notify(
             self,
             app_name: str,

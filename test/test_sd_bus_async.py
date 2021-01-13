@@ -24,7 +24,7 @@ from asyncio import get_running_loop, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 
-from py_sd_bus.dbus_proxy import (DbusInterfaceCommon, dbus_method,
+from py_sd_bus.dbus_proxy import (DbusInterfaceCommonAsync, dbus_method_async,
                                   dbus_method_async_overload,
                                   dbus_property_async,
                                   dbus_property_async_overload,
@@ -60,7 +60,7 @@ class TestRequestName(TempDbusTest):
         await self.bus.request_name_async("org.example.test", 0)
 
 
-class TestInterface(DbusInterfaceCommon,
+class TestInterface(DbusInterfaceCommonAsync,
                     interface_name='org.test.test',
                     ):
 
@@ -69,15 +69,15 @@ class TestInterface(DbusInterfaceCommon,
         self.test_string = 'test_property'
         self.test_string_read = 'read'
 
-    @dbus_method("s", "s")
+    @dbus_method_async("s", "s")
     async def upper(self, string: str) -> str:
         return string.upper()
 
-    @dbus_method(result_signature='x')
+    @dbus_method_async(result_signature='x')
     async def test_int(self) -> int:
         return 1
 
-    @dbus_method(result_signature='x', result_args_names=('an_int', ))
+    @dbus_method_async(result_signature='x', result_args_names=('an_int', ))
     async def int_annotated(self) -> int:
         return 1
 
@@ -93,7 +93,7 @@ class TestInterface(DbusInterfaceCommon,
     def test_property_read_only(self) -> str:
         return self.test_string_read
 
-    @dbus_method("sb", "s")
+    @dbus_method_async("sb", "s")
     async def kwargs_function(
             self,
             input: str = 'test',
@@ -103,7 +103,7 @@ class TestInterface(DbusInterfaceCommon,
         else:
             return input.lower()
 
-    @dbus_method("sb", "s", 0, ('string_result', ))
+    @dbus_method_async("sb", "s", 0, ('string_result', ))
     async def kwargs_function_annotated(
             self,
             input: str = 'test',

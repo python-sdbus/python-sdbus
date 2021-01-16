@@ -20,36 +20,16 @@
 
 from __future__ import annotations
 
-from typing import List
 from unittest import TestCase, main
 
-from py_sd_bus.dbus_common import get_bus
-from py_sd_bus.dbus_proxy_sync import (DbusInterfaceCommon, dbus_method,
-                                       dbus_property)
+from py_sd_bus.proxies import FreedesktopDbus
 from py_sd_bus.sd_bus_internals import DbusPropertyReadOnlyError
 
 
-class SyncDbus(DbusInterfaceCommon,
-               interface_name='org.freedesktop.DBus'):
-
-    @dbus_method()
-    def get_id(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property('as')
-    def features(self) -> List[str]:
-        raise NotImplementedError
-
-
 class TestSync(TestCase):
-    def setUp(self) -> None:
-        self.bus = get_bus()
 
     def test_sync(self) -> None:
-        s = SyncDbus(
-            'org.freedesktop.DBus',
-            '/org/freedesktop/DBus',
-            self.bus)
+        s = FreedesktopDbus()
 
         self.assertIsInstance(s.get_id(), str)
         self.assertIsInstance(s.features, list)

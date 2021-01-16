@@ -12,6 +12,8 @@ py_sd_bus is the python dbus library that aim to use the modern features of pyth
     :maxdepth: 2
     :caption: Contents:
 
+    sync
+
 Dbus
 -----------
 

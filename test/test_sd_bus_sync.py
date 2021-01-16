@@ -20,12 +20,12 @@
 
 from __future__ import annotations
 
-from unittest import TestCase, main
 from typing import List
+from unittest import TestCase, main
 
-from py_sd_bus.dbus_proxy import (DbusInterfaceCommon, dbus_method,
-                                  get_bus, dbus_property)
-
+from py_sd_bus.dbus_common import get_bus
+from py_sd_bus.dbus_proxy_sync import (DbusInterfaceCommon, dbus_method,
+                                       dbus_property)
 from py_sd_bus.sd_bus_internals import DbusPropertyReadOnlyError
 
 
@@ -46,12 +46,10 @@ class TestSync(TestCase):
         self.bus = get_bus()
 
     def test_sync(self) -> None:
-        s = SyncDbus()
-        s._connect(
-            self.bus,
+        s = SyncDbus(
             'org.freedesktop.DBus',
             '/org/freedesktop/DBus',
-        )
+            self.bus)
 
         self.assertIsInstance(s.get_id(), str)
         self.assertIsInstance(s.features, list)

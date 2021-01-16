@@ -24,11 +24,12 @@ from asyncio import get_running_loop, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 
-from py_sd_bus.dbus_proxy import (DbusInterfaceCommonAsync, dbus_method_async,
-                                  dbus_method_async_overload,
-                                  dbus_property_async,
-                                  dbus_property_async_overload,
-                                  dbus_signal_async)
+from py_sd_bus.dbus_proxy_async import (DbusInterfaceCommonAsync,
+                                        dbus_method_async,
+                                        dbus_method_async_overload,
+                                        dbus_property_async,
+                                        dbus_property_async_overload,
+                                        dbus_signal_async)
 
 from .common_test_util import TempDbusTest
 

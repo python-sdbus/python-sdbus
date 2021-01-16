@@ -19,48 +19,19 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from asyncio import Queue, get_running_loop
+from asyncio import Queue
 from copy import deepcopy
-from inspect import getfullargspec, getmembers, iscoroutinefunction
+from inspect import getmembers, iscoroutinefunction
 from types import FunctionType, MethodType
-from typing import (Any, AsyncGenerator, Callable, Coroutine, Dict, Generator,
-                    Generic, Iterator, List, Optional, Sequence, Set, Tuple,
-                    Type, TypeVar, cast)
+from typing import (Any, AsyncGenerator, Callable, Dict, Generator, Generic,
+                    List, Optional, Sequence, Set, Tuple, Type, TypeVar, cast)
 from weakref import ref as weak_ref
 
-from .sd_bus_internals import SdBus, SdBusInterface, SdBusMessage, sd_bus_open
+from .dbus_common import (DbusMethodCommon, DbusSomethingAsync,
+                          DbusSomethingSync, _method_name_converter)
+from .sd_bus_internals import SdBus, SdBusInterface, SdBusMessage
 
 DEFAULT_BUS: Optional[SdBus] = None
-
-
-def get_bus() -> SdBus:
-    global DEFAULT_BUS
-    old_bus = DEFAULT_BUS
-    if old_bus is None:
-        new_bus = sd_bus_open()
-        DEFAULT_BUS = new_bus
-        return new_bus
-    else:
-        return old_bus
-
-
-def _method_name_converter(python_name: str) -> Iterator[str]:
-    char_iter = iter(python_name)
-    # Name starting with upper case letter
-    first_char = next(char_iter)
-    yield first_char.upper()
-
-    upper_next_one = False
-    for c in char_iter:
-        # Every under score remove and uppercase next one
-        if c != '_':
-            if upper_next_one:
-                yield c.upper()
-                upper_next_one = False
-            else:
-                yield c
-        else:
-            upper_next_one = True
 
 
 T_input = TypeVar('T_input')
@@ -68,219 +39,22 @@ T_result = TypeVar('T_result')
 T_obj = TypeVar('T_obj')
 
 
-class DbusSomething:
-    def __init__(self) -> None:
-        self.interface_name: Optional[str] = None
-        self.serving_enabled: bool = True
-
-
-class DbusBinded:
+class DbusBindedAsync:
     ...
 
 
-class DbusMethodCommon(DbusSomething):
-
-    def __init__(
-            self,
-            original_method: FunctionType,
-            method_name: Optional[str],
-            input_signature: str,
-            input_args_names: Sequence[str],
-            result_signature: str,
-            result_args_names: Sequence[str],
-            flags: int):
-
-        assert not isinstance(input_args_names, str), (
-            "Passed a string as input args"
-            " names. Did you forget to put"
-            " it in to a tuple ('string', ) ?")
-
-        assert not any(' ' in x for x in input_args_names), (
-            "Can't have spaces in argument input names"
-            f"Args: {input_args_names}")
-
-        assert not any(' ' in x for x in result_args_names), (
-            "Can't have spaces in argument result names."
-            f"Args: {result_args_names}")
-
-        super().__init__()
-        self.original_method = original_method
-        self.args_spec = getfullargspec(original_method)
-        self.args_names = self.args_spec.args[1:]  # 1: because of self
-        self.num_of_args = len(self.args_names)
-        self.args_defaults = (
-            self.args_spec.defaults
-            if self.args_spec.defaults is not None
-            else ())
-        self.default_args_start_at = self.num_of_args - len(self.args_defaults)
-        self.dbus_method: Optional[DbusMethodType] = None
-        self.is_async_method = iscoroutinefunction(original_method)
-
-        if method_name is None:
-            self.method_name = ''.join(
-                _method_name_converter(original_method.__name__))
-        else:
-            self.method_name = method_name
-
-        self.input_signature = input_signature
-        self.input_args_names: Sequence[str] = (
-            self.args_names
-            if result_args_names and not input_args_names
-            else input_args_names)
-
-        self.result_signature = result_signature
-        self.result_args_names = result_args_names
-        self.flags = flags
-
-    def _rebuild_args(
-            self,
-            function: FunctionType,
-            *args: Any,
-            **kwargs: Dict[str, Any]) -> List[Any]:
-        # 3 types of arguments
-        # *args - should be passed directly
-        # **kwargs - should be put in a proper order
-        # defaults - should be retrived and put in proper order
-
-        # Strategy:
-        # Iterate over arg names
-        # Use:
-        # 1. Arg
-        # 2. Kwarg
-        # 3. Default
-
-        # a, b, c, d, e
-        #       ^ defaults start here
-        # 5 - 3 = [2]
-        # ^ total args
-        #     ^ number of default args
-        # First arg that supports default is
-        # (total args - number of default args)
-        passed_args_iter = iter(args)
-        default_args_iter = iter(self.args_defaults)
-
-        new_args_list: List[Any] = []
-
-        for i, a_name in enumerate(self.args_spec.args[1:]):
-            try:
-                next_arg = next(passed_args_iter)
-            except StopIteration:
-                next_arg = None
-
-            if i >= self.default_args_start_at:
-                next_default_arg = next(default_args_iter)
-            else:
-                next_default_arg = None
-
-            next_kwarg = kwargs.get(a_name)
-
-            if next_arg is not None:
-                new_args_list.append(next_arg)
-            elif next_kwarg is not None:
-                new_args_list.append(next_kwarg)
-            elif next_default_arg is not None:
-                new_args_list.append(next_default_arg)
-            else:
-                raise TypeError('Could not flatten the args')
-
-        return new_args_list
-
-
-class DbusMethodSync(DbusMethodCommon):
+class DbusMethodAsync(DbusMethodCommon, DbusSomethingAsync):
     def __get__(self,
-                obj: DbusInterfaceBase,
-                obj_class: Optional[Type[DbusInterfaceBase]] = None,
-                ) -> Callable[..., Any]:
-        return DbusMethodSyncBinded(self, obj)
-
-
-class DbusMethodSyncBinded(DbusBinded):
-    def __init__(self,
-                 dbus_method: DbusMethodSync,
-                 interface: DbusInterfaceBase):
-        self.dbus_method = dbus_method
-        self.interface = interface
-
-    def _call_dbus_sync(self, *args: Any) -> Any:
-        assert self.interface.attached_bus is not None
-        assert self.interface.remote_service_name is not None
-        assert self.interface.remote_object_path is not None
-        assert self.dbus_method.interface_name is not None
-        new_call_message = self.interface.attached_bus.new_method_call_message(
-            self.interface.remote_service_name,
-            self.interface.remote_object_path,
-            self.dbus_method.interface_name,
-            self.dbus_method.method_name,
-        )
-        if args:
-            new_call_message.append_data(
-                self.dbus_method.input_signature, *args)
-
-        reply_message = self.interface.attached_bus.call(
-            new_call_message)
-        return reply_message.get_contents()
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        if self.interface.is_binded:
-
-            if len(args) == self.dbus_method.num_of_args:
-                assert not kwargs, (
-                    "Passed more arguments than method supports"
-                    f"Extra args: {kwargs}")
-                rebuilt_args: Sequence[Any] = args
-            else:
-                rebuilt_args = self.dbus_method._rebuild_args(
-                    self.dbus_method.original_method,
-                    *args,
-                    **kwargs)
-
-            return self._call_dbus_sync(*rebuilt_args)
-        else:
-            raise ValueError('Method not bounded to remote object')
-
-
-def dbus_method(
-    input_signature: str = "",
-    result_signature: str = "",
-    flags: int = 0,
-    result_args_names: Sequence[str] = (),
-    input_args_names: Sequence[str] = (),
-    method_name: Optional[str] = None,
-) -> Callable[[T_input], T_input]:
-
-    def dbus_method_decorator(original_method: T_input) -> T_input:
-        assert isinstance(original_method, FunctionType)
-        assert not iscoroutinefunction(original_method), (
-            "Expected NON coroutine function. ",
-            "Maybe you wanted to use dbus_method_async?",
-        )
-        new_wrapper = DbusMethodSync(
-            original_method=original_method,
-            method_name=method_name,
-            input_signature=input_signature,
-            result_signature=result_signature,
-            result_args_names=result_args_names,
-            input_args_names=input_args_names,
-            flags=flags,
-        )
-
-        return cast(T_input, new_wrapper)
-
-    return dbus_method_decorator
-
-
-class DbusMethodAsync(DbusMethodCommon):
-    def __get__(self,
-                obj: DbusInterfaceBase,
-                obj_class: Optional[Type[DbusInterfaceBase]] = None,
+                obj: DbusInterfaceBaseAsync,
+                obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
                 ) -> Callable[..., Any]:
         return DbusMethodAsyncBinded(self, obj)
 
 
-class DbusMethodAsyncBinded(DbusBinded):
+class DbusMethodAsyncBinded(DbusBindedAsync):
     def __init__(self,
                  dbus_method: DbusMethodAsync,
-                 interface: DbusInterfaceBase):
+                 interface: DbusInterfaceBaseAsync):
         self.dbus_method = dbus_method
         self.interface = interface
 
@@ -382,15 +156,15 @@ def dbus_method_async(
 T = TypeVar('T')
 
 
-class DbusProperty(DbusSomething, Generic[T]):
+class DbusProperty(DbusSomethingAsync, Generic[T]):
     def __init__(
             self,
             property_name: str,
             property_signature: str,
-            property_getter: Callable[[DbusInterfaceBase],
+            property_getter: Callable[[DbusInterfaceBaseAsync],
                                       T],
             property_setter: Optional[
-                Callable[[DbusInterfaceBase, T],
+                Callable[[DbusInterfaceBaseAsync, T],
                          None]],
             flags: int,
 
@@ -405,8 +179,8 @@ class DbusProperty(DbusSomething, Generic[T]):
 
 class DbusPropertyAsync(DbusProperty[T]):
     def __get__(self,
-                obj: DbusInterfaceBase,
-                obj_class: Optional[Type[DbusInterfaceBase]] = None,
+                obj: DbusInterfaceBaseAsync,
+                obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
                 ) -> DbusPropertyAsyncBinded:
         return DbusPropertyAsyncBinded(self, obj)
 
@@ -421,18 +195,10 @@ class DbusPropertyAsync(DbusProperty[T]):
         self.property_setter = new_set_function
 
 
-def _check_sync_in_async_env() -> bool:
-    try:
-        get_running_loop()
-        return False
-    except RuntimeError:
-        return True
-
-
-class DbusPropertyAsyncBinded(DbusBinded):
+class DbusPropertyAsyncBinded(DbusBindedAsync):
     def __init__(self,
                  dbus_property: DbusPropertyAsync[T],
-                 interface: DbusInterfaceBase):
+                 interface: DbusInterfaceBaseAsync):
         self.dbus_property = dbus_property
         self.interface = interface
 
@@ -539,98 +305,7 @@ def dbus_property_async(
     return property_decorator
 
 
-class DbusPropertySync(DbusProperty[T]):
-    def __get__(self,
-                obj: DbusInterfaceBase,
-                obj_class: Optional[Type[DbusInterfaceBase]] = None,
-                ) -> T:
-        assert _check_sync_in_async_env(), (
-            "Used sync __get__ method in async environment. "
-            "This is probably an error as it will block "
-            "other asyncio methods for considerable time."
-        )
-
-        if not obj.is_binded:
-            raise ValueError
-
-        assert obj.attached_bus is not None
-        assert obj.remote_service_name is not None
-        assert obj.remote_object_path is not None
-        assert self.property_name is not None
-        assert self.interface_name is not None
-        new_call_message = obj.attached_bus. \
-            new_property_get_message(
-                obj.remote_service_name,
-                obj.remote_object_path,
-                self.interface_name,
-                self.property_name,
-            )
-
-        reply_message = obj.attached_bus. \
-            call(new_call_message)
-        return cast(T, reply_message.get_contents()[1])
-
-    def __set__(self, obj: DbusInterfaceBase, value: T) -> None:
-        assert _check_sync_in_async_env(), (
-            "Used sync __set__ method in async environment. "
-            "This is probably an error as it will block "
-            "other asyncio methods for considerable time."
-        )
-
-        assert obj.attached_bus is not None
-        assert obj.remote_service_name is not None
-        assert obj.remote_object_path is not None
-        assert self.property_name is not None
-        assert self.interface_name is not None
-        new_call_message = obj.attached_bus. \
-            new_property_set_message(
-                obj.remote_service_name,
-                obj.remote_object_path,
-                self.interface_name,
-                self.property_name,
-            )
-
-        new_call_message.append_data(
-            'v', (self.property_signature, value))
-
-        obj.attached_bus.call(new_call_message)
-
-
-def dbus_property(
-    property_signature: str = "",
-    flags: int = 0,
-    property_name: Optional[str] = None,
-) -> Callable[
-    [Callable[[Any], T]],
-        DbusPropertySync[T]]:
-
-    def property_decorator(
-        function: Callable[..., Any]
-    ) -> DbusPropertySync[T]:
-        assert not iscoroutinefunction(function), "Expected regular function"
-        nonlocal property_name
-
-        if property_name is None:
-            property_name = ''.join(
-                _method_name_converter(
-                    cast(FunctionType, function).__name__
-                )
-            )
-
-        new_wrapper: DbusPropertySync[T] = DbusPropertySync(
-            property_name,
-            property_signature,
-            function,
-            None,
-            flags,
-        )
-
-        return new_wrapper
-
-    return property_decorator
-
-
-class DbusSignal(Generic[T], DbusSomething):
+class DbusSignal(Generic[T], DbusSomethingAsync):
     def __init__(
         self,
         signal_name: str,
@@ -645,16 +320,16 @@ class DbusSignal(Generic[T], DbusSomething):
         self.flags = flags
 
     def __get__(self,
-                obj: DbusInterfaceBase,
-                obj_class: Optional[Type[DbusInterfaceBase]] = None,
+                obj: DbusInterfaceBaseAsync,
+                obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
                 ) -> DbusSignalBinded[T]:
         return DbusSignalBinded(self, obj)
 
 
-class DbusSignalBinded(Generic[T], DbusBinded):
+class DbusSignalBinded(Generic[T], DbusBindedAsync):
     def __init__(self,
                  dbus_signal: DbusSignal[T],
-                 interface: DbusInterfaceBase):
+                 interface: DbusInterfaceBaseAsync):
         self.dbus_signal = dbus_signal
         self.interface = interface
 
@@ -790,25 +465,29 @@ def dbus_property_async_overload(
     return cast(DbusPropertyAsync[T], DbusOverload(new_property))
 
 
-class DbusInterfaceMeta(type):
+class DbusInterfaceMetaAsync(type):
     def __new__(cls, name: str,
                 bases: Tuple[type, ...],
                 namespace: Dict[str, Any],
                 interface_name: Optional[str] = None,
                 serving_enabled: bool = True,
-                ) -> DbusInterfaceMeta:
+                ) -> DbusInterfaceMetaAsync:
 
         declared_interfaces = set()
         # Set interface name
         for key, value in namespace.items():
-            if isinstance(value, DbusSomething):
+            assert not isinstance(value, DbusSomethingSync), (
+                "Can't mix sync methods in async interface."
+            )
+
+            if isinstance(value, DbusSomethingAsync):
                 value.interface_name = interface_name
                 value.serving_enabled = serving_enabled
                 declared_interfaces.add(key)
 
         super_declared_interfaces = set()
         for base in bases:
-            if issubclass(base, DbusInterfaceBase):
+            if issubclass(base, DbusInterfaceBaseAsync):
                 super_declared_interfaces.update(
                     base._dbus_declared_interfaces)
 
@@ -822,14 +501,14 @@ class DbusInterfaceMeta(type):
                     except KeyError:
                         continue
 
-                assert isinstance(sc_dbus_def, DbusSomething)
+                assert isinstance(sc_dbus_def, DbusSomethingAsync)
                 new_dbus_def = deepcopy(sc_dbus_def)
                 if isinstance(new_dbus_def, DbusMethodAsync):
                     new_dbus_def.original_method = cast(
                         MethodType, value.original)
                 elif isinstance(new_dbus_def, DbusPropertyAsync):
                     new_dbus_def.property_getter = cast(
-                        Callable[[DbusInterfaceBase], Any],
+                        Callable[[DbusInterfaceBaseAsync], Any],
                         value.original)
                     if value.setter_overload is not None:
                         new_dbus_def.property_setter = value.setter_overload
@@ -848,10 +527,10 @@ class DbusInterfaceMeta(type):
         namespace['_dbus_serving_enabled'] = serving_enabled
         new_cls = super().__new__(cls, name, bases, namespace)
 
-        return cast(DbusInterfaceMeta, new_cls)
+        return cast(DbusInterfaceMetaAsync, new_cls)
 
 
-class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
+class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
     _dbus_declared_interfaces: Set[str]
     _dbus_interface_name: Optional[str]
     _dbus_serving_enabled: bool
@@ -871,10 +550,10 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
         self.attached_bus = bus
         self.serving_object_path = object_path
         # TODO: can be optimized with a single loop
-        interface_map: Dict[str, List[DbusBinded]] = {}
+        interface_map: Dict[str, List[DbusBindedAsync]] = {}
 
         for key, value in getmembers(self):
-            assert not isinstance(value, DbusSomething)
+            assert not isinstance(value, DbusSomethingAsync)
 
             if isinstance(value, DbusMethodAsyncBinded):
                 interface_name = value.dbus_method.interface_name
@@ -964,17 +643,14 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
     ) -> T_input:
 
         new_object = cls.__new__(cls)
-        assert isinstance(new_object, DbusInterfaceBase)
+        assert isinstance(new_object, DbusInterfaceBaseAsync)
         new_object._connect(bus, service_name, object_path)
         assert isinstance(new_object, cls)
         return new_object
 
 
-DbusMethodType = Callable[[DbusInterfaceBase, Any], Coroutine[Any, Any, Any]]
-
-
 class DbusPeerInterfaceAsync(
-    DbusInterfaceBase,
+    DbusInterfaceBaseAsync,
     interface_name='org.freedesktop.DBus.Peer',
     serving_enabled=False,
 ):
@@ -989,7 +665,7 @@ class DbusPeerInterfaceAsync(
 
 
 class DbusIntrospectableAsync(
-    DbusInterfaceBase,
+    DbusInterfaceBaseAsync,
     interface_name='org.freedesktop.DBus.Introspectable',
     serving_enabled=False,
 ):
@@ -1001,35 +677,4 @@ class DbusIntrospectableAsync(
 
 class DbusInterfaceCommonAsync(
         DbusPeerInterfaceAsync, DbusIntrospectableAsync):
-    ...
-
-
-class DbusPeerInterface(
-    DbusInterfaceBase,
-    interface_name='org.freedesktop.DBus.Peer',
-    serving_enabled=False,
-):
-
-    @dbus_method()
-    def ping(self) -> None:
-        raise NotImplementedError
-
-    @dbus_method()
-    def get_machine_id(self) -> str:
-        raise NotImplementedError
-
-
-class DbusIntrospectable(
-    DbusInterfaceBase,
-    interface_name='org.freedesktop.DBus.Introspectable',
-    serving_enabled=False,
-):
-
-    @dbus_method()
-    def introspect(self) -> str:
-        raise NotImplementedError
-
-
-class DbusInterfaceCommon(
-        DbusPeerInterface, DbusIntrospectable):
     ...

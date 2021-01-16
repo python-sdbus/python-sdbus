@@ -19,8 +19,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..dbus_proxy import (DbusInterfaceCommonAsync, dbus_method_async,
-                          dbus_property_async, dbus_signal_async, get_bus)
+from ..dbus_common import get_bus
+from ..dbus_proxy_async import (DbusInterfaceCommonAsync, dbus_method_async,
+                                dbus_property_async, dbus_signal_async)
 from ..sd_bus_internals import SdBus
 
 

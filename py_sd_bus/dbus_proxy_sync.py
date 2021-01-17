@@ -169,6 +169,9 @@ class DbusPropertySync(DbusProperty[T]):
             "other asyncio methods for considerable time."
         )
 
+        if not self.property_signature:
+            raise AttributeError('Dbus property is read only')
+
         assert obj.attached_bus is not None
         assert obj.remote_service_name is not None
         assert obj.remote_object_path is not None
@@ -190,7 +193,6 @@ class DbusPropertySync(DbusProperty[T]):
 
 def dbus_property(
     property_signature: str = "",
-    flags: int = 0,
     property_name: Optional[str] = None,
 ) -> Callable[
     [Callable[[Any], T]],
@@ -214,7 +216,7 @@ def dbus_property(
             property_signature,
             function,
             None,
-            flags,
+            0,
         )
 
         return new_wrapper

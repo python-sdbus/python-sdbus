@@ -39,7 +39,7 @@ class FreedesktopDbus(DbusInterfaceCommon,
     def get_id(self) -> str:
         raise NotImplementedError
 
-    @dbus_property('as')
+    @dbus_property()
     def features(self) -> List[str]:
         raise NotImplementedError
 

@@ -26,9 +26,9 @@ from typing import Tuple
 
 from py_sd_bus.dbus_proxy_async import (DbusInterfaceCommonAsync,
                                         dbus_method_async,
-                                        dbus_method_async_overload,
+                                        dbus_method_async_override,
                                         dbus_property_async,
-                                        dbus_property_async_overload,
+                                        dbus_property_async_override,
                                         dbus_signal_async)
 
 from .common_test_util import TempDbusTest
@@ -192,11 +192,11 @@ class TestProxy(TempDbusTest):
         test_var = ['asdasd']
 
         class TestInheritnce(TestInterface):
-            @dbus_method_async_overload
+            @dbus_method_async_override
             async def test_int(self) -> int:
                 return 2
 
-            @dbus_property_async_overload
+            @dbus_property_async_override
             def test_property(self) -> str:
                 return test_var[0]
 

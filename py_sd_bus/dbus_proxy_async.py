@@ -456,11 +456,11 @@ class DbusOverload:
         self.setter_overload = new_setter
 
 
-def dbus_method_async_overload(new_function: T) -> T:
+def dbus_method_async_override(new_function: T) -> T:
     return cast(T, DbusOverload(new_function))
 
 
-def dbus_property_async_overload(
+def dbus_property_async_override(
         new_property: Callable[[Any], T]) -> DbusPropertyAsync[T]:
     return cast(DbusPropertyAsync[T], DbusOverload(new_property))
 

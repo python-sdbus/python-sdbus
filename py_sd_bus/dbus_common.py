@@ -40,6 +40,11 @@ def get_default_bus() -> SdBus:
         return old_bus
 
 
+def set_default_bus(new_default: SdBus) -> None:
+    global DEFAULT_BUS
+    DEFAULT_BUS = new_default
+
+
 def _method_name_converter(python_name: str) -> Iterator[str]:
     char_iter = iter(python_name)
     # Name starting with upper case letter

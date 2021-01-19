@@ -113,7 +113,32 @@ Asyncio:
 * Serve object on dbus for other programms.
 * Dbus Signals.
 
+Name conversions
++++++++++++++++++++++
 
+Dbus uses CamelCase for method names.
+
+Python uses snake_case.
+
+When decorating a method name will be automatically translated from snake_case
+to CamelCase. Example: ``close_notification`` -> ``CloseNotification``
+
+However, all decorators have a parametre to force Dbus name to a specific value.
+See API documentation for a particular decorator.
+
+
+Default bus
+++++++++++++++++++++++++++
+
+Most object methods that take a bus as a parametre
+will use a default bus connection if a bus object is
+not explicitly passed.
+
+Session bus is default bus when running as a user and
+system bus otherwise.
+
+:py:func:`request_default_bus_name_async` can be used to acquire
+a service name on default bus.
 
 
 * :ref:`genindex`

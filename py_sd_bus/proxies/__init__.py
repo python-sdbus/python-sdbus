@@ -44,9 +44,15 @@ class FreedesktopDbus(DbusInterfaceCommon,
         raise NotImplementedError
 
 
-class NotificationsInterface(DbusInterfaceCommon,
-                             interface_name='org.freedesktop.Notifications'
-                             ):
+class FreedesktopNotifications(DbusInterfaceCommon,
+                               interface_name='org.freedesktop.Notifications'
+                               ):
+    def __init__(self, bus: Optional[SdBus] = None) -> None:
+        super().__init__(
+            'org.freedesktop.Notifications',
+            '/org/freedesktop/Notifications',
+            bus,
+        )
 
     @dbus_method('u')
     def close_notification(self, notif_id: int) -> None:
@@ -60,7 +66,7 @@ class NotificationsInterface(DbusInterfaceCommon,
     def get_server_infomation(self) -> Tuple[str, str, str, str]:
         raise NotImplementedError
 
-    @dbus_method("susssasa{sv}i")
+    @dbus_method('susssasa{sv}i')
     def notify(
             self,
             app_name: str,
@@ -73,12 +79,3 @@ class NotificationsInterface(DbusInterfaceCommon,
             expire_timeout: int, ) -> int:
 
         raise NotImplementedError
-
-
-class FreedesktopNotifications(NotificationsInterface):
-    def __init__(self, bus: Optional[SdBus] = None) -> None:
-        super().__init__(
-            'org.freedesktop.Notifications',
-            '/org/freedesktop/Notifications',
-            bus,
-        )

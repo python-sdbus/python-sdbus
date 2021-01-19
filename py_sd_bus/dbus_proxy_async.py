@@ -28,10 +28,9 @@ from typing import (Any, AsyncGenerator, Callable, Dict, Generator, Generic,
 from weakref import ref as weak_ref
 
 from .dbus_common import (DbusMethodCommon, DbusSomethingAsync,
-                          DbusSomethingSync, _method_name_converter)
+                          DbusSomethingSync, _method_name_converter,
+                          get_default_bus)
 from .sd_bus_internals import SdBus, SdBusInterface, SdBusMessage
-
-DEFAULT_BUS: Optional[SdBus] = None
 
 
 T_input = TypeVar('T_input')
@@ -546,7 +545,13 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         self._local_signal_queues: \
             Dict[DbusSignal[Any], List[weak_ref[Queue[Any]]]] = {}
 
-    async def start_serving(self, bus: SdBus, object_path: str) -> None:
+    async def start_serving(self,
+                            object_path: str,
+                            bus: Optional[SdBus] = None,
+                            ) -> None:
+
+        if bus is None:
+            bus = get_default_bus()
         # TODO: Being able to serve multiple busses and object
         self.attached_bus = bus
         self.serving_object_path = object_path
@@ -625,27 +630,27 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
 
     def _connect(
         self,
-        bus: SdBus,
         service_name: str,
         object_path: str,
+        bus: Optional[SdBus] = None,
     ) -> None:
 
         self.is_binded = True
-        self.attached_bus = bus
+        self.attached_bus = bus if bus is not None else get_default_bus()
         self.remote_service_name = service_name
         self.remote_object_path = object_path
 
     @classmethod
     def new_connect(
         cls: Type[T_input],
-        bus: SdBus,
         service_name: str,
         object_path: str,
+        bus: Optional[SdBus] = None,
     ) -> T_input:
 
         new_object = cls.__new__(cls)
         assert isinstance(new_object, DbusInterfaceBaseAsync)
-        new_object._connect(bus, service_name, object_path)
+        new_object._connect(service_name, object_path, bus)
         assert isinstance(new_object, cls)
         return new_object
 

@@ -26,7 +26,7 @@ from typing import (Any, Callable, Dict, Generic, Optional, Sequence, Set,
 
 from .dbus_common import (DbusMethodCommon, DbusSomethingAsync,
                           DbusSomethingSync, _check_sync_in_async_env,
-                          _method_name_converter, get_bus)
+                          _method_name_converter, get_default_bus)
 from .sd_bus_internals import SdBus
 
 DEFAULT_BUS: Optional[SdBus] = None
@@ -267,13 +267,14 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
 
     def __init__(
             self,
-
             service_name: str,
             object_path: str,
             bus: Optional[SdBus] = None, ) -> None:
         self.remote_service_name = service_name
         self.remote_object_path = object_path
-        self.attached_bus: SdBus = bus if bus is not None else get_bus()
+        self.attached_bus: SdBus = (
+            bus if bus is not None
+            else get_default_bus())
 
 
 class DbusPeerInterface(

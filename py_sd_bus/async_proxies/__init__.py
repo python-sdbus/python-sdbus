@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..dbus_common import get_bus
+
 from ..dbus_proxy_async import (DbusInterfaceCommonAsync, dbus_method_async,
                                 dbus_property_async, dbus_signal_async)
 from ..sd_bus_internals import SdBus
@@ -32,11 +32,10 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
 
     def __init__(self, bus: Optional[SdBus] = None):
         super().__init__()
-        self.bus: SdBus = bus if bus is not None else get_bus()
         self._connect(
-            self.bus,
             'org.freedesktop.DBus',
-            '/org/freedesktop/DBus'
+            '/org/freedesktop/DBus',
+            bus,
         )
 
     @dbus_method_async()
@@ -102,9 +101,8 @@ class NotificationsInterface(DbusInterfaceCommonAsync,
 class FreedesktopNotifications(NotificationsInterface):
     def __init__(self, bus: Optional[SdBus] = None) -> None:
         super().__init__()
-        self.bus: SdBus = bus if bus is not None else get_bus()
         self._connect(
-            self.bus,
             'org.freedesktop.Notifications',
-            '/org/freedesktop/Notifications'
+            '/org/freedesktop/Notifications',
+            bus,
         )

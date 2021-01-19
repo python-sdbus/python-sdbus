@@ -29,7 +29,7 @@ from .sd_bus_internals import SdBus, sd_bus_open
 DEFAULT_BUS: Optional[SdBus] = None
 
 
-def get_bus() -> SdBus:
+def get_default_bus() -> SdBus:
     global DEFAULT_BUS
     old_bus = DEFAULT_BUS
     if old_bus is None:

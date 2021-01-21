@@ -125,4 +125,17 @@ Start server before client. ``python example_server.py``
 In separated terminal start client. ``python example_client.py``
 
 Use CTRL-C to close client and server.
-    
+
+You can also use :py:obj:`ExampleInterface` as a local object: ::
+
+    from asyncio import run
+    from example_interface import ExampleInterface
+
+    example_object = ExampleInterface()
+
+    async def test() -> None:
+        print(await example_object.upper('test'))
+
+        print(await example_object.hello_world)
+
+    run(test())

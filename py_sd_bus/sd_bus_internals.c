@@ -161,9 +161,9 @@
         py_object;                                 \
     })
 
-static PyObject *exception_dict = NULL;
+static PyObject *dbus_error_to_exception_dict = NULL;
+static PyObject *exception_to_dbus_error_dict = NULL;
 static PyObject *exception_default = NULL;
-static PyObject *exception_generic = NULL;
 static PyTypeObject *async_future_type = NULL;
 static PyObject *asyncio_get_running_loop = NULL;
 static PyObject *asyncio_queue_class = NULL;
@@ -1848,10 +1848,10 @@ SdBus_call(SdBusObject *self,
 
     if (sd_bus_error_get_errno(&error))
     {
-        PyObject *exception_to_raise = PyDict_GetItemString(exception_dict, error.name);
+        PyObject *exception_to_raise = PyDict_GetItemString(dbus_error_to_exception_dict, error.name);
         if (exception_to_raise == NULL)
         {
-            exception_to_raise = exception_generic;
+            exception_to_raise = exception_default;
         }
         PyObject *exception_tuple CLEANUP_PY_OBJECT = Py_BuildValue("(ss)", error.name, error.message);
         PyErr_SetObject(exception_to_raise, exception_tuple);
@@ -1874,10 +1874,10 @@ int future_set_exception_from_message(PyObject *future, sd_bus_message *message)
         return -1;
     }
 
-    PyObject *exception_to_raise_type = PyDict_GetItemString(exception_dict, callback_error->name);
+    PyObject *exception_to_raise_type = PyDict_GetItemString(dbus_error_to_exception_dict, callback_error->name);
     if (exception_to_raise_type == NULL)
     {
-        exception_to_raise_type = exception_generic;
+        exception_to_raise_type = exception_default;
     }
     PyObject *new_exception CLEANUP_PY_OBJECT = PyObject_Call(exception_to_raise_type, exception_data, NULL);
     if (new_exception == NULL)
@@ -2440,12 +2440,57 @@ decode_object_path(PyObject *Py_UNUSED(self),
     }
 }
 
+PyObject *
+_map_exception(PyObject *exception, PyObject *dbus_error_string)
+{
+    CALL_PYTHON_INT_CHECK(PyDict_SetItem(dbus_error_to_exception_dict, dbus_error_string, exception));
+    CALL_PYTHON_INT_CHECK(PyDict_SetItem(exception_to_dbus_error_dict, exception, dbus_error_string));
+
+    Py_RETURN_NONE;
+}
+
+PyObject *
+_add_exception_mapping(PyObject *exception)
+{
+    if (PyObject_IsSubclass(exception, exception_default) < 1)
+    {
+        PyErr_SetString(PyExc_TypeError, "Exception is invlaid subclass. Must derive from DbusBaseError");
+        return NULL;
+    }
+
+    PyObject *dbus_error_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(exception, "dbus_error_name"));
+
+    if (CALL_PYTHON_INT_CHECK(PyDict_Contains(dbus_error_to_exception_dict, dbus_error_string)) > 0)
+    {
+        PyErr_SetString(PyExc_ValueError, "Dbus error is already mapped.");
+        return NULL;
+    }
+
+    if (CALL_PYTHON_INT_CHECK(PyDict_Contains(exception_to_dbus_error_dict, exception)) > 0)
+    {
+        PyErr_SetString(PyExc_ValueError, "Exception is already mapped to dbus error.");
+        return NULL;
+    }
+
+    return _map_exception(exception, dbus_error_string);
+}
+
+static PyObject *
+add_exception_mapping(PyObject *Py_UNUSED(self),
+                      PyObject *const *args,
+                      Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(1);
+    return _add_exception_mapping(args[0]);
+}
+
 static PyMethodDef SdBusPyInternal_methods[] = {
     {"sd_bus_open", (PyCFunction)sd_bus_py_open, METH_NOARGS, "Open dbus connection. Session bus running as user or system bus as daemon"},
     {"sd_bus_open_user", (PyCFunction)sd_bus_py_open_user, METH_NOARGS, "Open user session dbus"},
     {"sd_bus_open_system", (PyCFunction)sd_bus_py_open_system, METH_NOARGS, "Open system dbus"},
     {"encode_object_path", (void *)encode_object_path, METH_FASTCALL, "Encode object path with object path prefix and arbitrary string"},
     {"decode_object_path", (void *)decode_object_path, METH_FASTCALL, "Decode object path with object path prefix and arbitrary string"},
+    {"add_exception_mapping", (void *)add_exception_mapping, METH_FASTCALL, "Add exception to the mapping of dbus error names"},
     {NULL, NULL, 0, NULL},
 };
 
@@ -2464,93 +2509,60 @@ static PyModuleDef sd_bus_internals_module = {
         return NULL;                 \
     }
 
+#define SD_BUS_PY_INIT_TYPE_READY(type) \
+    if (PyType_Ready(&type) < 0)        \
+    {                                   \
+        return NULL;                    \
+    }
+
+#define SD_BUS_PY_INIT_ADD_OBJECT(type_name, type)              \
+    Py_INCREF((PyObject *)type);                                \
+    if (PyModule_AddObject(m, type_name, (PyObject *)type) < 0) \
+    {                                                           \
+        Py_DECREF((PyObject *)type);                            \
+        return NULL;                                            \
+    }
+
 PyMODINIT_FUNC
 PyInit_sd_bus_internals(void)
 {
-    PyObject *m;
-    if (PyType_Ready(&SdBusType) < 0)
-    {
-        return NULL;
-    }
-    if (PyType_Ready(&SdBusMessageType) < 0)
-    {
-        return NULL;
-    }
-    if (PyType_Ready(&SdBusSlotType) < 0)
-    {
-        return NULL;
-    }
-    if (PyType_Ready(&SdBusInterfaceType) < 0)
-    {
-        return NULL;
-    }
+    SD_BUS_PY_INIT_TYPE_READY(SdBusType);
+    SD_BUS_PY_INIT_TYPE_READY(SdBusMessageType);
+    SD_BUS_PY_INIT_TYPE_READY(SdBusSlotType);
+    SD_BUS_PY_INIT_TYPE_READY(SdBusInterfaceType);
 
-    m = PyModule_Create(&sd_bus_internals_module);
-    if (m == NULL)
-    {
-        return NULL;
-    }
+    PyObject *m CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyModule_Create(&sd_bus_internals_module));
 
-    Py_INCREF(&SdBusType);
-    if (PyModule_AddObject(m, "SdBus", (PyObject *)&SdBusType) < 0)
-    {
-        Py_DECREF(&SdBusType);
-        Py_DECREF(m);
-        return NULL;
-    }
-    if (PyModule_AddObject(m, "SdBusMessage", (PyObject *)&SdBusMessageType) < 0)
-    {
-        Py_DECREF(&SdBusMessageType);
-        Py_DECREF(m);
-        return NULL;
-    }
-    if (PyModule_AddObject(m, "SdBusSlot", (PyObject *)&SdBusSlotType) < 0)
-    {
-        Py_DECREF(&SdBusSlotType);
-        Py_DECREF(m);
-        return NULL;
-    }
-    if (PyModule_AddObject(m, "SdBusInterface", (PyObject *)&SdBusInterfaceType) < 0)
-    {
-        Py_DECREF(&SdBusInterfaceType);
-        Py_DECREF(m);
-        return NULL;
-    }
+    SD_BUS_PY_INIT_ADD_OBJECT("SdBus", &SdBusType);
+    SD_BUS_PY_INIT_ADD_OBJECT("SdBusMessage", &SdBusMessageType);
+    SD_BUS_PY_INIT_ADD_OBJECT("SdBusSlot", &SdBusSlotType);
+    SD_BUS_PY_INIT_ADD_OBJECT("SdBusInterface", &SdBusInterfaceType);
 
     // Exception map
-    exception_dict = PyDict_New();
-    if (exception_dict == NULL)
-    {
-        Py_DECREF(m);
-        return NULL;
-    }
-    if (PyModule_AddObject(m, "_ExceptionsMap", exception_dict) < 0)
-    {
-        Py_XDECREF(exception_dict);
-        Py_DECREF(m);
-        return NULL;
-    }
+    dbus_error_to_exception_dict = CALL_PYTHON_AND_CHECK(PyDict_New());
+    SD_BUS_PY_INIT_ADD_OBJECT("DBUS_ERROR_TO_EXCEPTION", dbus_error_to_exception_dict);
 
-    // TODO: check if PyErr_NewException can return NULL
-    PyObject *new_base_exception = PyErr_NewException("sd_bus_internals.DbusBaseError", NULL, NULL);
-    if (PyModule_AddObject(m, "DbusBaseError", new_base_exception) < 0)
-    {
-        Py_XDECREF(new_base_exception);
-        Py_DECREF(m);
-        return NULL;
-    }
+    exception_to_dbus_error_dict = CALL_PYTHON_AND_CHECK(PyDict_New());
+    SD_BUS_PY_INIT_ADD_OBJECT("EXCEPTION_TO_DBUS_ERROR", exception_to_dbus_error_dict);
+
+    PyObject *base_exception_dict CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyDict_New());
+    PyObject *base_error_name CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("org.freedesktop.DBus.Error.Failed"));
+    CALL_PYTHON_INT_CHECK(PyDict_SetItemString(base_exception_dict, "dbus_error_name", base_error_name));
+    PyObject *new_base_exception CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.DbusBaseError", NULL, NULL));
+
+    SD_BUS_PY_INIT_ADD_OBJECT("DbusBaseError", new_base_exception);
     exception_default = new_base_exception;
+    CALL_PYTHON_EXPECT_NONE(_map_exception(new_base_exception, base_error_name));
 
-    PyObject *new_exception = NULL;
-#define SD_BUS_PY_ADD_EXCEPTION(exception_name, dbus_string)                                              \
-    new_exception = PyErr_NewException("sd_bus_internals." #exception_name "", new_base_exception, NULL); \
-    PyDict_SetItemString(exception_dict, dbus_string, new_exception);                                     \
-    if (PyModule_AddObject(m, #exception_name, new_exception) < 0)                                        \
-    {                                                                                                     \
-        Py_XDECREF(new_exception);                                                                        \
-        Py_DECREF(m);                                                                                     \
-        return NULL;                                                                                      \
-    }
+#define SD_BUS_PY_ADD_EXCEPTION(exception_name, dbus_error_name)                                                                                    \
+    ({                                                                                                                                              \
+        PyObject *exception_dict CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyDict_New());                                                           \
+        PyObject *error_name CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString(dbus_error_name));                                      \
+        CALL_PYTHON_INT_CHECK(PyDict_SetItemString(exception_dict, "dbus_error_name", error_name));                                                 \
+        PyObject *new_exception CLEANUP_PY_OBJECT = PyErr_NewException("sd_bus_internals." #exception_name "", new_base_exception, exception_dict); \
+        SD_BUS_PY_INIT_ADD_OBJECT(#exception_name, new_exception);                                                                                  \
+        CALL_PYTHON_EXPECT_NONE(_map_exception(new_exception, error_name));                                                                         \
+    })
 
     SD_BUS_PY_ADD_EXCEPTION(DbusFailedError, SD_BUS_ERROR_FAILED);
     SD_BUS_PY_ADD_EXCEPTION(DbusNoMemoryError, SD_BUS_ERROR_NO_MEMORY);
@@ -2582,55 +2594,28 @@ PyInit_sd_bus_internals(void)
     SD_BUS_PY_ADD_EXCEPTION(DbusMatchRuleInvalidError, SD_BUS_ERROR_MATCH_RULE_INVALID);
     SD_BUS_PY_ADD_EXCEPTION(DbusInteractiveAuthorizationRequiredError, SD_BUS_ERROR_INTERACTIVE_AUTHORIZATION_REQUIRED);
 
-    exception_generic = PyErr_NewException("sd_bus_internals.DbusGenericError", new_base_exception, NULL);
-    if (PyModule_AddObject(m, "DbusGenericError", exception_generic) < 0)
-    {
-        Py_XDECREF(exception_generic);
-        Py_DECREF(m);
-        return NULL;
-    }
+    PyObject *asyncio_module = CALL_PYTHON_AND_CHECK(PyImport_ImportModule("asyncio"));
+    async_future_type = (PyTypeObject *)CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(asyncio_module, "Future"));
 
-    PyObject *asyncio_module = PyImport_ImportModule("asyncio");
-    TEST_FAILURE(asyncio_module == NULL);
-    async_future_type = (PyTypeObject *)PyObject_GetAttrString(asyncio_module, "Future");
-    TEST_FAILURE(async_future_type == NULL);
-    TEST_FAILURE(!PyType_Check(async_future_type));
-    TEST_FAILURE(PyType_Ready(async_future_type) < 0);
+    asyncio_get_running_loop = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(asyncio_module, "get_running_loop"));
 
-    asyncio_get_running_loop = PyObject_GetAttrString(asyncio_module, "get_running_loop");
-    TEST_FAILURE(asyncio_get_running_loop == NULL);
+    asyncio_queue_class = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(asyncio_module, "Queue"));
 
-    asyncio_queue_class = PyObject_GetAttrString(asyncio_module, "Queue");
-    TEST_FAILURE(asyncio_queue_class == NULL)
+    set_result_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("set_result"));
+    set_exception_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("set_exception"));
+    put_no_wait_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("put_nowait"));
+    call_soon_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("call_soon"));
+    create_task_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("create_task"));
+    remove_reader_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("remove_reader"));
+    add_reader_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("add_reader"));
+    empty_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString(""));
+    null_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromStringAndSize("\0", 1));
+    extend_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("extend"));
+    append_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("append"));
 
-    set_result_str = PyUnicode_FromString("set_result");
-    TEST_FAILURE(set_result_str == NULL);
-    set_exception_str = PyUnicode_FromString("set_exception");
-    TEST_FAILURE(set_exception_str == NULL);
-    put_no_wait_str = PyUnicode_FromString("put_nowait");
-    TEST_FAILURE(put_no_wait_str == NULL);
+    PyObject *inspect_module = CALL_PYTHON_AND_CHECK(PyImport_ImportModule("inspect"));
+    is_coroutine_function = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(inspect_module, "iscoroutinefunction"));
 
-    call_soon_str = PyUnicode_FromString("call_soon");
-    TEST_FAILURE(call_soon_str == NULL);
-    create_task_str = PyUnicode_FromString("create_task");
-    TEST_FAILURE(create_task_str == NULL);
-    remove_reader_str = PyUnicode_FromString("remove_reader");
-    TEST_FAILURE(remove_reader_str == NULL);
-    add_reader_str = PyUnicode_FromString("add_reader");
-    TEST_FAILURE(add_reader_str == NULL);
-    empty_str = PyUnicode_FromString("");
-    TEST_FAILURE(empty_str == NULL);
-    null_str = PyUnicode_FromStringAndSize("\0", 1);
-    TEST_FAILURE(null_str == NULL);
-    extend_str = PyUnicode_FromString("extend");
-    TEST_FAILURE(null_str == NULL);
-    append_str = PyUnicode_FromString("append");
-    TEST_FAILURE(append_str == NULL);
-
-    PyObject *inspect_module = PyImport_ImportModule("inspect");
-    TEST_FAILURE(inspect_module == NULL)
-    is_coroutine_function = PyObject_GetAttrString(inspect_module, "iscoroutinefunction");
-    TEST_FAILURE(is_coroutine_function == NULL);
-
+    Py_INCREF(m);
     return m;
 }

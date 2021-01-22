@@ -30,7 +30,8 @@ from weakref import ref as weak_ref
 from .dbus_common import (DbusMethodCommon, DbusSomethingAsync,
                           DbusSomethingSync, _method_name_converter,
                           get_default_bus)
-from .sd_bus_internals import SdBus, SdBusInterface, SdBusMessage
+from .sd_bus_internals import (SdBus, SdBusInterface, SdBusMessage,
+                               DbusBaseError)
 
 
 T_input = TypeVar('T_input')
@@ -100,17 +101,25 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
             request_message: SdBusMessage) -> None:
         request_data = request_message.get_contents()
 
-        reply_message = request_message.create_reply()
-
         local_method = self.dbus_method.original_method.__get__(
             self.interface, None)
 
-        if isinstance(request_data, tuple):
-            reply_data = await local_method(*request_data)
-        elif request_data is None:
-            reply_data = await local_method()
-        else:
-            reply_data = await local_method(request_data)
+        try:
+            if isinstance(request_data, tuple):
+                reply_data = await local_method(*request_data)
+            elif request_data is None:
+                reply_data = await local_method()
+            else:
+                reply_data = await local_method(request_data)
+        except DbusBaseError as e:
+            error_message = request_message.create_error_reply(
+                e.dbus_error_name,
+                str(e.args[0]),
+            )
+            error_message.send()
+            return
+
+        reply_message = request_message.create_reply()
 
         if isinstance(reply_data, tuple):
             reply_message.append_data(

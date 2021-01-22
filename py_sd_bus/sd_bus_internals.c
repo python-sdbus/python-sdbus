@@ -1633,6 +1633,11 @@ static PyObject *SdBusMessage_get_member(SdBusMessageObject *self, PyObject *Py_
     return PyUnicode_FromString(member_char_ptr);
 }
 
+static SdBusMessageObject *
+SdBusMessage_create_error_reply(SdBusMessageObject *self,
+                                PyObject *const *args,
+                                Py_ssize_t nargs);
+
 static PyMethodDef SdBusMessage_methods[] = {
     {"append_data", (void *)SdBusMessage_append_data, METH_FASTCALL, "Append basic data based on signature."},
     {"open_container", (void *)SdBusMessage_open_container, METH_FASTCALL, "Open container for writting"},
@@ -1644,6 +1649,7 @@ static PyMethodDef SdBusMessage_methods[] = {
     {"get_contents", (PyCFunction)SdBusMessage_get_contents2, METH_NOARGS, "Iterate over message contents"},
     {"get_member", (PyCFunction)SdBusMessage_get_member, METH_NOARGS, "Get message member field"},
     {"create_reply", (void *)SdBusMessage_create_reply, METH_FASTCALL, "Create reply message"},
+    {"create_error_reply", (void *)SdBusMessage_create_error_reply, METH_FASTCALL, "Create error reply with error name and error message"},
     {"send", (void *)SdBusMessage_send, METH_FASTCALL, "Queue message to be sent"},
     {NULL, NULL, 0, NULL},
 };
@@ -1659,6 +1665,28 @@ static PyTypeObject SdBusMessageType = {
     .tp_free = (freefunc)SdBusMessage_free,
     .tp_methods = SdBusMessage_methods,
 };
+
+static SdBusMessageObject *
+SdBusMessage_create_error_reply(SdBusMessageObject *self,
+                                PyObject *const *args,
+                                Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+
+    SdBusMessageObject *new_reply_message CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL));
+
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_errorf(
+        self->message_ref,
+        &new_reply_message->message_ref,
+        SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]),
+        "%s",
+        SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1])));
+
+    Py_INCREF(new_reply_message);
+    return new_reply_message;
+}
 
 static SdBusMessageObject *
 SdBusMessage_create_reply(SdBusMessageObject *self,
@@ -2502,13 +2530,6 @@ static PyModuleDef sd_bus_internals_module = {
     .m_size = -1,
 };
 
-#define TEST_FAILURE(test_statement) \
-    if (test_statement)              \
-    {                                \
-        Py_DECREF(m);                \
-        return NULL;                 \
-    }
-
 #define SD_BUS_PY_INIT_TYPE_READY(type) \
     if (PyType_Ready(&type) < 0)        \
     {                                   \
@@ -2548,7 +2569,7 @@ PyInit_sd_bus_internals(void)
     PyObject *base_exception_dict CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyDict_New());
     PyObject *base_error_name CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("org.freedesktop.DBus.Error.Failed"));
     CALL_PYTHON_INT_CHECK(PyDict_SetItemString(base_exception_dict, "dbus_error_name", base_error_name));
-    PyObject *new_base_exception CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.DbusBaseError", NULL, NULL));
+    PyObject *new_base_exception CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.DbusBaseError", NULL, base_exception_dict));
 
     SD_BUS_PY_INIT_ADD_OBJECT("DbusBaseError", new_base_exception);
     exception_default = new_base_exception;

@@ -103,6 +103,12 @@ class SdBusMessage:
     def create_reply(self) -> SdBusMessage:
         ...
 
+    def create_error_reply(
+            self,
+            error_name: str,
+            error_message: str, /) -> SdBusMessage:
+        ...
+
     def send(self) -> None:
         ...
 
@@ -188,6 +194,7 @@ def decode_object_path(prefix: str, full_path: str) -> str:
 
 
 class DbusBaseError(Exception):
+    dbus_error_name: str
     ...
 
 
@@ -305,3 +312,8 @@ class DbusMatchRuleInvalidError(DbusBaseError):
 
 class DbusInteractiveAuthorizationRequiredError(DbusBaseError):
     ...
+
+
+DBUS_ERROR_TO_EXCEPTION: Dict[str, DbusBaseError] = {}
+
+EXCEPTION_TO_DBUS_ERROR: Dict[DbusBaseError, str] = {}

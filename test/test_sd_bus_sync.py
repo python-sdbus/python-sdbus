@@ -23,6 +23,7 @@ from __future__ import annotations
 from unittest import TestCase, main
 
 from py_sd_bus.proxies import FreedesktopDbus
+from py_sd_bus.sd_bus_internals import DbusPropertyReadOnlyError
 
 
 class TestSync(TestCase):
@@ -36,7 +37,7 @@ class TestSync(TestCase):
         def test_invalid_assignment() -> None:
             s.features = ['test']
 
-        self.assertRaises(AttributeError, test_invalid_assignment)
+        self.assertRaises(DbusPropertyReadOnlyError, test_invalid_assignment)
 
 
 if __name__ == '__main__':

@@ -31,6 +31,8 @@ from py_sd_bus.dbus_proxy_async import (DbusInterfaceCommonAsync,
                                         dbus_property_async_override,
                                         dbus_signal_async)
 
+from py_sd_bus.sd_bus_internals import DbusBaseError, DbusFileExistsError
+
 from .common_test_util import TempDbusTest
 
 
@@ -117,6 +119,14 @@ class TestInterface(DbusInterfaceCommonAsync,
     @dbus_signal_async('ss')
     def test_signal(self) -> Tuple[str, str]:
         raise NotImplementedError
+
+    @dbus_method_async()
+    async def raise_base_exception(self) -> None:
+        raise DbusBaseError('Test error')
+
+    @dbus_method_async()
+    async def raise_derived_exception(self) -> None:
+        raise DbusFileExistsError('Test error 2')
 
 
 class TestProxy(TempDbusTest):
@@ -290,3 +300,30 @@ class TestProxy(TempDbusTest):
 
         with self.subTest('Python-python'):
             self.assertEqual(test_tuple, await wait_for(q.get(), timeout=1))
+
+    async def test_exceptions(self) -> None:
+        async def first_test() -> None:
+            await self.test_object_connection.raise_base_exception()
+
+        loop = get_running_loop()
+
+        t1 = loop.create_task(first_test())
+
+        try:
+            await wait_for(t1, timeout=1)
+        except DbusBaseError:
+            ...
+
+        self.assertRaises(DbusBaseError, t1.result)
+
+        async def second_test() -> None:
+            await self.test_object_connection.raise_derived_exception()
+
+        t2 = loop.create_task(second_test())
+
+        try:
+            await wait_for(t2, timeout=1)
+        except DbusFileExistsError:
+            ...
+
+        self.assertRaises(DbusFileExistsError, t2.result)

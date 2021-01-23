@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
 from .dbus_common import request_default_bus_name_async
+
 from .dbus_proxy_async import (DbusInterfaceCommonAsync, dbus_method_async,
                                dbus_property_async, dbus_signal_async)
 from .sd_bus_internals import sd_bus_open, sd_bus_open_system, sd_bus_open_user
@@ -28,4 +29,5 @@ __all__ = [
     'DbusInterfaceCommonAsync',
     'dbus_method_async', 'dbus_property_async', 'dbus_signal_async',
     'request_default_bus_name_async',
+    'DbusUserError',
 ]

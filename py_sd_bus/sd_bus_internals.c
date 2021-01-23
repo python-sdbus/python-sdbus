@@ -163,7 +163,8 @@
 
 static PyObject *dbus_error_to_exception_dict = NULL;
 static PyObject *exception_to_dbus_error_dict = NULL;
-static PyObject *exception_default = NULL;
+static PyObject *exception_unmapped_message = NULL;
+static PyObject *exception_base = NULL;
 static PyTypeObject *async_future_type = NULL;
 static PyObject *asyncio_get_running_loop = NULL;
 static PyObject *asyncio_queue_class = NULL;
@@ -1876,14 +1877,26 @@ SdBus_call(SdBusObject *self,
 
     if (sd_bus_error_get_errno(&error))
     {
-        PyObject *exception_to_raise = PyDict_GetItemString(dbus_error_to_exception_dict, error.name);
+        PyObject *error_name_str CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString(error.name));
+        PyObject *exception_to_raise = PyDict_GetItemWithError(dbus_error_to_exception_dict, error_name_str);
+
+        if (PyErr_Occurred())
+        {
+            return NULL;
+        }
+
         if (exception_to_raise == NULL)
         {
-            exception_to_raise = exception_default;
+            PyObject *exception_tuple CLEANUP_PY_OBJECT = Py_BuildValue("(ss)", error.name, error.message);
+            PyErr_SetObject(exception_unmapped_message, exception_tuple);
+            return NULL;
         }
-        PyObject *exception_tuple CLEANUP_PY_OBJECT = Py_BuildValue("(ss)", error.name, error.message);
-        PyErr_SetObject(exception_to_raise, exception_tuple);
-        return NULL;
+        else
+        {
+
+            PyErr_SetString(exception_to_raise, error.message);
+            return NULL;
+        }
     }
 
     CALL_SD_BUS_AND_CHECK(return_value);
@@ -1896,28 +1909,29 @@ int future_set_exception_from_message(PyObject *future, sd_bus_message *message)
 {
     const sd_bus_error *callback_error = sd_bus_message_get_error(message);
 
-    PyObject *exception_data CLEANUP_PY_OBJECT = Py_BuildValue("(ss)", callback_error->name, callback_error->message);
-    if (exception_data == NULL)
+    PyObject *error_name_str CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyUnicode_FromString(callback_error->name));
+    PyObject *error_message_str CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyUnicode_FromString(callback_error->message));
+
+    PyObject *exception_to_raise = PyDict_GetItemWithError(dbus_error_to_exception_dict, error_name_str);
+
+    PyObject *exception_occured = PyErr_Occurred();
+    if (exception_occured)
     {
-        return -1;
+        PyObject *should_be_none CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, exception_occured, NULL));
+        return 0;
     }
 
-    PyObject *exception_to_raise_type = PyDict_GetItemString(dbus_error_to_exception_dict, callback_error->name);
-    if (exception_to_raise_type == NULL)
+    if (exception_to_raise)
     {
-        exception_to_raise_type = exception_default;
+        PyObject *new_exception CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(exception_to_raise, error_message_str, NULL));
+        PyObject *return_object CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, new_exception, NULL));
     }
-    PyObject *new_exception CLEANUP_PY_OBJECT = PyObject_Call(exception_to_raise_type, exception_data, NULL);
-    if (new_exception == NULL)
+    else
     {
-        return -1;
+        PyObject *new_exception CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(exception_unmapped_message, error_name_str, error_message_str, NULL));
+        PyObject *return_object CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, new_exception, NULL));
     }
 
-    PyObject *return_object CLEANUP_PY_OBJECT = PyObject_CallMethodObjArgs(future, set_exception_str, new_exception, NULL);
-    if (return_object == NULL)
-    {
-        return -1;
-    }
     return 0;
 }
 
@@ -2469,38 +2483,26 @@ decode_object_path(PyObject *Py_UNUSED(self),
 }
 
 PyObject *
-_map_exception(PyObject *exception, PyObject *dbus_error_string)
-{
-    CALL_PYTHON_INT_CHECK(PyDict_SetItem(dbus_error_to_exception_dict, dbus_error_string, exception));
-    CALL_PYTHON_INT_CHECK(PyDict_SetItem(exception_to_dbus_error_dict, exception, dbus_error_string));
-
-    Py_RETURN_NONE;
-}
-
-PyObject *
 _add_exception_mapping(PyObject *exception)
 {
-    if (PyObject_IsSubclass(exception, exception_default) < 1)
-    {
-        PyErr_SetString(PyExc_TypeError, "Exception is invlaid subclass. Must derive from DbusBaseError");
-        return NULL;
-    }
-
     PyObject *dbus_error_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(exception, "dbus_error_name"));
 
     if (CALL_PYTHON_INT_CHECK(PyDict_Contains(dbus_error_to_exception_dict, dbus_error_string)) > 0)
     {
-        PyErr_SetString(PyExc_ValueError, "Dbus error is already mapped.");
+        PyErr_Format(PyExc_ValueError, "Dbus error %R is already mapped.", dbus_error_string);
         return NULL;
     }
 
     if (CALL_PYTHON_INT_CHECK(PyDict_Contains(exception_to_dbus_error_dict, exception)) > 0)
     {
-        PyErr_SetString(PyExc_ValueError, "Exception is already mapped to dbus error.");
+        PyErr_Format(PyExc_ValueError, "Exception %R is already mapped to dbus error.", exception);
         return NULL;
     }
 
-    return _map_exception(exception, dbus_error_string);
+    CALL_PYTHON_INT_CHECK(PyDict_SetItem(dbus_error_to_exception_dict, dbus_error_string, exception));
+    CALL_PYTHON_INT_CHECK(PyDict_SetItem(exception_to_dbus_error_dict, exception, dbus_error_string));
+
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -2566,54 +2568,13 @@ PyInit_sd_bus_internals(void)
     exception_to_dbus_error_dict = CALL_PYTHON_AND_CHECK(PyDict_New());
     SD_BUS_PY_INIT_ADD_OBJECT("EXCEPTION_TO_DBUS_ERROR", exception_to_dbus_error_dict);
 
-    PyObject *base_exception_dict CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyDict_New());
-    PyObject *base_error_name CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("org.freedesktop.DBus.Error.Failed"));
-    CALL_PYTHON_INT_CHECK(PyDict_SetItemString(base_exception_dict, "dbus_error_name", base_error_name));
-    PyObject *new_base_exception CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.DbusBaseError", NULL, base_exception_dict));
+    PyObject *new_base_exception CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.SdBusBaseError", NULL, NULL));
+    SD_BUS_PY_INIT_ADD_OBJECT("SdBusBaseError", new_base_exception);
+    exception_base = new_base_exception;
 
-    SD_BUS_PY_INIT_ADD_OBJECT("DbusBaseError", new_base_exception);
-    exception_default = new_base_exception;
-    CALL_PYTHON_EXPECT_NONE(_map_exception(new_base_exception, base_error_name));
-
-#define SD_BUS_PY_ADD_EXCEPTION(exception_name, dbus_error_name)                                                                                    \
-    ({                                                                                                                                              \
-        PyObject *exception_dict CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyDict_New());                                                           \
-        PyObject *error_name CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString(dbus_error_name));                                      \
-        CALL_PYTHON_INT_CHECK(PyDict_SetItemString(exception_dict, "dbus_error_name", error_name));                                                 \
-        PyObject *new_exception CLEANUP_PY_OBJECT = PyErr_NewException("sd_bus_internals." #exception_name "", new_base_exception, exception_dict); \
-        SD_BUS_PY_INIT_ADD_OBJECT(#exception_name, new_exception);                                                                                  \
-        CALL_PYTHON_EXPECT_NONE(_map_exception(new_exception, error_name));                                                                         \
-    })
-
-    SD_BUS_PY_ADD_EXCEPTION(DbusFailedError, SD_BUS_ERROR_FAILED);
-    SD_BUS_PY_ADD_EXCEPTION(DbusNoMemoryError, SD_BUS_ERROR_NO_MEMORY);
-    SD_BUS_PY_ADD_EXCEPTION(DbusServiceUnknownError, SD_BUS_ERROR_SERVICE_UNKNOWN);
-    SD_BUS_PY_ADD_EXCEPTION(DbusNameHasNoOwnerError, SD_BUS_ERROR_NAME_HAS_NO_OWNER);
-    SD_BUS_PY_ADD_EXCEPTION(DbusNoReplyError, SD_BUS_ERROR_NO_REPLY);
-    SD_BUS_PY_ADD_EXCEPTION(DbusIOError, SD_BUS_ERROR_IO_ERROR);
-    SD_BUS_PY_ADD_EXCEPTION(DbusBadAddressError, SD_BUS_ERROR_BAD_ADDRESS);
-    SD_BUS_PY_ADD_EXCEPTION(DbusNotSupportedError, SD_BUS_ERROR_NOT_SUPPORTED);
-    SD_BUS_PY_ADD_EXCEPTION(DbusLimitsExceededError, SD_BUS_ERROR_LIMITS_EXCEEDED);
-    SD_BUS_PY_ADD_EXCEPTION(DbusAccessDeniedError, SD_BUS_ERROR_ACCESS_DENIED);
-    SD_BUS_PY_ADD_EXCEPTION(DbusAuthFailedError, SD_BUS_ERROR_AUTH_FAILED);
-    SD_BUS_PY_ADD_EXCEPTION(DbusNoServerError, SD_BUS_ERROR_NO_SERVER);
-    SD_BUS_PY_ADD_EXCEPTION(DbusTimeoutError, SD_BUS_ERROR_TIMEOUT);
-    SD_BUS_PY_ADD_EXCEPTION(DbusNoNetworkError, SD_BUS_ERROR_NO_NETWORK);
-    SD_BUS_PY_ADD_EXCEPTION(DbusAddressInUseError, SD_BUS_ERROR_ADDRESS_IN_USE);
-    SD_BUS_PY_ADD_EXCEPTION(DbusDisconnectedError, SD_BUS_ERROR_DISCONNECTED);
-    SD_BUS_PY_ADD_EXCEPTION(DbusInvalidArgsError, SD_BUS_ERROR_INVALID_ARGS);
-    SD_BUS_PY_ADD_EXCEPTION(DbusFileExistsError, SD_BUS_ERROR_FILE_EXISTS);
-    SD_BUS_PY_ADD_EXCEPTION(DbusUnknownMethodError, SD_BUS_ERROR_UNKNOWN_METHOD);
-    SD_BUS_PY_ADD_EXCEPTION(DbusUnknownObjectError, SD_BUS_ERROR_UNKNOWN_OBJECT);
-    SD_BUS_PY_ADD_EXCEPTION(DbusUnknownInterfaceError, SD_BUS_ERROR_UNKNOWN_INTERFACE);
-    SD_BUS_PY_ADD_EXCEPTION(DbusUnknownPropertyError, SD_BUS_ERROR_UNKNOWN_PROPERTY);
-    SD_BUS_PY_ADD_EXCEPTION(DbusPropertyReadOnlyError, SD_BUS_ERROR_PROPERTY_READ_ONLY);
-    SD_BUS_PY_ADD_EXCEPTION(DbusUnixProcessIdUnknownError, SD_BUS_ERROR_UNIX_PROCESS_ID_UNKNOWN);
-    SD_BUS_PY_ADD_EXCEPTION(DbusInvalidSignatureError, SD_BUS_ERROR_INVALID_SIGNATURE);
-    SD_BUS_PY_ADD_EXCEPTION(DbusInconsistentMessageError, SD_BUS_ERROR_INCONSISTENT_MESSAGE);
-    SD_BUS_PY_ADD_EXCEPTION(DbusMatchRuleNotFound, SD_BUS_ERROR_MATCH_RULE_NOT_FOUND);
-    SD_BUS_PY_ADD_EXCEPTION(DbusMatchRuleInvalidError, SD_BUS_ERROR_MATCH_RULE_INVALID);
-    SD_BUS_PY_ADD_EXCEPTION(DbusInteractiveAuthorizationRequiredError, SD_BUS_ERROR_INTERACTIVE_AUTHORIZATION_REQUIRED);
+    PyObject *unmapped_error_exception CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.SdBusUnmappedMessageError", new_base_exception, NULL));
+    SD_BUS_PY_INIT_ADD_OBJECT("SdBusUnmappedMessageError", unmapped_error_exception);
+    unmapped_error_exception = unmapped_error_exception;
 
     PyObject *asyncio_module = CALL_PYTHON_AND_CHECK(PyImport_ImportModule("asyncio"));
     async_future_type = (PyTypeObject *)CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(asyncio_module, "Future"));

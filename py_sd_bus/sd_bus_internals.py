@@ -193,127 +193,18 @@ def decode_object_path(prefix: str, full_path: str) -> str:
     ...
 
 
-class DbusBaseError(Exception):
-    dbus_error_name: str
+def add_exception_mapping(exc: Exception, /) -> None:
     ...
 
 
-class DbusFailedError(DbusBaseError):
+class SdBusBaseError(Exception):
     ...
 
 
-class DbusNoMemoryError(DbusBaseError):
+class SdBusUnmappedMessageError(SdBusBaseError):
     ...
 
 
-class DbusServiceUnknownError(DbusBaseError):
-    ...
+DBUS_ERROR_TO_EXCEPTION: Dict[str, Exception] = {}
 
-
-class DbusNameHasNoOwnerError(DbusBaseError):
-    ...
-
-
-class DbusNoReplyError(DbusBaseError):
-    ...
-
-
-class DbusIOError(DbusBaseError):
-    ...
-
-
-class DbusBadAddressError(DbusBaseError):
-    ...
-
-
-class DbusNotSupportedError(DbusBaseError):
-    ...
-
-
-class DbusLimitsExceededError(DbusBaseError):
-    ...
-
-
-class DbusAccessDeniedError(DbusBaseError):
-    ...
-
-
-class DbusAuthFailedError(DbusBaseError):
-    ...
-
-
-class DbusNoServerError(DbusBaseError):
-    ...
-
-
-class DbusTimeoutError(DbusBaseError):
-    ...
-
-
-class DbusNoNetworkError(DbusBaseError):
-    ...
-
-
-class DbusAddressInUseError(DbusBaseError):
-    ...
-
-
-class DbusDisconnectedError(DbusBaseError):
-    ...
-
-
-class DbusInvalidArgsError(DbusBaseError):
-    ...
-
-
-class DbusFileExistsError(DbusBaseError):
-    ...
-
-
-class DbusUnknownMethodError(DbusBaseError):
-    ...
-
-
-class DbusUnknownObjectError(DbusBaseError):
-    ...
-
-
-class DbusUnknownInterfaceError(DbusBaseError):
-    ...
-
-
-class DbusUnknownPropertyError(DbusBaseError):
-    ...
-
-
-class DbusPropertyReadOnlyError(DbusBaseError):
-    ...
-
-
-class DbusUnixProcessIdUnknownError(DbusBaseError):
-    ...
-
-
-class DbusInvalidSignatureError(DbusBaseError):
-    ...
-
-
-class DbusInconsistentMessageError(DbusBaseError):
-    ...
-
-
-class DbusMatchRuleNotFound(DbusBaseError):
-    ...
-
-
-class DbusMatchRuleInvalidError(DbusBaseError):
-    ...
-
-
-class DbusInteractiveAuthorizationRequiredError(DbusBaseError):
-    ...
-
-
-DBUS_ERROR_TO_EXCEPTION: Dict[str, DbusBaseError] = {}
-
-EXCEPTION_TO_DBUS_ERROR: Dict[DbusBaseError, str] = {}
+EXCEPTION_TO_DBUS_ERROR: Dict[Exception, str] = {}

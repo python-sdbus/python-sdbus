@@ -24,14 +24,13 @@ from asyncio import get_running_loop, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 
+from py_sd_bus.dbus_exceptions import DbusFailedError, DbusFileExistsError
 from py_sd_bus.dbus_proxy_async import (DbusInterfaceCommonAsync,
                                         dbus_method_async,
                                         dbus_method_async_override,
                                         dbus_property_async,
                                         dbus_property_async_override,
                                         dbus_signal_async)
-
-from py_sd_bus.sd_bus_internals import DbusBaseError, DbusFileExistsError
 
 from .common_test_util import TempDbusTest
 
@@ -122,11 +121,19 @@ class TestInterface(DbusInterfaceCommonAsync,
 
     @dbus_method_async()
     async def raise_base_exception(self) -> None:
-        raise DbusBaseError('Test error')
+        raise DbusFailedError('Test error')
 
     @dbus_method_async()
     async def raise_derived_exception(self) -> None:
         raise DbusFileExistsError('Test error 2')
+
+    @dbus_method_async()
+    async def raise_custom_error(self) -> None:
+        raise DbusErrorTest('Custom')
+
+
+class DbusErrorTest(DbusFailedError):
+    dbus_error_name = 'org.example.Error'
 
 
 class TestProxy(TempDbusTest):
@@ -311,10 +318,10 @@ class TestProxy(TempDbusTest):
 
         try:
             await wait_for(t1, timeout=1)
-        except DbusBaseError:
+        except DbusFailedError:
             ...
 
-        self.assertRaises(DbusBaseError, t1.result)
+        self.assertRaises(DbusFailedError, t1.result)
 
         async def second_test() -> None:
             await self.test_object_connection.raise_derived_exception()
@@ -327,3 +334,27 @@ class TestProxy(TempDbusTest):
             ...
 
         self.assertRaises(DbusFileExistsError, t2.result)
+
+        async def third_test() -> None:
+            await self.test_object_connection.raise_custom_error()
+
+        t3 = loop.create_task(third_test())
+
+        try:
+            await wait_for(t3, timeout=1)
+        except DbusFailedError:
+            ...
+
+        self.assertRaises(DbusErrorTest, t3.result)
+
+        def bad_exception_error_name_used() -> None:
+            class BadDbusError(DbusFailedError):
+                dbus_error_name = 'org.freedesktop.DBus.Error.NoMemory'
+
+        self.assertRaises(ValueError, bad_exception_error_name_used)
+
+        def bad_exception_no_error_name() -> None:
+            class BadDbusError(DbusFailedError):
+                ...
+
+        self.assertRaises(TypeError, bad_exception_no_error_name)

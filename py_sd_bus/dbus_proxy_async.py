@@ -30,9 +30,8 @@ from weakref import ref as weak_ref
 from .dbus_common import (DbusMethodCommon, DbusSomethingAsync,
                           DbusSomethingSync, _method_name_converter,
                           get_default_bus)
-from .sd_bus_internals import (SdBus, SdBusInterface, SdBusMessage,
-                               DbusBaseError)
-
+from .dbus_exceptions import DbusFailedError
+from .sd_bus_internals import SdBus, SdBusInterface, SdBusMessage
 
 T_input = TypeVar('T_input')
 T_result = TypeVar('T_result')
@@ -111,7 +110,7 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
                 reply_data = await local_method()
             else:
                 reply_data = await local_method(request_data)
-        except DbusBaseError as e:
+        except DbusFailedError as e:
             error_message = request_message.create_error_reply(
                 e.dbus_error_name,
                 str(e.args[0]),

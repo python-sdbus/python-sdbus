@@ -22,8 +22,8 @@ from __future__ import annotations
 
 from unittest import TestCase, main
 
+from py_sd_bus.dbus_exceptions import DbusPropertyReadOnlyError
 from py_sd_bus.proxies import FreedesktopDbus
-from py_sd_bus.sd_bus_internals import DbusPropertyReadOnlyError
 
 
 class TestSync(TestCase):

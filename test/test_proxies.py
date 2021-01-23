@@ -22,7 +22,7 @@ from __future__ import annotations
 from unittest import IsolatedAsyncioTestCase, SkipTest, main
 
 from py_sd_bus.async_proxies import FreedesktopDbus, FreedesktopNotifications
-from py_sd_bus.sd_bus_internals import DbusServiceUnknownError
+from py_sd_bus.dbus_exceptions import DbusServiceUnknownError
 
 from .common_test_util import TempDbusTest
 

@@ -32,6 +32,8 @@ from py_sd_bus.dbus_proxy_async import (DbusInterfaceCommonAsync,
                                         dbus_property_async_override,
                                         dbus_signal_async)
 
+from py_sd_bus.sd_bus_internals import DbusNoReplyFlag
+
 from .common_test_util import TempDbusTest
 
 
@@ -70,6 +72,7 @@ class TestInterface(DbusInterfaceCommonAsync,
         super().__init__()
         self.test_string = 'test_property'
         self.test_string_read = 'read'
+        self.test_no_reply_string = 'no'
 
     @dbus_method_async("s", "s")
     async def upper(self, string: str) -> str:
@@ -130,6 +133,10 @@ class TestInterface(DbusInterfaceCommonAsync,
     @dbus_method_async()
     async def raise_custom_error(self) -> None:
         raise DbusErrorTest('Custom')
+
+    @dbus_method_async('s', flags=DbusNoReplyFlag)
+    async def no_reply_method(self, new_value: str) -> None:
+        self.test_no_reply_string = new_value
 
 
 class DbusErrorTest(DbusFailedError):
@@ -358,3 +365,7 @@ class TestProxy(TempDbusTest):
                 ...
 
         self.assertRaises(TypeError, bad_exception_no_error_name)
+
+    async def test_no_reply_method(self) -> None:
+        await wait_for(self.test_object_connection.no_reply_method('yes'),
+                       timeout=1)

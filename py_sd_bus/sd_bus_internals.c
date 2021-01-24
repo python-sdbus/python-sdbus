@@ -2598,6 +2598,16 @@ PyInit_sd_bus_internals(void)
     PyObject *inspect_module = CALL_PYTHON_AND_CHECK(PyImport_ImportModule("inspect"));
     is_coroutine_function = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(inspect_module, "iscoroutinefunction"));
 
+    CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusDeprecatedFlag", SD_BUS_VTABLE_DEPRECATED));
+    CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusHiddenFlag", SD_BUS_VTABLE_HIDDEN));
+    CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusUnprivilegedFlag", SD_BUS_VTABLE_UNPRIVILEGED));
+    CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusNoReplyFlag", SD_BUS_VTABLE_METHOD_NO_REPLY));
+    CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusPropertyConstFlag", SD_BUS_VTABLE_PROPERTY_CONST));
+    CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusPropertyEmitsChangeFlag", SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE));
+    CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusPropertyEmitsInvalidationFlag", SD_BUS_VTABLE_PROPERTY_EMITS_INVALIDATION));
+    CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusPropertyExplicitFlag", SD_BUS_VTABLE_PROPERTY_EXPLICIT));
+    CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusSensitiveFlag", SD_BUS_VTABLE_SENSITIVE));
+
     Py_INCREF(m);
     return m;
 }

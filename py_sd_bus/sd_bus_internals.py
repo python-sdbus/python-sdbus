@@ -208,3 +208,13 @@ class SdBusUnmappedMessageError(SdBusBaseError):
 DBUS_ERROR_TO_EXCEPTION: Dict[str, Exception] = {}
 
 EXCEPTION_TO_DBUS_ERROR: Dict[Exception, str] = {}
+
+DbusDeprecatedFlag: int = 0
+DbusHiddenFlag: int = 0
+DbusUnprivilegedFlag: int = 0
+DbusNoReplyFlag: int = 0
+DbusPropertyConstFlag: int = 0
+DbusPropertyEmitsChangeFlag: int = 0
+DbusPropertyEmitsInvalidationFlag: int = 0
+DbusPropertyExplicitFlag: int = 0
+DbusSensitiveFlag: int = 0

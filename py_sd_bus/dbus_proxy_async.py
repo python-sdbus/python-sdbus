@@ -113,7 +113,7 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
         except DbusFailedError as e:
             error_message = request_message.create_error_reply(
                 e.dbus_error_name,
-                str(e.args[0]),
+                str(e.args[0]) if e.args else "",
             )
             error_message.send()
             return

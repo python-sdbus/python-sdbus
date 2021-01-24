@@ -31,7 +31,8 @@ from .dbus_common import (DbusMethodCommon, DbusSomethingAsync,
                           DbusSomethingSync, _method_name_converter,
                           get_default_bus)
 from .dbus_exceptions import DbusFailedError
-from .sd_bus_internals import SdBus, SdBusInterface, SdBusMessage
+from .sd_bus_internals import (DbusNoReplyFlag, SdBus, SdBusInterface,
+                               SdBusMessage)
 
 T_input = TypeVar('T_input')
 T_result = TypeVar('T_result')
@@ -68,9 +69,15 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
             self.dbus_method.interface_name,
             self.dbus_method.method_name,
         )
+
         if args:
             new_call_message.append_data(
                 self.dbus_method.input_signature, *args)
+
+        if self.dbus_method.flags & DbusNoReplyFlag:
+            new_call_message.expect_reply = False
+            new_call_message.send()
+            return
 
         reply_message = await self.interface.attached_bus.call_async(
             new_call_message)
@@ -111,11 +118,17 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
             else:
                 reply_data = await local_method(request_data)
         except DbusFailedError as e:
+            if not request_message.expect_reply:
+                return
+
             error_message = request_message.create_error_reply(
                 e.dbus_error_name,
                 str(e.args[0]) if e.args else "",
             )
             error_message.send()
+            return
+
+        if not request_message.expect_reply:
             return
 
         reply_message = request_message.create_reply()

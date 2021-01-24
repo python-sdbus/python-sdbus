@@ -112,6 +112,8 @@ class SdBusMessage:
     def send(self) -> None:
         ...
 
+    expect_reply: bool
+
 
 class SdBus:
     def call(self, message: SdBusMessage, /) -> SdBusMessage:

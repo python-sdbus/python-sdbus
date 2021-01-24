@@ -103,6 +103,18 @@
         return_int;                                                                                              \
     })
 
+#define CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_function)                                                           \
+    ({                                                                                                           \
+        int return_int = sd_bus_function;                                                                        \
+        if (return_int < 0)                                                                                      \
+        {                                                                                                        \
+            PyErr_Format(PyExc_RuntimeError, "Line: %d. " #sd_bus_function " in function %s returned error: %s", \
+                         __LINE__, __FUNCTION__, strerrorname_np(-return_int));                                  \
+            return -1;                                                                                           \
+        }                                                                                                        \
+        return_int;                                                                                              \
+    })
+
 #define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                \
     ({                                                          \
         const char *new_char_ptr = PyUnicode_AsUTF8(py_object); \
@@ -1655,6 +1667,37 @@ static PyMethodDef SdBusMessage_methods[] = {
     {NULL, NULL, 0, NULL},
 };
 
+static PyObject *
+SdBusMessage_expect_reply_getter(SdBusMessageObject *self, void *Py_UNUSED(closure))
+{
+    return PyBool_FromLong(CALL_SD_BUS_AND_CHECK(sd_bus_message_get_expect_reply(self->message_ref)));
+}
+
+static int
+SdBusMessage_expect_reply_setter(SdBusMessageObject *self, PyObject *new_value, void *Py_UNUSED(closure))
+{
+    if (NULL == new_value)
+    {
+        PyErr_SetString(PyExc_AttributeError, "Can't delete expect_reply");
+        return -1;
+    }
+
+    if (!PyBool_Check(new_value))
+    {
+        PyErr_Format(PyExc_TypeError, "Expected bool, got %R", new_value);
+        return -1;
+    }
+
+    CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_message_set_expect_reply(self->message_ref, Py_True == new_value));
+
+    return 0;
+}
+
+static PyGetSetDef SdBusMessage_properies[] = {
+    {"expect_reply", (getter)SdBusMessage_expect_reply_getter, (setter)SdBusMessage_expect_reply_setter, "Expect reply message?", NULL},
+    {0},
+};
+
 static PyTypeObject SdBusMessageType = {
     PyVarObject_HEAD_INIT(NULL, 0)
         .tp_name = "sd_bus_internals.SdBusMessage",
@@ -1665,6 +1708,7 @@ static PyTypeObject SdBusMessageType = {
     .tp_init = (initproc)SdBusMessage_init,
     .tp_free = (freefunc)SdBusMessage_free,
     .tp_methods = SdBusMessage_methods,
+    .tp_getset = SdBusMessage_properies,
 };
 
 static SdBusMessageObject *

@@ -25,14 +25,6 @@
 
 //Helpers
 
-#define SD_BUS_PY_CHECK_RETURN_VALUE(_exception_to_raise)                          \
-    if (return_value < 0)                                                          \
-    {                                                                              \
-        PyErr_Format(_exception_to_raise, "Line: %d sd-bus returned error %i: %s", \
-                     __LINE__, -return_value, strerror(-return_value));            \
-        return NULL;                                                               \
-    }
-
 #define SD_BUS_PY_CHECK_ARGS_NUMBER(number_args)                                             \
     if (nargs != number_args)                                                                \
     {                                                                                        \
@@ -96,23 +88,23 @@
         int return_int = sd_bus_function;                                                                        \
         if (return_int < 0)                                                                                      \
         {                                                                                                        \
-            PyErr_Format(PyExc_RuntimeError, "Line: %d. " #sd_bus_function " in function %s returned error: %s", \
+            PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error: %s", \
                          __LINE__, __FUNCTION__, strerrorname_np(-return_int));                                  \
             return NULL;                                                                                         \
         }                                                                                                        \
         return_int;                                                                                              \
     })
 
-#define CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_function)                                                           \
-    ({                                                                                                           \
-        int return_int = sd_bus_function;                                                                        \
-        if (return_int < 0)                                                                                      \
-        {                                                                                                        \
-            PyErr_Format(PyExc_RuntimeError, "Line: %d. " #sd_bus_function " in function %s returned error: %s", \
-                         __LINE__, __FUNCTION__, strerrorname_np(-return_int));                                  \
-            return -1;                                                                                           \
-        }                                                                                                        \
-        return_int;                                                                                              \
+#define CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_function)                                                      \
+    ({                                                                                                      \
+        int return_int = sd_bus_function;                                                                   \
+        if (return_int < 0)                                                                                 \
+        {                                                                                                   \
+            PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error: %s", \
+                         __LINE__, __FUNCTION__, strerrorname_np(-return_int));                             \
+            return -1;                                                                                      \
+        }                                                                                                   \
+        return_int;                                                                                         \
     })
 
 #define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                \
@@ -177,6 +169,7 @@ static PyObject *dbus_error_to_exception_dict = NULL;
 static PyObject *exception_to_dbus_error_dict = NULL;
 static PyObject *exception_unmapped_message = NULL;
 static PyObject *exception_base = NULL;
+static PyObject *exception_lib = NULL;
 static PyTypeObject *async_future_type = NULL;
 static PyObject *asyncio_get_running_loop = NULL;
 static PyObject *asyncio_queue_class = NULL;
@@ -623,10 +616,8 @@ SdBusMessage_dump(SdBusMessageObject *self,
 {
     SD_BUS_PY_CHECK_ARGS_NUMBER(0);
 
-    int return_value = sd_bus_message_dump(self->message_ref, 0, SD_BUS_MESSAGE_DUMP_WITH_HEADER);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
-    return_value = sd_bus_message_rewind(self->message_ref, 1);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_dump(self->message_ref, 0, SD_BUS_MESSAGE_DUMP_WITH_HEADER));
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_rewind(self->message_ref, 1));
     Py_RETURN_NONE;
 }
 
@@ -1260,8 +1251,8 @@ SdBusMessage_open_container(SdBusMessageObject *self,
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_type_char_ptr, args[0]);
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_contents_char_ptr, args[1]);
 
-    int return_value = sd_bus_message_open_container(self->message_ref, container_type_char_ptr[0], container_contents_char_ptr);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(self->message_ref, container_type_char_ptr[0], container_contents_char_ptr));
+
     Py_RETURN_NONE;
 }
 
@@ -1271,8 +1262,9 @@ SdBusMessage_close_container(SdBusMessageObject *self,
                              Py_ssize_t nargs)
 {
     SD_BUS_PY_CHECK_ARGS_NUMBER(0);
-    int return_value = sd_bus_message_close_container(self->message_ref);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_close_container(self->message_ref));
+
     Py_RETURN_NONE;
 }
 
@@ -1288,8 +1280,8 @@ SdBusMessage_enter_container(SdBusMessageObject *self,
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_type_char_ptr, args[0]);
     SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_contents_char_ptr, args[1]);
 
-    int return_value = sd_bus_message_enter_container(self->message_ref, container_type_char_ptr[0], container_contents_char_ptr);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, container_type_char_ptr[0], container_contents_char_ptr));
+
     Py_RETURN_NONE;
 }
 
@@ -1299,8 +1291,9 @@ SdBusMessage_exit_container(SdBusMessageObject *self,
                             Py_ssize_t nargs)
 {
     SD_BUS_PY_CHECK_ARGS_NUMBER(0);
-    int return_value = sd_bus_message_exit_container(self->message_ref);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
+
     Py_RETURN_NONE;
 }
 
@@ -1315,8 +1308,9 @@ SdBusMessage_send(SdBusMessageObject *self,
                   Py_ssize_t nargs)
 {
     SD_BUS_PY_CHECK_ARGS_NUMBER(0);
-    int return_value = sd_bus_send(NULL, self->message_ref, NULL);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+
+    CALL_SD_BUS_AND_CHECK(sd_bus_send(NULL, self->message_ref, NULL));
+
     Py_RETURN_NONE;
 }
 
@@ -1741,8 +1735,8 @@ SdBusMessage_create_reply(SdBusMessageObject *self,
     SD_BUS_PY_CHECK_ARGS_NUMBER(0);
     SdBusMessageObject *new_reply_message CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL));
 
-    int return_value = sd_bus_message_new_method_return(self->message_ref, &new_reply_message->message_ref);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_return(self->message_ref, &new_reply_message->message_ref));
+
     Py_INCREF(new_reply_message);
     return new_reply_message;
 }
@@ -1789,14 +1783,14 @@ SdBus_new_method_call_message(SdBusObject *self,
 
     SdBusMessageObject *new_message_object CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusMessageType, NULL));
 
-    int return_value = sd_bus_message_new_method_call(
+    CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_call(
         self->sd_bus_ref,
         &new_message_object->message_ref,
         destination_bus_name,
         object_path,
         interface_name,
-        member_name);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+        member_name));
+
     Py_INCREF(new_message_object);
     return new_message_object;
 }
@@ -1986,10 +1980,9 @@ static PyObject *
 SdBus_get_fd(SdBusObject *self,
              PyObject *Py_UNUSED(args))
 {
-    int return_value = sd_bus_get_fd(self->sd_bus_ref);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    int file_descriptor = CALL_SD_BUS_AND_CHECK(sd_bus_get_fd(self->sd_bus_ref));
 
-    return PyLong_FromLong((long)return_value);
+    return PyLong_FromLong((long)file_descriptor);
 }
 
 #define CHECK_SD_BUS_READER      \
@@ -2132,12 +2125,11 @@ SdBus_add_interface(SdBusObject *self,
 
     PyObject *should_be_none CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs((PyObject *)interface_object, create_vtable_name, NULL));
 
-    int return_value = sd_bus_add_object_vtable(self->sd_bus_ref, &interface_object->interface_slot->slot_ref,
-                                                path_char_ptr, interface_name_char_ptr,
-                                                interface_object->vtable,
-                                                args[0]);
-
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    CALL_SD_BUS_AND_CHECK(
+        sd_bus_add_object_vtable(self->sd_bus_ref, &interface_object->interface_slot->slot_ref,
+                                 path_char_ptr, interface_name_char_ptr,
+                                 interface_object->vtable,
+                                 args[0]));
 
     Py_RETURN_NONE;
 }
@@ -2217,27 +2209,20 @@ SdBus_get_signal_queue(SdBusObject *self,
     PyObject *new_queue CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_queue_class, NULL));
 
     // Bind lifetime of the slot to the queue
-    int return_value = PyObject_SetAttrString(new_queue, "_sd_bus_slot", (PyObject *)new_slot);
-    if (return_value < 0)
-    {
-        return NULL;
-    }
+    CALL_PYTHON_INT_CHECK(PyObject_SetAttrString(new_queue, "_sd_bus_slot", (PyObject *)new_slot));
 
     PyObject *running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
 
     PyObject *new_future CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "create_future", ""));
 
     // Bind lifetime of the queue to future
-    return_value = PyObject_SetAttrString(new_future, "_sd_bus_queue", new_queue);
-    if (return_value < 0)
-    {
-        return NULL;
-    }
+    CALL_PYTHON_INT_CHECK(PyObject_SetAttrString(new_future, "_sd_bus_queue", new_queue));
 
-    return_value = sd_bus_match_signal_async(self->sd_bus_ref, &new_slot->slot_ref,
-                                             sender_service_char_ptr, path_name_char_ptr, interface_name_char_ptr, member_name_char_ptr,
-                                             _SdBus_signal_callback, _SdBus_match_signal_instant_callback, new_future);
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    CALL_SD_BUS_AND_CHECK(
+        sd_bus_match_signal_async(
+            self->sd_bus_ref, &new_slot->slot_ref,
+            sender_service_char_ptr, path_name_char_ptr, interface_name_char_ptr, member_name_char_ptr,
+            _SdBus_signal_callback, _SdBus_match_signal_instant_callback, new_future));
 
     CHECK_SD_BUS_READER
     Py_INCREF(new_future);
@@ -2490,8 +2475,7 @@ encode_object_path(PyObject *Py_UNUSED(self),
 
     const char *new_char_ptr CLEANUP_STR_MALLOC = NULL;
 
-    int return_value = sd_bus_path_encode(prefix_char_ptr, external_char_ptr, (char **)(&new_char_ptr));
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    CALL_SD_BUS_AND_CHECK(sd_bus_path_encode(prefix_char_ptr, external_char_ptr, (char **)(&new_char_ptr)));
 
     return PyUnicode_FromString(new_char_ptr);
 }
@@ -2513,8 +2497,7 @@ decode_object_path(PyObject *Py_UNUSED(self),
 
     const char *new_char_ptr CLEANUP_STR_MALLOC = NULL;
 
-    int return_value = sd_bus_path_decode(full_path_char_ptr, prefix_char_ptr, (char **)(&new_char_ptr));
-    SD_BUS_PY_CHECK_RETURN_VALUE(PyExc_RuntimeError);
+    CALL_SD_BUS_AND_CHECK(sd_bus_path_decode(full_path_char_ptr, prefix_char_ptr, (char **)(&new_char_ptr)));
 
     if (new_char_ptr)
     {
@@ -2619,6 +2602,10 @@ PyInit_sd_bus_internals(void)
     PyObject *unmapped_error_exception CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.SdBusUnmappedMessageError", new_base_exception, NULL));
     SD_BUS_PY_INIT_ADD_OBJECT("SdBusUnmappedMessageError", unmapped_error_exception);
     unmapped_error_exception = unmapped_error_exception;
+
+    PyObject *library_exception CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.SdBusLibraryError", new_base_exception, NULL));
+    SD_BUS_PY_INIT_ADD_OBJECT("SdBusLibraryError", library_exception);
+    exception_lib = library_exception;
 
     PyObject *asyncio_module = CALL_PYTHON_AND_CHECK(PyImport_ImportModule("asyncio"));
     async_future_type = (PyTypeObject *)CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(asyncio_module, "Future"));

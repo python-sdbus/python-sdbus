@@ -207,6 +207,10 @@ class SdBusUnmappedMessageError(SdBusBaseError):
     ...
 
 
+class SdBusLibraryError(SdBusBaseError):
+    ...
+
+
 DBUS_ERROR_TO_EXCEPTION: Dict[str, Exception] = {}
 
 EXCEPTION_TO_DBUS_ERROR: Dict[Exception, str] = {}

@@ -21,7 +21,6 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
-
 from ..dbus_proxy_async import (DbusInterfaceCommonAsync, dbus_method_async,
                                 dbus_property_async, dbus_signal_async)
 from ..sd_bus_internals import SdBus
@@ -38,12 +37,47 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
             bus,
         )
 
+    @dbus_method_async('s', method_name='GetConnectionUnixProcessID')
+    async def get_connection_pid(self, service_name: str) -> int:
+        raise NotImplementedError
+
+    @dbus_method_async('s', method_name='GetConnectionUnixUser')
+    async def get_connection_uid(self, service_name: str) -> int:
+        raise NotImplementedError
+
     @dbus_method_async()
     async def get_id(self) -> str:
         raise NotImplementedError
 
+    @dbus_method_async('s')
+    async def get_name_owner(self, service_name: str) -> str:
+        raise NotImplementedError
+
+    @dbus_method_async()
+    async def list_activatable_names(self) -> List[str]:
+        raise NotImplementedError
+
+    @dbus_method_async()
+    async def list_names(self) -> List[str]:
+        raise NotImplementedError
+
+    @dbus_method_async('s')
+    async def name_has_owner(self, service_name: str) -> bool:
+        raise NotImplementedError
+
+    @dbus_method_async('su')
+    async def start_service_by_name(
+            self,
+            service_name: str,
+            flags: int = 0) -> int:
+        raise NotImplementedError
+
     @dbus_property_async('as')
     def features(self) -> List[str]:
+        raise NotImplementedError
+
+    @dbus_property_async('as')
+    def interfaces(self) -> List[str]:
         raise NotImplementedError
 
     @dbus_signal_async()

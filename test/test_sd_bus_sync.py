@@ -33,6 +33,11 @@ class TestSync(TestCase):
 
         self.assertIsInstance(s.get_id(), str)
         self.assertIsInstance(s.features, list)
+        self.assertIsInstance(
+            s.get_connection_pid('org.freedesktop.DBus'), int)
+
+        self.assertIsInstance(
+            s.get_connection_uid('org.freedesktop.DBus'), int)
 
         def test_invalid_assignment() -> None:
             s.features = ['test']

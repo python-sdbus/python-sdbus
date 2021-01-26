@@ -35,12 +35,47 @@ class FreedesktopDbus(DbusInterfaceCommon,
             bus,
         )
 
+    @dbus_method('s', method_name='GetConnectionUnixProcessID')
+    def get_connection_pid(self, service_name: str) -> int:
+        raise NotImplementedError
+
+    @dbus_method('s', method_name='GetConnectionUnixUser')
+    def get_connection_uid(self, service_name: str) -> int:
+        raise NotImplementedError
+
     @dbus_method()
     def get_id(self) -> str:
         raise NotImplementedError
 
+    @dbus_method('s')
+    def get_name_owner(self, service_name: str) -> str:
+        raise NotImplementedError
+
+    @dbus_method()
+    def list_activatable_names(self) -> List[str]:
+        raise NotImplementedError
+
+    @dbus_method()
+    def list_names(self) -> List[str]:
+        raise NotImplementedError
+
+    @dbus_method('s')
+    def name_has_owner(self, service_name: str) -> bool:
+        raise NotImplementedError
+
+    @dbus_method('su')
+    def start_service_by_name(
+            self,
+            service_name: str,
+            flags: int = 0) -> int:
+        raise NotImplementedError
+
     @dbus_property('as')
     def features(self) -> List[str]:
+        raise NotImplementedError
+
+    @dbus_property('as')
+    def interfaces(self) -> List[str]:
         raise NotImplementedError
 
 

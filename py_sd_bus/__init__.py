@@ -18,16 +18,68 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-from .dbus_common import request_default_bus_name_async
-
+from .dbus_common import (get_default_bus, request_default_bus_name_async,
+                          set_default_bus)
+from .dbus_exceptions import (DbusAccessDeniedError, DbusAddressInUseError,
+                              DbusAuthFailedError, DbusBadAddressError,
+                              DbusDisconnectedError, DbusFailedError,
+                              DbusFileExistsError, DbusFileNotFoundError,
+                              DbusInconsistentMessageError,
+                              DbusInteractiveAuthorizationRequiredError,
+                              DbusInvalidArgsError,
+                              DbusInvalidFileContentError,
+                              DbusInvalidSignatureError, DbusIOError,
+                              DbusLimitsExceededError,
+                              DbusMatchRuleInvalidError, DbusMatchRuleNotFound,
+                              DbusNameHasNoOwnerError, DbusNoMemoryError,
+                              DbusNoNetworkError, DbusNoReplyError,
+                              DbusNoServerError, DbusNotSupportedError,
+                              DbusPropertyReadOnlyError,
+                              DbusServiceUnknownError, DbusTimeoutError,
+                              DbusUnixProcessIdUnknownError,
+                              DbusUnknownInterfaceError,
+                              DbusUnknownMethodError, DbusUnknownObjectError,
+                              DbusUnknownPropertyError)
 from .dbus_proxy_async import (DbusInterfaceCommonAsync, dbus_method_async,
                                dbus_property_async, dbus_signal_async)
-from .sd_bus_internals import sd_bus_open, sd_bus_open_system, sd_bus_open_user
+from .dbus_proxy_sync import DbusInterfaceCommon, dbus_method, dbus_property
+from .sd_bus_internals import (SdBusLibraryError, SdBusUnmappedMessageError,
+                               decode_object_path, encode_object_path,
+                               sd_bus_open, sd_bus_open_system,
+                               sd_bus_open_user)
 
 __all__ = [
-    'sd_bus_open', 'sd_bus_open_user', 'sd_bus_open_system',
+    'get_default_bus', 'request_default_bus_name_async',
+    'set_default_bus',
+
+    'DbusAccessDeniedError', 'DbusAddressInUseError',
+    'DbusAuthFailedError', 'DbusBadAddressError',
+    'DbusDisconnectedError', 'DbusFailedError',
+    'DbusFileExistsError', 'DbusFileNotFoundError',
+    'DbusInconsistentMessageError',
+    'DbusInteractiveAuthorizationRequiredError',
+    'DbusInvalidArgsError',
+    'DbusInvalidFileContentError',
+    'DbusInvalidSignatureError', 'DbusIOError',
+    'DbusLimitsExceededError',
+    'DbusMatchRuleInvalidError', 'DbusMatchRuleNotFound',
+    'DbusNameHasNoOwnerError', 'DbusNoMemoryError',
+    'DbusNoNetworkError', 'DbusNoReplyError',
+    'DbusNoServerError', 'DbusNotSupportedError',
+    'DbusPropertyReadOnlyError',
+    'DbusServiceUnknownError', 'DbusTimeoutError',
+    'DbusUnixProcessIdUnknownError',
+    'DbusUnknownInterfaceError',
+    'DbusUnknownMethodError', 'DbusUnknownObjectError',
+    'DbusUnknownPropertyError',
+
     'DbusInterfaceCommonAsync',
     'dbus_method_async', 'dbus_property_async', 'dbus_signal_async',
-    'request_default_bus_name_async',
-    'DbusUserError',
+
+    'DbusInterfaceCommon', 'dbus_method', 'dbus_property',
+
+    'SdBusLibraryError', 'SdBusUnmappedMessageError',
+    'decode_object_path', 'encode_object_path',
+    'sd_bus_open', 'sd_bus_open_system',
+    'sd_bus_open_user'
 ]

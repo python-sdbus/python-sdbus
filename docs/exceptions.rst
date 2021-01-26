@@ -48,6 +48,13 @@ Other exceptions
     The exceptions argument is a tuple of
     error name and error message. 
 
+.. py:exception:: SdBusLibraryError
+
+    sd-bus library returned error.
+
+    Exception message contains line number and the error name.
+
+
 .. _list of error exceptions:
 
 Error name exception list

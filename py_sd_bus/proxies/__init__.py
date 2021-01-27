@@ -104,13 +104,13 @@ class FreedesktopNotifications(DbusInterfaceCommon,
     @dbus_method('susssasa{sv}i')
     def notify(
             self,
-            app_name: str,
-            replaces_id: int,
-            app_icon: str,
-            summary: str,
-            body: str,
-            actions: List[str],
-            hints: Dict[str, Tuple[str, Any]],
-            expire_timeout: int, ) -> int:
+            app_name: str = '',
+            replaces_id: int = 0,
+            app_icon: str = '',
+            summary: str = '',
+            body: str = '',
+            actions: List[str] = [],
+            hints: Dict[str, Tuple[str, Any]] = {},
+            expire_timeout: int = -1, ) -> int:
 
         raise NotImplementedError

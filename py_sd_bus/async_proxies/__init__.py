@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
+from .._proxies_common import NotificationsHelper
 from ..dbus_proxy_async import (DbusInterfaceCommonAsync, dbus_method_async,
                                 dbus_property_async, dbus_signal_async)
 from ..sd_bus_internals import SdBus
@@ -93,9 +94,10 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
         raise NotImplementedError
 
 
-class NotificationsInterface(DbusInterfaceCommonAsync,
-                             interface_name='org.freedesktop.Notifications'
-                             ):
+class NotificationsInterface(
+        NotificationsHelper,
+        DbusInterfaceCommonAsync,
+        interface_name='org.freedesktop.Notifications'):
 
     @dbus_method_async('u')
     async def close_notification(self, notif_id: int) -> None:

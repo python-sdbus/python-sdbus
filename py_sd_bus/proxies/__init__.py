@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
+from .._proxies_common import NotificationsHelper
 from ..dbus_proxy_sync import DbusInterfaceCommon, dbus_method, dbus_property
 from ..sd_bus_internals import SdBus
 
@@ -79,9 +80,11 @@ class FreedesktopDbus(DbusInterfaceCommon,
         raise NotImplementedError
 
 
-class FreedesktopNotifications(DbusInterfaceCommon,
-                               interface_name='org.freedesktop.Notifications'
-                               ):
+class FreedesktopNotifications(
+        NotificationsHelper,
+        DbusInterfaceCommon,
+        interface_name='org.freedesktop.Notifications'):
+
     def __init__(self, bus: Optional[SdBus] = None) -> None:
         super().__init__(
             'org.freedesktop.Notifications',

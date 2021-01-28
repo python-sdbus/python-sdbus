@@ -2,7 +2,7 @@
 
 # Copyright (C) 2020, 2021 igo95862
 
-# This file is part of py_sd_bus
+# This file is part of python-sdbus
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 from sys import path
 from os.path import abspath
 
-project = 'py_sd_bus'
+project = 'python-sdbus'
 author = 'igo95862'
 source_suffix = '.rst'
 extensions = ['sphinx.ext.autodoc']

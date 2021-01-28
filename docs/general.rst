@@ -85,7 +85,7 @@ Dbus types conversion
 Blocking vs Async
 +++++++++++++++++++++
 
-py_sd_bus supports both blocking and async IO.
+Python-sdbus supports both blocking and async IO.
 
 Regular python functions are always blocking.
 

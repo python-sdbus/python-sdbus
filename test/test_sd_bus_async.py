@@ -2,7 +2,7 @@
 
 # Copyright (C) 2020, 2021 igo95862
 
-# This file is part of py_sd_bus
+# This file is part of python-sdbus
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -24,11 +24,11 @@ from asyncio import get_running_loop, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 
-from py_sd_bus import (DbusFailedError, DbusFileExistsError,
-                       DbusInterfaceCommonAsync, DbusNoReplyFlag,
-                       dbus_method_async, dbus_method_async_override,
-                       dbus_property_async, dbus_property_async_override,
-                       dbus_signal_async)
+from sdbus import (DbusFailedError, DbusFileExistsError,
+                   DbusInterfaceCommonAsync, DbusNoReplyFlag,
+                   dbus_method_async, dbus_method_async_override,
+                   dbus_property_async, dbus_property_async_override,
+                   dbus_signal_async)
 
 from .common_test_util import TempDbusTest
 

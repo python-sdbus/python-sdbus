@@ -2,7 +2,7 @@
 
 # Copyright (C) 2020, 2021 igo95862
 
-# This file is part of py_sd_bus
+# This file is part of python-sdbus
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,8 +21,8 @@ from __future__ import annotations
 
 from unittest import IsolatedAsyncioTestCase, SkipTest, main
 
-from py_sd_bus import DbusServiceUnknownError
-from py_sd_bus.async_proxies import FreedesktopDbus, FreedesktopNotifications
+from sdbus import DbusServiceUnknownError
+from sdbus.async_proxies import FreedesktopDbus, FreedesktopNotifications
 
 from .common_test_util import TempDbusTest
 

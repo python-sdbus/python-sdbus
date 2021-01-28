@@ -2,7 +2,7 @@
 
 # Copyright (C) 2020, 2021 igo95862
 
-# This file is part of py_sd_bus
+# This file is part of python-sdbus
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,8 +22,8 @@ from __future__ import annotations
 
 from unittest import TestCase, main
 
-from py_sd_bus import DbusPropertyReadOnlyError
-from py_sd_bus.proxies import FreedesktopDbus
+from sdbus import DbusPropertyReadOnlyError
+from sdbus.proxies import FreedesktopDbus
 
 
 class TestSync(TestCase):

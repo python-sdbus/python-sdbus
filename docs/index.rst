@@ -1,7 +1,7 @@
-Welcome to py_sd_bus documentation!
+Welcome to Python-sdbus documentation!
 =======================================================
 
-py_sd_bus is the python dbus library that aim to use the modern features of python
+Python-sdbus is the python dbus library that aim to use the modern features of python
 
 * `Asyncio <https://docs.python.org/3/library/asyncio.html>`_
 * `Typing <https://docs.python.org/3/library/typing.html>`_

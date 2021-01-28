@@ -4,7 +4,7 @@ Blocking quick start
 Interface classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-py_sd_bus works by declaring interface classes.
+Python-sdbus works by declaring interface classes.
 
 Interface classes for blocking IO should be derived from :py:class:`DbusInterfaceCommon`.
 

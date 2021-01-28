@@ -4,7 +4,7 @@ Asyncio quick start
 Interface classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-py_sd_bus works by declaring interface classes.
+Python-sdbus works by declaring interface classes.
 
 Interface classes for async IO should be derived from :py:class:`DbusInterfaceCommonAsync`.
 

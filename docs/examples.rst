@@ -15,7 +15,7 @@ There are 3 files:
 
 ``example_interface.py`` file: ::
 
-    from py_sd_bus import (DbusInterfaceCommonAsync, dbus_method_async,
+    from sdbus import (DbusInterfaceCommonAsync, dbus_method_async,
                            dbus_property_async, dbus_signal_async)
 
     # This is file only contains interface definition for easy import
@@ -52,7 +52,7 @@ There are 3 files:
 
     from example_interface import ExampleInterface
 
-    from py_sd_bus import request_default_bus_name_async
+    from sdbus import request_default_bus_name_async
 
     loop = get_event_loop()
 

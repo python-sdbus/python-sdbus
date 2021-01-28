@@ -104,7 +104,7 @@ Blocking:
 * No dbus signals.
 * Cannot serve objects, only interact with existing object on dbus.
 
-:doc:`/sync`
+:doc:`/sync_api`
 
 Asyncio:
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -112,6 +112,8 @@ Asyncio:
 * Multiple requests at the same time.
 * Serve object on dbus for other programms.
 * Dbus Signals.
+
+:doc:`/asyncio_api`
 
 Name conversions
 +++++++++++++++++++++

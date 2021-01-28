@@ -3,6 +3,8 @@ Common API
 
 These calls are shared between async and blocking API.
 
+.. py:currentmodule:: sdbus
+
 Dbus connections calls
 ++++++++++++++++++++++++++++++++++
 

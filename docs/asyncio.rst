@@ -4,6 +4,8 @@ Asyncio API
 Classes
 ++++++++++++++++++++
 
+.. py:currentmodule:: sdbus
+
 .. py:class:: DbusInterfaceCommonAsync(interface_name)
 
     Dbus async interface class.

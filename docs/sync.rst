@@ -4,6 +4,8 @@ Blocking API
 Classes
 +++++++++++++++
 
+.. py:currentmodule:: sdbus
+
 .. py:class:: DbusInterfaceCommon(interface_name)
 
     Dbus interface class.

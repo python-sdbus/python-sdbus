@@ -10,6 +10,8 @@ under ``sdbus.proxies``
 This page document the asyncio interfaces. Blocking interfaces mirror asyncio
 interface with all methods being regular ``def`` functions and no signals.
 
+.. py:currentmodule:: sdbus.async_proxies
+
 Freedesktop dbus
 +++++++++++++++++++++++++++++++++
 

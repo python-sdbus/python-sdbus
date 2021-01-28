@@ -43,10 +43,10 @@ from .dbus_exceptions import (DbusAccessDeniedError, DbusAddressInUseError,
 from .dbus_proxy_async import (DbusInterfaceCommonAsync, dbus_method_async,
                                dbus_property_async, dbus_signal_async)
 from .dbus_proxy_sync import DbusInterfaceCommon, dbus_method, dbus_property
-from .sd_bus_internals import (SdBusLibraryError, SdBusUnmappedMessageError,
-                               decode_object_path, encode_object_path,
-                               sd_bus_open, sd_bus_open_system,
-                               sd_bus_open_user)
+from .sd_bus_internals import (SdBusBaseError, SdBusLibraryError,
+                               SdBusUnmappedMessageError, decode_object_path,
+                               encode_object_path, sd_bus_open,
+                               sd_bus_open_system, sd_bus_open_user)
 
 __all__ = [
     'get_default_bus', 'request_default_bus_name_async',
@@ -78,8 +78,8 @@ __all__ = [
 
     'DbusInterfaceCommon', 'dbus_method', 'dbus_property',
 
-    'SdBusLibraryError', 'SdBusUnmappedMessageError',
-    'decode_object_path', 'encode_object_path',
-    'sd_bus_open', 'sd_bus_open_system',
-    'sd_bus_open_user'
+    'SdBusBaseError', 'SdBusLibraryError',
+    'SdBusUnmappedMessageError', 'decode_object_path',
+    'encode_object_path', 'sd_bus_open',
+    'sd_bus_open_system', 'sd_bus_open_user'
 ]

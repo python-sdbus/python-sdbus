@@ -303,7 +303,7 @@ Decorators
             def name_changed(self) -> str:
                 raise NotImplementedError
 
-.. py:decorator:: dbus_method_async_override
+.. py:decorator:: dbus_method_async_override()
 
     Override the method.
 
@@ -326,12 +326,12 @@ Decorators
 
         class ExampleOverride(ExampleInterface):
 
-            @dbus_method_async_override
+            @dbus_method_async_override()
             async def upper(self, str_to_up: str) -> str:
                 return 'Upper: ' + str_to_up.upper()
 
 
-.. py:decorator:: dbus_property_async_override
+.. py:decorator:: dbus_property_async_override()
 
     Override property.
 
@@ -356,7 +356,7 @@ Decorators
 
         class ExampleOverride(ExampleInterface):
 
-            @dbus_property_async_override
+            @dbus_property_async_override()
             def str_prop(self) -> str:
                 return 'Test property' + self.s
 

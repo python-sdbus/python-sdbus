@@ -41,7 +41,8 @@ from .dbus_exceptions import (DbusAccessDeniedError, DbusAddressInUseError,
                               DbusUnknownMethodError, DbusUnknownObjectError,
                               DbusUnknownPropertyError)
 from .dbus_proxy_async import (DbusInterfaceCommonAsync, dbus_method_async,
-                               dbus_property_async, dbus_signal_async)
+                               dbus_method_async_override, dbus_property_async,
+                               dbus_property_async_override, dbus_signal_async)
 from .dbus_proxy_sync import DbusInterfaceCommon, dbus_method, dbus_property
 from .sd_bus_internals import (SdBusBaseError, SdBusLibraryError,
                                SdBusUnmappedMessageError, decode_object_path,
@@ -73,13 +74,14 @@ __all__ = [
     'DbusUnknownMethodError', 'DbusUnknownObjectError',
     'DbusUnknownPropertyError',
 
-    'DbusInterfaceCommonAsync',
-    'dbus_method_async', 'dbus_property_async', 'dbus_signal_async',
+    'DbusInterfaceCommonAsync', 'dbus_method_async',
+    'dbus_method_async_override', 'dbus_property_async',
+    'dbus_property_async_override', 'dbus_signal_async',
 
     'DbusInterfaceCommon', 'dbus_method', 'dbus_property',
 
     'SdBusBaseError', 'SdBusLibraryError',
     'SdBusUnmappedMessageError', 'decode_object_path',
     'encode_object_path', 'sd_bus_open',
-    'sd_bus_open_system', 'sd_bus_open_user'
+    'sd_bus_open_system', 'sd_bus_open_user',
 ]

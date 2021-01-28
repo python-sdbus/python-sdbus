@@ -37,7 +37,7 @@ If you are unfamiliar with Dbus you might want to read following pages:
 
 `Dbus specification by freedesktop <https://dbus.freedesktop.org/doc/dbus-specification.html>`_
 
-`Install D-Feet dbus debugger and observe object on your dbus <https://wiki.gnome.org/Apps/DFeet>`_
+`Install D-Feet dbus debugger and observe services and objects on your dbus <https://wiki.gnome.org/Apps/DFeet>`_
 
 Indices and tables
 ==================

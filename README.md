@@ -1,11 +1,11 @@
-# Modern Python binds for Dbus
+# Modern Python binds for D-Bus
 
 Features:
 
-* Asyncio and blocking calls
-* Type hints. (`mypy --strict` compatable)
-* No Python 2 legacy
-* Based on fast sd_bus
+* Asyncio and blocking calls.
+* Type hints. (`mypy --strict` compatible)
+* No Python 2 legacy.
+* Based on fast sd-bus from systemd.
 * Unified client/server interface classes. Write interface once!
 
 See the

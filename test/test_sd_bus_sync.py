@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from unittest import TestCase, main
 
-from py_sd_bus.dbus_exceptions import DbusPropertyReadOnlyError
+from py_sd_bus import DbusPropertyReadOnlyError
 from py_sd_bus.proxies import FreedesktopDbus
 
 

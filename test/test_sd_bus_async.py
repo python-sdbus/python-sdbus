@@ -216,11 +216,11 @@ class TestProxy(TempDbusTest):
         test_var = ['asdasd']
 
         class TestInheritnce(TestInterface):
-            @dbus_method_async_override
+            @dbus_method_async_override()
             async def test_int(self) -> int:
                 return 2
 
-            @dbus_property_async_override
+            @dbus_property_async_override()
             def test_property(self) -> str:
                 return test_var[0]
 

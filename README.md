@@ -1,3 +1,6 @@
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/igo95862/python-sdbus.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/igo95862/python-sdbus/alerts/)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/igo95862/python-sdbus.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/igo95862/python-sdbus/context:python)
+
 # Modern Python binds for D-Bus
 
 Features:

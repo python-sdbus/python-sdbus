@@ -312,6 +312,8 @@ Decorators
 
     New method should take same arguments.
 
+    You **must** add round brackets to decorator.
+
     Example::
 
         class ExampleInterface(DbusInterfaceCommonAsync,
@@ -334,6 +336,8 @@ Decorators
 .. py:decorator:: dbus_property_async_override()
 
     Override property.
+
+    You **must** add round brackets to decorator.
 
     Example::
 

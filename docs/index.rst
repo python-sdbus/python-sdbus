@@ -15,9 +15,9 @@ py_sd_bus is the python dbus library that aim to use the modern features of pyth
     general
     common_api
     sync_quick
-    sync
+    sync_api
     asyncio_quick
-    asyncio
+    asyncio_api
     exceptions
     examples
     proxies

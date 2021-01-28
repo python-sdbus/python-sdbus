@@ -127,7 +127,7 @@ Decorators
         
         Sequence can be list, tuple, etc...
         Number of elements in the sequence should match
-        the number of result arguments otherwise :py:exc:`RuntimeError`
+        the number of result arguments otherwise :py:exc:`SdBusLibraryError`
         will be raised.
 
         Defaults to result arguments being nameless.

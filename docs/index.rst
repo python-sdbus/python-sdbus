@@ -21,6 +21,7 @@ Python-sdbus is the python dbus library that aim to use the modern features of p
     exceptions
     examples
     proxies
+    api_index
 
 Dbus
 -----------
@@ -43,5 +44,5 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
+* :doc:`/api_index`
 * :ref:`search`

@@ -147,5 +147,5 @@ acquire a specific bus connection.
 
 
 * :ref:`genindex`
-* :ref:`modindex`
+* :doc:`/api_index`
 * :ref:`search`

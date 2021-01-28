@@ -197,6 +197,7 @@ class DbusPropertySync(DbusProperty[T]):
 
 def dbus_property(
     property_signature: str = "",
+    flags: int = 0,
     property_name: Optional[str] = None,
 ) -> Callable[
     [Callable[[Any], T]],
@@ -224,7 +225,7 @@ def dbus_property(
             property_signature,
             function,
             None,
-            0,
+            flags,
         )
 
         return new_wrapper

@@ -142,7 +142,7 @@ system bus otherwise.
 :py:func:`request_default_bus_name_async` can be used to acquire
 a service name on default bus.
 
-Use :py:func`sd_bus_open_user` and :py:func`sd_bus_open_system` to
+Use :py:func:`sd_bus_open_user` and :py:func:`sd_bus_open_system` to
 acquire a specific bus connection.
 
 

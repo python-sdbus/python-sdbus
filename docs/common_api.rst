@@ -84,3 +84,64 @@ Helper functions
         )
         print(s)
         # Prints: dbus.service
+
+
+.. _dbus-flags:
+
+Flags
++++++++++++++++++++++++++++++++++++
+
+Flags are :py:obj:`int` values that should be ORed to combine.
+
+Example, :py:obj:`DbusDeprecatedFlag` plus :py:obj:`DbusHiddenFlag`: ``DbusDeprecatedFlag | DbusHiddenFlag``
+
+.. py:data:: DbusDeprecatedFlag
+    :type: int
+
+    Mark this method or propety as deprecated in introspection data.
+
+.. py:data:: DbusHiddenFlag
+    :type: int
+
+    Method or property will not show up in introspection data.
+
+.. py:data:: DbusUnprivilegedFlag
+    :type: int
+
+    Mark this method or property as unprivileged. This means anyone can
+    call it. Only works for system bus as user session bus is fully
+    trusted by default.
+
+.. py:data:: DbusNoReplyFlag
+    :type: int
+
+    This method does not have a reply message. It instantly returns
+    and does not have any errors.
+
+.. py:data:: DbusPropertyConstFlag
+    :type: int
+
+    Mark that this property does not change during object life time.
+
+.. py:data:: DbusPropertyEmitsChangeFlag
+    :type: int
+
+    This property emits signal when it changes.
+
+.. py:data:: DbusPropertyEmitsInvalidationFlag
+    :type: int
+
+    This property emits signal when it invalidates. (means the value changed
+    but does not include new value in the signal)
+
+.. py:data:: DbusPropertyExplicitFlag
+    :type: int
+
+    This property is too heavy to calculate so its not included ig GetAll method
+    call.
+
+.. py:data:: DbusSensitiveFlag
+    :type: int
+
+    Data in messages in sensitive and will be scrubed from memory after message
+    is red.

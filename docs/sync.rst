@@ -97,6 +97,13 @@ Decorators
     :param str input_signature: dbus input signature.
         Defaults to "" meaning method takes no arguments.
         Required if method takes any arguments.
+
+    :param int flags: modifies behaivor.
+        No effect on remote connections.
+        Defaults to 0 meaning no special behavior.
+
+        See :ref:`dbus-flags` .
+
     :param str method_name: Explicitly define remote method name.
         Usually not required as remote method name will be constructed
         based on original method name.
@@ -137,7 +144,7 @@ Decorators
         d.count_entries({'a': 'asdasdasd', 'b': 'hgterghead213d'})
 
 
-.. py:decorator:: dbus_property([property_signature, [property_name]])
+.. py:decorator:: dbus_property([property_signature, [flags, [property_name]]])
 
     Define dbus property
 
@@ -152,6 +159,13 @@ Decorators
         Empty signature "" indicates read-only property.
         Defaults to empty signature "".
         Required only for writable properties.
+    
+    :param int flags: modifies behaivor.
+        No effect on remote connections.
+        Defaults to 0 meaning no special behavior.
+
+        See :ref:`dbus-flags` .
+
     :param str property_name: Explicitly define remote property name.
         Usually not required as remote property name will be constructed
         based on original method name.

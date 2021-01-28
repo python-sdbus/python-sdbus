@@ -113,9 +113,11 @@ Decorators
         Defaults to "" meaning method returns empty reply on success.
         Required if you intend to serve the object.
 
-    :param int flags: modifies serving behaivor.
+    :param int flags: modifies behaivor.
         No effect on remote connections.
         Defaults to 0 meaning no special behavior.
+
+        See :ref:`dbus-flags` .
 
     :param Sequence[str] result_args_names: sequence of result
         argument names.
@@ -186,9 +188,11 @@ Decorators
     :param str property_signature: Property dbus signature.
         Has to be a single type or container.
 
-    :param int flags: modifies serving behaivor.
+    :param int flags: modifies behaivor.
         No effect on remote connections.
         Defaults to 0 meaning no special behavior.
+
+        See :ref:`dbus-flags` .
 
     :param str property_name: Force specifc property name
         instead of construcing it based on Python function name.
@@ -263,9 +267,11 @@ Decorators
 
         Defaults to result arguments being nameless.
 
-    :param int flags: modifies serving behaivor.
+    :param int flags: modifies behaivor.
         No effect on remote connections.
         Defaults to 0 meaning no special behavior.
+
+        See :ref:`dbus-flags` .
 
     :param str signal_name: Forces specific signal name instead
         of being based on Python function name.

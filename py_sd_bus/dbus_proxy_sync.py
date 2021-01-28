@@ -92,6 +92,10 @@ def dbus_method(
     flags: int = 0,
     method_name: Optional[str] = None,
 ) -> Callable[[T_input], T_input]:
+    assert not isinstance(input_signature, FunctionType), (
+        "Passed function to decorator directly. "
+        "Did you forget () round brackets?"
+    )
 
     def dbus_method_decorator(original_method: T_input) -> T_input:
         assert isinstance(original_method, FunctionType)
@@ -197,6 +201,10 @@ def dbus_property(
 ) -> Callable[
     [Callable[[Any], T]],
         DbusPropertySync[T]]:
+    assert not isinstance(property_signature, FunctionType), (
+        "Passed function to decorator directly. "
+        "Did you forget () round brackets?"
+    )
 
     def property_decorator(
         function: Callable[..., Any]

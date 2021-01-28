@@ -58,7 +58,11 @@ async def request_default_bus_name_async(
 def _method_name_converter(python_name: str) -> Iterator[str]:
     char_iter = iter(python_name)
     # Name starting with upper case letter
-    first_char = next(char_iter)
+    try:
+        first_char = next(char_iter)
+    except StopIteration:
+        return
+
     yield first_char.upper()
 
     upper_next_one = False

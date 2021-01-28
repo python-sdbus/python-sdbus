@@ -97,7 +97,7 @@ def dbus_method(
         assert isinstance(original_method, FunctionType)
         assert not iscoroutinefunction(original_method), (
             "Expected NON coroutine function. ",
-            "Maybe you wanted to use dbus_method_async?",
+            "Maybe you wanted to remove 'async' keyword?",
         )
         new_wrapper = DbusMethodSync(
             original_method=original_method,

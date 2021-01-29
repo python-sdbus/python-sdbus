@@ -34,21 +34,23 @@ Classes
             Optional dbus connection object.
             If not passed the default dbus will be used.
 
-    .. py:method:: ping()
+    .. py:method:: dbus_ping()
     
         Pings the remote object using dbus.
+
         Usefull to test if remote object is alive.
 
-    .. py:method:: get_machine_id()
+    .. py:method:: dbus_machine_id()
     
         Returns the machine UUID of the remote object.
-        
+
         :return: machine UUID
         :rtype: str
 
-    .. py:method:: introspect()
+    .. py:method:: dbus_introspect()
 
         Get dbus introspection XML.
+
         It is users responsibility to parse that data.
 
         :return: string with introspection XML

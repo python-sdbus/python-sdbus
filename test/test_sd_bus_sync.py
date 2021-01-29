@@ -30,6 +30,9 @@ class TestSync(TestCase):
 
     def test_sync(self) -> None:
         s = FreedesktopDbus()
+        s.dbus_ping()
+        s.dbus_introspect()
+        s.dbus_machine_id()
 
         self.assertIsInstance(s.get_id(), str)
         self.assertIsInstance(s.features, list)

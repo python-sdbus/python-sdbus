@@ -707,12 +707,12 @@ class DbusPeerInterfaceAsync(
     serving_enabled=False,
 ):
 
-    @dbus_method_async()
-    async def ping(self) -> None:
+    @dbus_method_async(method_name='Ping')
+    async def dbus_ping(self) -> None:
         raise NotImplementedError
 
-    @dbus_method_async()
-    async def get_machine_id(self) -> str:
+    @dbus_method_async(method_name='GetMachineId')
+    async def dbus_machine_id(self) -> str:
         raise NotImplementedError
 
 
@@ -722,8 +722,8 @@ class DbusIntrospectableAsync(
     serving_enabled=False,
 ):
 
-    @dbus_method_async()
-    async def introspect(self) -> str:
+    @dbus_method_async(method_name='Introspect')
+    async def dbus_introspect(self) -> str:
         raise NotImplementedError
 
 

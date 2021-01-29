@@ -149,7 +149,7 @@ class TestProxy(TempDbusTest):
         self.test_object_connection = TestInterface.new_connect(
             "org.example.test", '/', self.bus)
 
-        await self.test_object_connection.ping()
+        await self.test_object_connection.dbus_ping()
 
     async def test_method_kwargs(self) -> None:
 

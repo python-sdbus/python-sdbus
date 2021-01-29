@@ -292,12 +292,12 @@ class DbusPeerInterface(
     serving_enabled=False,
 ):
 
-    @dbus_method()
-    def ping(self) -> None:
+    @dbus_method(method_name='Ping')
+    def dbus_ping(self) -> None:
         raise NotImplementedError
 
-    @dbus_method()
-    def get_machine_id(self) -> str:
+    @dbus_method(method_name='GetMachineId')
+    def dbus_machine_id(self) -> str:
         raise NotImplementedError
 
 
@@ -307,8 +307,8 @@ class DbusIntrospectable(
     serving_enabled=False,
 ):
 
-    @dbus_method()
-    def introspect(self) -> str:
+    @dbus_method(method_name='Introspect')
+    def dbus_introspect(self) -> str:
         raise NotImplementedError
 
 

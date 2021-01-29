@@ -31,7 +31,9 @@ class TestFreedesktopDbus(TempDbusTest):
     async def test_connection(self) -> None:
         dbus_object = FreedesktopDbus(self.bus)
 
-        await dbus_object.ping()
+        await dbus_object.dbus_ping()
+        await dbus_object.dbus_introspect()
+        await dbus_object.dbus_machine_id()
         self.assertIsInstance(await dbus_object.get_id(), str)
         self.assertIsInstance(await dbus_object.features, list)
 

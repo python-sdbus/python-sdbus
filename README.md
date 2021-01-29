@@ -19,7 +19,13 @@ Also includes a
 [repository](https://python-sdbus.readthedocs.io/en/latest/proxies.html)
 of well-known DBus interfaces such as Notifications interface.
 
-Here is example code:
+## Installation
+
+From AUR: https://aur.archlinux.org/packages/python-sdbus-git/
+
+PyPI comming soon.
+
+## Example code
 
 Interface `example_interface.py` file:
 

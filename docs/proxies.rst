@@ -100,7 +100,7 @@ This is the dbus daemon interface. Used for querying dbus state.
         Starts a specified service.
 
         Flags parameter is not used currently and should be
-        omited or set to 0.
+        omitted or set to 0.
 
         :param str service_name: Service name to start.
         :param int flags: Not used. Omit or pass 0.
@@ -138,7 +138,7 @@ This is the dbus daemon interface. Used for querying dbus state.
         
         * The name that acquired or lost
         * Old owner (by unique bus name) or empty string if no one owned it
-        * New owner (by unique bus name) or emptry string if no one owns it now
+        * New owner (by unique bus name) or empty string if no one owns it now
 
 
 Freedesktop Notifications

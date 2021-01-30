@@ -38,7 +38,7 @@ Classes
     
         Pings the remote object using dbus.
 
-        Usefull to test if remote object is alive.
+        Useful to test if remote object is alive.
 
     .. py:method:: dbus_machine_id()
     

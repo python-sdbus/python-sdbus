@@ -14,7 +14,7 @@ Dbus types conversion
 
 `Dbus types reference <https://dbus.freedesktop.org/doc/dbus-specification.html#type-system>`_
 
-.. note:: Python integers are unlimited size but dbus intergers are not.
+.. note:: Python integers are unlimited size but dbus integers are not.
     All integer types raise :py:exc:`OverflowError` 
     if you try to pass number outside the type size.
 
@@ -73,7 +73,7 @@ Dbus types conversion
 |             |          |                 | I.E. ``a{si}`` is the dict with string keys and integer values.    |
 |             |          |                 | ``{si}`` is NOT a valid signature.                                 |
 +-------------+----------+-----------------+--------------------------------------------------------------------+
-| Variant     | v        | :py:obj:`tuple` | Unknown type that can be any signle type.                          |
+| Variant     | v        | :py:obj:`tuple` | Unknown type that can be any single type.                          |
 |             |          |                 | In Python represented by a tuple of                                |
 |             |          |                 | a signature string and a single type.                              |
 |             |          |                 |                                                                    |
@@ -93,7 +93,7 @@ Asyncio is a part of python standard library that allows non-blocking io.
 
 `Asyncio documentation <https://docs.python.org/3/library/asyncio.html>`_ 
 
-Generally blocking IO should only be used for simple scripts and programms that interact
+Generally blocking IO should only be used for simple scripts and programs that interact
 with existing dbus objects.
 
 Blocking:
@@ -110,7 +110,7 @@ Asyncio:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 * Calls need to be ``await`` ed.
 * Multiple requests at the same time.
-* Serve object on dbus for other programms.
+* Serve object on dbus for other programs.
 * Dbus Signals.
 
 :doc:`/asyncio_api`

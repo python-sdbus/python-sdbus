@@ -100,7 +100,7 @@ Example, :py:obj:`DbusDeprecatedFlag` plus :py:obj:`DbusHiddenFlag`: ``DbusDepre
 .. py:data:: DbusDeprecatedFlag
     :type: int
 
-    Mark this method or propety as deprecated in introspection data.
+    Mark this method or property as deprecated in introspection data.
 
 .. py:data:: DbusHiddenFlag
     :type: int

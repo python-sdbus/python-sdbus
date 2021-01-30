@@ -96,4 +96,4 @@ Example::
 
 ``MultipleInterfaces`` class will have both ``test_method`` and ``example_method``
 that will be wired to correct interface names. (``org.example.myinterface``
-and ``org.example.test`` respectivly)
+and ``org.example.test`` respectively)

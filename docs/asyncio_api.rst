@@ -30,7 +30,7 @@ Classes
         :async:
     
         Pings the remote object using dbus.
-        Usefull to test if remote object is alive.
+        Useful to test if remote object is alive.
 
     .. py:method:: dbus_machine_id()
         :async:
@@ -90,7 +90,7 @@ Classes
     .. py:method:: start_serving(bus, object_path)
         :async:
 
-        Object will apear and become callable on dbus.
+        Object will appear and become callable on dbus.
 
         :param str object_path:
             Object path that it will be available at.
@@ -151,7 +151,7 @@ Decorators
         will be nameless
 
     :param str method_name: Force specific dbus method name 
-        instead of being based on Python funciton name.
+        instead of being based on Python function name.
 
     Example::
 
@@ -185,7 +185,7 @@ Decorators
     .. warning:: Properties are supposed 
         to be lightweight to get or set. 
         Make sure property getter or setter
-        does not preform heavy IO or computation
+        does not perform heavy IO or computation
         as that will block other methods or properties.
 
     :param str property_signature: Property dbus signature.
@@ -197,8 +197,8 @@ Decorators
 
         See :ref:`dbus-flags` .
 
-    :param str property_name: Force specifc property name
-        instead of construcing it based on Python function name.
+    :param str property_name: Force specific property name
+        instead of constructing it based on Python function name.
      
     Properties have following methods:
 

@@ -9,7 +9,7 @@ These exceptions are bound to specific dbus error names. For example,
 error name.
 
 This means if the remote object sends an error message with this error name
-the Python will recieve this exception.
+the Python will receive this exception.
 
 When raised in a method callback an error message will be sent
 back to caller.
@@ -283,7 +283,7 @@ Error name exception list
 
 .. py:exception:: DbusInvalidFileContentError
 
-    Invlaid file content.
+    Invalid file content.
 
     .. py:attribute:: dbus_error_name
         :type: str

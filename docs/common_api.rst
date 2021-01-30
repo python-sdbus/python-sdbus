@@ -52,7 +52,7 @@ Helper functions
 
 .. py:function:: encode_object_path(prefix, external)
 
-    Encode that abitrary string as a valid object path prefixed
+    Encode that arbitrary string as a valid object path prefixed
     with prefix.
 
     :param str prefix: Prefix path. Must be a valid object path.
@@ -139,11 +139,11 @@ Example, :py:obj:`DbusDeprecatedFlag` plus :py:obj:`DbusHiddenFlag`: ``DbusDepre
 .. py:data:: DbusPropertyExplicitFlag
     :type: int
 
-    This property is too heavy to calculate so its not included ig GetAll method
+    This property is too heavy to calculate so its not included in GetAll method
     call.
 
 .. py:data:: DbusSensitiveFlag
     :type: int
 
-    Data in messages in sensitive and will be scrubed from memory after message
+    Data in messages in sensitive and will be scrubbed from memory after message
     is red.

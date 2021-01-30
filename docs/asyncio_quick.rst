@@ -31,7 +31,7 @@ Example::
     class ExampleInterface(DbusInterfaceCommonAsync,
                            interface_name='org.example.myinterface'
                            ):
-        # Method that takes an integer and mutltiplies it by 2
+        # Method that takes an integer and multiplies it by 2
         @dbus_method_async('i', 'i')
         async def double_int(self, an_int: int) -> None:
             return an_int * 2
@@ -144,7 +144,7 @@ Example::
         async def upper(self, str_to_up: str) -> str:
             return str_to_up.upper()
 
-Methods behaive exact same way as Python methods would: ::
+Methods behave exact same way as Python methods would: ::
 
     print(await example_object.upper('test'))  # prints TEST
 
@@ -192,7 +192,7 @@ Example: ::
 
 Properties are supposed to be lightweight. Make sure you don't block event loop with getter or setter.
 
-Async properties do not behaive the same way as :py:func:`property` decorator does.
+Async properties do not behave the same way as :py:func:`property` decorator does.
 
 To get the value of the property you can either directly ``await`` on property
 or use :py:meth:`get_async` method. (also need to be awaited)

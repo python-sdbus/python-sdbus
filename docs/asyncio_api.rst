@@ -71,7 +71,7 @@ Classes
 
     .. py:classmethod:: new_connect(bus, service_name, object_path)
 
-        Create new binded object and bypass ``__init__``.
+        Create new bounded object and bypass ``__init__``.
 
         :param str service_name:
             Remote object dbus connection name. 
@@ -116,7 +116,7 @@ Decorators
         Defaults to "" meaning method returns empty reply on success.
         Required if you intend to serve the object.
 
-    :param int flags: modifies behaivor.
+    :param int flags: modifies behavior.
         No effect on remote connections.
         Defaults to 0 meaning no special behavior.
 
@@ -191,7 +191,7 @@ Decorators
     :param str property_signature: Property dbus signature.
         Has to be a single type or container.
 
-    :param int flags: modifies behaivor.
+    :param int flags: modifies behavior.
         No effect on remote connections.
         Defaults to 0 meaning no special behavior.
 
@@ -270,7 +270,7 @@ Decorators
 
         Defaults to result arguments being nameless.
 
-    :param int flags: modifies behaivor.
+    :param int flags: modifies behavior.
         No effect on remote connections.
         Defaults to 0 meaning no special behavior.
 

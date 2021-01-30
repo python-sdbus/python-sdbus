@@ -102,7 +102,7 @@ Decorators
         Defaults to "" meaning method takes no arguments.
         Required if method takes any arguments.
 
-    :param int flags: modifies behaivor.
+    :param int flags: modifies behavior.
         No effect on remote connections.
         Defaults to 0 meaning no special behavior.
 
@@ -164,7 +164,7 @@ Decorators
         Defaults to empty signature "".
         Required only for writable properties.
     
-    :param int flags: modifies behaivor.
+    :param int flags: modifies behavior.
         No effect on remote connections.
         Defaults to 0 meaning no special behavior.
 

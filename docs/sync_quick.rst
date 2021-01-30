@@ -102,7 +102,7 @@ Example::
         def test_string(self) -> str:
             raise NotImplementedError
 
-The new property behaives very similar to Pythons :py:func:`property` decorator. ::
+The new property behaves very similar to Pythons :py:func:`property` decorator. ::
 
     # Initialize the object
     d = ExampleInterface(

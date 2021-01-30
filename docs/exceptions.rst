@@ -1,4 +1,4 @@
-Excepctions
+Exceptions
 ========================
 
 Error name bound exceptions
@@ -140,7 +140,7 @@ Error name exception list
 
 .. py:exception:: DbusAccessDeniedError
 
-    Caller does not have enough privelledges.
+    Caller does not have enough privileges.
 
     .. py:attribute:: dbus_error_name
         :type: str

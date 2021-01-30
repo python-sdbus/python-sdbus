@@ -90,7 +90,7 @@ There are 3 files:
 
     from example_interface import ExampleInterface
 
-    # Create a new binded object
+    # Create a new bounded object
     example_object = ExampleInterface.new_connect('org.example.test', '/')
 
 

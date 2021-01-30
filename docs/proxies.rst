@@ -195,7 +195,7 @@ for more details.
         :returns: List of capabilities
         :rtype: List[str]
 
-    .. py:method:: get_server_infomation()
+    .. py:method:: get_server_information()
         :async:
 
         Returns notification server information.
@@ -235,7 +235,7 @@ for more details.
         :param bool is_resident: When set the server will not automatically remove the notification when an action has been invoked.
         :param Union[str,Path] sound_file_path: The path to a sound file to play when the notification pops up.
         :param str sound_name: A themeable named sound to play. Similar to icon-name, only for sounds. An example would be "message-new-instant".
-        :param bool suppress_sound: Causes the server to suppress playing any sounds when this notificaiotn is displayed.
+        :param bool suppress_sound: Causes the server to suppress playing any sounds when this notification is displayed.
         :param bool is_transient: When set the server will treat the notification as transient and by-pass the server's persistence capability.
         :param Tuple[int,int] xy_pos: Specifies the X and Y location on the screen that the notification should point to.
         :param int urgency: The urgency level. (what urgency levels there are?)
@@ -247,7 +247,7 @@ for more details.
 
         First element of tuple is notification id.
 
-        Second elemt is the index of the action invoked. Matches the index of passed list of actions.
+        Second element is the index of the action invoked. Matches the index of passed list of actions.
 
     .. py:attribute:: notification_closed
         :type: Tuple[int, int]

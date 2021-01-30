@@ -22,7 +22,7 @@ with existing dbus objects.
 Blocking:
 ^^^^^^^^^^^^^^^^^^^^^
 * Blocking is easier to initiate (no event loop)
-* Properties behaive exactly as Python properties do. (i.e. can asing with '=' operator)
+* Properties behave exactly as Python properties do. (i.e. can assign with '=' operator)
 * Only allows one request at a time.
 * No dbus signals.
 * Cannot serve objects, only interact with existing object on dbus.
@@ -125,7 +125,7 @@ Python uses snake_case.
 When decorating a method name will be automatically translated from snake_case
 to CamelCase. Example: ``close_notification`` -> ``CloseNotification``
 
-However, all decorators have a parametre to force Dbus name to a specific value.
+However, all decorators have a parameter to force Dbus name to a specific value.
 See API documentation for a particular decorator.
 
 

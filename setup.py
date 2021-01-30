@@ -26,7 +26,8 @@ with open('./README.md') as f:
 
 setup(
     name='sdbus',
-    description='Modern DBus python binds. Based on sd-bus from libsystemd.',
+    description=('Modern Python D-Bus library. '
+                 'Based on sd-bus from libsystemd.'),
     long_description=long_description,
     long_description_content_type='text/markdown',
     version='0.7.0',

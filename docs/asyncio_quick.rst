@@ -1,6 +1,8 @@
 Asyncio quick start
 +++++++++++++++++++++
 
+.. py:currentmodule:: sdbus
+
 Interface classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -49,30 +51,38 @@ Connecting
 
 :py:class:`DbusInterfaceCommonAsync` provides two methods for connecting to remote objects.
 
-:py:meth:`new_connect` class method bypasses the class ``__init__`` and returns connected object. 
+:py:meth:`DbusInterfaceCommonAsync.new_connect` class method bypasses the class ``__init__`` and returns connected object. 
 
-:py:meth:`_connect` should be used inside the ``__init__`` methods if your class is remote only.
+:py:meth:`DbusInterfaceCommonAsync._connect` should be used inside the ``__init__`` methods if your class is remote only.
 
-See API reference down bellow.
+Recommended to create connection classes that a subclass of the interface: ::
+
+    class ExampleInterface(...):
+        # Some interface class
+        ...
+
+    class ExampleClient(ExampleInterface):
+        def __init__(self) -> None:
+            # Your client init can connect to any object based on passed arguments.
+            self._connect('org.example.test', '/')
+
 
 Serving objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:py:class:`DbusInterfaceCommonAsync` provides :py:meth:`start_serving` method
-that will export the object to the dbus. After calling it the object
+:py:meth:`DbusInterfaceCommonAsync.start_serving` method
+will export the object to the dbus. After calling it the object
 becomes visible on dbus for other processes to call.
 
 Example using ExampleInterface from before ::
 
     loop = get_event_loop()
 
-    b = get_default_bus()
-
     i = ExampleInterface()
 
     async def start() -> None:
         # Acquire a name on the bus
-        await b.request_name_async('org.example.test', 0)
+        await request_default_bus_name_async('org.example.test')
         # Start serving at / path
         await i.start_serving('/')
 
@@ -100,6 +110,163 @@ and ``'/'`` path: ::
     
     async def test() -> None:
         print(await i.double_int(5))  # Will print 10
+
+Methods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Methods are async function calls wrapped with :py:func:`dbus_method_async` decorator. (see the API reference for decorator parameters)
+
+Methods have to be async function, otherwise :py:exc:`AssertionError` will be raised.
+
+While method calls are async there is a inherit timeout timer for any method call.
+
+To return an error to caller you need to raise exception which has a :py:exc:`DbusFailedError` as base.
+Regular exceptions will not propagate.
+
+See :doc:`/exceptions`.
+
+Example::
+
+    class ExampleInterface(...):
+
+        ...
+        # Body of some class
+
+        # Method that takes a string 
+        # and returns uppercase of that string
+        @dbus_method_async(
+            input_signature='s',
+            result_signature='s',
+            result_args_names=('uppercased', )  # This is optional but
+                                                # makes arguments have names in 
+                                                # instrospection data.
+        )
+        async def upper(self, str_to_up: str) -> str:
+            return str_to_up.upper()
+
+Methods behaive exact same way as Python methods would: ::
+
+    print(await example_object.upper('test'))  # prints TEST
+
+
+Properties
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Properties are a single value that can be read and write.
+
+To declare a read only property you need to decorate a regular function with
+:py:func:`dbus_property_async` decorator.
+
+Example: ::
+
+    class ExampleInterface(...):
+
+        ...
+        # Body of some class
+
+        # Read only property. No setter defined.
+        @dbus_property_async('i')
+        def read_only_number(self) -> int:
+            return 10
+
+To create a read/write property you need to decorate the setter function with
+the :py:obj:`setter` attribute of your getter function.
+
+Example: ::
+
+    class ExampleInterface(...):
+
+        ...
+        # Body of some class
+
+        # Read/write property. First define getter.
+        @dbus_property_async('s')
+        def read_write_str(self) -> str:
+            return self.s
+
+        # Now create setter. Method name does not matter.
+        @read_write_str.setter  # Use the property setter method as decorator
+        def read_write_str_setter(self, new_str: str) -> None:
+            self.s = new_str
+
+
+Properties are supposed to be lightweight. Make sure you don't block event loop with getter or setter.
+
+Async properties do not behaive the same way as :py:func:`property` decorator does.
+
+To get the value of the property you can either directly ``await`` on property
+or use :py:meth:`get_async` method. (also need to be awaited)
+
+To set property use :py:meth:`set_async` method.
+
+Example: ::
+
+    ...
+    # Somewhere in async function
+    # Assume we have example_object of class defined above
+    print(await example_object.read_write_str)  # Print the value of read_write_str
+
+    ...
+    # Set read_write_str to new value
+    await example_object.read_write_str.set_async('test')
+
+
+Signals
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To define a dbus signal wrap a function with :py:func:`dbus_signal_async` decorator.
+
+The function is only used for type hints information. It is recommended
+to just put ``raise NotImplementedError`` in to the body of the function.
+
+Example: ::
+
+    class ExampleInterface(...):
+
+            ...
+            # Body of some class
+            @dbus_signal_async('s')
+            def name_changed(self) -> str:
+                raise NotImplementedError
+
+To catch a signal use ``async for`` loop: ::
+
+    async for x in example_object.name_changed:
+        print(x)
+
+A signal can be emitted with :py:meth:`emit` method.
+
+Example: ::
+
+    example_object.name_changed.emit('test')
+
+Subclass Overrides
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you define a subclass which overrides a declared dbus method or property
+you need to use :py:func:`dbus_method_async_override` and :py:func:`dbus_property_async_override`
+decorators. Overridden property can decorate a new setter.
+
+Overridden methods should take same number and type of arguments.
+
+Example: ::
+
+    # Some subclass
+    class SubclassInterface(...):
+
+        ...
+        @dbus_method_async_override()
+        async def upper(self, str_to_up: str) -> str:
+            return 'Upper: ' + str_to_up.upper()
+
+        @dbus_property_async_override()
+        def str_prop(self) -> str:
+            return 'Test property' + self.s
+
+        # Setter needs to be decorated again to override
+        @str_prop.setter
+        def str_prop_setter(self, new_s: str) -> None:
+            self.s = new_s.upper()
 
 Multiple interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

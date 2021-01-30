@@ -50,7 +50,7 @@ Classes
         :return: string with introspection XML
         :rtype: str
 
-    .. py:classmethod:: _connect(bus, service_name, object_path)
+    .. py:method:: _connect(bus, service_name, object_path)
 
         Binds object to a remote dbus object. Calls
         will be redirected to remote dbus object.
@@ -69,7 +69,7 @@ Classes
             Optional dbus connection object.
             If not passed the default dbus will be used.
 
-    .. py:method:: new_connect(bus, service_name, object_path)
+    .. py:classmethod:: new_connect(bus, service_name, object_path)
 
         Create new binded object and bypass ``__init__``.
 

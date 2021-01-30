@@ -260,7 +260,7 @@ class DbusInterfaceMeta(type):
                     base._dbus_declared_interfaces)
 
         for key in super_declared_interfaces & namespace.keys():
-            raise TypeError("Attempted to overload dbus defenition"
+            raise TypeError("Attempted to overload dbus definition"
                             " sync interfaces do not support overloading")
 
         namespace['_dbus_declared_interfaces'] = declared_interfaces

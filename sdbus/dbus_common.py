@@ -160,7 +160,7 @@ class DbusMethodCommon(DbusSomethingCommon):
         # 3 types of arguments
         # *args - should be passed directly
         # **kwargs - should be put in a proper order
-        # defaults - should be retrived and put in proper order
+        # defaults - should be retrieved and put in proper order
 
         # Strategy:
         # Iterate over arg names

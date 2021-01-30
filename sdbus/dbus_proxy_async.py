@@ -563,7 +563,7 @@ class DbusInterfaceMetaAsync(type):
                 namespace[key] = new_dbus_def
                 declared_interfaces.add(key)
             else:
-                raise TypeError("Attempted to overload dbus defenition"
+                raise TypeError("Attempted to overload dbus definition"
                                 " without using @dbus_overload decorator")
 
         namespace['_dbus_declared_interfaces'] = declared_interfaces
@@ -598,7 +598,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
 
         if bus is None:
             bus = get_default_bus()
-        # TODO: Being able to serve multiple busses and object
+        # TODO: Being able to serve multiple buses and object
         self.attached_bus = bus
         self.serving_object_path = object_path
         # TODO: can be optimized with a single loop

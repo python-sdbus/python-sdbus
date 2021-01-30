@@ -243,7 +243,7 @@ static PyTypeObject SdBusSlotType = {
 };
 
 // SdBusInterface
-// TODO: adding interface to different busses, recalculating vtable
+// TODO: adding interface to different buses, recalculating vtable
 
 typedef struct
 {
@@ -422,7 +422,7 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
     sd_bus_vtable start_vtable = SD_BUS_VTABLE_START(0);
     self->vtable[0] = start_vtable;
     Py_ssize_t current_index = 1;
-    // Iter method defenitions
+    // Iter method definitions
     for (Py_ssize_t i = 0; i < num_of_methods; ({++i; ++current_index; }))
     {
         PyObject *method_tuple = CALL_PYTHON_AND_CHECK(PyList_GetItem(self->method_list, i));
@@ -915,8 +915,8 @@ const char *_subscript_char_ptr(const char *old_char_ptr, size_t start, size_t e
     // 6 - 4 = 2
     // Actual string
     // 'def\0'
-    // 3 string lenght without \0
-    // 4 string lenght with \0
+    // 3 string length without \0
+    // 4 string length with \0
     size_t new_string_size = (end - start) + 1;
     char *new_string = malloc(new_string_size + 1);
     if (new_string == NULL)
@@ -1135,7 +1135,7 @@ PyObject *_parse_variant(PyObject *tuple_object, _Parse_state *parser_state)
     }
     if (PyTuple_GET_SIZE(tuple_object) != 2)
     {
-        PyErr_Format(PyExc_TypeError, "Expected tuple of only 2 elemetns got %zi", PyTuple_GET_SIZE(tuple_object));
+        PyErr_Format(PyExc_TypeError, "Expected tuple of only 2 elements got %zi", PyTuple_GET_SIZE(tuple_object));
         return NULL;
     }
     PyObject *variant_signature = PyTuple_GET_ITEM(tuple_object, 0);
@@ -1583,7 +1583,7 @@ PyObject *_iter_complete(_Parse_state *parser)
 
 PyObject *iter_tuple_or_single(_Parse_state *parser)
 {
-    // Calculate the lenght of message data
+    // Calculate the length of message data
     size_t container_size = _container_size(parser->container_char_ptr);
     if (container_size == 0)
     {
@@ -1624,7 +1624,7 @@ SdBusMessage_get_contents2(SdBusMessageObject *self, PyObject *Py_UNUSED(args))
     };
     /* Parsing strategy
      Either return a single object (single string, single int, single array)
-     or a tuple of single objects. This mirrows the python function returns.
+     or a tuple of single objects. This mirrors the python function returns.
     */
     return iter_tuple_or_single(&read_parser);
 }
@@ -1647,7 +1647,7 @@ SdBusMessage_create_error_reply(SdBusMessageObject *self,
 
 static PyMethodDef SdBusMessage_methods[] = {
     {"append_data", (void *)SdBusMessage_append_data, METH_FASTCALL, "Append basic data based on signature."},
-    {"open_container", (void *)SdBusMessage_open_container, METH_FASTCALL, "Open container for writting"},
+    {"open_container", (void *)SdBusMessage_open_container, METH_FASTCALL, "Open container for writing"},
     {"close_container", (void *)SdBusMessage_close_container, METH_FASTCALL, "Close container"},
     {"enter_container", (void *)SdBusMessage_enter_container, METH_FASTCALL, "Enter container for reading"},
     {"exit_container", (void *)SdBusMessage_exit_container, METH_FASTCALL, "Exit container"},
@@ -2325,7 +2325,7 @@ static PyTypeObject SdBusType = {
 static int _SdBusInterface_callback(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
 {
     SdBusInterfaceObject *self = userdata;
-    // Get the memeber name from the message
+    // Get the member name from the message
     const char *member_char_ptr = sd_bus_message_get_member(m);
     PyObject *callback_object = PyDict_GetItemString(self->method_dict, member_char_ptr);
     if (callback_object == NULL)

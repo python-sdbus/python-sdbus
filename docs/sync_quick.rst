@@ -1,6 +1,8 @@
 Blocking quick start
 +++++++++++++++++++++
 
+.. py:currentmodule:: sdbus
+
 Interface classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -48,7 +50,7 @@ served for other processes to interact with. See :ref:`blocking-vs-async`
 Connecting
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:py:class:`DbusInterfaceCommon` ``__init__`` method takes service_name 
+:py:meth:`DbusInterfaceCommon.__init__` method takes service_name 
 and object_path of the remote object that the object will bind to.
 
 Example connecting and calling method::
@@ -62,6 +64,59 @@ Example connecting and calling method::
 
     d.close_notification(1234)
 
+Methods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Methods are functions wrapped with :py:func:`dbus_method` decorator.
+
+If the remote object sends an error reply an exception with base of :py:exc:`DbusFailedError`
+will be raised. See :doc:`/exceptions` for list of exceptions.
+
+The wrapped function will not be called. Its recommended to set the function to ``raise NotImplementedError``.
+
+Example::
+
+    class ExampleInterface(...):
+
+        ...
+        # Body of some class
+
+        @dbus_method('u')
+        def close_notification(self, an_int: int) -> None:
+            raise NotImplementedError
+
+Properties
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+DBus property is defined by wrapping a function with :py:func:`dbus_property` decorator.
+
+Example::
+
+    class ExampleInterface(...):
+
+        ...
+        # Body of some class
+
+        # Property of str
+        @dbus_property('s')
+        def test_string(self) -> str:
+            raise NotImplementedError
+
+The new property behaives very similar to Pythons :py:func:`property` decorator. ::
+
+    # Initialize the object
+    d = ExampleInterface(
+        service_name='org.example.test',
+        object_path='/',
+    )
+
+    # Print it
+    print(d.test_string)
+
+    # Assign new string
+    d.test_string = 'some_string'
+
+If property is read-only when :py:exc:`DbusPropertyReadOnlyError` will be raised.
 
 Multiple interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -180,12 +180,12 @@ Decorators
                                interface_name='org.example.myproperty'
                                ):
 
-            # Read only property of int
-            @dbus_property()
+            # Property of int
+            @dbus_property('i')
             def test_int(self) -> int:
                 raise NotImplementedError
 
-            # Read/Write property of str
+            # Property of str
             @dbus_property('s')
             def test_string(self) -> str:
                 raise NotImplementedError

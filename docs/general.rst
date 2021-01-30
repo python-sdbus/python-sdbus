@@ -1,11 +1,46 @@
 General Information
 ===================
 
-Glossary
+.. py:currentmodule:: sdbus
+
+.. _blocking-vs-async:
+
+Blocking vs Async
 +++++++++++++++++++++
 
-* **Signature** dbus type definition. Represented by a string. See :ref:`dbus-types`.
+Python-sdbus supports both blocking and async IO.
 
+Regular python functions are always blocking.
+
+Asyncio is a part of python standard library that allows non-blocking io.
+
+`Asyncio documentation <https://docs.python.org/3/library/asyncio.html>`_ 
+
+Generally blocking IO should only be used for simple scripts and programs that interact
+with existing dbus objects.
+
+Blocking:
+^^^^^^^^^^^^^^^^^^^^^
+* Blocking is easier to initiate (no event loop)
+* Properties behaive exactly as Python properties do. (i.e. can asing with '=' operator)
+* Only allows one request at a time.
+* No dbus signals.
+* Cannot serve objects, only interact with existing object on dbus.
+
+:doc:`/sync_quick`
+
+:doc:`/sync_api`
+
+Asyncio:
+^^^^^^^^^^^^^^^^^^^^^^^^
+* Calls need to be ``await`` ed.
+* Multiple requests at the same time.
+* Serve object on dbus for other programs.
+* Dbus Signals.
+
+:doc:`/asyncio_quick`
+
+:doc:`/asyncio_api`
 
 .. _dbus-types:
 
@@ -80,41 +115,6 @@ Dbus types conversion
 |             |          |                 | Example: ``("s", "test")`` variant of a single string              |
 +-------------+----------+-----------------+--------------------------------------------------------------------+
 
-.. _blocking-vs-async:
-
-Blocking vs Async
-+++++++++++++++++++++
-
-Python-sdbus supports both blocking and async IO.
-
-Regular python functions are always blocking.
-
-Asyncio is a part of python standard library that allows non-blocking io.
-
-`Asyncio documentation <https://docs.python.org/3/library/asyncio.html>`_ 
-
-Generally blocking IO should only be used for simple scripts and programs that interact
-with existing dbus objects.
-
-Blocking:
-^^^^^^^^^^^^^^^^^^^^^
-* Blocking is easier to initiate (no event loop)
-* Properties behaive exactly as Python properties do. (i.e. can asing with '=' operator)
-* Only allows one request at a time.
-* No dbus signals.
-* Cannot serve objects, only interact with existing object on dbus.
-
-:doc:`/sync_api`
-
-Asyncio:
-^^^^^^^^^^^^^^^^^^^^^^^^
-* Calls need to be ``await`` ed.
-* Multiple requests at the same time.
-* Serve object on dbus for other programs.
-* Dbus Signals.
-
-:doc:`/asyncio_api`
-
 Name conversions
 +++++++++++++++++++++
 
@@ -132,7 +132,7 @@ See API documentation for a particular decorator.
 Default bus
 ++++++++++++++++++++++++++
 
-Most object methods that take a bus as a parametre
+Most object methods that take a bus as a parameter
 will use a default bus connection if a bus object is
 not explicitly passed.
 
@@ -145,7 +145,26 @@ a service name on default bus.
 Use :py:func:`sd_bus_open_user` and :py:func:`sd_bus_open_system` to
 acquire a specific bus connection.
 
+Set the default connection to a new default with :py:func:`set_default_bus`.
+This should be done before any object that take bus as an init argument are created.
 
+In the future there will be a better way to create and acquire
+new bus connections.
+
+Glossary
++++++++++++++++++++++
+
+* **Bus** object representing connection to dbus.
+* **Proxy** Python object that represents an object on DBus.
+    Without proxy you manipulate messages directly.
+* **Remote** something that exists outside current Python process.
+* **Local** something that exists inside current Python scope.
+* **Service Name** a well known name that an process can acquire on dbus.
+    For example, systemd acquires ``org.freedesktop.systemd1`` name.
+* **Signature** dbus type definition. Represented by a string. See :ref:`dbus-types`.
+
+Contents
+++++++++++++++++++++
 * :ref:`genindex`
 * :doc:`/api_index`
 * :ref:`search`

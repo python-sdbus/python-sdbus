@@ -32,7 +32,9 @@ More incoming. (systemd, secrets... )
 
 From AUR: https://aur.archlinux.org/packages/python-sdbus-git/
 
-PyPI coming soon.
+PyPI: https://pypi.org/project/sdbus/
+
+`pip install sdbus`
 
 ## Example code
 

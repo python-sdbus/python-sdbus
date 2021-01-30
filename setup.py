@@ -30,7 +30,7 @@ setup(
                  'Based on sd-bus from libsystemd.'),
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version='0.7.0',
+    version='0.7.1',
     url='https://github.com/igo95862/python-sdbus',
     author='igo95862',
     author_email='igo95862@yandex.ru',
@@ -52,7 +52,7 @@ setup(
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    packages=['sdbus'],
+    packages=['sdbus', 'sdbus.proxies', 'sdbus.async_proxies'],
     python_requires='>=3.8',
     ext_modules=[
         Extension(

@@ -20,6 +20,14 @@ Also includes a
 [repository](https://python-sdbus.readthedocs.io/en/latest/proxies.html)
 of well-known DBus interfaces such as Notifications interface.
 
+### Interfaces included
+
+* D-Bus 
+* Freedesktop Notifications
+* ...
+
+More incoming. (systemd, secrets... )
+
 ## Installation
 
 From AUR: https://aur.archlinux.org/packages/python-sdbus-git/

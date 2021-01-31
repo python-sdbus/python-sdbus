@@ -11,6 +11,7 @@ Features:
 * No Python 2 legacy.
 * Based on fast sd-bus from systemd.
 * Unified client/server interface classes. Write interface once!
+* Dbus methods can have keyword and default arguments.
 
 See the
 [documentation](https://python-sdbus.readthedocs.io/en/latest/index.html)

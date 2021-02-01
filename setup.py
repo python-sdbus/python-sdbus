@@ -55,7 +55,7 @@ setup(
     packages=['sdbus',
               'sdbus.proxies', 'sdbus.async_proxies',
               'sdbus._proxies_common'],
-    python_requires='>=3.8',
+    python_requires='>=3.7',
     ext_modules=[
         Extension(
             'sdbus.sd_bus_internals',

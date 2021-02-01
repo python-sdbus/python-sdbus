@@ -55,11 +55,14 @@ setup(
     packages=['sdbus',
               'sdbus.proxies', 'sdbus.async_proxies',
               'sdbus._proxies_common'],
+    package_dir={
+        'sdbus': 'src/sdbus',
+    },
     python_requires='>=3.7',
     ext_modules=[
         Extension(
             'sdbus.sd_bus_internals',
-            ['sdbus/sd_bus_internals.c', ],
+            ['src/sdbus/sd_bus_internals.c', ],
             libraries=['systemd', ],
         )
     ],

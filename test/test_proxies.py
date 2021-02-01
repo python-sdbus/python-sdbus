@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from os import environ
 from unittest import IsolatedAsyncioTestCase, SkipTest, main
 
 from sdbus import DbusServiceUnknownError
@@ -41,11 +42,14 @@ class TestFreedesktopDbus(TempDbusTest):
 class TestFreedesktopNotifications(IsolatedAsyncioTestCase):
 
     async def test_capabilities(self) -> None:
+        if 'DBUS_SESSION_BUS_ADDRESS' not in environ:
+            raise SkipTest('No session dbus running')
+
         notifications = FreedesktopNotifications()
         try:
             self.assertIsInstance(await notifications.get_capabilities(), list)
         except DbusServiceUnknownError:
-            raise SkipTest
+            raise SkipTest('No notifications daemon running')
 
 
 if __name__ == "__main__":

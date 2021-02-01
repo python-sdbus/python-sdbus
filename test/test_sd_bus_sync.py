@@ -20,16 +20,18 @@
 
 from __future__ import annotations
 
-from unittest import TestCase, main
+from unittest import main
 
 from sdbus import DbusPropertyReadOnlyError
 from sdbus.proxies import FreedesktopDbus
 
+from .common_test_util import TempDbusTest
 
-class TestSync(TestCase):
+
+class TestSync(TempDbusTest):
 
     def test_sync(self) -> None:
-        s = FreedesktopDbus()
+        s = FreedesktopDbus(self.bus)
         s.dbus_ping()
         s.dbus_introspect()
         s.dbus_machine_id()

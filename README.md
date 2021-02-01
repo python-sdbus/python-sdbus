@@ -29,6 +29,11 @@ of well-known DBus interfaces such as Notifications interface.
 
 More incoming. (systemd, secrets... )
 
+## Requirements
+
+* Python 3.8 or higher. (3.7 might work but is not supported)
+* libsystemd. (comes with systemd)
+
 ## Installation
 
 From AUR: https://aur.archlinux.org/packages/python-sdbus-git/

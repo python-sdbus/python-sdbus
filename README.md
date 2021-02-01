@@ -105,7 +105,7 @@ async def clock() -> None:
 
 
 async def startup() -> None:
-    """Preform async startup actions"""
+    """Perform async startup actions"""
     # Acquire a known name on the bus
     # Client will use that name to connect to this server
     await request_default_bus_name_async('org.example.test')
@@ -130,7 +130,7 @@ example_object = ExampleInterface.new_connect('org.example.test', '/')
 
 
 async def print_clock() -> None:
-    # Use async for loop to print clock signals we recieve
+    # Use async for loop to print clock signals we receive
     async for x in example_object.clock:
         print('Got clock: ', x)
 

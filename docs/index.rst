@@ -7,6 +7,7 @@ Python-sdbus is the python dbus library that aim to use the modern features of p
 * `Type hints <https://docs.python.org/3/library/typing.html>`_
 * `Based on fast sd-bus <https://www.freedesktop.org/software/systemd/man/sd-bus.html>`_
 * Unified client/server interface classes. Write interface class once.
+* Dbus methods can have keyword and default arguments.
 
 D-Bus
 -----------

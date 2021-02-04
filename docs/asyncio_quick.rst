@@ -13,7 +13,10 @@ Interface classes for async IO should be derived from :py:class:`DbusInterfaceCo
 The class constructor takes ``interface_name`` keyword to determine the dbus interface name for all
 dbus elements declared in the class body.
 
-Example::
+Example: ::
+
+    from sdbus import DbusInterfaceCommonAsync
+
 
     class ExampleInterface(DbusInterfaceCommonAsync,
                            interface_name='org.example.myinterface'
@@ -26,7 +29,11 @@ signals using decorators such as
 :py:func:`dbus_signal_async`.
 
 
-Example::
+Example: ::
+
+    from sdbus import (DbusInterfaceCommonAsync, dbus_method_async,
+                       dbus_property_async, dbus_signal_async)
+
 
     class ExampleInterface(DbusInterfaceCommonAsync,
                            interface_name='org.example.myinterface'
@@ -57,6 +64,9 @@ Connecting
 
 Recommended to create connection classes that a subclass of the interface: ::
 
+    from sdbus import DbusInterfaceCommonAsync
+
+
     class ExampleInterface(...):
         # Some interface class
         ...
@@ -74,7 +84,10 @@ Serving objects
 will export the object to the dbus. After calling it the object
 becomes visible on dbus for other processes to call.
 
-Example using ExampleInterface from before ::
+Example using ExampleInterface from before: ::
+
+    from sdbus import request_default_bus_name_async
+
 
     loop = get_event_loop()
 
@@ -125,7 +138,10 @@ Regular exceptions will not propagate.
 
 See :doc:`/exceptions`.
 
-Example::
+Example: ::
+
+    from sdbus import DbusInterfaceCommonAsync, dbus_method_async
+
 
     class ExampleInterface(...):
 
@@ -159,6 +175,9 @@ To declare a read only property you need to decorate a regular function with
 
 Example: ::
 
+    from sdbus import DbusInterfaceCommonAsync, dbus_property_async
+
+
     class ExampleInterface(...):
 
         ...
@@ -173,6 +192,9 @@ To create a read/write property you need to decorate the setter function with
 the :py:obj:`setter` attribute of your getter function.
 
 Example: ::
+
+    from sdbus import DbusInterfaceCommonAsync, dbus_property_async
+
 
     class ExampleInterface(...):
 
@@ -221,6 +243,9 @@ to just put ``raise NotImplementedError`` in to the body of the function.
 
 Example: ::
 
+    from sdbus import DbusInterfaceCommonAsync, dbus_signal_async
+
+
     class ExampleInterface(...):
 
             ...
@@ -251,6 +276,10 @@ Overridden methods should take same number and type of arguments.
 
 Example: ::
 
+    from sdbus import (dbus_method_async_override,
+                       dbus_property_async_override)
+
+
     # Some subclass
     class SubclassInterface(...):
 
@@ -277,6 +306,9 @@ To implement this define multiple interface classes and do a
 multiple inheritance on all interfaces the object has.
 
 Example: ::
+
+    from sdbus import DbusInterfaceCommonAsync
+
 
     class ExampleInterface(DbusInterfaceCommonAsync,
                            interface_name='org.example.myinterface'

@@ -60,7 +60,10 @@ Helper functions
     :return: valid object path
     :rtype: str
 
-    Example on how systemd encodes unit names on dbus ::
+    Example on how systemd encodes unit names on dbus: ::
+
+        from sdbus import encode_object_path
+
 
         # System uses /org/freedesktop/systemd1/unit as prefix of all units
         # dbus.service is a name of dbus unit but dot . is not a valid object path
@@ -78,9 +81,12 @@ Helper functions
     :return: Arbitrary name
     :rtype: str
 
-    Example decoding systemd unit name ::
+    Example decoding systemd unit name: ::
 
-        s = encode_object_path(
+        from sdbus import decode_object_path
+
+
+        s = decode_object_path(
             '/org/freedesktop/systemd1/unit',
             '/org/freedesktop/systemd1/unit/dbus_2eservice'
         )

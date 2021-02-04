@@ -25,6 +25,10 @@ Interface class body should contain the definitions of methods, properties and s
 
 Example::
 
+    from sdbus import (DbusInterfaceCommon,
+                       dbus_method, dbus_property)
+
+
     class ExampleInterface(DbusInterfaceCommon,
                            interface_name='org.example.myinterface'
                            ):
@@ -74,7 +78,10 @@ will be raised. See :doc:`/exceptions` for list of exceptions.
 
 The wrapped function will not be called. Its recommended to set the function to ``raise NotImplementedError``.
 
-Example::
+Example: ::
+
+    from sdbus import DbusInterfaceCommon, dbus_method
+
 
     class ExampleInterface(...):
 
@@ -90,7 +97,9 @@ Properties
 
 DBus property is defined by wrapping a function with :py:func:`dbus_property` decorator.
 
-Example::
+Example: ::
+
+    from sdbus import DbusInterfaceCommon, dbus_property
 
     class ExampleInterface(...):
 
@@ -126,7 +135,10 @@ A dbus object can have multiple interfaces with different methods and properties
 To implement this define multiple interface classes and do a
 multiple inheritance on all interfaces the object has.
 
-Example::
+Example: ::
+
+    from sdbus import DbusInterfaceCommon, dbus_method
+
 
     class ExampleInterface(DbusInterfaceCommon,
                            interface_name='org.example.myinterface'

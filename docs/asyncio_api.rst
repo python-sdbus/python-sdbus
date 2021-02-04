@@ -153,7 +153,10 @@ Decorators
     :param str method_name: Force specific dbus method name 
         instead of being based on Python function name.
 
-    Example::
+    Example: ::
+
+        from sdbus import DbusInterfaceCommonAsync, dbus_method_async
+
 
         class ExampleInterface(DbusInterfaceCommonAsync,
                                interface_name='org.example.test'
@@ -223,7 +226,10 @@ Decorators
         Set property value.
 
     
-    Example::
+    Example: ::
+
+        from sdbus import DbusInterfaceCommonAsync, dbus_property_async
+
 
         class ExampleInterface(DbusInterfaceCommonAsync,
                                interface_name='org.example.test'
@@ -294,7 +300,10 @@ Decorators
 
         Emit a new signal with *args* data.
 
-    Example::
+    Example: ::
+
+        from sdbus import DbusInterfaceCommonAsync, dbus_signal_async
+
 
         class ExampleInterface(DbusInterfaceCommonAsync,
                                interface_name='org.example.signal'
@@ -315,7 +324,11 @@ Decorators
 
     You **must** add round brackets to decorator.
 
-    Example::
+    Example: ::
+
+        from sdbus import (DbusInterfaceCommonAsync, dbus_method_async
+                           dbus_method_async_override)
+
 
         class ExampleInterface(DbusInterfaceCommonAsync,
                                interface_name='org.example.test'
@@ -340,7 +353,11 @@ Decorators
 
     You **must** add round brackets to decorator.
 
-    Example::
+    Example: ::
+
+        from sdbus import (DbusInterfaceCommonAsync, dbus_property_async
+                           dbus_property_async_override)
+
 
         class ExampleInterface(DbusInterfaceCommonAsync,
                                interface_name='org.example.test'
@@ -350,7 +367,7 @@ Decorators
                 self.s = 'aaaaaaaaa'
 
             # Original property
-            @dbus_property('s')
+            @dbus_property_async('s')
             def str_prop(self) -> str:
                 return self.s
             

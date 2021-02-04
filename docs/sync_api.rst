@@ -56,7 +56,11 @@ Classes
         :return: string with introspection XML
         :rtype: str
 
-    Example::
+    Example: ::
+
+        from sdbus import (DbusInterfaceCommon,
+                           dbus_method, dbus_property)
+
 
         class ExampleInterface(DbusInterfaceCommon,
                                interface_name='org.example.my'
@@ -112,7 +116,10 @@ Decorators
         Usually not required as remote method name will be constructed
         based on original method name.
 
-    Defining methods example::
+    Defining methods example: ::
+
+        from sdbus import DbusInterfaceCommon, dbus_method
+
 
         class ExampleInterface(DbusInterfaceCommon,
                                interface_name='org.example.my'
@@ -174,7 +181,10 @@ Decorators
         Usually not required as remote property name will be constructed
         based on original method name.
 
-    Defining properties example::
+    Defining properties example: ::
+
+        from sdbus import DbusInterfaceCommon, dbus_property
+
 
         class ExampleInterface(DbusInterfaceCommon,
                                interface_name='org.example.myproperty'

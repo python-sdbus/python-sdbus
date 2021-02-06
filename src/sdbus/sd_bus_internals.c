@@ -83,16 +83,16 @@
         return NULL;       \
     }
 
-#define CALL_SD_BUS_AND_CHECK(sd_bus_function)                                                                   \
-    ({                                                                                                           \
-        int return_int = sd_bus_function;                                                                        \
-        if (return_int < 0)                                                                                      \
-        {                                                                                                        \
+#define CALL_SD_BUS_AND_CHECK(sd_bus_function)                                                              \
+    ({                                                                                                      \
+        int return_int = sd_bus_function;                                                                   \
+        if (return_int < 0)                                                                                 \
+        {                                                                                                   \
             PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error: %s", \
-                         __LINE__, __FUNCTION__, strerrorname_np(-return_int));                                  \
-            return NULL;                                                                                         \
-        }                                                                                                        \
-        return_int;                                                                                              \
+                         __LINE__, __FUNCTION__, strerrorname_np(-return_int));                             \
+            return NULL;                                                                                    \
+        }                                                                                                   \
+        return_int;                                                                                         \
     })
 
 #define CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_function)                                                      \
@@ -413,7 +413,7 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
     Py_ssize_t num_of_properties = PyList_Size(self->property_list);
     Py_ssize_t num_of_signals = PyList_Size(self->signal_list);
 
-    self->vtable = malloc(sizeof(sd_bus_vtable) * (num_of_signals + num_of_properties + num_of_methods + 2));
+    self->vtable = calloc(num_of_signals + num_of_properties + num_of_methods + 2, sizeof(sd_bus_vtable));
     if (self->vtable == NULL)
     {
         return PyErr_NoMemory();

@@ -46,7 +46,7 @@ PyPI: https://pypi.org/project/sdbus/
 
 Interface `example_interface.py` file:
 
-```
+```python
 from sdbus import (DbusInterfaceCommonAsync, dbus_method_async,
                    dbus_property_async, dbus_signal_async)
 
@@ -79,7 +79,7 @@ class ExampleInterface(
 
 Server `example_server.py` file:
 
-```
+```python
 from asyncio import get_event_loop, sleep
 from random import randint
 from time import time
@@ -120,7 +120,7 @@ loop.run_forever()
 
 Client `example_client.py` file:
 
-```
+```python
 from asyncio import get_event_loop
 
 from example_interface import ExampleInterface

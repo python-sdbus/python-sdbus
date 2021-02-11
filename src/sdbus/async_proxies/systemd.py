@@ -51,6 +51,14 @@ class SystemdManager(
         for x in await self.list_units():
             yield SystemdUnitListTuple(*x)
 
+    @dbus_method_async()
+    async def subscribe(self) -> None:
+        raise NotImplementedError
+
+    @dbus_method_async()
+    async def unsubscribe(self) -> None:
+        raise NotImplementedError
+
     @dbus_property_async()
     def version(self) -> str:
         raise NotImplementedError

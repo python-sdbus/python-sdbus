@@ -25,9 +25,9 @@ of well-known DBus interfaces such as Notifications interface.
 
 * D-Bus 
 * Freedesktop Notifications
-* ...
+* systemd (incomplete)
 
-More incoming. (systemd, secrets... )
+More incoming. (NetworkManager, secrets... )
 
 ## Requirements
 

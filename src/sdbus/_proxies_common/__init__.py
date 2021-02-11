@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union, NamedTuple
+from typing import Any, Dict, Literal, NamedTuple, Optional, Tuple, Union
 
 
 class NotificationsHelper:
@@ -115,3 +115,19 @@ class SystemdUnitListTuple(NamedTuple):
     job_id: int
     job_type: str
     job_path: str
+
+
+SystemdUnitStartModes = Literal[
+    'replace', 'fail', 'isolate',
+    'ignore-dependencies', 'ignore-requirements'
+]
+
+SystemdUnitStopModes = Literal[
+    'replace', 'fail',
+    'ignore-dependencies', 'ignore-requirements'
+]
+
+SystemdActiveState = Literal[
+    'active', 'reloading', 'failed',
+    'activating', 'deactivating'
+]

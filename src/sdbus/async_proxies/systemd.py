@@ -19,12 +19,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import Optional, Tuple, List, AsyncGenerator
+from typing import Any, AsyncGenerator, List, Literal, Optional, Tuple
 
+from .._proxies_common import (SystemdActiveState, SystemdUnitListTuple,
+                               SystemdUnitStartModes, SystemdUnitStopModes)
 from ..dbus_proxy_async import (DbusInterfaceCommonAsync, dbus_method_async,
                                 dbus_property_async, dbus_signal_async)
-from ..sd_bus_internals import SdBus
-from .._proxies_common import SystemdUnitListTuple
+from ..sd_bus_internals import SdBus, encode_object_path
 
 
 class SystemdManager(
@@ -63,4 +64,85 @@ class SystemdManager(
         raise NotImplementedError
 
 
-__all__ = ('SystemdManager', 'SystemdUnitListTuple')
+class SystemdUnit(
+        DbusInterfaceCommonAsync,
+        interface_name='org.freedesktop.systemd1.Unit'):
+
+    def __init__(self, unit_name: str, bus: Optional[SdBus] = None):
+        super().__init__()
+        self._connect(
+            'org.freedesktop.systemd1',
+            encode_object_path('/org/freedesktop/systemd1/unit', unit_name),
+            bus,
+        )
+
+    @dbus_method_async()
+    async def freeze(self) -> None:
+        raise NotImplementedError
+
+    @dbus_method_async()
+    async def thaw(self) -> None:
+        raise NotImplementedError
+
+    @dbus_method_async('si')
+    async def kill(
+            self,
+            kill_who: Literal['main', 'controll', 'all'],
+            signal: int,) -> None:
+        raise NotImplementedError
+
+    @dbus_method_async('s')
+    async def reload(
+            self, mode: SystemdUnitStartModes) -> str:
+        raise NotImplementedError
+
+    @dbus_method_async('s')
+    async def reload_or_restart(
+            self, mode: SystemdUnitStartModes) -> str:
+
+        raise NotImplementedError
+
+    @dbus_method_async('s')
+    async def reload_or_try_restart(
+            self, mode: SystemdUnitStartModes) -> str:
+
+        raise NotImplementedError
+
+    @dbus_method_async()
+    async def reset_failed(self) -> None:
+        raise NotImplementedError
+
+    @dbus_method_async('s')
+    async def restart(
+            self, mode: SystemdUnitStartModes) -> str:
+        raise NotImplementedError
+
+    @dbus_method_async('ba(sv)')
+    async def set_properties(
+            self,
+            is_runtime: bool,
+            properties: List[Tuple[str, Tuple[str, Any]]]) -> None:
+        raise NotImplementedError
+
+    @dbus_method_async('s')
+    async def start(self, mode: SystemdUnitStartModes) -> str:
+        raise NotImplementedError
+
+    @dbus_method_async('s')
+    async def stop(self, mode: SystemdUnitStopModes) -> str:
+        raise NotImplementedError
+
+    @dbus_method_async('s')
+    async def try_restart(self, mode: SystemdUnitStartModes) -> str:
+        raise NotImplementedError
+
+    @dbus_property_async()
+    def active_state(self) -> SystemdActiveState:
+        raise NotImplementedError
+
+    @dbus_property_async()
+    def sub_state(self) -> str:
+        raise NotImplementedError
+
+
+__all__ = ('SystemdManager', 'SystemdUnitListTuple', 'SystemdUnit')

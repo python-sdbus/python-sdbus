@@ -21,10 +21,10 @@ from __future__ import annotations
 
 from .freedesktop import (FreedesktopDbus, FreedesktopNotifications,
                           NotificationsInterface)
-from .systemd import SystemdManager, SystemdUnitListTuple
+from .systemd import SystemdManager, SystemdUnit, SystemdUnitListTuple
 
 __all__ = [
     'FreedesktopDbus', 'FreedesktopNotifications',
     'NotificationsInterface',
-    'SystemdManager', 'SystemdUnitListTuple',
+    'SystemdManager', 'SystemdUnit', 'SystemdUnitListTuple'
 ]

@@ -20,7 +20,9 @@
 from __future__ import annotations
 
 from .freedesktop import FreedesktopDbus, FreedesktopNotifications
+from .systemd import SystemdManager, SystemdUnit, SystemdUnitListTuple
 
 __all__ = [
-    'FreedesktopDbus', 'FreedesktopNotifications'
+    'FreedesktopDbus', 'FreedesktopNotifications',
+    'SystemdManager', 'SystemdUnit', 'SystemdUnitListTuple',
 ]

@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, NamedTuple
 
 
 class NotificationsHelper:
@@ -102,3 +102,16 @@ class NotificationsHelper:
             hints_dict['y'] = ('i', xy_pos[1])
 
         return hints_dict
+
+
+class SystemdUnitListTuple(NamedTuple):
+    primary_name: str
+    description: str
+    load_state: str
+    active_state: str
+    sub_state: str
+    followed_unit: str
+    unit_path: str
+    job_id: int
+    job_type: str
+    job_path: str

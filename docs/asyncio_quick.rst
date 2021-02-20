@@ -80,7 +80,7 @@ Recommended to create connection classes that a subclass of the interface: ::
 Serving objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:py:meth:`DbusInterfaceCommonAsync.start_serving` method
+:py:meth:`DbusInterfaceCommonAsync.export_to_dbus` method
 will export the object to the dbus. After calling it the object
 becomes visible on dbus for other processes to call.
 
@@ -97,7 +97,7 @@ Example using ExampleInterface from before: ::
         # Acquire a name on the bus
         await request_default_bus_name_async('org.example.test')
         # Start serving at / path
-        await i.start_serving('/')
+        i.export_to_dbus('/')
 
     loop.run_until_complete(start())
     loop.run_forever()

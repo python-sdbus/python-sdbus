@@ -58,6 +58,11 @@ setup(
     package_dir={
         'sdbus': 'src/sdbus',
     },
+    package_data={
+        'sdbus': [
+            'py.typed',
+        ],
+    },
     python_requires='>=3.7',
     ext_modules=[
         Extension(

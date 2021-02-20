@@ -596,6 +596,17 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                             bus: Optional[SdBus] = None,
                             ) -> None:
 
+        from warnings import warn
+        warn("start_serving is deprecated in favor of export_to_dbus",
+             DeprecationWarning)
+        self.export_to_dbus(object_path, bus)
+
+    def export_to_dbus(
+        self,
+        object_path: str,
+        bus: Optional[SdBus] = None,
+    ) -> None:
+
         if bus is None:
             bus = get_default_bus()
         # TODO: Being able to serve multiple buses and object

@@ -30,7 +30,7 @@ setup(
                  'Based on sd-bus from libsystemd.'),
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version='0.7.4',
+    version='0.7.5',
     url='https://github.com/igo95862/python-sdbus',
     author='igo95862',
     author_email='igo95862@yandex.ru',

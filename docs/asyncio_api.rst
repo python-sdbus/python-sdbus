@@ -87,8 +87,7 @@ Classes
             Optional dbus connection object.
             If not passed the default dbus will be used.
 
-    .. py:method:: start_serving(bus, object_path)
-        :async:
+    .. py:method:: export_to_dbus(bus, object_path)
 
         Object will appear and become callable on dbus.
 

@@ -145,7 +145,7 @@ class TestProxy(TempDbusTest):
         await self.bus.request_name_async("org.example.test", 0)
 
         self.test_object = TestInterface()
-        await self.test_object.start_serving('/', self.bus)
+        self.test_object.export_to_dbus('/', self.bus)
         self.test_object_connection = TestInterface.new_connect(
             "org.example.test", '/', self.bus)
 
@@ -227,7 +227,7 @@ class TestProxy(TempDbusTest):
 
         test_subclass = TestInheritnce()
 
-        await test_subclass.start_serving('/subclass', self.bus)
+        test_subclass.export_to_dbus('/subclass', self.bus)
 
         with self.subTest('Subclass test: python-python'):
             self.assertEqual(await test_subclass.test_int(), 2)

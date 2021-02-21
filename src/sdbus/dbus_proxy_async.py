@@ -26,6 +26,7 @@ from types import FunctionType, MethodType
 from typing import (Any, AsyncGenerator, Callable, Dict, Generator, Generic,
                     List, Optional, Sequence, Set, Tuple, Type, TypeVar, cast)
 from weakref import ref as weak_ref
+from weakref import ref as weakref
 
 from .dbus_common import (DbusMethodCommon, DbusSomethingAsync,
                           DbusSomethingSync, _method_name_converter,
@@ -56,17 +57,20 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
                  dbus_method: DbusMethodAsync,
                  interface: DbusInterfaceBaseAsync):
         self.dbus_method = dbus_method
-        self.interface = interface
+        self.interface_ref = weakref(interface)
 
     async def _call_dbus_async(self, *args: Any) -> Any:
-        assert self.interface._attached_bus is not None
-        assert self.interface._remote_service_name is not None
-        assert self.interface._remote_object_path is not None
+        interface = self.interface_ref()
+        assert interface is not None
+
+        assert interface._attached_bus is not None
+        assert interface._remote_service_name is not None
+        assert interface._remote_object_path is not None
         assert self.dbus_method.interface_name is not None
-        new_call_message = self.interface._attached_bus. \
+        new_call_message = interface._attached_bus. \
             new_method_call_message(
-                self.interface._remote_service_name,
-                self.interface._remote_object_path,
+                interface._remote_service_name,
+                interface._remote_object_path,
                 self.dbus_method.interface_name,
                 self.dbus_method.method_name,
             )
@@ -80,12 +84,15 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
             new_call_message.send()
             return
 
-        reply_message = await self.interface._attached_bus.call_async(
+        reply_message = await interface._attached_bus.call_async(
             new_call_message)
         return reply_message.get_contents()
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        if self.interface._is_binded:
+        interface = self.interface_ref()
+        assert interface is not None
+
+        if interface._is_binded:
 
             if len(args) == self.dbus_method.num_of_args:
                 assert not kwargs, (
@@ -101,15 +108,18 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
             return self._call_dbus_async(*rebuilt_args)
         else:
             return self.dbus_method.original_method(
-                self.interface, *args, **kwargs)
+                interface, *args, **kwargs)
 
     async def _call_from_dbus(
             self,
             request_message: SdBusMessage) -> None:
+        interface = self.interface_ref()
+        assert interface is not None
+
         request_data = request_message.get_contents()
 
         local_method = self.dbus_method.original_method.__get__(
-            self.interface, None)
+            interface, None)
 
         try:
             if isinstance(request_data, tuple):
@@ -226,63 +236,75 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
                  dbus_property: DbusPropertyAsync[T],
                  interface: DbusInterfaceBaseAsync):
         self.dbus_property = dbus_property
-        self.interface = interface
+        self.interface_ref = weakref(interface)
 
     def __await__(self) -> Generator[Any, None, T]:
         return self.get_async().__await__()
 
     async def get_async(self) -> T:
-        if not self.interface._is_binded:
-            return self.dbus_property.property_getter(
-                self.interface)
+        interface = self.interface_ref()
+        assert interface is not None
 
-        assert self.interface._attached_bus is not None
-        assert self.interface._remote_service_name is not None
-        assert self.interface._remote_object_path is not None
+        if not interface._is_binded:
+            return self.dbus_property.property_getter(
+                interface)
+
+        assert interface._attached_bus is not None
+        assert interface._remote_service_name is not None
+        assert interface._remote_object_path is not None
         assert self.dbus_property.property_name is not None
         assert self.dbus_property.interface_name is not None
-        new_call_message = self.interface._attached_bus. \
+        new_call_message = interface._attached_bus. \
             new_property_get_message(
-                self.interface._remote_service_name,
-                self.interface._remote_object_path,
+                interface._remote_service_name,
+                interface._remote_object_path,
                 self.dbus_property.interface_name,
                 self.dbus_property.property_name,
             )
 
-        reply_message = await self.interface._attached_bus. \
+        reply_message = await interface._attached_bus. \
             call_async(new_call_message)
         # Get method returns variant but we only need contents of variant
         return cast(T, reply_message.get_contents()[1])
 
     def _reply_get_sync(self, message: SdBusMessage) -> None:
-        reply_data: Any = self.dbus_property.property_getter(self.interface)
+        interface = self.interface_ref()
+        assert interface is not None
+
+        reply_data: Any = self.dbus_property.property_getter(interface)
         message.append_data(self.dbus_property.property_signature, reply_data)
 
     def _reply_set_sync(self, message: SdBusMessage) -> None:
+        interface = self.interface_ref()
+        assert interface is not None
+
         assert self.dbus_property.property_setter is not None
         data_to_set_to: Any = message.get_contents()
 
-        self.dbus_property.property_setter(self.interface, data_to_set_to)
+        self.dbus_property.property_setter(interface, data_to_set_to)
 
     async def set_async(self, complete_object: T) -> None:
-        if not self.interface._is_binded:
+        interface = self.interface_ref()
+        assert interface is not None
+
+        if not interface._is_binded:
             if self.dbus_property.property_setter is None:
                 raise ValueError('Property has no setter')
 
             self.dbus_property.property_setter(
-                self.interface, complete_object)
+                interface, complete_object)
 
             return
 
-        assert self.interface._attached_bus is not None
-        assert self.interface._remote_service_name is not None
-        assert self.interface._remote_object_path is not None
+        assert interface._attached_bus is not None
+        assert interface._remote_service_name is not None
+        assert interface._remote_object_path is not None
         assert self.dbus_property.property_name is not None
         assert self.dbus_property.interface_name is not None
-        new_call_message = self.interface._attached_bus. \
+        new_call_message = interface._attached_bus. \
             new_property_set_message(
-                self.interface._remote_service_name,
-                self.interface._remote_object_path,
+                interface._remote_service_name,
+                interface._remote_object_path,
                 self.dbus_property.interface_name,
                 self.dbus_property.property_name,
             )
@@ -290,7 +312,7 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
         new_call_message.append_data(
             'v', (self.dbus_property.property_signature, complete_object))
 
-        await self.interface._attached_bus.call_async(new_call_message)
+        await interface._attached_bus.call_async(new_call_message)
 
 
 def dbus_property_async(
@@ -362,18 +384,21 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
                  dbus_signal: DbusSignal[T],
                  interface: DbusInterfaceBaseAsync):
         self.dbus_signal = dbus_signal
-        self.interface = interface
+        self.interface_ref = weakref(interface)
 
     async def _get_dbus_queue(self) -> Queue[SdBusMessage]:
-        assert self.interface._attached_bus is not None
-        assert self.interface._remote_service_name is not None
-        assert self.interface._remote_object_path is not None
+        interface = self.interface_ref()
+        assert interface is not None
+
+        assert interface._attached_bus is not None
+        assert interface._remote_service_name is not None
+        assert interface._remote_object_path is not None
         assert self.dbus_signal.interface_name is not None
         assert self.dbus_signal.signal_name is not None
 
-        return await self.interface._attached_bus.get_signal_queue_async(
-            self.interface._remote_service_name,
-            self.interface._remote_object_path,
+        return await interface._attached_bus.get_signal_queue_async(
+            interface._remote_service_name,
+            interface._remote_object_path,
             self.dbus_signal.interface_name,
             self.dbus_signal.signal_name,
         )
@@ -381,15 +406,21 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
     def _cleanup_local_queue(
             self,
             queue_ref: weak_ref[Queue[T]]) -> None:
-        self.interface._local_signal_queues[self.dbus_signal].remove(queue_ref)
+        interface = self.interface_ref()
+        assert interface is not None
+
+        interface._local_signal_queues[self.dbus_signal].remove(queue_ref)
 
     def _get_local_queue(self) -> Queue[T]:
+        interface = self.interface_ref()
+        assert interface is not None
+
         try:
-            list_of_queues = self.interface._local_signal_queues[
+            list_of_queues = interface._local_signal_queues[
                 self.dbus_signal]
         except KeyError:
             list_of_queues = []
-            self.interface._local_signal_queues[
+            interface._local_signal_queues[
                 self.dbus_signal] = list_of_queues
 
         new_queue: Queue[T] = Queue()
@@ -400,7 +431,10 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
 
     async def __aiter__(self) -> AsyncGenerator[T, None]:
 
-        if self.interface._is_binded:
+        interface = self.interface_ref()
+        assert interface is not None
+
+        if interface._is_binded:
             message_queue = await self._get_dbus_queue()
 
             while True:
@@ -414,13 +448,16 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
                 yield next_data
 
     def _emit_message(self, args: T) -> None:
-        assert self.interface._attached_bus is not None
-        assert self.interface._serving_object_path is not None
+        interface = self.interface_ref()
+        assert interface is not None
+
+        assert interface._attached_bus is not None
+        assert interface._serving_object_path is not None
         assert self.dbus_signal.interface_name is not None
         assert self.dbus_signal.signal_name is not None
 
-        signal_message = self.interface._attached_bus.new_signal_message(
-            self.interface._serving_object_path,
+        signal_message = interface._attached_bus.new_signal_message(
+            interface._serving_object_path,
             self.dbus_signal.interface_name,
             self.dbus_signal.signal_name,
         )
@@ -435,12 +472,14 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
         signal_message.send()
 
     def emit(self, args: T) -> None:
-        if self.interface._activated_interfaces:
+        interface = self.interface_ref()
+        assert interface is not None
+
+        if interface._activated_interfaces:
             self._emit_message(args)
 
         try:
-            list_of_queues = self.interface._local_signal_queues[
-                self.dbus_signal]
+            list_of_queues = interface._local_signal_queues[self.dbus_signal]
         except KeyError:
             return
 

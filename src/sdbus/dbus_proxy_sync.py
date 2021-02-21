@@ -58,17 +58,18 @@ class DbusMethodSyncBinded(DbusBinded):
 
     def _call_dbus_sync(self, *args: Any) -> Any:
         assert self.dbus_method.interface_name is not None
-        new_call_message = self.interface.attached_bus.new_method_call_message(
-            self.interface.remote_service_name,
-            self.interface.remote_object_path,
-            self.dbus_method.interface_name,
-            self.dbus_method.method_name,
-        )
+        new_call_message = self.interface._attached_bus. \
+            new_method_call_message(
+                self.interface._remote_service_name,
+                self.interface._remote_object_path,
+                self.dbus_method.interface_name,
+                self.dbus_method.method_name,
+            )
         if args:
             new_call_message.append_data(
                 self.dbus_method.input_signature, *args)
 
-        reply_message = self.interface.attached_bus.call(
+        reply_message = self.interface._attached_bus.call(
             new_call_message)
         return reply_message.get_contents()
 
@@ -154,15 +155,15 @@ class DbusPropertySync(DbusProperty[T]):
         )
         assert self.interface_name is not None
 
-        new_call_message = obj.attached_bus. \
+        new_call_message = obj._attached_bus. \
             new_property_get_message(
-                obj.remote_service_name,
-                obj.remote_object_path,
+                obj._remote_service_name,
+                obj._remote_object_path,
                 self.interface_name,
                 self.property_name,
             )
 
-        reply_message = obj.attached_bus. \
+        reply_message = obj._attached_bus. \
             call(new_call_message)
         return cast(T, reply_message.get_contents()[1])
 
@@ -176,15 +177,15 @@ class DbusPropertySync(DbusProperty[T]):
         if not self.property_signature:
             raise AttributeError('Dbus property is read only')
 
-        assert obj.attached_bus is not None
-        assert obj.remote_service_name is not None
-        assert obj.remote_object_path is not None
+        assert obj._attached_bus is not None
+        assert obj._remote_service_name is not None
+        assert obj._remote_object_path is not None
         assert self.property_name is not None
         assert self.interface_name is not None
-        new_call_message = obj.attached_bus. \
+        new_call_message = obj._attached_bus. \
             new_property_set_message(
-                obj.remote_service_name,
-                obj.remote_object_path,
+                obj._remote_service_name,
+                obj._remote_object_path,
                 self.interface_name,
                 self.property_name,
             )
@@ -192,7 +193,7 @@ class DbusPropertySync(DbusProperty[T]):
         new_call_message.append_data(
             'v', (self.property_signature, value))
 
-        obj.attached_bus.call(new_call_message)
+        obj._attached_bus.call(new_call_message)
 
 
 def dbus_property(
@@ -279,9 +280,9 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
             service_name: str,
             object_path: str,
             bus: Optional[SdBus] = None, ) -> None:
-        self.remote_service_name = service_name
-        self.remote_object_path = object_path
-        self.attached_bus: SdBus = (
+        self._remote_service_name = service_name
+        self._remote_object_path = object_path
+        self._attached_bus: SdBus = (
             bus if bus is not None
             else get_default_bus())
 

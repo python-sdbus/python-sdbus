@@ -61,6 +61,7 @@ setup(
     package_data={
         'sdbus': [
             'py.typed',
+            'sd_bus_internals.pyi',
         ],
     },
     python_requires='>=3.7',

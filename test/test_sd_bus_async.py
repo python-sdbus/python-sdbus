@@ -28,7 +28,7 @@ from sdbus import (DbusFailedError, DbusFileExistsError,
                    DbusInterfaceCommonAsync, DbusNoReplyFlag,
                    dbus_method_async, dbus_method_async_override,
                    dbus_property_async, dbus_property_async_override,
-                   dbus_signal_async)
+                   dbus_signal_async, DbusUnknownObjectError)
 
 from .common_test_util import TempDbusTest
 
@@ -365,3 +365,21 @@ class TestProxy(TempDbusTest):
     async def test_no_reply_method(self) -> None:
         await wait_for(self.test_object_connection.no_reply_method('yes'),
                        timeout=1)
+
+    async def test_interface_remove(self) -> None:
+        from gc import collect
+
+        del self.test_object
+
+        collect()
+
+        loop = get_running_loop()
+
+        t = loop.create_task(self.test_object_connection.dbus_introspect())
+
+        try:
+            await wait_for(t, timeout=0.2)
+        except DbusUnknownObjectError:
+            ...
+
+        self.assertRaises(DbusUnknownObjectError, t.result)

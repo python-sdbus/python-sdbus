@@ -110,7 +110,7 @@ async def startup() -> None:
     # Client will use that name to connect to this server
     await request_default_bus_name_async('org.example.test')
     # Export the object to dbus
-    await export_object.start_serving('/')
+    export_object.export_to_dbus('/')
 
 
 loop.run_until_complete(startup())

@@ -272,21 +272,45 @@ SdBusInterface_init(SdBusInterfaceObject *self, PyObject *Py_UNUSED(args), PyObj
     return 0;
 }
 
-static void
-SdBusInterface_free(SdBusInterfaceObject *self)
+static int
+SdBusInterface_clear(SdBusInterfaceObject *self)
 {
-    Py_XDECREF(self->interface_slot);
-    Py_XDECREF(self->method_list);
-    Py_XDECREF(self->method_dict);
-    Py_XDECREF(self->property_list);
-    Py_XDECREF(self->property_get_dict);
-    Py_XDECREF(self->property_set_dict);
-    Py_XDECREF(self->signal_list);
+    Py_CLEAR(self->interface_slot);
+    Py_CLEAR(self->method_list);
+    Py_CLEAR(self->method_dict);
+    Py_CLEAR(self->property_list);
+    Py_CLEAR(self->property_get_dict);
+    Py_CLEAR(self->property_set_dict);
+    Py_CLEAR(self->signal_list);
+
     if (self->vtable)
     {
         free(self->vtable);
     }
-    PyObject_Free(self);
+
+    return 0;
+}
+
+static int
+SdBusInterface_traverse(SdBusInterfaceObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(self->interface_slot);
+    Py_VISIT(self->method_list);
+    Py_VISIT(self->method_dict);
+    Py_VISIT(self->property_list);
+    Py_VISIT(self->property_get_dict);
+    Py_VISIT(self->property_set_dict);
+    Py_VISIT(self->signal_list);
+
+    return 0;
+}
+
+static void
+SdBusInterface_dealloc(SdBusInterfaceObject *self)
+{
+    PyObject_GC_UnTrack(self);
+    SdBusInterface_clear(self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 inline int _check_callable_or_none(PyObject *some_object)
@@ -557,10 +581,12 @@ static PyTypeObject SdBusInterfaceType = {
         .tp_name = "sd_bus_internals.SdBusInterface",
     .tp_basicsize = sizeof(SdBusInterfaceObject),
     .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
     .tp_new = PyType_GenericNew,
     .tp_init = (initproc)SdBusInterface_init,
-    .tp_free = (freefunc)SdBusInterface_free,
+    .tp_clear = (inquiry)SdBusInterface_clear,
+    .tp_traverse = (traverseproc)SdBusInterface_traverse,
+    .tp_dealloc = (destructor)SdBusInterface_dealloc,
     .tp_methods = SdBusInterface_methods,
     .tp_members = SdBusInterface_members,
 };

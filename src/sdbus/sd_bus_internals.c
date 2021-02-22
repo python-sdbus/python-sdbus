@@ -2271,7 +2271,7 @@ SdBus_request_name_async(SdBusObject *self,
     SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
     SD_BUS_PY_CHECK_ARG_TYPE(1, PyLong_Type);
 
-    SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(name_char_ptr, args[0]);
+    const char *service_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
     uint64_t flags = PyLong_AsUnsignedLongLong(args[1]);
     if (PyErr_Occurred())
     {
@@ -2285,7 +2285,7 @@ SdBus_request_name_async(SdBusObject *self,
     CALL_SD_BUS_AND_CHECK(sd_bus_request_name_async(
         self->sd_bus_ref,
         &new_slot_object->slot_ref,
-        name_char_ptr, flags, SdBus_request_callback, new_future));
+        service_name_char_ptr, flags, SdBus_request_callback, new_future));
 
     if (PyObject_SetAttrString(new_future, "_sd_bus_py_slot", (PyObject *)new_slot_object) < 0)
     {
@@ -2293,6 +2293,26 @@ SdBus_request_name_async(SdBusObject *self,
     }
     CHECK_SD_BUS_READER;
     return new_future;
+}
+
+static PyObject *
+SdBus_request_name(SdBusObject *self,
+                   PyObject *const *args,
+                   Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+    SD_BUS_PY_CHECK_ARG_TYPE(1, PyLong_Type);
+
+    const char *service_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+    uint64_t flags = PyLong_AsUnsignedLongLong(args[1]);
+    if (PyErr_Occurred())
+    {
+        return NULL;
+    }
+
+    CALL_SD_BUS_AND_CHECK(sd_bus_request_name(self->sd_bus_ref, service_name_char_ptr, flags));
+    Py_RETURN_NONE;
 }
 
 static PyMethodDef SdBus_methods[] = {
@@ -2306,7 +2326,8 @@ static PyMethodDef SdBus_methods[] = {
     {"new_signal_message", (void *)SdBus_new_signal_message, METH_FASTCALL, "Create new signal message. User must data to message and send it"},
     {"add_interface", (void *)SdBus_add_interface, METH_FASTCALL, "Add interface to the bus"},
     {"get_signal_queue_async", (void *)SdBus_get_signal_queue, METH_FASTCALL, "Returns a future that returns a queue that queues signal messages"},
-    {"request_name_async", (void *)SdBus_request_name_async, METH_FASTCALL, "Request dbus name"},
+    {"request_name_async", (void *)SdBus_request_name_async, METH_FASTCALL, "Request dbus name async"},
+    {"request_name", (void *)SdBus_request_name, METH_FASTCALL, "Request dbus name blocking"},
     {NULL, NULL, 0, NULL},
 };
 

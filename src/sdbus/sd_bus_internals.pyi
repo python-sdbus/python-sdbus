@@ -174,6 +174,9 @@ class SdBus:
     def request_name_async(self, name: str, flags: int, /) -> Future[None]:
         ...
 
+    def request_name(self, name: str, flags: int, /) -> None:
+        ...
+
 
 def sd_bus_open() -> SdBus:
     ...

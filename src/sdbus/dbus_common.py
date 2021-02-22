@@ -55,6 +55,13 @@ async def request_default_bus_name_async(
     await default_bus.request_name_async(new_name, flags)
 
 
+async def request_default_bus_name(
+        new_name: str,
+        flags: int = 0,) -> None:
+    default_bus = get_default_bus()
+    default_bus.request_name(new_name, flags)
+
+
 def _method_name_converter(python_name: str) -> Iterator[str]:
     char_iter = iter(python_name)
     # Name starting with upper case letter

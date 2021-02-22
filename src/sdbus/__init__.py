@@ -18,8 +18,8 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-from .dbus_common import (get_default_bus, request_default_bus_name_async,
-                          set_default_bus)
+from .dbus_common import (get_default_bus, request_default_bus_name,
+                          request_default_bus_name_async, set_default_bus)
 from .dbus_exceptions import (DbusAccessDeniedError, DbusAddressInUseError,
                               DbusAuthFailedError, DbusBadAddressError,
                               DbusDisconnectedError, DbusFailedError,
@@ -56,8 +56,8 @@ from .sd_bus_internals import (DbusDeprecatedFlag, DbusHiddenFlag,
                                sd_bus_open_user)
 
 __all__ = [
-    'get_default_bus', 'request_default_bus_name_async',
-    'set_default_bus',
+    'get_default_bus', 'request_default_bus_name',
+    'request_default_bus_name_async', 'set_default_bus',
 
     'DbusAccessDeniedError', 'DbusAddressInUseError',
     'DbusAuthFailedError', 'DbusBadAddressError',

@@ -31,6 +31,8 @@ from .common_test_util import TempDbusTest
 class TestSync(TempDbusTest):
 
     def test_sync(self) -> None:
+        self.bus.request_name('org.example.test', 0)
+
         s = FreedesktopDbus(self.bus)
         s.dbus_ping()
         s.dbus_introspect()
@@ -48,6 +50,8 @@ class TestSync(TempDbusTest):
             s.features = ['test']
 
         self.assertRaises(DbusPropertyReadOnlyError, test_invalid_assignment)
+
+        self.assertTrue(s.get_name_owner('org.example.test'))
 
 
 if __name__ == '__main__':

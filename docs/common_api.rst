@@ -11,6 +11,13 @@ Dbus connections calls
 .. py:function:: request_default_bus_name_async(new_name)
     :async:
 
+    Acquire a name on the default bus async.
+
+    :param str new_name: the name to acquire.
+        Must be a valid dbus service name.
+
+.. py:function:: request_default_bus_name(new_name)
+
     Acquire a name on the default bus.
 
     :param str new_name: the name to acquire.

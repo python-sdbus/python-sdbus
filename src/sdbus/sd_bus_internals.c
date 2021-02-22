@@ -2337,6 +2337,24 @@ SdBus_add_object_manager(SdBusObject *self,
     return new_slot_object;
 }
 
+static PyObject *
+SdBus_emit_object_added(SdBusObject *self,
+                        PyObject *const *args,
+                        Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(1);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+
+    const char *added_object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+
+    CALL_SD_BUS_AND_CHECK(
+        sd_bus_emit_object_added(
+            self->sd_bus_ref,
+            added_object_path));
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef SdBus_methods[] = {
     {"call", (void *)SdBus_call, METH_FASTCALL, "Send message and get reply"},
     {"call_async", (void *)SdBus_call_async, METH_FASTCALL, "Async send message, returns awaitable future"},
@@ -2351,6 +2369,7 @@ static PyMethodDef SdBus_methods[] = {
     {"request_name_async", (void *)SdBus_request_name_async, METH_FASTCALL, "Request dbus name async"},
     {"request_name", (void *)SdBus_request_name, METH_FASTCALL, "Request dbus name blocking"},
     {"add_object_manager", (void *)SdBus_add_object_manager, METH_FASTCALL, "Add object manager at the path"},
+    {"emit_object_added", (void *)SdBus_emit_object_added, METH_FASTCALL, "Emit signal that object was added"},
     {NULL, NULL, 0, NULL},
 };
 

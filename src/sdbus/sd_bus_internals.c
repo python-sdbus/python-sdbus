@@ -2315,6 +2315,28 @@ SdBus_request_name(SdBusObject *self,
     Py_RETURN_NONE;
 }
 
+static SdBusSlotObject *
+SdBus_add_object_manager(SdBusObject *self,
+                         PyObject *const *args,
+                         Py_ssize_t nargs)
+{
+    SD_BUS_PY_CHECK_ARGS_NUMBER(1);
+    SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+
+    const char *object_manager_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+
+    SdBusSlotObject *new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject *)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject *)&SdBusSlotType, NULL));
+
+    CALL_SD_BUS_AND_CHECK(
+        sd_bus_add_object_manager(
+            self->sd_bus_ref,
+            &new_slot_object->slot_ref,
+            object_manager_path));
+
+    Py_INCREF(new_slot_object);
+    return new_slot_object;
+}
+
 static PyMethodDef SdBus_methods[] = {
     {"call", (void *)SdBus_call, METH_FASTCALL, "Send message and get reply"},
     {"call_async", (void *)SdBus_call_async, METH_FASTCALL, "Async send message, returns awaitable future"},
@@ -2328,6 +2350,7 @@ static PyMethodDef SdBus_methods[] = {
     {"get_signal_queue_async", (void *)SdBus_get_signal_queue, METH_FASTCALL, "Returns a future that returns a queue that queues signal messages"},
     {"request_name_async", (void *)SdBus_request_name_async, METH_FASTCALL, "Request dbus name async"},
     {"request_name", (void *)SdBus_request_name, METH_FASTCALL, "Request dbus name blocking"},
+    {"add_object_manager", (void *)SdBus_add_object_manager, METH_FASTCALL, "Add object manager at the path"},
     {NULL, NULL, 0, NULL},
 };
 

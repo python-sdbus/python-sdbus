@@ -177,6 +177,9 @@ class SdBus:
     def request_name(self, name: str, flags: int, /) -> None:
         ...
 
+    def add_object_manager(self, path: str) -> SdBusSlot:
+        ...
+
 
 def sd_bus_open() -> SdBus:
     ...

@@ -547,9 +547,13 @@ def interfaces_from_str(xml_str: str) -> List[DbusInterfaceIntrospection]:
 
 
 def generate_async_py_file(
-        interfaces: List[DbusInterfaceIntrospection]) -> str:
+        interfaces: List[DbusInterfaceIntrospection],
+        include_import_header: bool = True) -> str:
 
     interfaces_definitions = '\n'.join(
         (x.generate_interface_class() for x in interfaces))
 
-    return async_import_header_txt + interfaces_definitions
+    if include_import_header:
+        return async_import_header_txt + interfaces_definitions
+    else:
+        return interfaces_definitions

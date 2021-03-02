@@ -459,10 +459,10 @@ class DbusInterfaceIntrospection:
 async_import_header_txt = """
 from __future__ import annotations
 
-from typing import Any, AsyncGenerator, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
-from dbus_proxy_async import (DbusInterfaceCommonAsync, dbus_method_async,
-                              dbus_property_async, dbus_signal_async)
+from sdbus import (DbusInterfaceCommonAsync, dbus_method_async,
+                   dbus_property_async, dbus_signal_async)
 """
 
 async_interface_template_txt = """

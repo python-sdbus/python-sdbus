@@ -419,7 +419,8 @@ class DbusInterfaceIntrospection:
             raise ValueError(f"Expected interface tag, got {element.tag}")
 
         self.interface_name = element.attrib['name']
-        self.python_name = interface_name_to_class(self.interface_name)
+        self.python_name = interface_name_to_class(
+            self.interface_name) + 'Interface'
 
         self.is_deprecated = False
         self.c_name: Optional[str] = None

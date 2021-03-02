@@ -322,8 +322,7 @@ class DbusMethodInrospection:
     @property
     def dbus_input_signature(self) -> str:
         return ''.join(
-            (x.dbus_type if not x.is_input else ''
-             for x in self.input_args)
+            (x.dbus_type for x in self.input_args)
         )
 
     @property

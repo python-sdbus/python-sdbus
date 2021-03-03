@@ -72,6 +72,7 @@ class TestInterface(DbusInterfaceCommonAsync,
 
     @dbus_method_async("s", "s")
     async def upper(self, string: str) -> str:
+        """Uppercase the input"""
         return string.upper()
 
     @dbus_method_async(result_signature='x')
@@ -84,6 +85,7 @@ class TestInterface(DbusInterfaceCommonAsync,
 
     @dbus_property_async("s")
     def test_property(self) -> str:
+        """Test property"""
         return self.test_string
 
     @test_property.setter
@@ -116,6 +118,7 @@ class TestInterface(DbusInterfaceCommonAsync,
 
     @dbus_signal_async('ss')
     def test_signal(self) -> Tuple[str, str]:
+        """Test signal"""
         raise NotImplementedError
 
     @dbus_method_async()
@@ -383,3 +386,26 @@ class TestProxy(TempDbusTest):
             ...
 
         self.assertRaises(DbusUnknownObjectError, t.result)
+
+    def test_docstring(self) -> None:
+        from pydoc import getdoc
+
+        with self.subTest('Method local doc'):
+            self.assertTrue(getdoc(self.test_object.upper))
+
+        with self.subTest('Method remote doc'):
+            self.assertTrue(getdoc(self.test_object_connection.upper))
+
+        with self.subTest('Property local doc'):
+            self.assertTrue(getdoc(self.test_object.test_property))
+
+        with self.subTest('Property remote doc'):
+            self.assertTrue(
+                getdoc(self.test_object_connection.test_property))
+
+        with self.subTest('Signal local doc'):
+            self.assertTrue(getdoc(self.test_object.test_signal))
+
+        with self.subTest('Signal remote doc'):
+            self.assertTrue(
+                getdoc(self.test_object_connection.test_signal))

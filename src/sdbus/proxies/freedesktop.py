@@ -38,10 +38,12 @@ class FreedesktopDbus(DbusInterfaceCommon,
 
     @dbus_method('s', method_name='GetConnectionUnixProcessID')
     def get_connection_pid(self, service_name: str) -> int:
+        """Get Process Id that owns the name"""
         raise NotImplementedError
 
     @dbus_method('s', method_name='GetConnectionUnixUser')
     def get_connection_uid(self, service_name: str) -> int:
+        """Get process User Id that owns the name"""
         raise NotImplementedError
 
     @dbus_method()
@@ -73,6 +75,7 @@ class FreedesktopDbus(DbusInterfaceCommon,
 
     @dbus_property('as')
     def features(self) -> List[str]:
+        """D-Bus implementation features"""
         raise NotImplementedError
 
     @dbus_property('as')

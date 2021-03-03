@@ -53,6 +53,17 @@ class TestSync(TempDbusTest):
 
         self.assertTrue(s.get_name_owner('org.example.test'))
 
+    def test_docstring(self) -> None:
+        from pydoc import getdoc
+
+        s = FreedesktopDbus(self.bus)
+
+        with self.subTest('Method doc'):
+            self.assertTrue(getdoc(s.get_connection_pid))
+
+        with self.subTest('Property doc (through class dict)'):
+            self.assertTrue(getdoc(s.__class__.__dict__['features']))
+
 
 if __name__ == '__main__':
     main()

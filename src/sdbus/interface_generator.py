@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, Iterator, List, Optional, Tuple, Union
+from typing import Dict, Iterable, Iterator, List, Optional, Tuple, Union
 from xml.etree.ElementTree import Element
 from xml.etree.ElementTree import fromstring as etree_from_str
 from xml.etree.ElementTree import parse as etree_from_file
@@ -247,6 +247,63 @@ class DbusSigToTyping:
         return cls.result_typing(cls.split_sig(signature))
 
 
+class DbusMemberAbstract:
+
+    def __init__(self, element: Element):
+        self.method_name = element.attrib['name']
+        self.python_name = camel_case_to_snake_case(self.method_name)
+
+        self.is_deprecated = False
+        self.is_unpriveledged = False
+
+        self.iter_sub_elements(element)
+
+    def _flags_iter(self) -> Iterator[str]:
+        if self.is_deprecated:
+            yield 'DbusDeprecatedFlag'
+
+        if self.is_unpriveledged:
+            yield 'DbusUnprivilegedFlag'
+
+    @property
+    def flags_str(self) -> str:
+        return ' | '.join(self._flags_iter())
+
+    def _parse_arg(self, arg: Element) -> None:
+        raise NotImplementedError('Member does not have arguments')
+
+    def _parse_annotation_data(self,
+                               annotation_name: str,
+                               annotation_value: str) -> None:
+
+        if annotation_name == 'org.freedesktop.DBus.Deprecated':
+            self.is_deprecated = parse_str_bool(annotation_value)
+        elif annotation_name == 'org.freedesktop.systemd1.Privileged':
+            self.is_unpriveledged = parse_str_bool(annotation_value)
+        else:
+            ...
+
+    def _parse_annotation(self, annotation: Element) -> None:
+        if annotation.tag != 'annotation':
+            raise ValueError('Uknown element of member: ', annotation.tag)
+
+        annotation_name = annotation.attrib['name']
+        annotation_value = annotation.attrib['value']
+
+        self._parse_annotation_data(annotation_name, annotation_value)
+
+    def iter_sub_elements(self, element: Element) -> None:
+        for sub_element in element:
+            tag = sub_element.tag
+            if tag == 'annotation':
+                self._parse_annotation(sub_element)
+            elif tag == 'arg':
+                self._parse_arg(sub_element)
+            else:
+                raise ValueError(
+                    'Uknown member annotation tag: ', tag)
+
+
 class DbusArgsIntrospection:
     def __init__(self, element: Element):
         if element.tag != 'arg':
@@ -279,45 +336,32 @@ class DbusArgsIntrospection:
                 f"is input: {self.is_input}")
 
 
-class DbusMethodInrospection:
+class DbusMethodInrospection(DbusMemberAbstract):
     def __init__(self, element: Element):
         if element.tag != 'method':
             raise ValueError(f"Expected method tag, got {element.tag}")
 
-        self.method_name = element.attrib['name']
-        self.python_name = camel_case_to_snake_case(self.method_name)
+        self.is_no_reply = False
 
         self.input_args: List[DbusArgsIntrospection] = []
         self.result_args: List[DbusArgsIntrospection] = []
 
-        self.c_name: Optional[str] = None
-        self.is_no_reply = False
-        self.is_deprecated = False
+        super().__init__(element)
 
-        for arg_or_node in element:
-            tag = arg_or_node.tag
-            if tag == 'arg':
-                new_arg = DbusArgsIntrospection(arg_or_node)
-                if new_arg.is_input or new_arg.is_input is None:
-                    self.input_args.append(new_arg)
-                elif not new_arg.is_input:
-                    self.result_args.append(new_arg)
-                else:
-                    raise ValueError('Malformed arg direction')
-            elif tag == 'annotation':
-                annotation_name = arg_or_node.attrib['name']
-                annotation_value = arg_or_node.attrib['value']
+    def _flags_iter(self) -> Iterator[str]:
+        if self.is_no_reply:
+            yield 'DbusNoReplyFlag'
 
-                if annotation_name == 'org.freedesktop.DBus.GLib.CSymbol':
-                    self.c_name = annotation_value
-                elif annotation_name == 'org.freedesktop.DBus.Method.NoReply':
-                    self.is_no_reply = parse_str_bool(annotation_value)
-                elif annotation_name == 'org.freedesktop.DBus.Deprecated':
-                    self.is_deprecated = parse_str_bool(annotation_value)
-                else:
-                    ...
-            else:
-                raise ValueError(f"Unknown arg node {tag}")
+        yield from super()._flags_iter()
+
+    def _parse_arg(self, arg: Element) -> None:
+        new_arg = DbusArgsIntrospection(arg)
+        if new_arg.is_input or new_arg.is_input is None:
+            self.input_args.append(new_arg)
+        elif not new_arg.is_input:
+            self.result_args.append(new_arg)
+        else:
+            raise ValueError('Malformed arg direction')
 
     @property
     def dbus_input_signature(self) -> str:
@@ -357,16 +401,22 @@ class DbusMethodInrospection:
                 f"result: {self.dbus_result_signature}")
 
 
-class DbusPropertyIntrospection:
+class DbusPropertyIntrospection(DbusMemberAbstract):
+    _EMITS_CHANGED_MAP: Dict[str, Optional[str]] = {
+        'true': 'DbusPropertyEmitsChangeFlag',
+        'false': None,
+        'invalidates': 'DbusPropertyEmitsInvalidationFlag',
+        'const': 'DbusPropertyConstFlag',
+    }
+
     def __init__(self, element: Element):
         if element.tag != 'property':
             raise ValueError(f"Expected property tag, got {element.tag}")
 
-        self.name = element.attrib['name']
-        self.python_name = camel_case_to_snake_case(self.name)
         self.dbus_signature = element.attrib['type']
 
         self.emits_changed: Optional[str] = None
+        self.is_explicit = False
 
         access_type = element.attrib['access']
         if access_type == 'readwrite':
@@ -376,32 +426,50 @@ class DbusPropertyIntrospection:
         else:
             raise ValueError(f"Unknown property access {self.is_read_only}")
 
-        for annotation in element:
-            if annotation.tag != 'annotation':
-                raise ValueError('Uknown element of signal: ', annotation.tag)
+        super().__init__(element)
 
-            annotation_name = annotation.attrib['name']
-            annotation_value = annotation.attrib['value']
+    def _flags_iter(self) -> Iterator[str]:
+        if self.emits_changed is not None:
+            yield self.emits_changed
 
-            if annotation_name == ('org.freedesktop.DBus.Property'
-                                   '.EmitsChangedSignal'):
-                self.emits_changed = annotation_value
-            else:
-                ...
+        yield from super()._flags_iter()
+
+    def _parse_annotation_data(self,
+                               annotation_name: str,
+                               annotation_value: str) -> None:
+
+        if annotation_name == ('org.freedesktop.DBus.Property'
+                               '.EmitsChangedSignal'):
+            if annotation_value not in self._EMITS_CHANGED_MAP:
+                raise ValueError('Unknown EmitsChanged value',
+                                 annotation_value)
+
+            self.emits_changed = self._EMITS_CHANGED_MAP[annotation_value]
+        elif annotation_name == 'org.freedesktop.systemd1.Explicit':
+            self.is_explicit = parse_str_bool(annotation_value)
+
+        super()._parse_annotation_data(annotation_name, annotation_value)
 
     @property
     def typing(self) -> str:
         return DbusSigToTyping.typing_complete(self.dbus_signature)
 
 
-class DbusSignalIntrospection:
+class DbusSignalIntrospection(DbusMemberAbstract):
     def __init__(self, element: Element):
         if element.tag != 'signal':
             raise ValueError(f"Expected signal tag, got {element.tag}")
 
-        self.name = element.attrib['name']
-        self.python_name = camel_case_to_snake_case(self.name)
-        self.args = [DbusArgsIntrospection(x) for x in element]
+        self.args: List[DbusArgsIntrospection] = []
+        super().__init__(element)
+
+    def _parse_arg(self, arg: Element) -> None:
+        new_arg = DbusArgsIntrospection(arg)
+
+        if new_arg.is_input:
+            raise ValueError('Signal argument cannot be in', new_arg)
+
+        self.args.append(new_arg)
 
     @property
     def dbus_signature(self) -> str:
@@ -462,7 +530,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Tuple
 
-from sdbus import (DbusInterfaceCommonAsync, dbus_method_async,
+from sdbus import (DbusDeprecatedFlag, DbusInterfaceCommonAsync,
+                   DbusNoReplyFlag, DbusPropertyConstFlag,
+                   DbusPropertyEmitsChangeFlag,
+                   DbusPropertyEmitsInvalidationFlag, DbusPropertyExplicitFlag,
+                   DbusUnprivilegedFlag, dbus_method_async,
                    dbus_property_async, dbus_signal_async)
 """
 
@@ -481,6 +553,9 @@ class {{ interface.python_name }}(
 {% if method.dbus_result_signature %}
         result_signature='{{ method.dbus_result_signature }}',
 {% endif %}
+{% if method.flags_str %}
+        flags={{ method.flags_str }},
+{% endif %}
     )
     async def {{ method.python_name }}(
         self,
@@ -496,6 +571,9 @@ class {{ interface.python_name }}(
 {% if a_property.dbus_signature %}
         property_signature='{{ a_property.dbus_signature }}',
 {% endif %}
+{% if a_property.flags_str %}
+        flags={{ a_property.flags_str }},
+{% endif %}
     )
     def {{ a_property.python_name }}(self) -> {{ a_property.typing }}:
         raise NotImplementedError
@@ -505,6 +583,9 @@ class {{ interface.python_name }}(
     @dbus_signal_async(
 {% if signal.dbus_signature %}
         signal_signature='{{ signal.dbus_signature }}',
+{% endif %}
+{% if signal.flags_str %}
+        flags={{ signal.flags_str }},
 {% endif %}
     )
     def {{ signal.python_name }}(self) -> {{ signal.typing }}:

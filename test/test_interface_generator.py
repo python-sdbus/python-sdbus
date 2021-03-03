@@ -37,6 +37,7 @@ test_xml = """
         <arg name="bar" type="s" direction="out"/>
         <arg name="baz" type="a{us}" direction="out"/>
         <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
+        <annotation name="org.freedesktop.systemd1.Privileged" value="true"/>
       </method>
       <method name="Bazify">
         <arg name="bar" type="(iiu)" direction="in"/>

@@ -59,6 +59,8 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
         self.dbus_method = dbus_method
         self.interface_ref = weakref(interface)
 
+        self.__doc__ = dbus_method.__doc__
+
     async def _call_dbus_async(self, *args: Any) -> Any:
         interface = self.interface_ref()
         assert interface is not None
@@ -212,6 +214,8 @@ class DbusProperty(DbusSomethingAsync, Generic[T]):
         self.property_setter = property_setter
         self.flags = flags
 
+        self.__doc__ = property_getter.__doc__
+
 
 class DbusPropertyAsync(DbusProperty[T]):
     def __get__(self,
@@ -237,6 +241,8 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
                  interface: DbusInterfaceBaseAsync):
         self.dbus_property = dbus_property
         self.interface_ref = weakref(interface)
+
+        self.__doc__ = dbus_property.__doc__
 
     def __await__(self) -> Generator[Any, None, T]:
         return self.get_async().__await__()
@@ -361,6 +367,7 @@ def dbus_property_async(
 class DbusSignal(Generic[T], DbusSomethingAsync):
     def __init__(
         self,
+        original_function: Callable[[Any], T],
         signal_name: str,
         signature: str = "",
         args_names: Sequence[str] = (),
@@ -371,6 +378,8 @@ class DbusSignal(Generic[T], DbusSomethingAsync):
         self.signature = signature
         self.args_names = args_names
         self.flags = flags
+
+        self.__doc__ = original_function.__doc__
 
     def __get__(self,
                 obj: DbusInterfaceBaseAsync,
@@ -385,6 +394,8 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
                  interface: DbusInterfaceBaseAsync):
         self.dbus_signal = dbus_signal
         self.interface_ref = weakref(interface)
+
+        self.__doc__ = dbus_signal.__doc__
 
     async def _get_dbus_queue(self) -> Queue[SdBusMessage]:
         interface = self.interface_ref()
@@ -514,6 +525,7 @@ def dbus_signal_async(
             )
 
         return DbusSignal(
+            pseudo_function,
             signal_name, signal_signature,
             signal_args_names, flags,
         )

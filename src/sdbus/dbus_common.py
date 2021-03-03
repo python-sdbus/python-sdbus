@@ -159,6 +159,8 @@ class DbusMethodCommon(DbusSomethingCommon):
         self.result_args_names = result_args_names
         self.flags = flags
 
+        self.__doc__ = original_method.__doc__
+
     def _rebuild_args(
             self,
             function: FunctionType,

@@ -56,6 +56,8 @@ class DbusMethodSyncBinded(DbusBinded):
         self.dbus_method = dbus_method
         self.interface = interface
 
+        self.__doc__ = dbus_method.__doc__
+
     def _call_dbus_sync(self, *args: Any) -> Any:
         assert self.dbus_method.interface_name is not None
         new_call_message = self.interface._attached_bus. \
@@ -141,6 +143,8 @@ class DbusProperty(DbusSomethingSync, Generic[T]):
         self.property_getter = property_getter
         self.property_setter = property_setter
         self.flags = flags
+
+        self.__doc__ = property_getter.__doc__
 
 
 class DbusPropertySync(DbusProperty[T]):

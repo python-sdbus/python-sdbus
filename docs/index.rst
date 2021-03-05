@@ -28,7 +28,7 @@ If you are unfamiliar with D-Bus you might want to read following pages:
 
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
     :caption: Contents:
 
     general

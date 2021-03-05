@@ -24,6 +24,10 @@ from os.path import abspath
 project = 'python-sdbus'
 author = 'igo95862'
 source_suffix = '.rst'
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc', 'sdbus.autodoc']
 
-path.append(abspath('..'))
+autoclass_content = 'both'
+autodoc_typehints = 'description'
+autodoc_member_order = 'bysource'
+
+path.insert(0, abspath('../src'))

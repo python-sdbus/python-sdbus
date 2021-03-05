@@ -374,6 +374,7 @@ class DbusSignal(Generic[T], DbusSomethingAsync):
         flags: int = 0,
     ):
         super().__init__()
+        self.original_function = original_function
         self.signal_name = signal_name
         self.signature = signature
         self.args_names = args_names

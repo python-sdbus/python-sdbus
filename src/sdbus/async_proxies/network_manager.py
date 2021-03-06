@@ -169,11 +169,19 @@ class NetworkManagerAccessPointInterface(
 
 # endregion Access Point
 
+# region Secret Agent
 
-class OrgFreedesktopNetworkManagerAgentManagerInterface(
+class SecretAgentCapabilities(IntFlag):
+    """Secret agent capabilities"""
+    NONE = 0x0
+    VPN_HINTS = 0x1
+
+
+class NetworkManagerSecretAgentManagerInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.AgentManager',
 ):
+    """Secret Agent Manager"""
 
     @dbus_method_async(
         input_signature='s',
@@ -182,6 +190,10 @@ class OrgFreedesktopNetworkManagerAgentManagerInterface(
         self,
         identifier: str,
     ) -> None:
+        """Indentifies an agent.
+
+        Only one agent in each user session may use same indentifier.
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -192,6 +204,10 @@ class OrgFreedesktopNetworkManagerAgentManagerInterface(
         identifier: str,
         capabilities: int,
     ) -> None:
+        """Same as register() but with agent capabilities
+
+        See :py:class:`SecretAgentCapabilities`
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -199,151 +215,230 @@ class OrgFreedesktopNetworkManagerAgentManagerInterface(
     async def unregister(
         self,
     ) -> None:
+        """Notify NetworkManager that secret agent is no longer active"""
         raise NotImplementedError
 
+# endregion Secret Agent
 
-class OrgFreedesktopNetworkManagerCheckpointInterface(
+
+class NetworkManagerCheckpointInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Checkpoint',
 ):
+    """Network Manager configuration snapshot interface"""
 
     @dbus_property_async(
         property_signature='ao',
     )
     def devices(self) -> List[str]:
+        """List of devices which are part of this checkpoint"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='x',
     )
     def created(self) -> int:
+        """Snapohot creation time in CLOCK_BOOTTIME milliseconds"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def rollback_timeout(self) -> int:
+        """Automatic tollback timeout in seconds or zero"""
         raise NotImplementedError
 
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
+# region Connection State
 
 
-class OrgFreedesktopNetworkManagerConnectionActiveInterface(
+class ConnectionState(IntEnum):
+    """State of the connection"""
+    UNKNOWN = 0
+    ACTIVATING = 1
+    ACTIVATED = 2
+    DEACTIVATING = 3
+    DEACTIVATED = 4
+
+
+class ConnectionStateFlags(IntFlag):
+    """State of connection flags"""
+    NONE = 0x0
+    IS_MASTER = 0x1
+    IS_SLAVE = 0x2
+    LAYER2_READY = 0x4
+    IP4_READY = 0x8
+    IP6_READY = 0x10
+    MASTER_HAS_SLAVES = 0x20
+    LIFE_TIME_BOUND_TO_PROFILE_VISIBILITY = 0x40
+    EXTERNAL = 0x80
+
+
+class ConnectionStateReason(IntEnum):
+    UNKNOWN = 0
+    NONE = 1
+    USER_DISCONNECTED = 2
+    DEVICE_DISCONNECTED = 3
+    SERVICE_STOPPED = 4
+    IP_CONFIG_INVALID = 5
+    CONNECT_TIMEOUT = 6
+    SERVICE_START_TIMEOUT = 7
+    SERVICE_START_FAILED = 8
+    NO_SECRETS = 9
+    LOGIN_FAILED = 10
+    CONNECTION_REMOVED = 11
+    DEPENDENCY_FAILED = 12
+    DEVICE_REALIZE_FAILED = 13
+    DEVICE_REMOVED = 14
+
+
+class NetworkManagerConnectionActiveInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Connection.Active',
 ):
+    """Represents an attempt to connect to network"""
 
     @dbus_property_async(
         property_signature='o',
     )
     def connection(self) -> str:
+        """Path of connection object"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def specific_object(self) -> str:
+        """Specific object associated with active connection"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def id(self) -> str:
+        """Connection id"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def uuid(self) -> str:
+        """Connection UUID"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
+        property_name="Type"
     )
-    def type(self) -> str:
+    def connection_type(self) -> str:
+        """Connection type"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='ao',
     )
     def devices(self) -> List[str]:
+        """Array of devices object paths which are part of connection"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def state(self) -> int:
+        """Connection state
+
+        See :py:class:`ConnectionState`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def state_flags(self) -> int:
+        """Connection state flags
+
+        See :py:class:`ConnectionStateFlags`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def default(self) -> bool:
+        """Whether or not this connection owns default IPv4 route"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def ip4_config(self) -> str:
+        """Object path to Ip4Config object
+
+        Only valid if connection state is ACTIVATED
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def dhcp4_config(self) -> str:
+        """Object path to Dhcp4Config object
+
+        Only valid if connection state is ACTIVATED
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def default6(self) -> bool:
+        """Whether or not this connection owns default IPv6 route"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def ip6_config(self) -> str:
+        """Object path to Ip4Config object
+
+        Only valid if connection state is ACTIVATED
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def dhcp6_config(self) -> str:
+        """Object path to Dhcp6Config object
+
+        Only valid if connection state is ACTIVATED
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def vpn(self) -> bool:
+        """Whether this connection is a VPN"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def master(self) -> str:
+        """Path to master device if this connection is a slave"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='uu',
     )
     def state_changed(self) -> Tuple[int, int]:
+        """Signal of the new state and the reason
+
+        See :py:class:`ConnectionState` and :py:class:`ConnectionStateReason`
+        """
         raise NotImplementedError
 
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
+# endregion Connection State
 
 
 class OrgFreedesktopNetworkManagerDeviceAdslInterface(

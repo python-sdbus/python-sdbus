@@ -21,10 +21,14 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Tuple
-from enum import IntFlag
+from enum import IntFlag, IntEnum
 
 from sdbus import (DbusInterfaceCommonAsync, dbus_method_async,
                    dbus_property_async, dbus_signal_async)
+
+# region Interfaces
+
+# region Access Point
 
 
 class AccessPointCapabilities(IntFlag):
@@ -41,6 +45,34 @@ class AccessPointCapabilities(IntFlag):
     WPS = 0x2
     WPS_BUTTON = 0x4
     WPS_PIN = 0x8
+
+
+class WpaSecurityFlags(IntFlag):
+    """WPA (WiFi protected Access) encryption and authentication types"""
+    NONE = 0x0
+    P2P_WEP40 = 0x1
+    P2P_WEP104 = 0x2
+    P2P_TKIP = 0x4
+    P2P_CCMP = 0x8
+    BROADCAST_WEP40 = 0x10
+    BROADCAST_WEP104 = 0x20
+    BROADCAST_TKIP = 0x40
+    BROADCAST_CCMP = 0x80
+    AUTH_PSK = 0x100
+    AUTH_802_1X = 0x200
+    AUTH_SAE = 0x400
+    AUTH_OWE = 0x800
+    AUTH_OWE_TM = 0x1000
+    AUTH_EAP_SUITE_B = 0x2000
+
+
+class WiFiOperationMode(IntEnum):
+    """Operation mode of WiFi access point"""
+    UNKNOWN = 0
+    ADHOC = 1
+    INFRASTRUCTURE = 2
+    AP = 3
+    MESH = 4
 
 
 class NetworkManagerAccessPointInterface(
@@ -63,61 +95,79 @@ class NetworkManagerAccessPointInterface(
         property_signature='u',
     )
     def wpa_flags(self) -> int:
+        """Flags WPA authentication and encryption
+
+        See :py:class:`WpaSecurityFlags`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def rsn_flags(self) -> int:
+        """Flags describing RSN (Robust Secure Network) capabilities
+
+        See :py:class:`WpaSecurityFlags`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='ay',
     )
     def ssid(self) -> bytes:
+        """SSID of the access point. (name)"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def frequency(self) -> int:
+        """Frequency in MHz"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def hw_address(self) -> str:
+        """Hardware address (BSSID)"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def mode(self) -> int:
+        """Mode of operation of access point
+
+        See :py:class:`WiFiOperationMode`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def max_bitrate(self) -> int:
+        """Maximum bit rate of this access point. (in kilobits/second)"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='y',
     )
     def strength(self) -> int:
+        """Current signal quality in % percent"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='i',
     )
     def last_seen(self) -> int:
+        """Timestamp in CLOCK_BOOTTIME seconds since last seen in scan
+
+        Value of -1 means that the point was never found in scans.
+        """
         raise NotImplementedError
 
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
+
+# endregion Access Point
 
 
 class OrgFreedesktopNetworkManagerAgentManagerInterface(
@@ -2835,3 +2885,4 @@ class OrgFreedesktopNetworkManagerInterface(
     )
     def device_removed(self) -> str:
         raise NotImplementedError
+# endregion Interfaces

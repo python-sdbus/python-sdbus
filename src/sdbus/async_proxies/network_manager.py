@@ -190,9 +190,9 @@ class NetworkManagerSecretAgentManagerInterface(
         self,
         identifier: str,
     ) -> None:
-        """Indentifies an agent.
+        """Identifies an agent.
 
-        Only one agent in each user session may use same indentifier.
+        Only one agent in each user session may use same identifier.
         """
         raise NotImplementedError
 
@@ -274,6 +274,7 @@ class ConnectionStateFlags(IntFlag):
 
 
 class ConnectionStateReason(IntEnum):
+    """Connection state change reason"""
     UNKNOWN = 0
     NONE = 1
     USER_DISCONNECTED = 2
@@ -440,845 +441,763 @@ class NetworkManagerConnectionActiveInterface(
 
 # endregion Connection State
 
-
-class OrgFreedesktopNetworkManagerDeviceAdslInterface(
-    DbusInterfaceCommonAsync,
-    interface_name='org.freedesktop.NetworkManager.Device.Adsl',
-):
-
-    @dbus_property_async(
-        property_signature='b',
-    )
-    def carrier(self) -> bool:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
+# region Bluetooth device
 
 
-class OrgFreedesktopNetworkManagerDeviceBluetoothInterface(
+class BluetoothCapabilities(IntFlag):
+    """Bluetooth Capabilities"""
+    NONE = 0x0
+    DIAL_UP = 0x1
+    NETWORK_ACCESS_POINT = 0x2
+
+
+class NetworkManagerDeviceBluetoothInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Bluetooth',
 ):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
+    """Bluetooth device interface"""
 
     @dbus_property_async(
         property_signature='s',
     )
     def name(self) -> str:
+        """Name of Bluetooth device"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def bt_capabilities(self) -> int:
+        """Bluetooth device capabilities
+
+        See :py:class:`BluetoothCapabilities`
+        """
         raise NotImplementedError
 
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
+# endregion Bluetooth device
 
 
-class OrgFreedesktopNetworkManagerDeviceBondInterface(
+class NetworkManagerDeviceBondInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Bond',
 ):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='b',
-    )
-    def carrier(self) -> bool:
-        raise NotImplementedError
+    """Bond device interface"""
 
     @dbus_property_async(
         property_signature='ao',
     )
     def slaves(self) -> List[str]:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """List of paths of enslaved devices"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceBridgeInterface(
+class NetworkManagerDeviceBridgeInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Bridge',
 ):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='b',
-    )
-    def carrier(self) -> bool:
-        raise NotImplementedError
+    """Bridge device interface"""
 
     @dbus_property_async(
         property_signature='ao',
     )
     def slaves(self) -> List[str]:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """List of paths of enslaved devices"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceDummyInterface(
-    DbusInterfaceCommonAsync,
-    interface_name='org.freedesktop.NetworkManager.Device.Dummy',
-):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
-
-
-class OrgFreedesktopNetworkManagerDeviceGenericInterface(
+class NetworkManagerDeviceGenericInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Generic',
 ):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
+    """Generic device interface"""
 
     @dbus_property_async(
         property_signature='s',
     )
     def type_description(self) -> str:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Description of the interface type"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceInfinibandInterface(
-    DbusInterfaceCommonAsync,
-    interface_name='org.freedesktop.NetworkManager.Device.Infiniband',
-):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='b',
-    )
-    def carrier(self) -> bool:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
+class IpTunnelMode(IntEnum):
+    """Mode of IP tunnel"""
+    UNKNOWN = 0
+    IP_IP = 1
+    GRE = 2
+    SIT = 3
+    ISATAP = 4
+    VTI = 5
+    IP6_IP6 = 6
+    IP_IP6 = 7
+    IP6_GRE = 8
+    VTI6 = 9
+    GRE_TAP = 10
+    IP6_GRE_TAP = 11
 
 
-class OrgFreedesktopNetworkManagerDeviceIPTunnelInterface(
+class NetworkManagerDeviceIPTunnelInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.IPTunnel',
 ):
+    """IP tunnel device interface"""
 
     @dbus_property_async(
         property_signature='u',
     )
     def mode(self) -> int:
+        """Tunnel mode
+
+        See :py:class:`IpTunnelMode`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def parent(self) -> str:
+        """Object path of parent device"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def local(self) -> str:
+        """Local endpoint"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def remote(self) -> str:
+        """Remote endpoint"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='y',
     )
     def ttl(self) -> int:
+        """Time to Live (TTL)
+
+        0 is special value meaning the packets inherit TTL value.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='y',
     )
     def tos(self) -> int:
+        """Type of service (IPv4) or traffic class (IPv6)"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def path_mtu_discovery(self) -> bool:
+        """Whether path MTU discovery is enabled on this tunnel"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def input_key(self) -> str:
+        """Key used for incoming packets"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def output_key(self) -> str:
+        """Key used for outgoing packets"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='y',
     )
     def encapsulation_limit(self) -> int:
+        """How many levels of enapsulation are permitted
+
+        Only IPv6 tunnels
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def flow_label(self) -> int:
+        """Flow label assigned to tunnel packets
+
+        Only IPv6 tunnels
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def flags(self) -> int:
+        """Tunnel flags
+
+        Missing upstream documentation
+        """
         raise NotImplementedError
 
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
 
-
-class OrgFreedesktopNetworkManagerDeviceLowpanInterface(
+class NetworkManagerDeviceLowpanInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Lowpan',
 ):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
+    """6LoWPAN device interface"""
 
     @dbus_property_async(
         property_signature='o',
     )
     def parent(self) -> str:
+        """Path to parent device"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceMacsecInterface(
+class NetworkManagerDeviceMacsecInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Macsec',
 ):
+    """MacSec device interface"""
 
     @dbus_property_async(
         property_signature='o',
     )
     def parent(self) -> str:
+        """Path to parent device"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='t',
     )
     def sci(self) -> int:
+        """Secure Channel Identifier"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='y',
     )
     def icv_length(self) -> int:
+        """Length of Integrity Check Value"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='t',
     )
     def cipher_suite(self) -> int:
+        """Set of cryptographic algorithms in use
+
+        Not documented upstream.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def window(self) -> int:
+        """Size of replay window. (in number of packets)"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='y',
     )
     def encoding_sa(self) -> int:
+        """Security Association in use"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def validation(self) -> str:
+        """Validation mode for incoming packets
+
+        * strict
+        * check
+        * disabled
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def encrypt(self) -> bool:
+        """Whether encryption of transmitted frames is enabled"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def protect(self) -> bool:
+        """Whether protection of transmitted frames is enabled"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def include_sci(self) -> bool:
+        """Whether SCI is always included in transmitted SecTAG"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
+        property_name='Es',
     )
-    def es(self) -> bool:
+    def end_station_enabled(self) -> bool:
+        """Whether End Station bit is enabled in SecTAG"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
+        property_name='Scb',
     )
-    def scb(self) -> bool:
+    def scb_enabled(self) -> bool:
+        """Whether Single Copy Broadcast is enabled in SecTAG"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def replay_protect(self) -> bool:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Whether replay protection is enabled"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceMacvlanInterface(
+class NetworkManagerDeviceMacvlanInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Macvlan',
 ):
+    """MACVLAN device interface"""
 
     @dbus_property_async(
         property_signature='o',
     )
     def parent(self) -> str:
+        """Path to parent device"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def mode(self) -> str:
+        """MacVlan mode
+
+        One of:
+        * private
+        * vepa
+        * bridge
+        * passthru
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def no_promisc(self) -> bool:
+        """Whether this device is blocked from promiscuous mode"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def tap(self) -> bool:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Whether the device is macvtap"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceModemInterface(
+class ModemCapabilities(IntFlag):
+    """Modem capabilities flags"""
+    NONE = 0x0
+    ANALOG_WIRE = 0x1
+    CDMA = 0x2
+    GSM = 0x4
+    LTE = 0x8
+
+
+class NetworkManagerDeviceModemInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Modem',
 ):
+    """Modem device interface"""
 
     @dbus_property_async(
         property_signature='u',
     )
     def modem_capabilities(self) -> int:
+        """Modem radio technology
+
+        Switching the radio technology might require
+        firmware reboot.
+
+        See :py:class:`ModemCapabilities`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def current_capabilities(self) -> int:
+        """Current supported radio technologies without firmware reload"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def device_id(self) -> str:
+        """Unique modem identifier"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def operator_code(self) -> str:
+        """Mobile country codes (MCC) + mobile network codes (MNC)
+
+        Blank if disconnected or not a 3GPP modem.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def apn(self) -> str:
+        """Access point name modem is connected to.
+
+        Blank if disconnected.
+        """
         raise NotImplementedError
 
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
 
-
-class OrgFreedesktopNetworkManagerDeviceOlpcMeshInterface(
+class NetworkManagerDeviceOlpcMeshInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.OlpcMesh',
 ):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
+    """OLPC Wireless Mesh device interface"""
 
     @dbus_property_async(
         property_signature='o',
     )
     def companion(self) -> str:
+        """Path to companion device"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def active_channel(self) -> int:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Currently active channel"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceOvsBridgeInterface(
+class NetworkManagerDeviceOvsBridgeInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.OvsBridge',
 ):
+    """Open vSwitch device interface"""
 
     @dbus_property_async(
         property_signature='ao',
     )
     def slaves(self) -> List[str]:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """List of paths to slave devices"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceOvsInterfaceInterface(
-    DbusInterfaceCommonAsync,
-    interface_name='org.freedesktop.NetworkManager.Device.OvsInterface',
-):
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
-
-
-class OrgFreedesktopNetworkManagerDeviceOvsPortInterface(
+class NetworkManagerDeviceOvsPortInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.OvsPort',
 ):
+    """Open vSwitch port device interface"""
 
     @dbus_property_async(
         property_signature='ao',
     )
     def slaves(self) -> List[str]:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """List of paths to slave devices"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDevicePppInterface(
-    DbusInterfaceCommonAsync,
-    interface_name='org.freedesktop.NetworkManager.Device.Ppp',
-):
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
-
-
-class OrgFreedesktopNetworkManagerDeviceStatisticsInterface(
+class NetworkManagerDeviceStatisticsInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Statistics',
 ):
+    """Device statistics interface"""
 
     @dbus_property_async(
         property_signature='u',
     )
     def refresh_rate_ms(self) -> int:
+        """Refreshed rate of properties of this interface in milliseconds."""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='t',
     )
     def tx_bytes(self) -> int:
+        """Number of transmitted bytes"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='t',
     )
     def rx_bytes(self) -> int:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Number of received bytes"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceTeamInterface(
+class NetworkManagerDeviceTeamInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Team',
 ):
+    """Teaming device
 
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
+    Aggregates multiple devices to a single one.
 
-    @dbus_property_async(
-        property_signature='b',
-    )
-    def carrier(self) -> bool:
-        raise NotImplementedError
-
+    Seems to be Network Manager specific type bond device.
+    """
     @dbus_property_async(
         property_signature='ao',
     )
     def slaves(self) -> List[str]:
+        """List of paths to slave devices"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def config(self) -> str:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """JSON config of the device"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceTunInterface(
+class NetworkManagerDeviceTunInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Tun',
 ):
+    """Userspace tunneling device interface"""
 
     @dbus_property_async(
         property_signature='x',
     )
     def owner(self) -> int:
+        """User ID (UID) of the device owner"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='x',
     )
     def group(self) -> int:
+        """Group ID (GID) of the device owner"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def mode(self) -> str:
+        """Tunnel mode
+
+        Either tun or tap
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def no_pi(self) -> bool:
+        """If true no protocol info is prepended to packets"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def vnet_hdr(self) -> bool:
+        """If true tunnel packets include virtio network header"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def multi_queue(self) -> bool:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """If true callers can connect multiple times"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceVethInterface(
+class NetworkManagerDeviceVethInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Veth',
 ):
+    """Virtual Ethernet device interface"""
 
     @dbus_property_async(
         property_signature='o',
     )
     def peer(self) -> str:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Path to peer device"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceVlanInterface(
+class NetworkManagerDeviceVlanInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Vlan',
 ):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='b',
-    )
-    def carrier(self) -> bool:
-        raise NotImplementedError
+    """Virtual LAN device interface"""
 
     @dbus_property_async(
         property_signature='o',
     )
     def parent(self) -> str:
+        """Path to parent device"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def vlan_id(self) -> int:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """VLAN ID of this interface"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceVrfInterface(
+class NetworkManagerDeviceVrfInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Vrf',
 ):
+    """Virtual routing and forwarding device interface"""
 
     @dbus_property_async(
         property_signature='u',
     )
     def table(self) -> int:
+        """Routing table ID of this device"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceVxlanInterface(
+class NetworkManagerDeviceVxlanInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Vxlan',
 ):
+    """Virtual Extensible LAN device interface"""
 
     @dbus_property_async(
         property_signature='o',
     )
     def parent(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
+        """Path to parent device"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
+        property_name='Id'
     )
-    def id(self) -> int:
+    def vxlan_id(self) -> int:
+        """VXLAN Network Identifier (VNI)"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def group(self) -> str:
+        """Multicast IP group used to communicate (v4 or v6)"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def local(self) -> str:
+        """Local IP address used to communicate"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='y',
     )
     def tos(self) -> int:
+        """TOS field of IP packets"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='y',
     )
     def ttl(self) -> int:
+        """TTL of IP packets"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def learning(self) -> bool:
+        """If true VXLAN dynamically learns the remote IP address"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def ageing(self) -> int:
+        """Interval in seconds at which kernel purges stale cached addresses"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def limit(self) -> int:
+        """Maximum number of entries in forwarding table"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='q',
     )
     def dst_port(self) -> int:
+        """Destination port for outgoing packets"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='q',
     )
     def src_port_min(self) -> int:
+        """Lowest source port for outgoing packets"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='q',
     )
     def src_port_max(self) -> int:
+        """Highest source port for outgoing packets"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
+        property_name='Proxy'
     )
-    def proxy(self) -> bool:
+    def arp_proxy(self) -> bool:
+        """If true ARP proxying is enabled"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
+        property_name='Rsc'
     )
-    def rsc(self) -> bool:
+    def route_short_circuit(self) -> bool:
+        """If true route short circuiting is enabled"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def l2miss(self) -> bool:
+        """If true emit netlink notification on L2 switch misses"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def l3miss(self) -> bool:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """If true emit netlink notification on L3 switch misses"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceWifiP2PInterface(
+class NetworkManagerDeviceWifiP2PInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.WifiP2P',
 ):
+    """Wi-Fi Peet to Peer device interface"""
 
     @dbus_method_async(
         input_signature='a{sv}',
@@ -1287,6 +1206,13 @@ class OrgFreedesktopNetworkManagerDeviceWifiP2PInterface(
         self,
         options: Dict[str, Tuple[str, Any]],
     ) -> None:
+        """Start find operation for Wi-Fi P2P peers
+
+        Options supported:
+
+        * ``timeout`` of type "i" which is a number of seconds \
+                    for search timeout between 1-600. Default 300.
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -1294,191 +1220,110 @@ class OrgFreedesktopNetworkManagerDeviceWifiP2PInterface(
     async def stop_find(
         self,
     ) -> None:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
+        """Stop find operation"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='ao',
     )
     def peers(self) -> List[str]:
+        """List of peer objects paths visible to this Wi-Fi device"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='o',
     )
     def peer_added(self) -> str:
+        """Signal when peer has been added with the new peer object path"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='o',
     )
     def peer_removed(self) -> str:
+        """Signal when peer has been lost with the lost peer object path"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceWiMaxInterface(
-    DbusInterfaceCommonAsync,
-    interface_name='org.freedesktop.NetworkManager.Device.WiMax',
-):
-
-    @dbus_method_async(
-        result_signature='ao',
-    )
-    async def get_nsp_list(
-        self,
-    ) -> List[str]:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='ao',
-    )
-    def nsps(self) -> List[str]:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='u',
-    )
-    def center_frequency(self) -> int:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='i',
-    )
-    def rssi(self) -> int:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='i',
-    )
-    def cinr(self) -> int:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='i',
-    )
-    def tx_power(self) -> int:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def bsid(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='o',
-    )
-    def active_nsp(self) -> str:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='o',
-    )
-    def nsp_added(self) -> str:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='o',
-    )
-    def nsp_removed(self) -> str:
-        raise NotImplementedError
-
-
-class OrgFreedesktopNetworkManagerDeviceWiredInterface(
+class NetworkManagerDeviceWiredInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Wired',
 ):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
+    """Wired Ethernet device interface"""
 
     @dbus_property_async(
         property_signature='s',
     )
     def perm_hw_address(self) -> str:
+        """Permanent hardware address"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def speed(self) -> int:
+        """Design speed of the device in megabits/second"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='as',
     )
     def s390_subchannels(self) -> List[str]:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='b',
-    )
-    def carrier(self) -> bool:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Array of IBM Z Architecture S/390 subchannels"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceWireGuardInterface(
+class NetworkManagerDeviceWireGuardInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.WireGuard',
 ):
+    """WireGuard device interface"""
 
     @dbus_property_async(
         property_signature='ay',
     )
     def public_key(self) -> bytes:
+        """Public key of the device"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='q',
     )
     def listen_port(self) -> int:
+        """UDP listening port for incoming connections"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def fw_mark(self) -> int:
+        """Optional packet marker to set routing policy"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceWirelessInterface(
+class WirelessCapabilities(IntFlag):
+    """Wireless device capabilities flags"""
+    NONE = 0x0
+    CIPHER_WEP40 = 0x1
+    CIPHER_WEP104 = 0x2
+    CIPHER_TKIP = 0x4
+    CIPHER_CCMP = 0x8
+    WPA = 0x10
+    WPA2 = 0x20
+    AP = 0x40
+    ADHOC = 0x80
+    FREQ_VALID = 0x100
+    FREQ_2GHZ = 0x200
+    FREQ_5GHZ = 0x400
+    MESH = 0x800
+    IBSS_WPA2 = 0x2000
+
+
+class NetworkManagerDeviceWirelessInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device.Wireless',
 ):
-
-    @dbus_method_async(
-        result_signature='ao',
-    )
-    async def get_access_points(
-        self,
-    ) -> List[str]:
-        raise NotImplementedError
+    """Wi-Fi device interface"""
 
     @dbus_method_async(
         result_signature='ao',
@@ -1486,6 +1331,10 @@ class OrgFreedesktopNetworkManagerDeviceWirelessInterface(
     async def get_all_access_points(
         self,
     ) -> List[str]:
+        """Return the list of paths to all access points visible
+
+        Includes the hidden ones without SSID.
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -1495,91 +1344,252 @@ class OrgFreedesktopNetworkManagerDeviceWirelessInterface(
         self,
         options: Dict[str, Tuple[str, Any]],
     ) -> None:
-        raise NotImplementedError
+        """Request to scan for Wi-Fi access points
 
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
+        Options:
+
+        * ``ssids`` of type 'ayy' (List[bytes])
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def perm_hw_address(self) -> str:
+        """Permanent hardware address"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def mode(self) -> int:
+        """Operating mode of the device
+
+        See :py:class:`WiFiOperationMode`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def bitrate(self) -> int:
+        """Bit rate currently used in kilobits/second"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='ao',
     )
     def access_points(self) -> List[str]:
+        """List of paths of access point currently visible"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def active_access_point(self) -> str:
+        """Path to currently used access point"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def wireless_capabilities(self) -> int:
+        """List of wireless device capabilities
+
+        See :py:class:`WirelessCapabilities`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='x',
     )
     def last_scan(self) -> int:
-        raise NotImplementedError
+        """Time in CLOCK_BOOTTIME milliseconds since last scan
 
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        Value -1 means never scanned.
+        """
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='o',
     )
     def access_point_added(self) -> str:
+        """Signal when new point is added with the path"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='o',
     )
     def access_point_removed(self) -> str:
+        """Signal when a point was removed with the path"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDeviceWpanInterface(
-    DbusInterfaceCommonAsync,
-    interface_name='org.freedesktop.NetworkManager.Device.Wpan',
-):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
-        raise NotImplementedError
+class DeviceCapabilities(IntFlag):
+    """Device Capabilities"""
+    NONE = 0x0
+    SUPPORTED = 0x1
+    CARRIER_DETECTABLE = 0x2
+    IS_SOFTWARE = 0x4
+    CAN_SRIOV = 0x8
 
 
-class OrgFreedesktopNetworkManagerDeviceInterface(
+class DeviceState(IntEnum):
+    """Device State"""
+    UNKNOWN = 0
+    UNMANAGED = 10
+    UNAVAILABLE = 20
+    DISCONNECTED = 30
+    PREPARE = 40
+    CONFIG = 50
+    NEED_AUTH = 60
+    IP_CONFIG = 70
+    IP_CHECK = 80
+    SECONDARIES = 90
+    ACTIVATED = 100
+    DEACTIVATING = 110
+    FAILED = 120
+
+
+class DeviceStateReason(IntEnum):
+    """Device State reason"""
+    NONE = 0
+    UNKNOWN = 1
+    NOW_MANAGED = 2
+    NOW_UNMANAGED = 3
+    CONFIG_FAILED = 4
+    IP_CONFIG_UNAVAILABLE = 5
+    IP_CONFIG_EXPIRED = 6
+    NO_SECRETS = 7
+    SUPPLICANT_DISCONNECT = 8
+    SUPPLICANT_CONFIG_FAILED = 9
+    SUPPLICANT_FAILED = 10
+    SUPPLICANT_TIMEOUT = 11
+    PPP_START_FAILED = 12
+    PPP_DISCONNECT = 13
+    PPP_FAILED = 14
+    DHCP_START_FAILED = 15
+    DHCP_ERROR = 16
+    DHCP_FAILED = 17
+    SHARED_START_FAILED = 18
+    SHARED_FAILED = 19
+    AUTOIP_START_FAILED = 20
+    AUTOIP_ERROR = 21
+    AUTOIP_FAILED = 22
+    MODEM_BUSY = 23
+    MODEM_NO_DIAL_TONE = 24
+    MODEM_NO_CARRIER = 25
+    MODEM_DIAL_TIMEOUT = 26
+    MODEM_DIAL_FAILED = 27
+    MODEM_INIT_FAILED = 28
+    GSM_APN_FAILED = 29
+    GSM_REGISTRATION_NOT_SEARCHING = 30
+    GSM_REGISTRATION_DENIED = 31
+    GSM_REGISTRATION_TIMEOUT = 32
+    GSM_REGISTRATION_FAILED = 33
+    GSM_PIN_CHECK_FAILED = 34
+    FIRMWARE_MISSING = 35
+    REMOVED = 36
+    SLEEPING = 37
+    CONNECTION_REMOVED = 38
+    USER_REQUESTED = 39
+    CARRIER = 40
+    CONNECTION_ASSUMED = 41
+    SUPPLICANT_AVAILABLE = 42
+    MODEM_NOT_FOUND = 43
+    BT_FAILED = 44
+    GSM_SIM_NOT_INSERTED = 45
+    GSM_SIM_PIN_REQUIRED = 46
+    GSM_SIM_PUK_REQUIRED = 47
+    GSM_SIM_WRONG = 48
+    INFINIBAND_MODE = 49
+    DEPENDENCY_FAILED = 50
+    BR2684_FAILED = 51
+    MODEM_MANAGER_UNAVAILABLE = 52
+    SSID_NOT_FOUND = 53
+    SECONDARY_CONNECTION_FAILED = 54
+    DCB_FCOE_FAILED = 55
+    TEAMD_CONTROL_FAILED = 56
+    MODEM_FAILED = 57
+    MODEM_AVAILABLE = 58
+    SIM_PIN_INCORRECT = 59
+    NEW_ACTIVATION = 60
+    PARENT_CHANGED = 61
+    PARENT_MANAGED_CHANGED = 62
+    OVSDB_FAILED = 63
+    IP_ADDRESS_DUPLICATE = 64
+    IP_METHOD_UNSUPPORTED = 65
+    SRIOV_CONFIGURATION_FAILED = 66
+    PEER_NOT_FOUND = 67
+
+
+class DeviceType(IntEnum):
+    """Device Type"""
+    UNKNOWN = 0
+    ETHERNET = 1
+    WIFI = 2
+    UNUSED1 = 3
+    UNUSED2 = 4
+    BLUETOOTH = 5
+    OLPC_MESH = 6
+    WIMAX = 7
+    MODEM = 8
+    INFINIBAND = 9
+    BOND = 10
+    VLAN = 11
+    ADSL = 12
+    BRIDGE = 13
+    GENERIC = 14
+    TEAM = 15
+    TUN = 16
+    IP_TUNNEL = 17
+    MACVLAN = 18
+    VXLAN = 19
+    VETH = 20
+    MACSEC = 21
+    DUMMY = 22
+    PPP = 23
+    OVS_INTERFACE = 24
+    OVS_PORT = 25
+    OVS_BRIDGE = 26
+    WPAN = 27
+    SIXLOWPAN = 28
+    WIREGUARD = 29
+    WIFI_P2P = 30
+    VRF = 31
+
+
+class DeviceMetered(IntEnum):
+    """Device Metered state"""
+    UNKNOWN = 0
+    YES = 1
+    NO = 2
+    GUESS_YES = 3
+    GUESS_NO = 4
+
+
+class ConnectivityState(IntEnum):
+    """Connectivity state"""
+    UNKNOWN = 0
+    NONE = 1
+    PORTAL = 2
+    LIMITED = 3
+    FULL = 4
+
+
+class DeviceInterfaceFlags(IntFlag):
+    """Device network interface flags"""
+    NONE = 0x0
+    UP = 0x1
+    LOWER_UP = 0x2
+    CARRIER = 0x10000
+
+
+class NetworkManagerDeviceInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Device',
 ):
+    """Device interface with common functionality"""
 
     @dbus_method_async(
         input_signature='a{sa{sv}}tu',
@@ -1588,8 +1598,14 @@ class OrgFreedesktopNetworkManagerDeviceInterface(
         self,
         connection: Dict[str, Dict[str, Tuple[str, Any]]],
         version_id: int,
-        flags: int,
+        flags: int = 0,
     ) -> None:
+        """Attempt to update the device configuration without deactivating
+
+        :param connection: Optional connection settings to be reapplied
+        :param version_id: Current version id of applied connection.
+        :param flags: currently there are no flags so it should be zero
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -1598,8 +1614,14 @@ class OrgFreedesktopNetworkManagerDeviceInterface(
     )
     async def get_applied_connection(
         self,
-        flags: int,
+        flags: int = 0,
     ) -> Tuple[Dict[str, Dict[str, Tuple[str, Any]]], int]:
+        """Get the currently applied connection on the device
+
+        :param flags: Currently there are no flags so this should be zero
+        :returns: Tuple of dictionary of connection settings \
+                 and an int version id.
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -1607,6 +1629,7 @@ class OrgFreedesktopNetworkManagerDeviceInterface(
     async def disconnect(
         self,
     ) -> None:
+        """Disconnect device and prevent from automatically activating"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -1614,427 +1637,498 @@ class OrgFreedesktopNetworkManagerDeviceInterface(
     async def delete(
         self,
     ) -> None:
+        """Deletes the software device.
+
+        Raises an exception if the device is a hardware device.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def udi(self) -> str:
+        """Not stable device identifier
+
+        Should not be used for tracking connection.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def path(self) -> str:
+        """Device path as exposed by Udev"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def interface(self) -> str:
+        """Name of device control interface (???)"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def ip_interface(self) -> str:
+        """Name of device data interface (???)"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def driver(self) -> str:
+        """Driver handling device"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def driver_version(self) -> str:
+        """Driver version"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def firmware_version(self) -> str:
+        """Firmware version of the device"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def capabilities(self) -> int:
-        raise NotImplementedError
+        """Capabilities of the device
 
-    @dbus_property_async(
-        property_signature='u',
-    )
-    def ip4_address(self) -> int:
+        See :py:class:`DeviceCapabilities`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def state(self) -> int:
+        """Device state.
+
+        See :py:class:`DeviceState`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='(uu)',
     )
     def state_reason(self) -> Tuple[int, int]:
+        """Current state and the reason.
+
+        See :py:class:`DeviceState` and :py:class:`DeviceStateReason`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def active_connection(self) -> str:
+        """Path of active connection object"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def ip4_config(self) -> str:
+        """Path of Ip4Config object
+
+        Only valid when device is in ACTIVATED state.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def dhcp4_config(self) -> str:
+        """Path of Dhcp4 object
+
+        Only valid when device is in ACTIVATED state.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def ip6_config(self) -> str:
+        """Path to Ip6Config object
+
+        Only valid when device is in ACTIVATED state.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def dhcp6_config(self) -> str:
+        """Path to Dhcp6 object
+
+        Only valid when device is in ACTIVATED state.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def managed(self) -> bool:
+        """Whether or not this device is manager by NetworkManager
+
+        This setting can be written.
+        The value is not persistent on NetworkManager restarts.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def autoconnect(self) -> bool:
+        """If true device is allowed to auto connect
+
+        Can be written.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def firmware_missing(self) -> bool:
+        """If true means the device is missing firmware"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def nm_plugin_missing(self) -> bool:
+        """If true means the plugin for NetworkManager is missing"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def device_type(self) -> int:
+        """Device type
+
+        See :py:class:`DeviceType`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='ao',
     )
     def available_connections(self) -> List[str]:
+        """List of object paths to connections available"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def physical_port_id(self) -> str:
+        """Physical network port of the device"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def mtu(self) -> int:
+        """Maximum Transmission Unit"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def metered(self) -> int:
+        """Whether the traffic is subject to limitations
+
+        See :py:class:`DeviceMetered`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='aa{sv}',
     )
     def lldp_neighbors(self) -> List[Dict[str, Tuple[str, Any]]]:
+        """List of LLDP neighbors
+
+        Each element is the dictionary of LLDP TLV names \
+        to variants values.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def real(self) -> bool:
+        """Whether this device is exists
+
+        If it does not yet exist it can be automatically created \
+        if one of the available connections becomes activated.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def ip4_connectivity(self) -> int:
+        """IPv4 connectivity state
+
+        See :py:class:`ConnectivityState`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def ip6_connectivity(self) -> int:
+        """IPv6 connectivity state
+
+        See :py:class:`ConnectivityState`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def interface_flags(self) -> int:
+        """Interface flags
+
+        See :py:class:`DeviceInterfaceFlags`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def hw_address(self) -> str:
+        """Hardware address"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='uuu',
     )
     def state_changed(self) -> Tuple[int, int, int]:
+        """Signal when device state has changed
+
+        Tuple of new state, old state and reason for new state.
+
+        See :py:class:`DeviceState` and :py:class:`DeviceStateReason`
+        """
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDHCP4ConfigInterface(
+class NetworkManagerDHCP4ConfigInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.DHCP4Config',
 ):
+    """DHCPv4 configuration"""
 
     @dbus_property_async(
         property_signature='a{sv}',
     )
     def options(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Options and configurations returned by DHCPv4 server"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDHCP6ConfigInterface(
+class NetworkManagerDHCP6ConfigInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.DHCP6Config',
 ):
+    """DHCPv6 configuration"""
 
     @dbus_property_async(
         property_signature='a{sv}',
     )
     def options(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Options and configurations returned by DHCPv4 server"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerDnsManagerInterface(
+class NetworkManagerDnsManagerInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.DnsManager',
 ):
+    """DNS configuration state"""
 
     @dbus_property_async(
         property_signature='s',
     )
     def mode(self) -> str:
+        """Current DNS processing mode"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def rc_manager(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='aa{sv}',
-    )
-    def configuration(self) -> List[Dict[str, Tuple[str, Any]]]:
+        """Current resolv.conf management mode"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerIP4ConfigInterface(
+class NetworkManagerIP4ConfigInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.IP4Config',
 ):
-
-    @dbus_property_async(
-        property_signature='aau',
-    )
-    def addresses(self) -> List[List[int]]:
-        raise NotImplementedError
+    """IPv4 configuration state"""
 
     @dbus_property_async(
         property_signature='aa{sv}',
     )
     def address_data(self) -> List[Dict[str, Tuple[str, Any]]]:
+        """Array of IP address data objects
+
+        Each dictionary includes ``'address'`` item with IP address string \
+        and ``'prefix'`` with an int of prefix. Some addresses may include \
+        additional attributes.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def gateway(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='aau',
-    )
-    def routes(self) -> List[List[int]]:
+        """Gateway in use"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='aa{sv}',
     )
     def route_data(self) -> List[Dict[str, Tuple[str, Any]]]:
-        raise NotImplementedError
+        """Array of route data objects
 
-    @dbus_property_async(
-        property_signature='au',
-    )
-    def nameservers(self) -> List[int]:
+        Each dictionary includes 'dest' (IP address string), 'prefix' (int).
+        Some routes may include 'next-hop', 'metric' and additional attributes.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='aa{sv}',
     )
     def nameserver_data(self) -> List[Dict[str, Tuple[str, Any]]]:
+        """List of nameserver objects
+
+        Currently, each dictionary only has the 'address' value. \
+        (string of IP address)
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='as',
     )
     def domains(self) -> List[str]:
+        """List of domains this address belongs to."""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='as',
     )
     def searches(self) -> List[str]:
+        """List of DNS searches"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='as',
     )
     def dns_options(self) -> List[str]:
+        """List of dns options"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='i',
     )
     def dns_priority(self) -> int:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='au',
-    )
-    def wins_servers(self) -> List[int]:
+        """Relative priority of DNS servers"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='as',
     )
     def wins_server_data(self) -> List[str]:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Windows Internet Name Service servers"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerIP6ConfigInterface(
+class NetworkManagerIP6ConfigInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.IP6Config',
 ):
-
-    @dbus_property_async(
-        property_signature='a(ayuay)',
-    )
-    def addresses(self) -> List[Tuple[bytes, int, bytes]]:
-        raise NotImplementedError
+    """IPv6 configuration"""
 
     @dbus_property_async(
         property_signature='aa{sv}',
     )
     def address_data(self) -> List[Dict[str, Tuple[str, Any]]]:
+        """Array of IP address data objects
+
+        Each dictionary includes ``'address'`` item with IP address string \
+        and ``'prefix'`` with an int of prefix. Some addresses may include \
+        additional attributes.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def gateway(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='a(ayuayu)',
-    )
-    def routes(self) -> List[Tuple[bytes, int, bytes, int]]:
+        """Gateway in use"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='aa{sv}',
     )
     def route_data(self) -> List[Dict[str, Tuple[str, Any]]]:
+        """Array of route data objects
+
+        Each dictionary includes 'dest' (IP address string), 'prefix' (int).
+        Some routes may include 'next-hop', 'metric' and additional attributes.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='aay',
     )
     def nameservers(self) -> List[bytes]:
+        """Nameservers in use"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='as',
     )
     def domains(self) -> List[str]:
+        """List of domains this address belongs to."""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='as',
     )
     def searches(self) -> List[str]:
+        """List of DNS searches"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='as',
     )
     def dns_options(self) -> List[str]:
+        """List of dns options"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='i',
     )
     def dns_priority(self) -> int:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Relative priority of DNS servers"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerPPPInterface(
+class NetworkManagerPPPInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.PPP',
 ):
+    """Helper interface for PPP plugin"""
 
     @dbus_method_async(
         result_signature='ss',
@@ -2042,6 +2136,10 @@ class OrgFreedesktopNetworkManagerPPPInterface(
     async def need_secrets(
         self,
     ) -> Tuple[str, str]:
+        """Need secrets?
+
+        Returns the tuple of username and password
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2051,6 +2149,7 @@ class OrgFreedesktopNetworkManagerPPPInterface(
         self,
         config: Dict[str, Tuple[str, Any]],
     ) -> None:
+        """Set IPv4 configuration"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2060,6 +2159,7 @@ class OrgFreedesktopNetworkManagerPPPInterface(
         self,
         config: Dict[str, Tuple[str, Any]],
     ) -> None:
+        """Set IPv6 configuration"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2069,6 +2169,10 @@ class OrgFreedesktopNetworkManagerPPPInterface(
         self,
         state: int,
     ) -> None:
+        """Set connection state.
+
+        Not documented upstream.
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2078,13 +2182,18 @@ class OrgFreedesktopNetworkManagerPPPInterface(
         self,
         ifindex: int,
     ) -> None:
+        """Set input device index
+
+        Not documented upstream.
+        """
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerSecretAgentInterface(
+class NetworkManagerSecretAgentInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.SecretAgent',
 ):
+    """D-Bus interface that stores secrets such as Wi-Fi passwords"""
 
     @dbus_method_async(
         input_signature='a{sa{sv}}osasu',
@@ -2098,6 +2207,7 @@ class OrgFreedesktopNetworkManagerSecretAgentInterface(
         hints: List[str],
         flags: int,
     ) -> Dict[str, Dict[str, Tuple[str, Any]]]:
+        """Retrieve stored secrets"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2108,6 +2218,7 @@ class OrgFreedesktopNetworkManagerSecretAgentInterface(
         connection_path: str,
         setting_name: str,
     ) -> None:
+        """Cancel pending get_secrets request"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2118,6 +2229,7 @@ class OrgFreedesktopNetworkManagerSecretAgentInterface(
         connection: Dict[str, Dict[str, Tuple[str, Any]]],
         connection_path: str,
     ) -> None:
+        """Save given secrets"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2128,13 +2240,24 @@ class OrgFreedesktopNetworkManagerSecretAgentInterface(
         connection: Dict[str, Dict[str, Tuple[str, Any]]],
         connection_path: str,
     ) -> None:
+        """Delete secrets"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerSettingsConnectionInterface(
+class ConnectionFlags(IntFlag):
+    """Connection flags"""
+    NONE = 0x0
+    UNSAVED = 0x1
+    GENERATED = 0x2
+    VOLATILE = 0x4
+    EXTERNAL = 0x8
+
+
+class NetworkManagerSettingsConnectionInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Settings.Connection',
 ):
+    """Represents a single network connection"""
 
     @dbus_method_async(
         input_signature='a{sa{sv}}',
@@ -2143,6 +2266,10 @@ class OrgFreedesktopNetworkManagerSettingsConnectionInterface(
         self,
         properties: Dict[str, Dict[str, Tuple[str, Any]]],
     ) -> None:
+        """Update connection settings.
+
+        Replaces all previous settings and properties.
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2152,6 +2279,7 @@ class OrgFreedesktopNetworkManagerSettingsConnectionInterface(
         self,
         properties: Dict[str, Dict[str, Tuple[str, Any]]],
     ) -> None:
+        """Update connection settings but do not save to disk"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2159,6 +2287,7 @@ class OrgFreedesktopNetworkManagerSettingsConnectionInterface(
     async def delete(
         self,
     ) -> None:
+        """Delete connection"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2167,6 +2296,7 @@ class OrgFreedesktopNetworkManagerSettingsConnectionInterface(
     async def get_settings(
         self,
     ) -> Dict[str, Dict[str, Tuple[str, Any]]]:
+        """Get connection settings"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2177,6 +2307,7 @@ class OrgFreedesktopNetworkManagerSettingsConnectionInterface(
         self,
         setting_name: str,
     ) -> Dict[str, Dict[str, Tuple[str, Any]]]:
+        """Get connection secrets"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2184,6 +2315,7 @@ class OrgFreedesktopNetworkManagerSettingsConnectionInterface(
     async def clear_secrets(
         self,
     ) -> None:
+        """Clear connection secrets"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2191,6 +2323,7 @@ class OrgFreedesktopNetworkManagerSettingsConnectionInterface(
     async def save(
         self,
     ) -> None:
+        """Save connection settings to storage"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2203,47 +2336,51 @@ class OrgFreedesktopNetworkManagerSettingsConnectionInterface(
         flags: int,
         args: Dict[str, Tuple[str, Any]],
     ) -> Dict[str, Tuple[str, Any]]:
+        """Update connection settings"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def unsaved(self) -> bool:
+        """If true some settings are not saved to disk"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def flags(self) -> int:
+        """Connection flags
+
+        See :py:class:`ConnectionFlags`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def filename(self) -> str:
+        """File that stores connection settings"""
         raise NotImplementedError
 
     @dbus_signal_async(
     )
     def updated(self) -> None:
+        """Signal when connection updated"""
         raise NotImplementedError
 
     @dbus_signal_async(
     )
     def removed(self) -> None:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Signal when connection is removed"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerSettingsInterface(
+class NetworkManagerSettingsInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.Settings',
 ):
+    """Global NetworkManager settings"""
 
     @dbus_method_async(
         result_signature='ao',
@@ -2251,6 +2388,7 @@ class OrgFreedesktopNetworkManagerSettingsInterface(
     async def list_connections(
         self,
     ) -> List[str]:
+        """List of connection object paths"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2261,6 +2399,7 @@ class OrgFreedesktopNetworkManagerSettingsInterface(
         self,
         uuid: str,
     ) -> str:
+        """Get connection path by UUID"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2271,6 +2410,7 @@ class OrgFreedesktopNetworkManagerSettingsInterface(
         self,
         connection: Dict[str, Dict[str, Tuple[str, Any]]],
     ) -> str:
+        """Add connection and save to disk"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2281,6 +2421,7 @@ class OrgFreedesktopNetworkManagerSettingsInterface(
         self,
         connection: Dict[str, Dict[str, Tuple[str, Any]]],
     ) -> str:
+        """Add connection and do not save"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2293,6 +2434,7 @@ class OrgFreedesktopNetworkManagerSettingsInterface(
         flags: int,
         args: Dict[str, Tuple[str, Any]],
     ) -> Tuple[str, Dict[str, Tuple[str, Any]]]:
+        """Add connection. Flags indicate whether to save or not"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2303,6 +2445,10 @@ class OrgFreedesktopNetworkManagerSettingsInterface(
         self,
         filenames: List[str],
     ) -> Tuple[bool, List[str]]:
+        """Load connections from filenames
+
+        :returns: Tuple of success and list of failed connection filenames.
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2311,6 +2457,7 @@ class OrgFreedesktopNetworkManagerSettingsInterface(
     async def reload_connections(
         self,
     ) -> bool:
+        """Reload all connection from disk"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2320,79 +2467,106 @@ class OrgFreedesktopNetworkManagerSettingsInterface(
         self,
         hostname: str,
     ) -> None:
+        """Save hostname to persistent configuration
+
+        If blank hostname is cleared.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='ao',
     )
     def connections(self) -> List[str]:
+        """List of paths to connection objects"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def hostname(self) -> str:
+        """Current hostname"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def can_modify(self) -> bool:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """If true adding and modifying connections is supported"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='o',
     )
     def new_connection(self) -> str:
+        """Signal when new connection has been added with the path"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='o',
     )
     def connection_removed(self) -> str:
+        """Signal when connection was removed with the path"""
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerVPNConnectionInterface(
+class VpnState(IntEnum):
+    """VPN State"""
+    UNKNOWN = 0
+    INIT = 1
+    SHUTDOWN = 2
+    STARTING = 3
+    STARTED = 4
+    STOPPING = 5
+    STOPPED = 6
+
+
+class VpnFailure(IntEnum):
+    """VPN Failure"""
+    LOGIN_FAILURE = 0
+    CONNECT_FAILED = 1
+    BAD_IP_CONFIG = 3
+
+
+class NetworkManagerVPNConnectionInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.VPN.Connection',
 ):
+    """VPN connection interface"""
 
     @dbus_property_async(
         property_signature='u',
     )
     def vpn_state(self) -> int:
+        """VPN connection state
+
+        See :py:class:`ConnectionState`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def banner(self) -> str:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
+        """Banner string of VPN connection"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='uu',
     )
     def vpn_state_changed(self) -> Tuple[int, int]:
+        """Signal when VPN state changed
+
+        Tuple of new state and reason.
+        See :py:class:`ConnectionState` and :py:class:`ConnectionStateReason`
+        """
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerVPNPluginInterface(
+class NetworkManagerVPNPluginInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.VPN.Plugin',
 ):
+    """Interface provided by VPN plugins"""
 
     @dbus_method_async(
         input_signature='a{sa{sv}}',
@@ -2401,6 +2575,10 @@ class OrgFreedesktopNetworkManagerVPNPluginInterface(
         self,
         connection: Dict[str, Dict[str, Tuple[str, Any]]],
     ) -> None:
+        """Connect to described connection
+
+        Interactive secrets requests not allowed.
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2411,6 +2589,11 @@ class OrgFreedesktopNetworkManagerVPNPluginInterface(
         connection: Dict[str, Dict[str, Tuple[str, Any]]],
         details: Dict[str, Tuple[str, Any]],
     ) -> None:
+        """Connect to described connection
+
+        Interactive secrets requests allowed.
+        (emits secrets_required signal)
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2421,6 +2604,10 @@ class OrgFreedesktopNetworkManagerVPNPluginInterface(
         self,
         settings: Dict[str, Dict[str, Tuple[str, Any]]],
     ) -> str:
+        """Asks plugin if connection will require secrets
+
+        :return: Setting name that requires secrets
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2428,6 +2615,7 @@ class OrgFreedesktopNetworkManagerVPNPluginInterface(
     async def disconnect(
         self,
     ) -> None:
+        """Disconnect from VPN"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2437,6 +2625,7 @@ class OrgFreedesktopNetworkManagerVPNPluginInterface(
         self,
         config: Dict[str, Tuple[str, Any]],
     ) -> None:
+        """Set generic connection details"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2446,6 +2635,7 @@ class OrgFreedesktopNetworkManagerVPNPluginInterface(
         self,
         config: Dict[str, Tuple[str, Any]],
     ) -> None:
+        """Set IPv4 settings"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2455,6 +2645,7 @@ class OrgFreedesktopNetworkManagerVPNPluginInterface(
         self,
         config: Dict[str, Tuple[str, Any]],
     ) -> None:
+        """Set IPv6 settings"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2464,6 +2655,7 @@ class OrgFreedesktopNetworkManagerVPNPluginInterface(
         self,
         reason: str,
     ) -> None:
+        """Set the plugin failure reason"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2473,165 +2665,196 @@ class OrgFreedesktopNetworkManagerVPNPluginInterface(
         self,
         connection: Dict[str, Dict[str, Tuple[str, Any]]],
     ) -> None:
+        """Called in response to secrets_required signal"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def state(self) -> int:
+        """VPN state
+
+        See :py:class:`VpnState`
+        """
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='u',
     )
     def state_changed(self) -> int:
+        """Signal when VPN state changed with new VPN state.
+
+        See :py:class:`VpnState`
+        """
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='sas',
     )
     def secrets_required(self) -> Tuple[str, List[str]]:
+        """Signal when secrest are required during ongoing connection"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='a{sv}',
     )
     def config(self) -> Dict[str, Tuple[str, Any]]:
+        """Signal when plugin obtained generic configuration"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='a{sv}',
     )
     def ip4_config(self) -> Dict[str, Tuple[str, Any]]:
+        """Signal when plugin obtained IPv4 configuration"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='a{sv}',
     )
     def ip6_config(self) -> Dict[str, Tuple[str, Any]]:
+        """Signal when plugin obtained IPv6 configuration"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='s',
     )
     def login_banner(self) -> str:
+        """Signal when plugin receives login banner from VPN service"""
         raise NotImplementedError
 
     @dbus_signal_async(
         signal_signature='u',
     )
     def failure(self) -> int:
+        """Signal when VPN failure occurs
+
+        See :py:class:`VpnFailure`
+        """
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerWifiP2PPeerInterface(
+class NetworkManagerWifiP2PPeerInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager.WifiP2PPeer',
 ):
+    """Interface of a peer in Wi-Fi P2P connection"""
 
     @dbus_property_async(
         property_signature='s',
     )
     def name(self) -> str:
+        """Device name"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def flags(self) -> int:
+        """Flags describing capabilities of the point
+
+        See :py:class:`AccessPointCapabilities`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def manufacturer(self) -> str:
+        """Manufacturer of the Wi-Fi P2P peer."""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def model(self) -> str:
+        """Peer model"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def model_number(self) -> str:
+        """Peer model number"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def serial(self) -> str:
+        """Peer serial"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='ay',
     )
     def wfd_i_es(self) -> bytes:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def hw_address(self) -> str:
+        """Wi-Fi Display Information Elements of the peer"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='y',
     )
     def strength(self) -> int:
+        """Current signal quality of the peer, in percent."""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='i',
     )
     def last_seen(self) -> int:
+        """Timestamp in CLOCK_BOOTTIME seconds since last seen in scan
+
+        Value of -1 means that the point was never found in scans.
+        """
         raise NotImplementedError
 
 
-class OrgFreedesktopNetworkManagerWiMaxNspInterface(
-    DbusInterfaceCommonAsync,
-    interface_name='org.freedesktop.NetworkManager.WiMax.Nsp',
-):
-
-    @dbus_property_async(
-        property_signature='s',
-    )
-    def name(self) -> str:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='u',
-    )
-    def signal_quality(self) -> int:
-        raise NotImplementedError
-
-    @dbus_property_async(
-        property_signature='u',
-    )
-    def network_type(self) -> int:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
+class NetworkManagerConnectivityState(IntEnum):
+    """NetworkManager connectivity state enum"""
+    UNKNOWN = 0
+    NONE = 1
+    PORTAL = 2
+    LIMITED = 3
+    FULL = 4
 
 
-class OrgFreedesktopNetworkManagerInterface(
+class NetworkManagerState(IntEnum):
+    """NetworkManager state enum"""
+    UNKNOWN = 0
+    ASLEEP = 10
+    DISCONNECTED = 20
+    DISCONNECTING = 30
+    CONNECTING = 40
+    CONNECTED_LOCAL = 50
+    CONNECTED_SITE = 60
+    GLOBAL = 70
+
+
+class NetworkManagerInterface(
     DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.NetworkManager',
 ):
+    """Main network manager interface"""
 
     @dbus_method_async(
         input_signature='u',
     )
     async def reload(
         self,
-        flags: int,
+        flags: int = 0x0,
     ) -> None:
+        """Reload NetworkManager configuration
+
+        Flags control what to reload:
+
+        * 0x0 everything
+        * 0x1 NetworkManager.conf
+        * 0x2 DNS configuration
+        * 0x4 Restart DNS plugin
+
+        :param flags: Reload what?
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2640,6 +2863,7 @@ class OrgFreedesktopNetworkManagerInterface(
     async def get_devices(
         self,
     ) -> List[str]:
+        """Get list of device object paths known"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2648,6 +2872,7 @@ class OrgFreedesktopNetworkManagerInterface(
     async def get_all_devices(
         self,
     ) -> List[str]:
+        """Get list of device object paths with placeholders"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2658,6 +2883,7 @@ class OrgFreedesktopNetworkManagerInterface(
         self,
         iface: str,
     ) -> str:
+        """Get device object path by interface name"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2666,10 +2892,14 @@ class OrgFreedesktopNetworkManagerInterface(
     )
     async def activate_connection(
         self,
-        connection: str,
-        device: str,
-        specific_object: str,
+        connection: str = '/',
+        device: str = '/',
+        specific_object: str = '/',
     ) -> str:
+        """Activate the connection.
+
+        :return: Activated connection object path.
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2682,6 +2912,7 @@ class OrgFreedesktopNetworkManagerInterface(
         device: str,
         specific_object: str,
     ) -> Tuple[str, str]:
+        """Add a new connection and activate"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2695,6 +2926,7 @@ class OrgFreedesktopNetworkManagerInterface(
         specific_object: str,
         options: Dict[str, Tuple[str, Any]],
     ) -> Tuple[str, str, Dict[str, Tuple[str, Any]]]:
+        """Add a new connection and activate"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2704,6 +2936,7 @@ class OrgFreedesktopNetworkManagerInterface(
         self,
         active_connection: str,
     ) -> None:
+        """Deactivate connection by given path"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2713,6 +2946,7 @@ class OrgFreedesktopNetworkManagerInterface(
         self,
         sleep: bool,
     ) -> None:
+        """Intended for system suspend/resume tracking not user"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2722,6 +2956,7 @@ class OrgFreedesktopNetworkManagerInterface(
         self,
         enable: bool,
     ) -> None:
+        """Disables all networking when set to false"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2730,6 +2965,7 @@ class OrgFreedesktopNetworkManagerInterface(
     async def get_permissions(
         self,
     ) -> Dict[str, str]:
+        """Returns the permissions of caller"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2740,6 +2976,7 @@ class OrgFreedesktopNetworkManagerInterface(
         level: str,
         domains: str,
     ) -> None:
+        """Set logging verbosity and which operations are logged"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2748,6 +2985,7 @@ class OrgFreedesktopNetworkManagerInterface(
     async def get_logging(
         self,
     ) -> Tuple[str, str]:
+        """Get current logging settings"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2756,6 +2994,10 @@ class OrgFreedesktopNetworkManagerInterface(
     async def check_connectivity(
         self,
     ) -> int:
+        """Get current connectivity state
+
+        See  :py:class:`NetworkManagerConnectivityState`
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2765,6 +3007,10 @@ class OrgFreedesktopNetworkManagerInterface(
     async def get_state(
         self,
     ) -> int:
+        """Get current NetworkManager state
+
+        See :py:class:`NetworkManagerState`
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2777,6 +3023,10 @@ class OrgFreedesktopNetworkManagerInterface(
         rollback_timeout: int,
         flags: int,
     ) -> str:
+        """Create configuration checkpoint for given devices
+
+        :return: New checkpoint object path
+        """
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2786,6 +3036,7 @@ class OrgFreedesktopNetworkManagerInterface(
         self,
         checkpoint: str,
     ) -> None:
+        """Destroy given checkpoint"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2796,6 +3047,7 @@ class OrgFreedesktopNetworkManagerInterface(
         self,
         checkpoint: str,
     ) -> Dict[str, int]:
+        """Use given checkpoint to rollback configuration"""
         raise NotImplementedError
 
     @dbus_method_async(
@@ -2806,54 +3058,63 @@ class OrgFreedesktopNetworkManagerInterface(
         checkpoint: str,
         add_timeout: int,
     ) -> None:
+        """Adjust checkpoint rollback timeout"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='ao',
     )
     def devices(self) -> List[str]:
+        """List of all current devices"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='ao',
     )
     def all_devices(self) -> List[str]:
+        """List of all current and un-realized devices"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='ao',
     )
     def checkpoints(self) -> List[str]:
+        """List of all checkpoint objects"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def networking_enabled(self) -> bool:
+        """Whether networking enabled or not"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def wireless_enabled(self) -> bool:
+        """Whether wireless enabled or not"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def wireless_hardware_enabled(self) -> bool:
+        """Whether wireless hardware enabled with RF kill switch"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def wwan_enabled(self) -> bool:
+        """Whether mobile broadband devices enabled"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def wwan_hardware_enabled(self) -> bool:
+        """Whether mobile hardware devices enabled with RF kill switch"""
         raise NotImplementedError
 
     @dbus_property_async(
@@ -2863,69 +3124,86 @@ class OrgFreedesktopNetworkManagerInterface(
         raise NotImplementedError
 
     @dbus_property_async(
-        property_signature='b',
-    )
-    def wimax_hardware_enabled(self) -> bool:
-        raise NotImplementedError
-
-    @dbus_property_async(
         property_signature='ao',
     )
     def active_connections(self) -> List[str]:
+        """List of active connection paths"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def primary_connection(self) -> str:
+        """Object path for primary connection"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def primary_connection_type(self) -> str:
+        """Primary connection type"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def metered(self) -> int:
+        """Primary connection metered status
+
+        See :py:class:`DeviceMetered`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='o',
     )
     def activating_connection(self) -> str:
+        """Primary connection activating connection"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='b',
     )
     def startup(self) -> bool:
+        """Whether NetworkManager is still activating"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def version(self) -> str:
+        """NetworkManager version"""
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='au',
     )
     def capabilities(self) -> List[int]:
+        """NetworkManager capabilities
+
+        * 1 Team devices
+        * 2 OpenVSwitch
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def state(self) -> int:
+        """Overall state of NetworkManager
+
+        See :py:class:`NetworkManagerState`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='u',
     )
     def connectivity(self) -> int:
+        """Overall state of connectivity
+
+        See :py:class:`NetworkManagerConnectivityState`
+        """
         raise NotImplementedError
 
     @dbus_property_async(
@@ -2938,46 +3216,44 @@ class OrgFreedesktopNetworkManagerInterface(
         property_signature='b',
     )
     def connectivity_check_enabled(self) -> bool:
+        """Whether the connectivity checking is enabled
+
+        Can be written.
+        """
         raise NotImplementedError
 
     @dbus_property_async(
         property_signature='s',
     )
     def connectivity_check_uri(self) -> str:
+        """URI that network manager will hit to check internet connection"""
         raise NotImplementedError
 
-    @dbus_property_async(
-        property_signature='a{sv}',
-    )
+    @dbus_property_async('a{sv}')
     def global_dns_configuration(self) -> Dict[str, Tuple[str, Any]]:
+        """Global DNS connection settings"""
         raise NotImplementedError
 
-    @dbus_signal_async(
-    )
+    @dbus_signal_async()
     def check_permissions(self) -> None:
+        """System authorization changed"""
         raise NotImplementedError
 
-    @dbus_signal_async(
-        signal_signature='u',
-    )
+    @dbus_signal_async('u')
     def state_changed(self) -> int:
+        """NetworkManager state changed
+
+        See :py:class:`NetworkManagerState`
+        """
         raise NotImplementedError
 
-    @dbus_signal_async(
-        signal_signature='a{sv}',
-    )
-    def properties_changed(self) -> Dict[str, Tuple[str, Any]]:
-        raise NotImplementedError
-
-    @dbus_signal_async(
-        signal_signature='o',
-    )
+    @dbus_signal_async('o')
     def device_added(self) -> str:
+        """Signal when new device has been added with path"""
         raise NotImplementedError
 
-    @dbus_signal_async(
-        signal_signature='o',
-    )
+    @dbus_signal_async('o')
     def device_removed(self) -> str:
+        """Signal when device had been removed with path"""
         raise NotImplementedError
 # endregion Interfaces

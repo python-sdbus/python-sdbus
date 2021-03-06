@@ -185,23 +185,23 @@ class SdBus:
 
 
 def sd_bus_open() -> SdBus:
-    ...
+    return SdBus()
 
 
 def sd_bus_open_user() -> SdBus:
-    ...
+    return SdBus()
 
 
 def sd_bus_open_system() -> SdBus:
-    ...
+    return SdBus()
 
 
 def encode_object_path(prefix: str, external: str) -> str:
-    ...
+    return prefix + external
 
 
 def decode_object_path(prefix: str, full_path: str) -> str:
-    ...
+    return full_path
 
 
 def add_exception_mapping(exc: Exception, /) -> None:

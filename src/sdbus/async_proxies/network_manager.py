@@ -3420,6 +3420,33 @@ class NetworkDeviceWired(
             device_path)
 
 
+class NetworkDeviceWireless(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceWirelessInterface):
+    """WiFi device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceWirelessInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
 class NetworkDeviceBluetooth(
         NetworkManagerDeviceInterface,
         NetworkManagerDeviceStatisticsInterface,

@@ -3275,7 +3275,7 @@ class NetworkManager(NetworkManagerInterface):
     and object path ``/org/freedesktop/NetworkManager`` is predetermined.
     """
 
-    def __init__(self, bus: Optional[SdBus]) -> None:
+    def __init__(self, bus: Optional[SdBus] = None) -> None:
         """
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -3295,7 +3295,7 @@ class NetworkManagerAgentManager(NetworkManagerSecretAgentManagerInterface):
     is predetermined.
     """
 
-    def __init__(self, bus: Optional[SdBus]) -> None:
+    def __init__(self, bus: Optional[SdBus] = None) -> None:
         """
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -3315,7 +3315,7 @@ class NetworkManagerDnsManager(NetworkManagerDnsManagerInterface):
     is predetermined.
     """
 
-    def __init__(self, bus: Optional[SdBus]) -> None:
+    def __init__(self, bus: Optional[SdBus] = None) -> None:
         """
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -3335,7 +3335,7 @@ class NetworkManagerSettings(NetworkManagerSettingsInterface):
     is predetermined.
     """
 
-    def __init__(self, bus: Optional[SdBus]) -> None:
+    def __init__(self, bus: Optional[SdBus] = None) -> None:
         """
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -3352,7 +3352,8 @@ class NetworkConnectionSettings(
     Implements :py:class:`NetworkManagerSettingsConnectionInterface`
     """
 
-    def __init__(self, settings_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, settings_path: str,
+                 bus: Optional[SdBus] = None) -> None:
         """
         :param settings_path: D-Bus path to settings object. \
             Usually obtained from \
@@ -3377,7 +3378,7 @@ class NetworkDeviceGeneric(
     :py:class:`NetworkManagerDeviceGenericInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3404,7 +3405,7 @@ class NetworkDeviceWired(
     :py:class:`NetworkManagerDeviceWiredInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3431,7 +3432,7 @@ class NetworkDeviceWireless(
     :py:class:`NetworkManagerDeviceWirelessInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3458,7 +3459,7 @@ class NetworkDeviceBluetooth(
     :py:class:`NetworkManagerDeviceBluetoothInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3486,7 +3487,7 @@ class NetworkDeviceBond(
     :py:class:`NetworkManagerDeviceBondInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3514,7 +3515,7 @@ class NetworkDeviceBridge(
     :py:class:`NetworkManagerDeviceBridgeInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3541,7 +3542,7 @@ class NetworkDeviceIpTunnel(
     :py:class:`NetworkManagerDeviceIPTunnelInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3568,7 +3569,7 @@ class NetworkDeviceMacsec(
     :py:class:`NetworkManagerDeviceMacsecInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3595,7 +3596,7 @@ class NetworkDeviceMacvlan(
     :py:class:`NetworkManagerDeviceMacvlanInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3622,7 +3623,7 @@ class NetworkDeviceModem(
     :py:class:`NetworkManagerDeviceModemInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3649,7 +3650,7 @@ class NetworkDeviceOlpcMesh(
     :py:class:`NetworkManagerDeviceOlpcMeshInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3676,7 +3677,7 @@ class NetworkDeviceOpenVSwitchBridge(
     :py:class:`NetworkManagerDeviceOvsBridgeInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3703,7 +3704,7 @@ class NetworkDeviceOpenVSwitchPort(
     :py:class:`NetworkManagerDeviceOvsPortInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3730,7 +3731,7 @@ class NetworkDeviceTeam(
     :py:class:`NetworkManagerDeviceTeamInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3757,7 +3758,7 @@ class NetworkDeviceTun(
     :py:class:`NetworkManagerDeviceTunInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3784,7 +3785,7 @@ class NetworkDeviceVeth(
     :py:class:`NetworkManagerDeviceVethInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3811,7 +3812,7 @@ class NetworkDeviceVlan(
     :py:class:`NetworkManagerDeviceVlanInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3838,7 +3839,7 @@ class NetworkDeviceVrf(
     :py:class:`NetworkManagerDeviceVrfInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3865,7 +3866,7 @@ class NetworkDeviceVxlan(
     :py:class:`NetworkManagerDeviceVxlanInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3892,7 +3893,7 @@ class NetworkDeviceWifiP2P(
     :py:class:`NetworkManagerDeviceWifiP2PInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3919,7 +3920,7 @@ class NetworkDeviceWireGuard(
     :py:class:`NetworkManagerDeviceWireGuardInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3946,7 +3947,7 @@ class NetworkDevicePPP(
     :py:class:`NetworkManagerPPPInterface`
     """
 
-    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param device_path: D-Bus path to device object. \
@@ -3968,7 +3969,8 @@ class ActiveConnection(NetworkManagerConnectionActiveInterface):
     Implements :py:class:`NetworkManagerConnectionActiveInterface`
     """
 
-    def __init__(self, connection_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, connection_path: str,
+                 bus: Optional[SdBus] = None) -> None:
         """
 
         :param connection_path: D-Bus path to connection object. \
@@ -4000,7 +4002,7 @@ class IPv4Config(NetworkManagerIP4ConfigInterface):
     Implements :py:class:`NetworkManagerIP4ConfigInterface`
     """
 
-    def __init__(self, ip4_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, ip4_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param ip4_path: D-Bus path to IPv4 config object. \
@@ -4021,7 +4023,7 @@ class IPv6Config(NetworkManagerIP6ConfigInterface):
     Implements :py:class:`NetworkManagerIP6ConfigInterface`
     """
 
-    def __init__(self, ip6_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, ip6_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param ip6_path: D-Bus path to IPv6 config object. \
@@ -4042,7 +4044,7 @@ class DHCPv4Config(NetworkManagerDHCP4ConfigInterface):
     Implements :py:class:`NetworkManagerDHCP4ConfigInterface`
     """
 
-    def __init__(self, dhcp4_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, dhcp4_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param dhcp4_path: D-Bus path to DHCPv4 config object. \
@@ -4063,7 +4065,7 @@ class DHCPv6Config(NetworkManagerDHCP6ConfigInterface):
     Implements :py:class:`NetworkManagerDHCP6ConfigInterface`
     """
 
-    def __init__(self, dhcpv6_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, dhcpv6_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param dhcpv6_path: D-Bus path to DHCPv6 config object. \
@@ -4084,7 +4086,7 @@ class AccessPoint(NetworkManagerAccessPointInterface):
     Implements :py:class:`NetworkManagerAccessPointInterface`
     """
 
-    def __init__(self, point_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, point_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param point_path: D-Bus path to access point object. \
@@ -4105,7 +4107,7 @@ class WiFiP2PPeer(NetworkManagerWifiP2PPeerInterface):
     Implements :py:class:`NetworkManagerWifiP2PPeerInterface`
     """
 
-    def __init__(self, peer_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, peer_path: str, bus: Optional[SdBus] = None) -> None:
         """
 
         :param peer_path: D-Bus path to access point object. \
@@ -4126,7 +4128,8 @@ class ConfigCheckpoint(NetworkManagerCheckpointInterface):
     Implements :py:class:`NetworkManagerCheckpointInterface`
     """
 
-    def __init__(self, checkpoint_path: str, bus: Optional[SdBus]) -> None:
+    def __init__(self, checkpoint_path: str,
+                 bus: Optional[SdBus] = None) -> None:
         """
 
         :param checkpoint_path: D-Bus path to access point object. \

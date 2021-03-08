@@ -791,6 +791,19 @@ class DbusIntrospectableAsync(
         raise NotImplementedError
 
 
+class DbusPropertiesInterfaceAsync(
+    DbusInterfaceBaseAsync,
+    interface_name='org.freedesktop.DBus.Properties',
+    serving_enabled=False,
+):
+    @dbus_signal_async('sa{sv}as')
+    def properties_changed(self) -> Tuple[str,
+                                          Dict[str, Tuple[str, Any]],
+                                          List[str]]:
+        ...
+
+
 class DbusInterfaceCommonAsync(
-        DbusPeerInterfaceAsync, DbusIntrospectableAsync):
+        DbusPeerInterfaceAsync, DbusPropertiesInterfaceAsync,
+        DbusIntrospectableAsync):
     ...

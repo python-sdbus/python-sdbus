@@ -50,6 +50,23 @@ Classes
         :return: string with introspection XML
         :rtype: str
 
+    .. py:attribute:: properties_changed
+        :type: Tuple[str, Dict[str, Tuple[str, Any]], List[str]]
+
+        Signal when one of the objects properties changes.
+
+        Signal data is:
+
+        Interface name : str
+            Name of the interface where property changed
+
+        Changed properties : Dict[str, Tuple[str, Any]]
+            Dictionary there keys are names of properties changed and
+            values are variants of new value.
+
+        Invalidated properties : List[str]
+            List of property names changed but no new value had been provided
+
     .. py:method:: _connect(bus, service_name, object_path)
 
         Binds object to a remote dbus object. Calls

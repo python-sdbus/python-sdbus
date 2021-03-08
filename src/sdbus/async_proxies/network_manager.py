@@ -20,11 +20,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 from enum import IntFlag, IntEnum
 
 from sdbus import (DbusInterfaceCommonAsync, dbus_method_async,
                    dbus_property_async, dbus_signal_async)
+
+from ..sd_bus_internals import SdBus
 
 # region Interfaces
 
@@ -3257,3 +3259,858 @@ class NetworkManagerInterface(
         """Signal when device had been removed with path"""
         raise NotImplementedError
 # endregion Interfaces
+
+
+# region Helper objects
+
+NETWORK_MANAGER_SERVICE_NAME = 'org.freedesktop.NetworkManager'
+
+
+class NetworkManager(NetworkManagerInterface):
+    """Network Manger main object
+
+    Implements :py:class:`NetworkManagerInterface`
+
+    Service name ``'org.freedesktop.NetworkManager'``
+    and object path ``/org/freedesktop/NetworkManager`` is predetermined.
+    """
+
+    def __init__(self, bus: Optional[SdBus]) -> None:
+        """
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            '/org/freedesktop/NetworkManager')
+
+
+class NetworkManagerAgentManager(NetworkManagerSecretAgentManagerInterface):
+    """NetworkManager secrets manager
+
+    Implements :py:class:`NetworkManagerSecretAgentManagerInterface`.
+
+    Service name ``'org.freedesktop.NetworkManager'``
+    and object path ``/org/freedesktop/NetworkManager/AgentManager``
+    is predetermined.
+    """
+
+    def __init__(self, bus: Optional[SdBus]) -> None:
+        """
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            '/org/freedesktop/NetworkManager/AgentManager')
+
+
+class NetworkManagerDnsManager(NetworkManagerDnsManagerInterface):
+    """NetworkManager DNS manager
+
+    Implements :py:class:`NetworkManagerDnsManagerInterface`.
+
+    Service name ``'org.freedesktop.NetworkManager'``
+    and object path ``/org/freedesktop/NetworkManager/DnsManager``
+    is predetermined.
+    """
+
+    def __init__(self, bus: Optional[SdBus]) -> None:
+        """
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            '/org/freedesktop/NetworkManager/DnsManager')
+
+
+class NetworkManagerSettings(NetworkManagerSettingsInterface):
+    """NetworkManager settings
+
+    Implements :py:class:`NetworkManagerSettingsInterface`.
+
+    Service name ``'org.freedesktop.NetworkManager'``
+    and object path ``/org/freedesktop/NetworkManager/DnsManager``
+    is predetermined.
+    """
+
+    def __init__(self, bus: Optional[SdBus]) -> None:
+        """
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            '/org/freedesktop/NetworkManager/Settings')
+
+
+class NetworkConnectionSettings(
+        NetworkManagerSettingsConnectionInterface):
+    """Setting of specific connection
+
+    Implements :py:class:`NetworkManagerSettingsConnectionInterface`
+    """
+
+    def __init__(self, settings_path: str, bus: Optional[SdBus]) -> None:
+        """
+        :param settings_path: D-Bus path to settings object. \
+            Usually obtained from \
+            :py:attr:`NetworkManagerDeviceInterface.active_connection`
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            settings_path)
+
+
+class NetworkDeviceGeneric(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceGenericInterface):
+    """Generic device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceGenericInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceWired(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceWiredInterface):
+    """Ethernet device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceWiredInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceBluetooth(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceBluetoothInterface):
+    """Bluetooth device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceBluetoothInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+
+            device_path)
+
+
+class NetworkDeviceBond(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceBondInterface):
+    """Bond device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceBondInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceBridge(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceBridgeInterface):
+    """Bridge device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceBridgeInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceIpTunnel(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceIPTunnelInterface):
+    """Generic device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceIPTunnelInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceMacsec(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceMacsecInterface):
+    """Macsec device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceMacsecInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceMacvlan(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceMacvlanInterface):
+    """Macvlan device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceMacvlanInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceModem(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceModemInterface):
+    """Generic device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceModemInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceOlpcMesh(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceOlpcMeshInterface):
+    """OLPC wireless mesh device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceOlpcMeshInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceOpenVSwitchBridge(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceOvsBridgeInterface):
+    """Open vSwitch bridge device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceOvsBridgeInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceOpenVSwitchPort(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceOvsPortInterface):
+    """Open vSwitch port device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceOvsPortInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceTeam(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceTeamInterface):
+    """Team device (special Bond device for NetworkManager)
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceTeamInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceTun(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceTunInterface):
+    """TUN device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceTunInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceVeth(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceVethInterface):
+    """Virtual Ethernet device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceVethInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceVlan(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceVlanInterface):
+    """VLAN device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceVlanInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceVrf(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceVrfInterface):
+    """VRF (virtual routing) device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceVrfInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceVxlan(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceVxlanInterface):
+    """VXLAN device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceVxlanInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceWifiP2P(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceWifiP2PInterface):
+    """Wifi Peer-to-Peer (P2P) device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceWifiP2PInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDeviceWireGuard(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerDeviceWireGuardInterface):
+    """Generic device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerDeviceWireGuardInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class NetworkDevicePPP(
+        NetworkManagerDeviceInterface,
+        NetworkManagerDeviceStatisticsInterface,
+        NetworkManagerPPPInterface):
+    """PPP device
+
+    Implements :py:class:`NetworkManagerDeviceInterface`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
+    :py:class:`NetworkManagerPPPInterface`
+    """
+
+    def __init__(self, device_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param device_path: D-Bus path to device object. \
+            Obtained from \
+            :py:meth:`NetworkManagerInterface.get_devices` or \
+            :py:meth:`NetworkManagerInterface.get_device_by_ip_iface`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            device_path)
+
+
+class ActiveConnection(NetworkManagerConnectionActiveInterface):
+    """Active connection object
+
+    Implements :py:class:`NetworkManagerConnectionActiveInterface`
+    """
+
+    def __init__(self, connection_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param connection_path: D-Bus path to connection object. \
+            Obtained from \
+            :py:meth:`NetworkManagerDeviceInterface.active_connection`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            connection_path)
+
+
+class ActiveVPNConnection(
+        ActiveConnection,
+        NetworkManagerVPNConnectionInterface):
+    """Active VPN connection object
+
+    Implements :py:class:`NetworkManagerConnectionActiveInterface`
+    and :py:class:`NetworkManagerVPNConnectionInterface`
+    """
+    ...
+
+
+class IPv4Config(NetworkManagerIP4ConfigInterface):
+    """IPv4 configuration interface
+
+    Implements :py:class:`NetworkManagerIP4ConfigInterface`
+    """
+
+    def __init__(self, ip4_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param ip4_path: D-Bus path to IPv4 config object. \
+            Obtained from \
+            :py:attr:`NetworkManagerDeviceInterface.ip4_config`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            ip4_path)
+
+
+class IPv6Config(NetworkManagerIP6ConfigInterface):
+    """IPv6 configuration interface
+
+    Implements :py:class:`NetworkManagerIP6ConfigInterface`
+    """
+
+    def __init__(self, ip6_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param ip6_path: D-Bus path to IPv6 config object. \
+            Obtained from \
+            :py:attr:`NetworkManagerDeviceInterface.ip4_config`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            ip6_path)
+
+
+class DHCPv4Config(NetworkManagerDHCP4ConfigInterface):
+    """DHCPv4 configuration interface
+
+    Implements :py:class:`NetworkManagerDHCP4ConfigInterface`
+    """
+
+    def __init__(self, dhcp4_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param dhcp4_path: D-Bus path to DHCPv4 config object. \
+            Obtained from \
+            :py:attr:`NetworkManagerDeviceInterface.dhcp4_config`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            dhcp4_path)
+
+
+class DHCPv6Config(NetworkManagerDHCP6ConfigInterface):
+    """DHCPv6 configuration interface
+
+    Implements :py:class:`NetworkManagerDHCP6ConfigInterface`
+    """
+
+    def __init__(self, dhcpv6_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param dhcpv6_path: D-Bus path to DHCPv6 config object. \
+            Obtained from \
+            :py:attr:`NetworkManagerDeviceInterface.dhcp6_config`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            dhcpv6_path)
+
+
+class AccessPoint(NetworkManagerAccessPointInterface):
+    """Access Point (WiFi point) object
+
+    Implements :py:class:`NetworkManagerAccessPointInterface`
+    """
+
+    def __init__(self, point_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param point_path: D-Bus path to access point object. \
+            Obtained from \
+            :py:attr:`NetworkManagerDeviceWirelessInterface.access_points`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            point_path)
+
+
+class WiFiP2PPeer(NetworkManagerWifiP2PPeerInterface):
+    """WiFi peer object
+
+    Implements :py:class:`NetworkManagerWifiP2PPeerInterface`
+    """
+
+    def __init__(self, peer_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param peer_path: D-Bus path to access point object. \
+            Obtained from \
+            :py:attr:`NetworkManagerDeviceWifiP2PInterface.peers`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            peer_path)
+
+
+class ConfigCheckpoint(NetworkManagerCheckpointInterface):
+    """Configuration checkpoint interface
+
+    Implements :py:class:`NetworkManagerCheckpointInterface`
+    """
+
+    def __init__(self, checkpoint_path: str, bus: Optional[SdBus]) -> None:
+        """
+
+        :param checkpoint_path: D-Bus path to access point object. \
+            Obtained from \
+            :py:attr:`NetworkManagerDeviceWifiP2PInterface.checkpoint_create`.
+
+        :param bus: You probably want to set default bus to system bus \
+            or pass system bus directly.
+        """
+        self._connect(
+            NETWORK_MANAGER_SERVICE_NAME,
+            checkpoint_path)
+
+# endregion Helper objects

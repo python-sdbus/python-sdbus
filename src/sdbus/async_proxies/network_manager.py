@@ -3280,6 +3280,7 @@ class NetworkManager(NetworkManagerInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             '/org/freedesktop/NetworkManager')
@@ -3300,6 +3301,7 @@ class NetworkManagerAgentManager(NetworkManagerSecretAgentManagerInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             '/org/freedesktop/NetworkManager/AgentManager')
@@ -3320,6 +3322,7 @@ class NetworkManagerDnsManager(NetworkManagerDnsManagerInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             '/org/freedesktop/NetworkManager/DnsManager')
@@ -3340,6 +3343,7 @@ class NetworkManagerSettings(NetworkManagerSettingsInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             '/org/freedesktop/NetworkManager/Settings')
@@ -3362,6 +3366,7 @@ class NetworkConnectionSettings(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             settings_path)
@@ -3389,6 +3394,7 @@ class NetworkDeviceGeneric(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3416,6 +3422,7 @@ class NetworkDeviceWired(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3443,6 +3450,7 @@ class NetworkDeviceWireless(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3470,9 +3478,9 @@ class NetworkDeviceBluetooth(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
-
             device_path)
 
 
@@ -3498,8 +3506,8 @@ class NetworkDeviceBond(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
-
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
 
@@ -3526,6 +3534,7 @@ class NetworkDeviceBridge(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3553,6 +3562,7 @@ class NetworkDeviceIpTunnel(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3580,6 +3590,7 @@ class NetworkDeviceMacsec(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3607,6 +3618,7 @@ class NetworkDeviceMacvlan(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3634,6 +3646,7 @@ class NetworkDeviceModem(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3661,6 +3674,7 @@ class NetworkDeviceOlpcMesh(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3688,6 +3702,7 @@ class NetworkDeviceOpenVSwitchBridge(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3715,6 +3730,7 @@ class NetworkDeviceOpenVSwitchPort(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3742,6 +3758,7 @@ class NetworkDeviceTeam(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3769,6 +3786,7 @@ class NetworkDeviceTun(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3796,6 +3814,7 @@ class NetworkDeviceVeth(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3823,6 +3842,7 @@ class NetworkDeviceVlan(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3850,6 +3870,7 @@ class NetworkDeviceVrf(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3877,6 +3898,7 @@ class NetworkDeviceVxlan(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3904,6 +3926,7 @@ class NetworkDeviceWifiP2P(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3931,6 +3954,7 @@ class NetworkDeviceWireGuard(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3958,6 +3982,7 @@ class NetworkDevicePPP(
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             device_path)
@@ -3980,6 +4005,7 @@ class ActiveConnection(NetworkManagerConnectionActiveInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             connection_path)
@@ -4012,6 +4038,7 @@ class IPv4Config(NetworkManagerIP4ConfigInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             ip4_path)
@@ -4033,6 +4060,7 @@ class IPv6Config(NetworkManagerIP6ConfigInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             ip6_path)
@@ -4054,6 +4082,7 @@ class DHCPv4Config(NetworkManagerDHCP4ConfigInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             dhcp4_path)
@@ -4075,6 +4104,7 @@ class DHCPv6Config(NetworkManagerDHCP6ConfigInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             dhcpv6_path)
@@ -4096,6 +4126,7 @@ class AccessPoint(NetworkManagerAccessPointInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             point_path)
@@ -4117,6 +4148,7 @@ class WiFiP2PPeer(NetworkManagerWifiP2PPeerInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             peer_path)
@@ -4139,6 +4171,7 @@ class ConfigCheckpoint(NetworkManagerCheckpointInterface):
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
         """
+        super().__init__()
         self._connect(
             NETWORK_MANAGER_SERVICE_NAME,
             checkpoint_path)

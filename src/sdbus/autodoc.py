@@ -32,6 +32,7 @@ from .dbus_proxy_async import (DbusInterfaceCommonAsync, DbusMethodAsync,
 class DbusMethodDocumenter(MethodDocumenter):
 
     objtype = 'DbusMethodAsync'
+    directivetype = 'method'
     priority = 100 + MethodDocumenter.priority
 
     @classmethod
@@ -64,6 +65,17 @@ class DbusPropertyDocumenter(AttributeDocumenter):
                 annotation_dict[key] = value.property_getter.\
                     __annotations__['return']
 
+    def add_content(self,
+                    *args: Any, **kwargs: Any,
+                    ) -> None:
+
+        source_name = self.get_sourcename()
+        self.add_line('', source_name)
+        self.add_line('**D-Bus property**', source_name)
+        self.add_line('', source_name)
+
+        super().add_content(*args, **kwargs)
+
 
 class DbusSignalDocumenter(AttributeDocumenter):
 
@@ -83,6 +95,17 @@ class DbusSignalDocumenter(AttributeDocumenter):
             if isinstance(value, DbusSignal):
                 annotation_dict[key] = value.original_function.\
                     __annotations__['return']
+
+    def add_content(self,
+                    *args: Any, **kwargs: Any,
+                    ) -> None:
+
+        source_name = self.get_sourcename()
+        self.add_line('', source_name)
+        self.add_line('**D-Bus signal**', source_name)
+        self.add_line('', source_name)
+
+        super().add_content(*args, **kwargs)
 
 
 def setup(app: Sphinx) -> None:

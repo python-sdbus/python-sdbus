@@ -46,7 +46,7 @@ class FreedesktopNotifications(
         raise NotImplementedError
 
     @dbus_method()
-    def get_server_infomation(self) -> Tuple[str, str, str, str]:
+    def get_server_information(self) -> Tuple[str, str, str, str]:
         raise NotImplementedError
 
     @dbus_method('susssasa{sv}i')

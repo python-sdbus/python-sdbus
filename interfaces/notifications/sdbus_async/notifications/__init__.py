@@ -40,7 +40,7 @@ class NotificationsInterface(
         raise NotImplementedError
 
     @dbus_method_async()
-    async def get_server_infomation(self) -> Tuple[str, str, str, str]:
+    async def get_server_information(self) -> Tuple[str, str, str, str]:
         raise NotImplementedError
 
     @dbus_method_async("susssasa{sv}i")

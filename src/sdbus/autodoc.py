@@ -109,6 +109,7 @@ class DbusSignalDocumenter(AttributeDocumenter):
 
 
 def setup(app: Sphinx) -> None:
+    app.setup_extension('sphinx.ext.autodoc')
     app.add_autodocumenter(DbusMethodDocumenter)
     app.add_autodocumenter(DbusPropertyDocumenter)
     app.add_autodocumenter(DbusSignalDocumenter)

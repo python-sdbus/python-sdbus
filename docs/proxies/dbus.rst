@@ -1,5 +1,5 @@
-D-Bus
+D-Bus daemon interface
 =============================
 
-.. automodule:: sdbus.async_proxies.freedesktop
+.. autoclass:: sdbus_async.dbus_daemon.FreedesktopDbus
     :members:

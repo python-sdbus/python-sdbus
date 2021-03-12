@@ -53,15 +53,24 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     packages=['sdbus',
-              'sdbus.proxies', 'sdbus.async_proxies',
-              'sdbus._proxies_common'],
+              # 'sdbus_async', 'sdbus_block',
+              'sdbus_async.dbus_daemon', 'sdbus_block.dbus_daemon',
+              ],
     package_dir={
         'sdbus': 'src/sdbus',
+        'sdbus_async.dbus_daemon': 'src/sdbus_async/dbus_daemon',
+        'sdbus_block.dbus_daemon': 'src/sdbus_block/dbus_daemon',
     },
     package_data={
         'sdbus': [
             'py.typed',
             'sd_bus_internals.pyi',
+        ],
+        'sdbus_async.dbus_daemon': [
+            'py.typed',
+        ],
+        'sdbus_block.dbus_daemon': [
+            'py.typed',
         ],
     },
     python_requires='>=3.7',

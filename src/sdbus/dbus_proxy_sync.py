@@ -92,6 +92,7 @@ class DbusMethodSyncBinded(DbusBinded):
 
 def dbus_method(
     input_signature: str = "",
+    result_signature: str = "",
     flags: int = 0,
     method_name: Optional[str] = None,
 ) -> Callable[[T_input], T_input]:
@@ -110,7 +111,7 @@ def dbus_method(
             original_method=original_method,
             method_name=method_name,
             input_signature=input_signature,
-            result_signature="",
+            result_signature=result_signature,
             result_args_names=(),
             input_args_names=(),
             flags=flags,

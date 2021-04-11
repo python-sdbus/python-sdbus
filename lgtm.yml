@@ -1,0 +1,6 @@
+---
+
+extraction:
+  python:
+    python_setup:
+      setup_py: "./setup.py"

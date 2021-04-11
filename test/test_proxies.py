@@ -23,7 +23,8 @@ from os import environ
 from unittest import IsolatedAsyncioTestCase, SkipTest, main
 
 from sdbus import DbusServiceUnknownError
-from sdbus.async_proxies import FreedesktopDbus, FreedesktopNotifications
+from sdbus_async.dbus_daemon import FreedesktopDbus
+from sdbus_async.notifications import FreedesktopNotifications
 
 from .common_test_util import TempDbusTest
 

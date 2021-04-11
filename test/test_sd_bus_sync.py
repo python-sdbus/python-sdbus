@@ -23,7 +23,7 @@ from __future__ import annotations
 from unittest import main
 
 from sdbus import DbusPropertyReadOnlyError
-from sdbus.proxies import FreedesktopDbus
+from sdbus_block.dbus_daemon import FreedesktopDbus
 
 from .common_test_util import TempDbusTest
 

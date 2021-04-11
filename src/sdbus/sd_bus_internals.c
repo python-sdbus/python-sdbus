@@ -95,16 +95,16 @@
         return_int;                                                                                         \
     })
 
-#define CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_function)                                                      \
-    ({                                                                                                      \
-        int return_int = sd_bus_function;                                                                   \
-        if (return_int < 0)                                                                                 \
-        {                                                                                                   \
-            PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error: %s", \
-                         __LINE__, __FUNCTION__, strerrorname_np(-return_int));                             \
-            return -1;                                                                                      \
-        }                                                                                                   \
-        return_int;                                                                                         \
+#define CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_function)                                                             \
+    ({                                                                                                             \
+        int return_int = sd_bus_function;                                                                          \
+        if (return_int < 0)                                                                                        \
+        {                                                                                                          \
+            PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error number: %i", \
+                         __LINE__, __FUNCTION__, -return_int);                                                     \
+            return -1;                                                                                             \
+        }                                                                                                          \
+        return_int;                                                                                                \
     })
 
 #define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                \

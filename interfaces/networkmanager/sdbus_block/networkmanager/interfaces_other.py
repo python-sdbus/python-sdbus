@@ -258,14 +258,6 @@ class NetworkManagerConnectionActiveInterface(
         """Path to master device if this connection is a slave"""
         raise NotImplementedError
 
-    @dbus_signal_async('uu')
-    def state_changed(self) -> Tuple[int, int]:
-        """Signal of the new state and the reason
-
-        See :py:class:`ConnectionState` and :py:class:`ConnectionStateReason`
-        """
-        raise NotImplementedError
-
 
 class NetworkManagerVPNConnectionInterface(
         DbusInterfaceCommon,
@@ -283,15 +275,6 @@ class NetworkManagerVPNConnectionInterface(
     @dbus_property('s')
     def banner(self) -> str:
         """Banner string of VPN connection"""
-        raise NotImplementedError
-
-    @dbus_signal_async('uu')
-    def vpn_state_changed(self) -> Tuple[int, int]:
-        """Signal when VPN state changed
-
-        Tuple of new state and reason.
-        See :py:class:`ConnectionState` and :py:class:`ConnectionStateReason`
-        """
         raise NotImplementedError
 
 

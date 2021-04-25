@@ -25,7 +25,7 @@ from sdbus import (DbusInterfaceCommonAsync, dbus_method_async,
                    dbus_property_async, dbus_signal_async)
 
 
-class NetworkManagerDeviceBluetoothInterface(
+class NetworkManagerDeviceBluetoothInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Bluetooth'):
     """Bluetooth device interface"""
@@ -44,7 +44,7 @@ class NetworkManagerDeviceBluetoothInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceBondInterface(
+class NetworkManagerDeviceBondInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Bond'):
     """Bond device interface"""
@@ -55,7 +55,7 @@ class NetworkManagerDeviceBondInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceBridgeInterface(
+class NetworkManagerDeviceBridgeInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Bridge'):
     """Bridge device interface"""
@@ -66,7 +66,7 @@ class NetworkManagerDeviceBridgeInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceGenericInterface(
+class NetworkManagerDeviceGenericInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Generic'):
     """Generic device interface"""
@@ -77,7 +77,7 @@ class NetworkManagerDeviceGenericInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceIPTunnelInterface(
+class NetworkManagerDeviceIPTunnelInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.IPTunnel'):
     """IP tunnel device interface"""
@@ -158,7 +158,7 @@ class NetworkManagerDeviceIPTunnelInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceLowpanInterface(
+class NetworkManagerDeviceLowpanInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Lowpan'):
     """6LoWPAN device interface"""
@@ -169,7 +169,7 @@ class NetworkManagerDeviceLowpanInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceMacsecInterface(
+class NetworkManagerDeviceMacsecInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Macsec'):
     """MacSec device interface"""
@@ -254,7 +254,7 @@ class NetworkManagerDeviceMacsecInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceMacvlanInterface(
+class NetworkManagerDeviceMacvlanInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Macvlan'):
     """MACVLAN device interface"""
@@ -287,7 +287,7 @@ class NetworkManagerDeviceMacvlanInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceModemInterface(
+class NetworkManagerDeviceModemInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Modem'):
     """Modem device interface"""
@@ -330,7 +330,7 @@ class NetworkManagerDeviceModemInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceOlpcMeshInterface(
+class NetworkManagerDeviceOlpcMeshInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.OlpcMesh'):
     """OLPC Wireless Mesh device interface"""
@@ -346,7 +346,7 @@ class NetworkManagerDeviceOlpcMeshInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceOvsBridgeInterface(
+class NetworkManagerDeviceOvsBridgeInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.OvsBridge'):
     """Open vSwitch device interface"""
@@ -357,7 +357,7 @@ class NetworkManagerDeviceOvsBridgeInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceOvsPortInterface(
+class NetworkManagerDeviceOvsPortInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.OvsPort'):
     """Open vSwitch port device interface"""
@@ -368,7 +368,7 @@ class NetworkManagerDeviceOvsPortInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceStatisticsInterface(
+class NetworkManagerDeviceStatisticsInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Statistics'):
     """Device statistics interface"""
@@ -389,7 +389,7 @@ class NetworkManagerDeviceStatisticsInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceTeamInterface(
+class NetworkManagerDeviceTeamInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Team'):
     """Teaming device
@@ -409,7 +409,7 @@ class NetworkManagerDeviceTeamInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceTunInterface(
+class NetworkManagerDeviceTunInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Tun'):
     """Userspace tunneling device interface"""
@@ -448,7 +448,7 @@ class NetworkManagerDeviceTunInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceVethInterface(
+class NetworkManagerDeviceVethInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Veth'):
     """Virtual Ethernet device interface"""
@@ -459,7 +459,7 @@ class NetworkManagerDeviceVethInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceVlanInterface(
+class NetworkManagerDeviceVlanInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Vlan'):
     """Virtual LAN device interface"""
@@ -475,7 +475,7 @@ class NetworkManagerDeviceVlanInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceVrfInterface(
+class NetworkManagerDeviceVrfInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Vrf'):
     """Virtual routing and forwarding device interface"""
@@ -486,7 +486,7 @@ class NetworkManagerDeviceVrfInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceVxlanInterface(
+class NetworkManagerDeviceVxlanInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Vxlan'):
     """Virtual Extensible LAN device interface"""
@@ -579,7 +579,7 @@ class NetworkManagerDeviceVxlanInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceWifiP2PInterface(
+class NetworkManagerDeviceWifiP2PInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.WifiP2P'):
     """Wi-Fi Peet to Peer device interface"""
@@ -619,7 +619,7 @@ class NetworkManagerDeviceWifiP2PInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceWiredInterface(
+class NetworkManagerDeviceWiredInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Wired'):
     """Wired Ethernet device interface"""
@@ -640,7 +640,7 @@ class NetworkManagerDeviceWiredInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceWireGuardInterface(
+class NetworkManagerDeviceWireGuardInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.WireGuard'):
     """WireGuard device interface"""
@@ -661,7 +661,7 @@ class NetworkManagerDeviceWireGuardInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceWirelessInterface(
+class NetworkManagerDeviceWirelessInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device.Wireless'):
     """Wi-Fi device interface"""
@@ -747,7 +747,7 @@ class NetworkManagerDeviceWirelessInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDeviceInterface(
+class NetworkManagerDeviceInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Device'):
     """Device interface with common functionality"""
@@ -1017,7 +1017,7 @@ class NetworkManagerDeviceInterface(
         raise NotImplementedError
 
 
-class NetworkManagerPPPInterface(
+class NetworkManagerPPPInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.PPP'):
     """Helper interface for PPP plugin"""

@@ -25,30 +25,30 @@ from typing import Optional
 
 from sdbus.sd_bus_internals import SdBus
 
-from .interfaces_devices import (NetworkManagerDeviceBluetoothInterface,
-                                 NetworkManagerDeviceBondInterface,
-                                 NetworkManagerDeviceBridgeInterface,
-                                 NetworkManagerDeviceGenericInterface,
-                                 NetworkManagerDeviceInterface,
-                                 NetworkManagerDeviceIPTunnelInterface,
-                                 NetworkManagerDeviceMacsecInterface,
-                                 NetworkManagerDeviceMacvlanInterface,
-                                 NetworkManagerDeviceModemInterface,
-                                 NetworkManagerDeviceOlpcMeshInterface,
-                                 NetworkManagerDeviceOvsBridgeInterface,
-                                 NetworkManagerDeviceOvsPortInterface,
-                                 NetworkManagerDeviceStatisticsInterface,
-                                 NetworkManagerDeviceTeamInterface,
-                                 NetworkManagerDeviceTunInterface,
-                                 NetworkManagerDeviceVethInterface,
-                                 NetworkManagerDeviceVlanInterface,
-                                 NetworkManagerDeviceVrfInterface,
-                                 NetworkManagerDeviceVxlanInterface,
-                                 NetworkManagerDeviceWifiP2PInterface,
-                                 NetworkManagerDeviceWiredInterface,
-                                 NetworkManagerDeviceWireGuardInterface,
-                                 NetworkManagerDeviceWirelessInterface,
-                                 NetworkManagerPPPInterface)
+from .interfaces_devices import (NetworkManagerDeviceBluetoothInterfaceAsync,
+                                 NetworkManagerDeviceBondInterfaceAsync,
+                                 NetworkManagerDeviceBridgeInterfaceAsync,
+                                 NetworkManagerDeviceGenericInterfaceAsync,
+                                 NetworkManagerDeviceInterfaceAsync,
+                                 NetworkManagerDeviceIPTunnelInterfaceAsync,
+                                 NetworkManagerDeviceMacsecInterfaceAsync,
+                                 NetworkManagerDeviceMacvlanInterfaceAsync,
+                                 NetworkManagerDeviceModemInterfaceAsync,
+                                 NetworkManagerDeviceOlpcMeshInterfaceAsync,
+                                 NetworkManagerDeviceOvsBridgeInterfaceAsync,
+                                 NetworkManagerDeviceOvsPortInterfaceAsync,
+                                 NetworkManagerDeviceStatisticsInterfaceAsync,
+                                 NetworkManagerDeviceTeamInterfaceAsync,
+                                 NetworkManagerDeviceTunInterfaceAsync,
+                                 NetworkManagerDeviceVethInterfaceAsync,
+                                 NetworkManagerDeviceVlanInterfaceAsync,
+                                 NetworkManagerDeviceVrfInterfaceAsync,
+                                 NetworkManagerDeviceVxlanInterfaceAsync,
+                                 NetworkManagerDeviceWifiP2PInterfaceAsync,
+                                 NetworkManagerDeviceWiredInterfaceAsync,
+                                 NetworkManagerDeviceWireGuardInterfaceAsync,
+                                 NetworkManagerDeviceWirelessInterfaceAsync,
+                                 NetworkManagerPPPInterfaceAsync)
 from .interfaces_other import (NetworkManagerAccessPointInterface,
                                NetworkManagerCheckpointInterface,
                                NetworkManagerConnectionActiveInterface,
@@ -166,7 +166,7 @@ class NetworkConnectionSettings(
         """
         :param settings_path: D-Bus path to settings object. \
             Usually obtained from \
-            :py:attr:`NetworkManagerDeviceInterface.active_connection`
+            :py:attr:`NetworkManagerDeviceInterfaceAsync.active_connection`
 
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -179,14 +179,14 @@ class NetworkConnectionSettings(
 
 
 class NetworkDeviceGeneric(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceGenericInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceGenericInterfaceAsync):
     """Generic device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceGenericInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceGenericInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -208,14 +208,14 @@ class NetworkDeviceGeneric(
 
 
 class NetworkDeviceWired(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceWiredInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceWiredInterfaceAsync):
     """Ethernet device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceWiredInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceWiredInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -237,14 +237,14 @@ class NetworkDeviceWired(
 
 
 class NetworkDeviceWireless(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceWirelessInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceWirelessInterfaceAsync):
     """WiFi device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceWirelessInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceWirelessInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -266,14 +266,14 @@ class NetworkDeviceWireless(
 
 
 class NetworkDeviceBluetooth(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceBluetoothInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceBluetoothInterfaceAsync):
     """Bluetooth device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceBluetoothInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceBluetoothInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -295,14 +295,14 @@ class NetworkDeviceBluetooth(
 
 
 class NetworkDeviceBond(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceBondInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceBondInterfaceAsync):
     """Bond device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceBondInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceBondInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -324,14 +324,14 @@ class NetworkDeviceBond(
 
 
 class NetworkDeviceBridge(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceBridgeInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceBridgeInterfaceAsync):
     """Bridge device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceBridgeInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceBridgeInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -353,14 +353,14 @@ class NetworkDeviceBridge(
 
 
 class NetworkDeviceIpTunnel(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceIPTunnelInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceIPTunnelInterfaceAsync):
     """Generic device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceIPTunnelInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceIPTunnelInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -382,14 +382,14 @@ class NetworkDeviceIpTunnel(
 
 
 class NetworkDeviceMacsec(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceMacsecInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceMacsecInterfaceAsync):
     """Macsec device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceMacsecInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceMacsecInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -411,14 +411,14 @@ class NetworkDeviceMacsec(
 
 
 class NetworkDeviceMacvlan(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceMacvlanInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceMacvlanInterfaceAsync):
     """Macvlan device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceMacvlanInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceMacvlanInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -440,14 +440,14 @@ class NetworkDeviceMacvlan(
 
 
 class NetworkDeviceModem(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceModemInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceModemInterfaceAsync):
     """Generic device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceModemInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceModemInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -469,14 +469,14 @@ class NetworkDeviceModem(
 
 
 class NetworkDeviceOlpcMesh(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceOlpcMeshInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceOlpcMeshInterfaceAsync):
     """OLPC wireless mesh device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceOlpcMeshInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceOlpcMeshInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -498,14 +498,14 @@ class NetworkDeviceOlpcMesh(
 
 
 class NetworkDeviceOpenVSwitchBridge(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceOvsBridgeInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceOvsBridgeInterfaceAsync):
     """Open vSwitch bridge device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceOvsBridgeInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceOvsBridgeInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -527,14 +527,14 @@ class NetworkDeviceOpenVSwitchBridge(
 
 
 class NetworkDeviceOpenVSwitchPort(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceOvsPortInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceOvsPortInterfaceAsync):
     """Open vSwitch port device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceOvsPortInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceOvsPortInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -556,14 +556,14 @@ class NetworkDeviceOpenVSwitchPort(
 
 
 class NetworkDeviceTeam(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceTeamInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceTeamInterfaceAsync):
     """Team device (special Bond device for NetworkManager)
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceTeamInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceTeamInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -585,14 +585,14 @@ class NetworkDeviceTeam(
 
 
 class NetworkDeviceTun(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceTunInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceTunInterfaceAsync):
     """TUN device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceTunInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceTunInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -614,14 +614,14 @@ class NetworkDeviceTun(
 
 
 class NetworkDeviceVeth(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceVethInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceVethInterfaceAsync):
     """Virtual Ethernet device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceVethInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceVethInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -643,14 +643,14 @@ class NetworkDeviceVeth(
 
 
 class NetworkDeviceVlan(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceVlanInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceVlanInterfaceAsync):
     """VLAN device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceVlanInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceVlanInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -672,14 +672,14 @@ class NetworkDeviceVlan(
 
 
 class NetworkDeviceVrf(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceVrfInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceVrfInterfaceAsync):
     """VRF (virtual routing) device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceVrfInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceVrfInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -701,14 +701,14 @@ class NetworkDeviceVrf(
 
 
 class NetworkDeviceVxlan(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceVxlanInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceVxlanInterfaceAsync):
     """VXLAN device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceVxlanInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceVxlanInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -730,14 +730,14 @@ class NetworkDeviceVxlan(
 
 
 class NetworkDeviceWifiP2P(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceWifiP2PInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceWifiP2PInterfaceAsync):
     """Wifi Peer-to-Peer (P2P) device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceWifiP2PInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceWifiP2PInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -759,14 +759,14 @@ class NetworkDeviceWifiP2P(
 
 
 class NetworkDeviceWireGuard(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerDeviceWireGuardInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerDeviceWireGuardInterfaceAsync):
     """Generic device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerDeviceWireGuardInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerDeviceWireGuardInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -788,14 +788,14 @@ class NetworkDeviceWireGuard(
 
 
 class NetworkDevicePPP(
-        NetworkManagerDeviceInterface,
-        NetworkManagerDeviceStatisticsInterface,
-        NetworkManagerPPPInterface):
+        NetworkManagerDeviceInterfaceAsync,
+        NetworkManagerDeviceStatisticsInterfaceAsync,
+        NetworkManagerPPPInterfaceAsync):
     """PPP device
 
-    Implements :py:class:`NetworkManagerDeviceInterface`, \
-    :py:class:`NetworkManagerDeviceStatisticsInterface` and \
-    :py:class:`NetworkManagerPPPInterface`
+    Implements :py:class:`NetworkManagerDeviceInterfaceAsync`, \
+    :py:class:`NetworkManagerDeviceStatisticsInterfaceAsync` and \
+    :py:class:`NetworkManagerPPPInterfaceAsync`
     """
 
     def __init__(self, device_path: str, bus: Optional[SdBus] = None) -> None:
@@ -828,7 +828,7 @@ class ActiveConnection(NetworkManagerConnectionActiveInterface):
 
         :param connection_path: D-Bus path to connection object. \
             Obtained from \
-            :py:meth:`NetworkManagerDeviceInterface.active_connection`.
+            :py:meth:`NetworkManagerDeviceInterfaceAsync.active_connection`.
 
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -862,7 +862,7 @@ class IPv4Config(NetworkManagerIP4ConfigInterface):
 
         :param ip4_path: D-Bus path to IPv4 config object. \
             Obtained from \
-            :py:attr:`NetworkManagerDeviceInterface.ip4_config`.
+            :py:attr:`NetworkManagerDeviceInterfaceAsync.ip4_config`.
 
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -885,7 +885,7 @@ class IPv6Config(NetworkManagerIP6ConfigInterface):
 
         :param ip6_path: D-Bus path to IPv6 config object. \
             Obtained from \
-            :py:attr:`NetworkManagerDeviceInterface.ip4_config`.
+            :py:attr:`NetworkManagerDeviceInterfaceAsync.ip4_config`.
 
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -908,7 +908,7 @@ class DHCPv4Config(NetworkManagerDHCP4ConfigInterface):
 
         :param dhcp4_path: D-Bus path to DHCPv4 config object. \
             Obtained from \
-            :py:attr:`NetworkManagerDeviceInterface.dhcp4_config`.
+            :py:attr:`NetworkManagerDeviceInterfaceAsync.dhcp4_config`.
 
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -931,7 +931,7 @@ class DHCPv6Config(NetworkManagerDHCP6ConfigInterface):
 
         :param dhcpv6_path: D-Bus path to DHCPv6 config object. \
             Obtained from \
-            :py:attr:`NetworkManagerDeviceInterface.dhcp6_config`.
+            :py:attr:`NetworkManagerDeviceInterfaceAsync.dhcp6_config`.
 
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -954,7 +954,7 @@ class AccessPoint(NetworkManagerAccessPointInterface):
 
         :param point_path: D-Bus path to access point object. \
             Obtained from \
-            :py:attr:`NetworkManagerDeviceWirelessInterface.access_points`.
+            :py:attr:`NetworkManagerDeviceWirelessInterfaceAsync.access_points`.
 
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -977,7 +977,7 @@ class WiFiP2PPeer(NetworkManagerWifiP2PPeerInterface):
 
         :param peer_path: D-Bus path to access point object. \
             Obtained from \
-            :py:attr:`NetworkManagerDeviceWifiP2PInterface.peers`.
+            :py:attr:`NetworkManagerDeviceWifiP2PInterfaceAsync.peers`.
 
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.
@@ -1001,7 +1001,7 @@ class ConfigCheckpoint(NetworkManagerCheckpointInterface):
 
         :param checkpoint_path: D-Bus path to access point object. \
             Obtained from \
-            :py:attr:`NetworkManagerDeviceWifiP2PInterface.checkpoint_create`.
+            :py:attr:`NetworkManagerDeviceWifiP2PInterfaceAsync.checkpoint_create`.
 
         :param bus: You probably want to set default bus to system bus \
             or pass system bus directly.

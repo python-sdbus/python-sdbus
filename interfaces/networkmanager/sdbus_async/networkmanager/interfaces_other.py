@@ -25,7 +25,7 @@ from sdbus import (DbusInterfaceCommonAsync, dbus_method_async,
                    dbus_property_async, dbus_signal_async)
 
 
-class NetworkManagerAccessPointInterface(
+class NetworkManagerAccessPointInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.AccessPoint'):
     """Interface representing Wi-Fi access point"""
@@ -96,7 +96,7 @@ class NetworkManagerAccessPointInterface(
         raise NotImplementedError
 
 
-class NetworkManagerSecretAgentManagerInterface(
+class NetworkManagerSecretAgentManagerInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.AgentManager'):
     """Secret Agent Manager"""
@@ -132,7 +132,7 @@ class NetworkManagerSecretAgentManagerInterface(
         raise NotImplementedError
 
 
-class NetworkManagerCheckpointInterface(
+class NetworkManagerCheckpointInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Checkpoint'):
     """Network Manager configuration snapshot interface"""
@@ -153,7 +153,7 @@ class NetworkManagerCheckpointInterface(
         raise NotImplementedError
 
 
-class NetworkManagerConnectionActiveInterface(
+class NetworkManagerConnectionActiveInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Connection.Active'):
     """Represents an attempt to connect to network"""
@@ -268,7 +268,7 @@ class NetworkManagerConnectionActiveInterface(
         raise NotImplementedError
 
 
-class NetworkManagerVPNConnectionInterface(
+class NetworkManagerVPNConnectionInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.VPN.Connection'):
     """VPN connection interface"""
@@ -296,7 +296,7 @@ class NetworkManagerVPNConnectionInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDHCP4ConfigInterface(
+class NetworkManagerDHCP4ConfigInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.DHCP4Config'):
     """DHCPv4 configuration"""
@@ -307,7 +307,7 @@ class NetworkManagerDHCP4ConfigInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDHCP6ConfigInterface(
+class NetworkManagerDHCP6ConfigInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.DHCP6Config'):
     """DHCPv6 configuration"""
@@ -318,7 +318,7 @@ class NetworkManagerDHCP6ConfigInterface(
         raise NotImplementedError
 
 
-class NetworkManagerDnsManagerInterface(
+class NetworkManagerDnsManagerInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.DnsManager'):
     """DNS configuration state"""
@@ -334,7 +334,7 @@ class NetworkManagerDnsManagerInterface(
         raise NotImplementedError
 
 
-class NetworkManagerIP4ConfigInterface(
+class NetworkManagerIP4ConfigInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.IP4Config'):
     """IPv4 configuration state"""
@@ -398,7 +398,7 @@ class NetworkManagerIP4ConfigInterface(
         raise NotImplementedError
 
 
-class NetworkManagerIP6ConfigInterface(
+class NetworkManagerIP6ConfigInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.IP6Config'):
     """IPv6 configuration"""
@@ -453,7 +453,7 @@ class NetworkManagerIP6ConfigInterface(
         raise NotImplementedError
 
 
-class NetworkManagerSecretAgentInterface(
+class NetworkManagerSecretAgentInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.SecretAgent'):
     """D-Bus interface that stores secrets such as Wi-Fi passwords"""
@@ -501,7 +501,7 @@ class NetworkManagerSecretAgentInterface(
         raise NotImplementedError
 
 
-class NetworkManagerSettingsConnectionInterface(
+class NetworkManagerSettingsConnectionInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Settings.Connection'):
     """Represents a single network connection"""
@@ -608,7 +608,7 @@ class NetworkManagerSettingsConnectionInterface(
         raise NotImplementedError
 
 
-class NetworkManagerSettingsInterface(
+class NetworkManagerSettingsInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.Settings'):
     """Global NetworkManager settings"""
@@ -728,7 +728,7 @@ class NetworkManagerSettingsInterface(
         raise NotImplementedError
 
 
-class NetworkManagerVPNPluginInterface(
+class NetworkManagerVPNPluginInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.VPN.Plugin'):
     """Interface provided by VPN plugins"""
@@ -868,7 +868,7 @@ class NetworkManagerVPNPluginInterface(
         raise NotImplementedError
 
 
-class NetworkManagerWifiP2PPeerInterface(
+class NetworkManagerWifiP2PPeerInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager.WifiP2PPeer'):
     """Interface of a peer in Wi-Fi P2P connection"""
@@ -925,7 +925,7 @@ class NetworkManagerWifiP2PPeerInterface(
         raise NotImplementedError
 
 
-class NetworkManagerInterface(
+class NetworkManagerInterfaceAsync(
         DbusInterfaceCommonAsync,
         interface_name='org.freedesktop.NetworkManager'):
     """Main network manager interface"""

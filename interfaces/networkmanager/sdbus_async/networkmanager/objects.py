@@ -49,25 +49,25 @@ from .interfaces_devices import (NetworkManagerDeviceBluetoothInterfaceAsync,
                                  NetworkManagerDeviceWireGuardInterfaceAsync,
                                  NetworkManagerDeviceWirelessInterfaceAsync,
                                  NetworkManagerPPPInterfaceAsync)
-from .interfaces_other import (NetworkManagerAccessPointInterface,
-                               NetworkManagerCheckpointInterface,
-                               NetworkManagerConnectionActiveInterface,
-                               NetworkManagerDHCP4ConfigInterface,
-                               NetworkManagerDHCP6ConfigInterface,
-                               NetworkManagerDnsManagerInterface,
-                               NetworkManagerInterface,
-                               NetworkManagerIP4ConfigInterface,
-                               NetworkManagerIP6ConfigInterface,
-                               NetworkManagerSecretAgentManagerInterface,
-                               NetworkManagerSettingsConnectionInterface,
-                               NetworkManagerSettingsInterface,
-                               NetworkManagerVPNConnectionInterface,
-                               NetworkManagerWifiP2PPeerInterface)
+from .interfaces_other import (NetworkManagerAccessPointInterfaceAsync,
+                               NetworkManagerCheckpointInterfaceAsync,
+                               NetworkManagerConnectionActiveInterfaceAsync,
+                               NetworkManagerDHCP4ConfigInterfaceAsync,
+                               NetworkManagerDHCP6ConfigInterfaceAsync,
+                               NetworkManagerDnsManagerInterfaceAsync,
+                               NetworkManagerInterfaceAsync,
+                               NetworkManagerIP4ConfigInterfaceAsync,
+                               NetworkManagerIP6ConfigInterfaceAsync,
+                               NetworkManagerSecretAgentManagerInterfaceAsync,
+                               NetworkManagerSettingsConnectionInterfaceAsync,
+                               NetworkManagerSettingsInterfaceAsync,
+                               NetworkManagerVPNConnectionInterfaceAsync,
+                               NetworkManagerWifiP2PPeerInterfaceAsync)
 
 NETWORK_MANAGER_SERVICE_NAME = 'org.freedesktop.NetworkManager'
 
 
-class NetworkManager(NetworkManagerInterface):
+class NetworkManager(NetworkManagerInterfaceAsync):
     """Network Manger main object
 
     Implements :py:class:`NetworkManagerInterface`
@@ -88,7 +88,8 @@ class NetworkManager(NetworkManagerInterface):
             bus)
 
 
-class NetworkManagerAgentManager(NetworkManagerSecretAgentManagerInterface):
+class NetworkManagerAgentManager(
+        NetworkManagerSecretAgentManagerInterfaceAsync):
     """NetworkManager secrets manager
 
     Implements :py:class:`NetworkManagerSecretAgentManagerInterface`.
@@ -110,7 +111,7 @@ class NetworkManagerAgentManager(NetworkManagerSecretAgentManagerInterface):
             bus)
 
 
-class NetworkManagerDnsManager(NetworkManagerDnsManagerInterface):
+class NetworkManagerDnsManager(NetworkManagerDnsManagerInterfaceAsync):
     """NetworkManager DNS manager
 
     Implements :py:class:`NetworkManagerDnsManagerInterface`.
@@ -132,7 +133,7 @@ class NetworkManagerDnsManager(NetworkManagerDnsManagerInterface):
             bus)
 
 
-class NetworkManagerSettings(NetworkManagerSettingsInterface):
+class NetworkManagerSettings(NetworkManagerSettingsInterfaceAsync):
     """NetworkManager settings
 
     Implements :py:class:`NetworkManagerSettingsInterface`.
@@ -155,7 +156,7 @@ class NetworkManagerSettings(NetworkManagerSettingsInterface):
 
 
 class NetworkConnectionSettings(
-        NetworkManagerSettingsConnectionInterface):
+        NetworkManagerSettingsConnectionInterfaceAsync):
     """Setting of specific connection
 
     Implements :py:class:`NetworkManagerSettingsConnectionInterface`
@@ -816,7 +817,7 @@ class NetworkDevicePPP(
             bus)
 
 
-class ActiveConnection(NetworkManagerConnectionActiveInterface):
+class ActiveConnection(NetworkManagerConnectionActiveInterfaceAsync):
     """Active connection object
 
     Implements :py:class:`NetworkManagerConnectionActiveInterface`
@@ -842,7 +843,7 @@ class ActiveConnection(NetworkManagerConnectionActiveInterface):
 
 class ActiveVPNConnection(
         ActiveConnection,
-        NetworkManagerVPNConnectionInterface):
+        NetworkManagerVPNConnectionInterfaceAsync):
     """Active VPN connection object
 
     Implements :py:class:`NetworkManagerConnectionActiveInterface`
@@ -851,7 +852,7 @@ class ActiveVPNConnection(
     ...
 
 
-class IPv4Config(NetworkManagerIP4ConfigInterface):
+class IPv4Config(NetworkManagerIP4ConfigInterfaceAsync):
     """IPv4 configuration interface
 
     Implements :py:class:`NetworkManagerIP4ConfigInterface`
@@ -874,7 +875,7 @@ class IPv4Config(NetworkManagerIP4ConfigInterface):
             bus)
 
 
-class IPv6Config(NetworkManagerIP6ConfigInterface):
+class IPv6Config(NetworkManagerIP6ConfigInterfaceAsync):
     """IPv6 configuration interface
 
     Implements :py:class:`NetworkManagerIP6ConfigInterface`
@@ -897,7 +898,7 @@ class IPv6Config(NetworkManagerIP6ConfigInterface):
             bus)
 
 
-class DHCPv4Config(NetworkManagerDHCP4ConfigInterface):
+class DHCPv4Config(NetworkManagerDHCP4ConfigInterfaceAsync):
     """DHCPv4 configuration interface
 
     Implements :py:class:`NetworkManagerDHCP4ConfigInterface`
@@ -920,7 +921,7 @@ class DHCPv4Config(NetworkManagerDHCP4ConfigInterface):
             bus)
 
 
-class DHCPv6Config(NetworkManagerDHCP6ConfigInterface):
+class DHCPv6Config(NetworkManagerDHCP6ConfigInterfaceAsync):
     """DHCPv6 configuration interface
 
     Implements :py:class:`NetworkManagerDHCP6ConfigInterface`
@@ -943,7 +944,7 @@ class DHCPv6Config(NetworkManagerDHCP6ConfigInterface):
             bus)
 
 
-class AccessPoint(NetworkManagerAccessPointInterface):
+class AccessPoint(NetworkManagerAccessPointInterfaceAsync):
     """Access Point (WiFi point) object
 
     Implements :py:class:`NetworkManagerAccessPointInterface`
@@ -966,7 +967,7 @@ class AccessPoint(NetworkManagerAccessPointInterface):
             bus)
 
 
-class WiFiP2PPeer(NetworkManagerWifiP2PPeerInterface):
+class WiFiP2PPeer(NetworkManagerWifiP2PPeerInterfaceAsync):
     """WiFi peer object
 
     Implements :py:class:`NetworkManagerWifiP2PPeerInterface`
@@ -989,7 +990,7 @@ class WiFiP2PPeer(NetworkManagerWifiP2PPeerInterface):
             bus)
 
 
-class ConfigCheckpoint(NetworkManagerCheckpointInterface):
+class ConfigCheckpoint(NetworkManagerCheckpointInterfaceAsync):
     """Configuration checkpoint interface
 
     Implements :py:class:`NetworkManagerCheckpointInterface`

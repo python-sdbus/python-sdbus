@@ -2520,6 +2520,10 @@ encode_object_path(PyObject *Py_UNUSED(self),
                    PyObject *const *args,
                    Py_ssize_t nargs)
 {
+#ifdef LIBSYSTEMD_NO_VALIDATION_FUNCS
+    PyErr_SetString(PyExc_NotImplementedError, "libsystemd<0.29.0 does not support validation functions");
+    return NULL;
+#else
     SD_BUS_PY_CHECK_ARGS_NUMBER(2);
     SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
     SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
@@ -2541,6 +2545,7 @@ encode_object_path(PyObject *Py_UNUSED(self),
     CALL_SD_BUS_AND_CHECK(sd_bus_path_encode(prefix_char_ptr, external_char_ptr, (char **)(&new_char_ptr)));
 
     return PyUnicode_FromString(new_char_ptr);
+#endif
 }
 
 static PyObject *

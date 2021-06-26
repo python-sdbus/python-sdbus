@@ -1,0 +1,32 @@
+---
+name: Run build and unit tests on Ubuntu 20.04
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  run:
+    name: Run build and unit tests
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+      - name: Setup python
+        uses: actions/setup-python@dc73133d4da04e56a135ae2246682783cc7c7cb6
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install python3-setuptools python3-dev libsystemd-dev \
+            systemd dbus
+      - name: Build extension
+        run: |
+          python3 setup.py build
+      - name: Install extension
+        run: |
+          python3 setup.py install
+      - name: Run unit tests
+        run: |
+          python3 -m unittest

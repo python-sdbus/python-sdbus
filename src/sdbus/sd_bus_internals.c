@@ -67,15 +67,16 @@
         return NULL;                                        \
     }
 
-#define CALL_PYTHON_AND_CHECK(py_function)  \
-    ({                                      \
-        PyObject *new_object = py_function; \
-        if (new_object == NULL)             \
-        {                                   \
-            return NULL;                    \
-        }                                   \
-        new_object;                         \
-    })
+#define CALL_PYTHON_AND_CHECK(py_function)      \
+    (                                           \
+        {                                       \
+            PyObject *new_object = py_function; \
+            if (new_object == NULL)             \
+            {                                   \
+                return NULL;                    \
+            }                                   \
+            new_object;                         \
+        })
 
 #define PYTHON_ERR_OCCURED \
     if (PyErr_Occurred())  \
@@ -83,87 +84,94 @@
         return NULL;       \
     }
 
-#define CALL_SD_BUS_AND_CHECK(sd_bus_function)                                                              \
-    ({                                                                                                      \
-        int return_int = sd_bus_function;                                                                   \
-        if (return_int < 0)                                                                                 \
-        {                                                                                                   \
-            PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error: %s", \
-                         __LINE__, __FUNCTION__, strerrorname_np(-return_int));                             \
-            return NULL;                                                                                    \
-        }                                                                                                   \
-        return_int;                                                                                         \
-    })
+#define CALL_SD_BUS_AND_CHECK(sd_bus_function)                                                                  \
+    (                                                                                                           \
+        {                                                                                                       \
+            int return_int = sd_bus_function;                                                                   \
+            if (return_int < 0)                                                                                 \
+            {                                                                                                   \
+                PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error: %s", \
+                             __LINE__, __FUNCTION__, -return_int);                                              \
+                return NULL;                                                                                    \
+            }                                                                                                   \
+            return_int;                                                                                         \
+        })
 
-#define CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_function)                                                             \
-    ({                                                                                                             \
-        int return_int = sd_bus_function;                                                                          \
-        if (return_int < 0)                                                                                        \
-        {                                                                                                          \
-            PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error number: %i", \
-                         __LINE__, __FUNCTION__, -return_int);                                                     \
-            return -1;                                                                                             \
-        }                                                                                                          \
-        return_int;                                                                                                \
-    })
+#define CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_function)                                                                 \
+    (                                                                                                                  \
+        {                                                                                                              \
+            int return_int = sd_bus_function;                                                                          \
+            if (return_int < 0)                                                                                        \
+            {                                                                                                          \
+                PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error number: %i", \
+                             __LINE__, __FUNCTION__, -return_int);                                                     \
+                return -1;                                                                                             \
+            }                                                                                                          \
+            return_int;                                                                                                \
+        })
 
-#define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                \
-    ({                                                          \
-        const char *new_char_ptr = PyUnicode_AsUTF8(py_object); \
-        if (new_char_ptr == NULL)                               \
-        {                                                       \
-            return NULL;                                        \
-        }                                                       \
-        new_char_ptr;                                           \
-    })
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                    \
+    (                                                               \
+        {                                                           \
+            const char *new_char_ptr = PyUnicode_AsUTF8(py_object); \
+            if (new_char_ptr == NULL)                               \
+            {                                                       \
+                return NULL;                                        \
+            }                                                       \
+            new_char_ptr;                                           \
+        })
 
-#define CALL_PYTHON_ITER(iter, iter_end)                     \
-    ({                                                       \
-        PyObject *next_object = PyIter_Next(signature_iter); \
-        if (next_object == NULL)                             \
-                                                             \
-        {                                                    \
-            if (PyErr_Occurred())                            \
-            {                                                \
-                return NULL;                                 \
-            }                                                \
-            else                                             \
-            {                                                \
-                iter_end;                                    \
-            }                                                \
-        }                                                    \
-        next_object;                                         \
-    })
+#define CALL_PYTHON_ITER(iter, iter_end)                         \
+    (                                                            \
+        {                                                        \
+            PyObject *next_object = PyIter_Next(signature_iter); \
+            if (next_object == NULL)                             \
+                                                                 \
+            {                                                    \
+                if (PyErr_Occurred())                            \
+                {                                                \
+                    return NULL;                                 \
+                }                                                \
+                else                                             \
+                {                                                \
+                    iter_end;                                    \
+                }                                                \
+            }                                                    \
+            next_object;                                         \
+        })
 
 #define CALL_PYTHON_INT_CHECK(py_function) \
-    ({                                     \
-        int return_int = py_function;      \
-        if (return_int < 0)                \
+    (                                      \
         {                                  \
-            return NULL;                   \
-        }                                  \
-        return_int;                        \
-    })
+            int return_int = py_function;  \
+            if (return_int < 0)            \
+            {                              \
+                return NULL;               \
+            }                              \
+            return_int;                    \
+        })
 
-#define CALL_PYTHON_EXPECT_NONE(py_function) \
-    ({                                       \
-        PyObject *none_obj = py_function;    \
-        if (none_obj == NULL)                \
-        {                                    \
-            return NULL;                     \
-        }                                    \
-        Py_DECREF(none_obj);                 \
-    })
+#define CALL_PYTHON_EXPECT_NONE(py_function)  \
+    (                                         \
+        {                                     \
+            PyObject *none_obj = py_function; \
+            if (none_obj == NULL)             \
+            {                                 \
+                return NULL;                  \
+            }                                 \
+            Py_DECREF(none_obj);              \
+        })
 
 #define CALL_PYTHON_CHECK_RETURN_NEG1(py_function) \
-    ({                                             \
-        PyObject *py_object = py_function;         \
-        if (py_object == NULL)                     \
+    (                                              \
         {                                          \
-            return -1;                             \
-        }                                          \
-        py_object;                                 \
-    })
+            PyObject *py_object = py_function;     \
+            if (py_object == NULL)                 \
+            {                                      \
+                return -1;                         \
+            }                                      \
+            py_object;                             \
+        })
 
 static PyObject *dbus_error_to_exception_dict = NULL;
 static PyObject *exception_to_dbus_error_dict = NULL;
@@ -423,7 +431,11 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
     self->vtable[0] = start_vtable;
     Py_ssize_t current_index = 1;
     // Iter method definitions
-    for (Py_ssize_t i = 0; i < num_of_methods; ({++i; ++current_index; }))
+    for (Py_ssize_t i = 0; i < num_of_methods; (
+             {
+                 ++i;
+                 ++current_index;
+             }))
     {
         PyObject *method_tuple = CALL_PYTHON_AND_CHECK(PyList_GetItem(self->method_list, i));
 
@@ -459,7 +471,11 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
         self->vtable[current_index] = temp_vtable;
     }
 
-    for (Py_ssize_t i = 0; i < num_of_properties; ({++i; ++current_index; }))
+    for (Py_ssize_t i = 0; i < num_of_properties; (
+             {
+                 ++i;
+                 ++current_index;
+             }))
     {
         PyObject *property_tuple = PyList_GET_ITEM(self->property_list, i);
 
@@ -502,7 +518,11 @@ SdBusInterface_create_vtable(SdBusInterfaceObject *self,
         }
     }
 
-    for (Py_ssize_t i = 0; i < num_of_signals; ({++i; ++current_index; }))
+    for (Py_ssize_t i = 0; i < num_of_signals; (
+             {
+                 ++i;
+                 ++current_index;
+             }))
     {
         PyObject *signal_tuple = PyList_GET_ITEM(self->signal_list, i);
 

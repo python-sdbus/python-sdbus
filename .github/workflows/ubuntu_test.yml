@@ -22,7 +22,7 @@ jobs:
           python3 setup.py build
       - name: Install extension
         run: |
-          sudo python3 setup.py install
+          sudo python3 setup.py install --old-and-unmanageable
       - name: Run unit tests
         run: |
           python3 -m unittest

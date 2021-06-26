@@ -1,0 +1,23 @@
+---
+name: Install package from PyPI and run unit tests on Ubuntu 20.04
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    name: Install from PyPI and run unit tests
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install python3-setuptools python3-dev libsystemd-dev \
+            systemd dbus python3 gcc python3-pip python3-jinja2
+      - name: Install package  # TODO set version to generic once 0.8.0 releases
+        run: |
+          pip3 install sdbus==0.8.0rc1
+      - name: Run unit tests
+        run: |
+          python3 -m unittest

@@ -35,6 +35,7 @@ from .dbus_exceptions import DbusFailedError
 from .sd_bus_internals import (DbusNoReplyFlag, SdBus, SdBusInterface,
                                SdBusMessage)
 
+
 T_input = TypeVar('T_input')
 T_result = TypeVar('T_result')
 T_obj = TypeVar('T_obj')
@@ -806,4 +807,30 @@ class DbusPropertiesInterfaceAsync(
 class DbusInterfaceCommonAsync(
         DbusPeerInterfaceAsync, DbusPropertiesInterfaceAsync,
         DbusIntrospectableAsync):
+    ...
+
+
+class DbusObjectManagerInterfaceAsync(
+    DbusInterfaceBaseAsync,
+    interface_name='org.freedesktop.DBus.ObjectManager',
+    serving_enabled=False,
+):
+    @dbus_method_async(result_signature='a{oa{sa{sv}}}')
+    async def get_managed_objects(
+            self) -> Dict[str, Dict[str, Dict[str, Any]]]:
+        raise NotImplementedError
+
+    @dbus_signal_async('oa{sa{sv}}')
+    def interfaces_added(self) -> Tuple[str, Dict[str, Dict[str, Any]]]:
+        raise NotImplementedError
+
+    @dbus_signal_async('oao')
+    def interfaces_removed(self) -> Tuple[str, List[str]]:
+        raise NotImplementedError
+
+
+class DbusInterfaceCommonWithManagerAsync(
+    DbusInterfaceCommonAsync,
+    DbusObjectManagerInterfaceAsync
+):
     ...

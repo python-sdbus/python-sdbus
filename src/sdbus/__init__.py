@@ -18,42 +18,79 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-from .dbus_common import (get_default_bus, request_default_bus_name,
-                          request_default_bus_name_async, set_default_bus)
-from .dbus_exceptions import (DbusAccessDeniedError, DbusAddressInUseError,
-                              DbusAuthFailedError, DbusBadAddressError,
-                              DbusDisconnectedError, DbusFailedError,
-                              DbusFileExistsError, DbusFileNotFoundError,
-                              DbusInconsistentMessageError,
-                              DbusInteractiveAuthorizationRequiredError,
-                              DbusInvalidArgsError,
-                              DbusInvalidFileContentError,
-                              DbusInvalidSignatureError, DbusIOError,
-                              DbusLimitsExceededError,
-                              DbusMatchRuleInvalidError, DbusMatchRuleNotFound,
-                              DbusNameHasNoOwnerError, DbusNoMemoryError,
-                              DbusNoNetworkError, DbusNoReplyError,
-                              DbusNoServerError, DbusNotSupportedError,
-                              DbusPropertyReadOnlyError,
-                              DbusServiceUnknownError, DbusTimeoutError,
-                              DbusUnixProcessIdUnknownError,
-                              DbusUnknownInterfaceError,
-                              DbusUnknownMethodError, DbusUnknownObjectError,
-                              DbusUnknownPropertyError)
-from .dbus_proxy_async import (DbusInterfaceCommonAsync, dbus_method_async,
-                               dbus_method_async_override, dbus_property_async,
-                               dbus_property_async_override, dbus_signal_async)
-from .dbus_proxy_sync import DbusInterfaceCommon, dbus_method, dbus_property
-from .sd_bus_internals import (DbusDeprecatedFlag, DbusHiddenFlag,
-                               DbusNoReplyFlag, DbusPropertyConstFlag,
-                               DbusPropertyEmitsChangeFlag,
-                               DbusPropertyEmitsInvalidationFlag,
-                               DbusPropertyExplicitFlag, DbusSensitiveFlag,
-                               DbusUnprivilegedFlag, SdBusBaseError,
-                               SdBusLibraryError, SdBusUnmappedMessageError,
-                               decode_object_path, encode_object_path,
-                               sd_bus_open, sd_bus_open_system,
-                               sd_bus_open_user)
+from .dbus_common import (
+    get_default_bus,
+    request_default_bus_name,
+    request_default_bus_name_async,
+    set_default_bus
+)
+from .dbus_exceptions import (
+    DbusAccessDeniedError,
+    DbusAddressInUseError,
+    DbusAuthFailedError,
+    DbusBadAddressError,
+    DbusDisconnectedError,
+    DbusFailedError,
+    DbusFileExistsError,
+    DbusFileNotFoundError,
+    DbusInconsistentMessageError,
+    DbusInteractiveAuthorizationRequiredError,
+    DbusInvalidArgsError,
+    DbusInvalidFileContentError,
+    DbusInvalidSignatureError,
+    DbusIOError,
+    DbusLimitsExceededError,
+    DbusMatchRuleInvalidError,
+    DbusMatchRuleNotFound,
+    DbusNameHasNoOwnerError,
+    DbusNoMemoryError,
+    DbusNoNetworkError,
+    DbusNoReplyError,
+    DbusNoServerError,
+    DbusNotSupportedError,
+    DbusPropertyReadOnlyError,
+    DbusServiceUnknownError,
+    DbusTimeoutError,
+    DbusUnixProcessIdUnknownError,
+    DbusUnknownInterfaceError,
+    DbusUnknownMethodError,
+    DbusUnknownObjectError,
+    DbusUnknownPropertyError
+)
+from .dbus_proxy_async import (
+    DbusInterfaceCommonAsync,
+    DbusInterfaceCommonWithManagerAsync,
+    dbus_method_async,
+    dbus_method_async_override,
+    dbus_property_async,
+    dbus_property_async_override,
+    dbus_signal_async
+)
+from .dbus_proxy_sync import (
+    DbusInterfaceCommon,
+    DbusInterfaceCommonWithManager,
+    dbus_method,
+    dbus_property
+)
+from .sd_bus_internals import (
+    DbusDeprecatedFlag,
+    DbusHiddenFlag,
+    DbusNoReplyFlag,
+    DbusPropertyConstFlag,
+    DbusPropertyEmitsChangeFlag,
+    DbusPropertyEmitsInvalidationFlag,
+    DbusPropertyExplicitFlag,
+    DbusSensitiveFlag,
+    DbusUnprivilegedFlag,
+    SdBusBaseError,
+    SdBusLibraryError,
+    SdBusUnmappedMessageError,
+    decode_object_path,
+    encode_object_path,
+    sd_bus_open,
+    sd_bus_open_system,
+    sd_bus_open_user
+)
 
 __all__ = [
     'get_default_bus', 'request_default_bus_name',
@@ -80,11 +117,15 @@ __all__ = [
     'DbusUnknownMethodError', 'DbusUnknownObjectError',
     'DbusUnknownPropertyError',
 
+    'DbusInterfaceCommonWithManagerAsync',
     'DbusInterfaceCommonAsync', 'dbus_method_async',
     'dbus_method_async_override', 'dbus_property_async',
     'dbus_property_async_override', 'dbus_signal_async',
 
-    'DbusInterfaceCommon', 'dbus_method', 'dbus_property',
+    'DbusInterfaceCommon',
+    'DbusInterfaceCommonWithManager',
+    'dbus_method',
+    'dbus_property',
 
     'DbusDeprecatedFlag', 'DbusHiddenFlag',
     'DbusNoReplyFlag', 'DbusPropertyConstFlag',

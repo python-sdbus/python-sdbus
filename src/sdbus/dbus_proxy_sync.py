@@ -321,3 +321,21 @@ class DbusIntrospectable(
 class DbusInterfaceCommon(
         DbusPeerInterface, DbusIntrospectable):
     ...
+
+
+class DbusObjectManagerInterface(
+    DbusInterfaceBase,
+    interface_name='org.freedesktop.DBus.ObjectManager',
+    serving_enabled=False,
+):
+    @dbus_method(result_signature='a{oa{sa{sv}}}')
+    def get_managed_objects(
+            self) -> Dict[str, Dict[str, Dict[str, Any]]]:
+        raise NotImplementedError
+
+
+class DbusInterfaceCommonWithManager(
+    DbusInterfaceCommon,
+    DbusObjectManagerInterface
+):
+    ...

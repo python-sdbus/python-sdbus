@@ -1682,21 +1682,18 @@ int future_set_exception_from_message(PyObject* future, sd_bus_message* message)
 
         PyObject* exception_occured = PyErr_Occurred();
         if (exception_occured) {
-                PyObject* should_be_none CLEANUP_PY_OBJECT =
-                    CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, exception_occured, NULL));
+                Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, exception_occured, NULL)));
                 return 0;
         }
 
         if (exception_to_raise) {
                 PyObject* new_exception CLEANUP_PY_OBJECT =
                     CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(exception_to_raise, error_message_str, NULL));
-                PyObject* return_object CLEANUP_PY_OBJECT =
-                    CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, new_exception, NULL));
+                Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, new_exception, NULL)));
         } else {
                 PyObject* new_exception CLEANUP_PY_OBJECT =
                     CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(exception_unmapped_message, error_name_str, error_message_str, NULL));
-                PyObject* return_object CLEANUP_PY_OBJECT =
-                    CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, new_exception, NULL));
+                Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, new_exception, NULL)));
         }
 
         return 0;
@@ -1719,8 +1716,7 @@ PyObject* register_reader(SdBusObject* self) {
         PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
         PyObject* new_reader_fd CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(SdBus_get_fd(self, NULL));
         PyObject* drive_method CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString((PyObject*)self, "drive"));
-        PyObject* should_be_none CLEANUP_PY_OBJECT =
-            CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, add_reader_str, new_reader_fd, drive_method, NULL));
+        Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, add_reader_str, new_reader_fd, drive_method, NULL)));
         Py_INCREF(new_reader_fd);
         self->reader_fd = new_reader_fd;
         Py_RETURN_NONE;
@@ -1728,7 +1724,7 @@ PyObject* register_reader(SdBusObject* self) {
 
 PyObject* unregister_reader(SdBusObject* self) {
         PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
-        PyObject* should_be_none CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, remove_reader_str, self->reader_fd, NULL));
+        Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, remove_reader_str, self->reader_fd, NULL)));
         Py_RETURN_NONE;
 }
 
@@ -1820,7 +1816,7 @@ static PyObject* SdBus_add_interface(SdBusObject* self, PyObject* const* args, P
 
         PyObject* create_vtable_name CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("_create_vtable"));
 
-        PyObject* should_be_none CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs((PyObject*)interface_object, create_vtable_name, NULL));
+        Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs((PyObject*)interface_object, create_vtable_name, NULL)));
 
         CALL_SD_BUS_AND_CHECK(sd_bus_add_object_vtable(self->sd_bus_ref, &interface_object->interface_slot->slot_ref, path_char_ptr, interface_name_char_ptr,
                                                        interface_object->vtable, args[0]));
@@ -2098,7 +2094,7 @@ static int _SdBusInterface_property_get_callback(sd_bus* Py_UNUSED(bus),
         PyObject* new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs((PyObject*)&SdBusMessageType, NULL));
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, reply);
 
-        PyObject* return_obj CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(get_call, new_message, NULL));
+        Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(get_call, new_message, NULL)));
         return 0;
 }
 
@@ -2116,7 +2112,7 @@ static int _SdBusInterface_property_set_callback(sd_bus* Py_UNUSED(bus),
         PyObject* new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs((PyObject*)&SdBusMessageType, NULL));
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, value);
 
-        PyObject* return_obj CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(set_call, new_message, NULL));
+        Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(set_call, new_message, NULL)));
         return 0;
 }
 

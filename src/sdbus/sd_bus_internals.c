@@ -68,8 +68,7 @@
     }
 
 #define CALL_PYTHON_AND_CHECK(py_function)      \
-    (                                           \
-        {                                       \
+    ({                                       \
             PyObject *new_object = py_function; \
             if (new_object == NULL)             \
             {                                   \
@@ -111,8 +110,7 @@
         })
 
 #define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                    \
-    (                                                               \
-        {                                                           \
+    ( {                                                           \
             const char *new_char_ptr = PyUnicode_AsUTF8(py_object); \
             if (new_char_ptr == NULL)                               \
             {                                                       \
@@ -570,7 +568,7 @@ static PyMemberDef SdBusInterface_members[] = {
     {"property_get_dict", T_OBJECT, offsetof(SdBusInterfaceObject, property_get_dict), READONLY, NULL},
     {"property_set_dict", T_OBJECT, offsetof(SdBusInterfaceObject, property_set_dict), READONLY, NULL},
     {"signal_list", T_OBJECT, offsetof(SdBusInterfaceObject, signal_list), READONLY, NULL},
-    {NULL}};
+    {0}};
 
 static PyTypeObject SdBusInterfaceType = {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -2689,7 +2687,6 @@ PyInit_sd_bus_internals(void)
 
     PyObject *unmapped_error_exception CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.SdBusUnmappedMessageError", new_base_exception, NULL));
     SD_BUS_PY_INIT_ADD_OBJECT("SdBusUnmappedMessageError", unmapped_error_exception);
-    unmapped_error_exception = unmapped_error_exception;
 
     PyObject *library_exception CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.SdBusLibraryError", new_base_exception, NULL));
     SD_BUS_PY_INIT_ADD_OBJECT("SdBusLibraryError", library_exception);

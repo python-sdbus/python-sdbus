@@ -25,3 +25,4 @@ build
 dev*
 strace*.txt
 *.so
+.cache

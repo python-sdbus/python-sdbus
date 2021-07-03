@@ -69,7 +69,8 @@ link_arguments: List[str] = ['-lsystemd']
 
 if environ.get('PYTHON_SDBUS_USE_STATIC_LINK'):
     # Link statically against libsystemd and libcap
-    link_arguments = ['-Wl,-Bstatic', '-lsystemd', '-lcap', '-Wl,-Bdynamic']
+    link_arguments = ['-Wl,-Bstatic', '-lsystemd', '-lcap',
+                      '-Wl,-Bdynamic', '-lrt', '-lpthread']
 
 if __name__ == '__main__':
     setup(

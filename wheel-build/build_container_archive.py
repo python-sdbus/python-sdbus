@@ -22,6 +22,11 @@ from subprocess import run, PIPE
 from argparse import ArgumentParser
 from pathlib import Path
 from shutil import copy
+from tempfile import TemporaryDirectory
+
+
+SYSTEMD_VERSION = '248.3'
+UTIL_LINUX_VERSION = '2.37'
 
 
 def create_archive(build_root: Path, output_file: Path) -> None:
@@ -29,6 +34,43 @@ def create_archive(build_root: Path, output_file: Path) -> None:
         ['tar', '--create', '--file', str(output_file.absolute()), '.'],
         cwd=build_root.resolve(),
     ).check_returncode()
+
+
+def download_and_unpack_source(target_dir: Path, url: str) -> None:
+    with TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+        dowload_tar_path = tmpdir_path / 'donwload.tar.gz'
+
+        run(
+            ['curl', '--fail', '--location',
+             url, '--output', str(dowload_tar_path)],
+        ).check_returncode()
+
+        run(
+            ['tar',
+             '--directory', str(target_dir),
+             '--strip-components=1',
+             '--extract', '--file', str(dowload_tar_path)],
+        ).check_returncode()
+
+
+def download_systemd_source(build_dir: Path) -> None:
+    systemd_download_url = (
+        "https://github.com/systemd/systemd-stable/"
+        f"archive/refs/tags/v{SYSTEMD_VERSION}.tar.gz"
+    )
+    systemd_src_dir = build_dir / "src_systemd"
+    systemd_src_dir.mkdir(exist_ok=True)  # TODO: maybe delete folder
+
+    util_linux_url = (
+        "https://github.com/karelzak/util-linux/"
+        f"archive/refs/tags/v{UTIL_LINUX_VERSION}.tar.gz"
+    )
+    util_linux_src_dir = build_dir / "src_util_linux"
+    util_linux_src_dir.mkdir(exist_ok=True)
+
+    download_and_unpack_source(systemd_src_dir, systemd_download_url)
+    download_and_unpack_source(util_linux_src_dir, util_linux_url)
 
 
 def copy_git_ls_files(source_root: Path, build_root: Path) -> None:
@@ -78,6 +120,7 @@ def main() -> None:
     source_root = args.source_root
 
     copy_git_ls_files(source_root, build_dir)
+    download_systemd_source(build_dir)
 
     create_archive(build_dir, output_file)
 

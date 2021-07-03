@@ -18,12 +18,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
-from subprocess import run, PIPE
+
+from __future__ import annotations
+
 from argparse import ArgumentParser
 from pathlib import Path
 from shutil import copy
+from subprocess import PIPE, run
 from tempfile import TemporaryDirectory
-
 
 SYSTEMD_VERSION = '248.3'
 UTIL_LINUX_VERSION = '2.37'

@@ -65,8 +65,8 @@ def download_systemd_source(build_dir: Path) -> None:
     systemd_src_dir.mkdir(exist_ok=True)  # TODO: maybe delete folder
 
     util_linux_url = (
-        "https://github.com/karelzak/util-linux/"
-        f"archive/refs/tags/v{UTIL_LINUX_VERSION}.tar.gz"
+        "https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/"
+        f"v{UTIL_LINUX_VERSION}/util-linux-{UTIL_LINUX_VERSION}.tar.xz"
     )
     util_linux_src_dir = build_dir / "src_util_linux"
     util_linux_src_dir.mkdir(exist_ok=True)

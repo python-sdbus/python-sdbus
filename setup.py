@@ -22,6 +22,8 @@ from __future__ import annotations
 from subprocess import DEVNULL, PIPE, CalledProcessError
 from subprocess import run as subprocess_run
 from typing import List, Optional, Tuple
+from os import environ
+
 
 from setuptools import Extension, setup
 
@@ -63,6 +65,12 @@ LIBSYSTEMD_MAJOR, LIBSYSTEMD_MINOR, LIBSYTEMD_PATCH = get_libsystemd_version()
 
 if LIBSYSTEMD_MAJOR <= 0 and LIBSYSTEMD_MINOR < 29:
     c_macros.append(('LIBSYSTEMD_NO_VALIDATION_FUNCS', None))
+
+link_arguments: List[str] = ['-lsystemd']
+
+if environ.get('PYTHON_SDBUS_USE_STATIC_LINK'):
+    # Link statically against libsystemd and libcap
+    link_arguments = ['-Wl,-Bstatic', '-lsystemd', '-lcap', '-Wl,-Bdynamic']
 
 if __name__ == '__main__':
     setup(
@@ -119,7 +127,7 @@ if __name__ == '__main__':
             Extension(
                 'sdbus.sd_bus_internals',
                 ['src/sdbus/sd_bus_internals.c', ],
-                libraries=['systemd', ],
+                extra_link_args=link_arguments,
                 define_macros=c_macros,
             )
         ],

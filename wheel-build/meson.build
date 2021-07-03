@@ -1,5 +1,5 @@
 archive_builder = find_program('./build_container_archive.py')
-# archive_builder = files('./build_container_archive.py')
+podman_runner = find_program('./run_podman.py')
 
 build_container_archive = custom_target(
     'container_archive.tar',
@@ -11,4 +11,9 @@ build_container_archive = custom_target(
         '--output-file', '@OUTPUT@',
         '--source-root', '@SOURCE_ROOT@',
     ]
+)
+
+run_podman = run_target(
+    'run_podman',
+    command : [podman_runner, '--archive', build_container_archive],
 )

@@ -31,7 +31,7 @@ with open('./README.md') as f:
 c_macros: List[Tuple[str, Optional[str]]] = []
 
 
-def get_libsystemd_version() -> Optional[Tuple[int, int, int]]:
+def get_libsystemd_version() -> Tuple[int, int, int]:
     process = subprocess_run(
         args=('ldconfig', '-f', '/dev/null', '-C', '/dev/null',
               '-v', '-N', '-X'),
@@ -42,7 +42,7 @@ def get_libsystemd_version() -> Optional[Tuple[int, int, int]]:
     try:
         process.check_returncode()
     except CalledProcessError:
-        return None
+        return 0, 0, 0
 
     result_str = process.stdout.decode('utf-8')
 
@@ -56,7 +56,7 @@ def get_libsystemd_version() -> Optional[Tuple[int, int, int]]:
                 int(semver_strs[3]),
             )
 
-    return None
+    return 0, 0, 0
 
 
 LIBSYSTEMD_MAJOR, LIBSYSTEMD_MINOR, LIBSYTEMD_PATCH = get_libsystemd_version()

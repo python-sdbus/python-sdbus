@@ -21,8 +21,11 @@
 
 from __future__ import annotations
 
-from os import environ
+from os import environ, execl
 from typing import List
+from subprocess import run
+from pathlib import Path
+from shutil import copy
 
 yum_packages: List[str] = [
     'gettext-autopoint', 'gperf',
@@ -38,25 +41,61 @@ yum_packages: List[str] = [
 #   --enable-symvers
 #   --with-pkgconfigdir '/usr/share/pkgconfig/'
 
-
-# export PKG_CONFIG_PATH="/usr/local/lib64/pkgconfig"
-
 # Ninja
 # ./configure.py --boostrap
 # cp ./ninja /usr/local/bin
 
 # systemd
+# export PKG_CONFIG_PATH="/usr/local/lib64/pkgconfig"
 # meson setup build -Dstatic-libsystemd=pic
 
 # PYTHON_SDBUS_USE_STATIC_LINK=1
 
+ROOT_DIR = Path('/root')
+
 
 def setup_env() -> None:
-    environ['PATH'] = f"/opt/python/cp39-cp39/bin:{environ['PATH']}"
+    python_versions = ['cp39-cp39', 'cp38-cp38', 'cp37-cp37m']
+    python_bin_paths = (f"/opt/python/{x}/bin" for x in python_versions)
+
+    environ['PATH'] = f"{':'.join(python_bin_paths)}:{environ['PATH']}"
+
+
+def install_packages() -> None:
+    run(
+        ['yum', 'install', '--assumeyes'] + yum_packages,
+    ).check_returncode()
+
+
+def install_ninja() -> None:
+    ninja_src_path = ROOT_DIR / 'src_ninja'
+    ninja_boot_strap_path = ninja_src_path / 'configure.py'
+
+    run(
+        [ninja_boot_strap_path, '--bootstrap'],
+        cwd=ninja_src_path,
+    ).check_returncode()
+
+    copy(ninja_src_path / 'ninja', '/usr/local/bin')
+
+
+def install_meson() -> None:
+    run(
+        ['pip3', 'install', 'meson']
+    ).check_returncode()
+
+
+def drop_to_shell() -> None:
+    execl('/bin/sh', '/bin/sh')
 
 
 def main() -> None:
     setup_env()
+    install_packages()
+    install_ninja()
+    install_meson()
+
+    drop_to_shell()
 
 
 if __name__ == '__main__':

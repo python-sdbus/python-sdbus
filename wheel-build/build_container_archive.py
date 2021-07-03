@@ -29,6 +29,8 @@ from tempfile import TemporaryDirectory
 
 SYSTEMD_VERSION = '248.3'
 UTIL_LINUX_VERSION = '2.37'
+NINJA_VERSION = '1.10.2'
+LIBCAP_VERSION = '2.51'
 
 
 def create_archive(build_root: Path, output_file: Path) -> None:
@@ -39,6 +41,8 @@ def create_archive(build_root: Path, output_file: Path) -> None:
 
 
 def download_and_unpack_source(target_dir: Path, url: str) -> None:
+    target_dir.mkdir(exist_ok=True)  # TODO: maybe delete folder
+
     with TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
         dowload_tar_path = tmpdir_path / 'donwload.tar.gz'
@@ -62,17 +66,30 @@ def download_systemd_source(build_dir: Path) -> None:
         f"archive/refs/tags/v{SYSTEMD_VERSION}.tar.gz"
     )
     systemd_src_dir = build_dir / "src_systemd"
-    systemd_src_dir.mkdir(exist_ok=True)  # TODO: maybe delete folder
+    systemd_src_dir.mkdir(exist_ok=True)
 
     util_linux_url = (
         "https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/"
         f"v{UTIL_LINUX_VERSION}/util-linux-{UTIL_LINUX_VERSION}.tar.xz"
     )
     util_linux_src_dir = build_dir / "src_util_linux"
-    util_linux_src_dir.mkdir(exist_ok=True)
+
+    ninja_src_url = (
+        "https://github.com/ninja-build/ninja/"
+        f"archive/refs/tags/v{NINJA_VERSION}.tar.gz"
+    )
+    ninja_src_dir = build_dir / "src_ninja"
+
+    libcap_src_url = (
+        "https://kernel.org/pub/linux/libs/security/"
+        f"linux-privs/libcap2/libcap-{LIBCAP_VERSION}.tar.xz"
+    )
+    libcap_src_dir = build_dir / 'src_libcap'
 
     download_and_unpack_source(systemd_src_dir, systemd_download_url)
     download_and_unpack_source(util_linux_src_dir, util_linux_url)
+    download_and_unpack_source(ninja_src_dir, ninja_src_url)
+    download_and_unpack_source(libcap_src_dir, libcap_src_url)
 
 
 def copy_git_ls_files(source_root: Path, build_root: Path) -> None:

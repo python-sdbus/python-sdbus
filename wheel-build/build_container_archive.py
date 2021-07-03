@@ -24,6 +24,13 @@ from pathlib import Path
 from shutil import copy
 
 
+def create_archive(build_root: Path, output_file: Path) -> None:
+    run(
+        ['tar', '--create', '--file', str(output_file.absolute()), '.'],
+        cwd=build_root.resolve(),
+    ).check_returncode()
+
+
 def copy_git_ls_files(source_root: Path, build_root: Path) -> None:
     git_ls = run(
         ['git', 'ls-files'],
@@ -71,6 +78,8 @@ def main() -> None:
     source_root = args.source_root
 
     copy_git_ls_files(source_root, build_dir)
+
+    create_archive(build_dir, output_file)
 
 
 if __name__ == '__main__':

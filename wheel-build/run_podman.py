@@ -41,7 +41,8 @@ def run_podman(archive: Path) -> None:
             ['podman', 'run',
              '--tty', '--interactive',
              '--volume', '.:/root',
-             MANYLINUX_VERSION
+             MANYLINUX_VERSION,
+             '/root/python-sdbus/wheel-build/run_inside_container.py',
              ],
             cwd=tmpdir,
         ).check_returncode()

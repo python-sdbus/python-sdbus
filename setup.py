@@ -19,11 +19,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from os import environ
 from subprocess import DEVNULL, PIPE, CalledProcessError
 from subprocess import run as subprocess_run
 from typing import List, Optional, Tuple
-from os import environ
-
 
 from setuptools import Extension, setup
 

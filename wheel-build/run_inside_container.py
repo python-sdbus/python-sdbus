@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from os import environ, execl
 from typing import List
-from subprocess import run
+from subprocess import run, PIPE, CalledProcessError
 from pathlib import Path
 from shutil import copy
 
@@ -52,13 +52,32 @@ yum_packages: List[str] = [
 # PYTHON_SDBUS_USE_STATIC_LINK=1
 
 ROOT_DIR = Path('/root')
+NPROC = '4'
+PYTHON_VERSIONS = ['cp39-cp39', 'cp38-cp38', 'cp37-cp37m']
+C_FLAGS = (
+    '-march=x86-64 -mtune=generic '
+    '-O2 -fno-plt -D_FORTIFY_SOURCE=2 '
+    '-fstack-clash-protection -fcf-protection '
+)
 
 
 def setup_env() -> None:
-    python_versions = ['cp39-cp39', 'cp38-cp38', 'cp37-cp37m']
-    python_bin_paths = (f"/opt/python/{x}/bin" for x in python_versions)
+    python_bin_paths = (f"/opt/python/{x}/bin" for x in PYTHON_VERSIONS)
 
     environ['PATH'] = f"{':'.join(python_bin_paths)}:{environ['PATH']}"
+    environ['PYTHON_SDBUS_USE_STATIC_LINK'] = '1'
+    environ['CFLAGS'] = C_FLAGS
+    environ['CXXFLAGS'] = C_FLAGS
+
+    nproc = run(
+        ['nproc'],
+        stdout=PIPE,
+        text=True,
+    )
+    nproc.check_returncode()
+
+    global NPROC
+    NPROC = nproc.stdout.splitlines()[0]
 
 
 def install_packages() -> None:
@@ -85,15 +104,77 @@ def install_meson() -> None:
     ).check_returncode()
 
 
+def install_util_linux() -> None:
+    util_linux_src_path = ROOT_DIR / 'src_util_linux'
+
+    run(
+        [util_linux_src_path / 'autogen.sh'],
+        cwd=util_linux_src_path,
+        env={'AL_OPTS': '-I/usr/share/aclocal/', **environ},
+    ).check_returncode()
+
+    run(
+        [
+            util_linux_src_path / 'configure',
+            '--prefix', '/usr/local',
+            '--libdir', '/usr/local/lib64',
+            '--enable-symvers',
+        ],
+        cwd=util_linux_src_path,
+    ).check_returncode()
+
+    run(
+        ['make', '--jobs', NPROC, 'install'],
+        cwd=util_linux_src_path,
+    ).check_returncode()
+
+
+def install_libcap() -> None:
+    libcap_src_path = ROOT_DIR / 'src_libcap'
+
+    run(
+        ['make', '--jobs', NPROC, 'install'],
+        cwd=libcap_src_path,
+    ).check_returncode()
+
+
+def install_systemd() -> None:
+    systemd_src_path = ROOT_DIR / 'src_systemd'
+    systemd_build_path = ROOT_DIR / 'build_systemd'
+
+    run(
+        ['meson', 'setup',
+         systemd_build_path, systemd_src_path,
+         '-Dstatic-libsystemd=pic',
+         '--buildtype', 'plain',
+         '-Db_lto=true', '-Db_pie=true',
+         ],
+        env={**environ, 'PKG_CONFIG_PATH': '/usr/local/lib64/pkgconfig'},
+    ).check_returncode()
+
+    run(
+        ['ninja', 'install'],
+        cwd=systemd_build_path,
+    ).check_returncode()
+
+
 def drop_to_shell() -> None:
     execl('/bin/sh', '/bin/sh')
 
 
 def main() -> None:
-    setup_env()
-    install_packages()
-    install_ninja()
-    install_meson()
+    try:
+        setup_env()
+        install_packages()
+
+        install_ninja()
+        install_meson()
+
+        install_util_linux()
+        install_libcap()
+        install_systemd()
+    except CalledProcessError:
+        drop_to_shell()
 
     drop_to_shell()
 

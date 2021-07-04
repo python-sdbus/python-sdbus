@@ -54,11 +54,11 @@ yum_packages: List[str] = [
 ROOT_DIR = Path('/root')
 NPROC = '4'
 PYTHON_VERSIONS = ['cp39-cp39', 'cp38-cp38', 'cp37-cp37m']
-C_FLAGS = (
-    '-march=x86-64 -mtune=generic '
-    '-O2 -fno-plt -D_FORTIFY_SOURCE=2 '
-    '-fstack-clash-protection -fcf-protection '
-)
+
+BASIC_C_FLAGS: List[str] = [
+    '-O2', '-fno-plt', '-D_FORTIFY_SOURCE=2',
+    '-fstack-clash-protection',
+]
 
 
 def setup_env() -> None:
@@ -66,8 +66,24 @@ def setup_env() -> None:
 
     environ['PATH'] = f"{':'.join(python_bin_paths)}:{environ['PATH']}"
     environ['PYTHON_SDBUS_USE_STATIC_LINK'] = '1'
-    environ['CFLAGS'] = C_FLAGS
-    environ['CXXFLAGS'] = C_FLAGS
+
+    audit_wheel_arch = environ['AUDITWHEEL_ARCH']
+
+    if audit_wheel_arch == 'x86_64':
+        BASIC_C_FLAGS.extend(
+            (
+                '-march=x86-64', '-mtune=generic',
+                '-fcf-protection',  # cf-protection only available on x86_64
+            )
+        )
+    elif audit_wheel_arch == 'aarch64':
+        BASIC_C_FLAGS.extend(('-march=armv8-a', '-mtune=generic'))
+    else:
+        print('PYTHON-SDBUS: Unknown arch')
+
+    new_cflags = ' '.join(BASIC_C_FLAGS)
+    environ['CFLAGS'] = new_cflags
+    environ['CXXFLAGS'] = new_cflags
 
     nproc = run(
         ['nproc'],

@@ -28,10 +28,13 @@ from subprocess import run
 from shutil import copy
 
 
-MANYLINUX_VERSION = 'manylinux2014_x86_64'
+MANYLINUX_VERSION = 'manylinux2014'
 
 
-def run_podman(archive: Path, source_root: Path) -> None:
+def run_podman(
+        archive: Path,
+        source_root: Path,
+        arch: str,) -> None:
     wheels_root = source_root / 'wheels'
 
     with TemporaryDirectory() as tmpdir:
@@ -42,9 +45,10 @@ def run_podman(archive: Path, source_root: Path) -> None:
         ).check_returncode()
         run(
             ['podman', 'run',
+             '--arch', arch,
              '--tty', '--interactive',
              '--volume', '.:/root',
-             MANYLINUX_VERSION,
+             f"quay.io/pypa/{MANYLINUX_VERSION}_{arch}",
              '/root/python-sdbus/wheel-build/run_inside_container.py',
              ],
             cwd=tmpdir,
@@ -67,9 +71,19 @@ def main() -> None:
         type=Path,
         required=True,
     )
+    parser.add_argument(
+        '--arch',
+        type=str,
+        choices=['x86_64', 'aarch64'],
+        default='x86_64',
+    )
 
     args = parser.parse_args()
-    run_podman(args.archive, args.source_root)
+    run_podman(
+        args.archive,
+        args.source_root,
+        args.arch,
+    )
 
 
 if __name__ == '__main__':

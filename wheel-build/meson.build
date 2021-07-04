@@ -15,11 +15,22 @@ build_container_archive = custom_target(
     ],
 )
 
-run_podman = run_target(
-    'run_podman',
+run_podman_x86_64 = run_target(
+    'run_podman_x86_64',
     command : [
         podman_runner,
         '--archive', build_container_archive,
         '--source-root', '@SOURCE_ROOT@',
+        '--arch', 'x86_64',
+    ],
+)
+
+run_podman_aarch64 = run_target(
+    'run_podman_aarch64',
+    command : [
+        podman_runner,
+        '--archive', build_container_archive,
+        '--source-root', '@SOURCE_ROOT@',
+        '--arch', 'aarch64',
     ],
 )

@@ -811,7 +811,7 @@ class DbusInterfaceCommonAsync(
 
 
 class DbusObjectManagerInterfaceAsync(
-    DbusInterfaceBaseAsync,
+    DbusInterfaceCommonAsync,
     interface_name='org.freedesktop.DBus.ObjectManager',
     serving_enabled=False,
 ):
@@ -827,10 +827,3 @@ class DbusObjectManagerInterfaceAsync(
     @dbus_signal_async('oao')
     def interfaces_removed(self) -> Tuple[str, List[str]]:
         raise NotImplementedError
-
-
-class DbusInterfaceCommonWithManagerAsync(
-    DbusInterfaceCommonAsync,
-    DbusObjectManagerInterfaceAsync
-):
-    ...

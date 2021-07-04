@@ -324,7 +324,7 @@ class DbusInterfaceCommon(
 
 
 class DbusObjectManagerInterface(
-    DbusInterfaceBase,
+    DbusInterfaceCommon,
     interface_name='org.freedesktop.DBus.ObjectManager',
     serving_enabled=False,
 ):
@@ -332,10 +332,3 @@ class DbusObjectManagerInterface(
     def get_managed_objects(
             self) -> Dict[str, Dict[str, Dict[str, Any]]]:
         raise NotImplementedError
-
-
-class DbusInterfaceCommonWithManager(
-    DbusInterfaceCommon,
-    DbusObjectManagerInterface
-):
-    ...

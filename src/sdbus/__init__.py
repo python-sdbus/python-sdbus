@@ -59,7 +59,7 @@ from .dbus_exceptions import (
 )
 from .dbus_proxy_async import (
     DbusInterfaceCommonAsync,
-    DbusInterfaceCommonWithManagerAsync,
+    DbusObjectManagerInterfaceAsync,
     dbus_method_async,
     dbus_method_async_override,
     dbus_property_async,
@@ -68,7 +68,7 @@ from .dbus_proxy_async import (
 )
 from .dbus_proxy_sync import (
     DbusInterfaceCommon,
-    DbusInterfaceCommonWithManager,
+    DbusObjectManagerInterface,
     dbus_method,
     dbus_property
 )
@@ -117,13 +117,13 @@ __all__ = [
     'DbusUnknownMethodError', 'DbusUnknownObjectError',
     'DbusUnknownPropertyError',
 
-    'DbusInterfaceCommonWithManagerAsync',
+    'DbusObjectManagerInterfaceAsync',
     'DbusInterfaceCommonAsync', 'dbus_method_async',
     'dbus_method_async_override', 'dbus_property_async',
     'dbus_property_async_override', 'dbus_signal_async',
 
     'DbusInterfaceCommon',
-    'DbusInterfaceCommonWithManager',
+    'DbusObjectManagerInterface',
     'dbus_method',
     'dbus_property',
 

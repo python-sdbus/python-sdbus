@@ -17,7 +17,7 @@ jobs:
             systemd dbus python3 gcc python3-pip python3-jinja2
       - name: Install package  # TODO set version to generic once 0.8.0 releases
         run: |
-          pip3 install sdbus==0.8.0rc1
+          pip3 install sdbus==0.8.0rc2
       - name: Run unit tests
         run: |
           python3 -m unittest

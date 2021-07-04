@@ -13,8 +13,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install python3-setuptools python3-dev libsystemd-dev \
-            systemd dbus python3 gcc python3-pip python3-jinja2
+          sudo apt install python3-setuptools \
+            systemd dbus python3 python3-pip python3-jinja2
       - name: Install package  # TODO set version to generic once 0.8.0 releases
         run: |
           pip3 install sdbus==0.8.0rc2

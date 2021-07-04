@@ -25,12 +25,15 @@ from argparse import ArgumentParser
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from subprocess import run
+from shutil import copy
 
 
 MANYLINUX_VERSION = 'manylinux2014_x86_64'
 
 
-def run_podman(archive: Path) -> None:
+def run_podman(archive: Path, source_root: Path) -> None:
+    wheels_root = source_root / 'wheels'
+
     with TemporaryDirectory() as tmpdir:
         run(
             ['tar', '--extract',
@@ -47,6 +50,10 @@ def run_podman(archive: Path) -> None:
             cwd=tmpdir,
         ).check_returncode()
 
+        wheels_root.mkdir(exist_ok=True)
+        for wheel in (Path(tmpdir) / 'wheels').iterdir():
+            copy(wheel, wheels_root)
+
 
 def main() -> None:
     parser = ArgumentParser()
@@ -55,9 +62,14 @@ def main() -> None:
         type=Path,
         required=True,
     )
+    parser.add_argument(
+        '--source-root',
+        type=Path,
+        required=True,
+    )
 
     args = parser.parse_args()
-    run_podman(args.archive)
+    run_podman(args.archive, args.source_root)
 
 
 if __name__ == '__main__':

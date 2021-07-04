@@ -158,26 +158,64 @@ def install_systemd() -> None:
     ).check_returncode()
 
 
+def compile_extension() -> None:
+    python_sdbus_src_path = ROOT_DIR / 'python-sdbus'
+    setup_py_path = python_sdbus_src_path / 'setup.py'
+    build_dir_path = python_sdbus_src_path / 'build'
+    dist_dir_path = python_sdbus_src_path / 'dist'
+    repaired_wheels_path = ROOT_DIR / 'wheels'
+
+    python_executables = ['python3.9', 'python3.8', 'python3.7']
+
+    for python in python_executables:
+        run(
+            [python, setup_py_path, 'build'],
+            cwd=python_sdbus_src_path,
+        ).check_returncode()
+
+        run(
+            [python, setup_py_path, 'build', 'bdist_wheel'],
+            cwd=python_sdbus_src_path,
+        ).check_returncode()
+
+        run(
+            ['rm', '--recursive', build_dir_path],
+            cwd=python_sdbus_src_path,
+        ).check_returncode()
+
+    # Repair wheels
+    for wheel in dist_dir_path.iterdir():
+        run(
+            [
+                'auditwheel', 'repair',
+                '--plat', environ['AUDITWHEEL_PLAT'],
+                '--strip',
+                '--wheel-dir', repaired_wheels_path,
+                wheel,
+            ],
+        ).check_returncode()
+
+
 def drop_to_shell() -> None:
     execl('/bin/sh', '/bin/sh')
 
 
 def main() -> None:
-    try:
-        setup_env()
-        install_packages()
+    setup_env()
+    install_packages()
 
-        install_ninja()
-        install_meson()
+    install_ninja()
+    install_meson()
 
-        install_util_linux()
-        install_libcap()
-        install_systemd()
-    except CalledProcessError:
-        drop_to_shell()
+    install_util_linux()
+    install_libcap()
+    install_systemd()
 
-    drop_to_shell()
+    compile_extension()
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except CalledProcessError:
+        drop_to_shell()

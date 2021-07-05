@@ -28,15 +28,15 @@ Classes
 
     .. py:method:: dbus_ping()
         :async:
-    
+
         Pings the remote object using dbus.
         Useful to test if remote object is alive.
 
     .. py:method:: dbus_machine_id()
         :async:
-    
+
         Returns the machine UUID of the remote object.
-        
+
         :return: machine UUID
         :rtype: str
 
@@ -115,6 +115,55 @@ Classes
             Optional dbus connection object.
             If not passed the default dbus will be used.
 
+
+.. py:class:: DbusObjectManagerInterfaceAsync(interface_name)
+
+    This class is almost identical to :py:class:`DbusInterfaceCommonAsync`
+    but implements `ObjectManager <https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-objectmanager>`_
+    interface.
+
+    .. py:method:: get_managed_objects()
+        :async:
+
+        Get the objects this object manager in managing.
+
+        :return:
+            Triple nested dictionary that contains all the objects
+            paths with their properties values.
+
+            Dict[ObjectPath, Dict[InterfaceName, Dict[PropertyName, PropertyValue]]]
+
+        :rtype: Dict[str, Dict[str, Dict[str, Any]]]
+
+    .. py:attribute:: interfaces_added
+        :type: Tuple[str, Dict[str, Dict[str, Any]]]
+
+        Signal when a new object is added or and existing object
+        gains a new interface.
+
+        Signal data is:
+
+        Object path : str
+            Path to object that was added or modified.
+
+        Object interfaces and properties : Dict[str, Dict[str, Any]]]
+            Dict[InterfaceName, Dict[PropertyName, PropertyValue]]
+
+    .. py:attribute:: interfaces_removed
+        :type: Tuple[str, List[str]]
+
+        Signal when existing object or and interface of
+        existing object is removed.
+
+        Signal data is:
+
+        Object path : str
+            Path to object that was removed or modified.
+
+        Interfaces list : List[str]
+            Interfaces names that were removed.
+
+
 Decorators
 ++++++++++++++++++++++++
 
@@ -127,7 +176,7 @@ Decorators
     :param str input_signature: dbus input signature.
         Defaults to "" meaning method takes no arguments.
         Required if you intend to connect to a remote object.
-    
+
     :param str result_signature: dbus result signature.
         Defaults to "" meaning method returns empty reply on success.
         Required if you intend to serve the object.
@@ -140,10 +189,10 @@ Decorators
 
     :param Sequence[str] result_args_names: sequence of result
         argument names.
-        
+
         These names will show up in introspection data but otherwise
         have no effect.
-        
+
         Sequence can be list, tuple, etc...
         Number of elements in the sequence should match
         the number of result arguments otherwise :py:exc:`SdBusLibraryError`
@@ -189,7 +238,7 @@ Decorators
             )
             async def upper(self, str_to_up: str) -> str:
                 return str_to_up.upper()
-                
+
 
 
 .. py:decorator:: dbus_property_async(property_signature, [flags, [property_name]])
@@ -386,7 +435,7 @@ Decorators
             @dbus_property_async('s')
             def str_prop(self) -> str:
                 return self.s
-            
+
             @str_prop.setter
             def str_prop_setter(self, new_s: str) -> None:
                 self.s = new_s

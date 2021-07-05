@@ -35,13 +35,13 @@ Classes
             If not passed the default dbus will be used.
 
     .. py:method:: dbus_ping()
-    
+
         Pings the remote object using dbus.
 
         Useful to test if remote object is alive.
 
     .. py:method:: dbus_machine_id()
-    
+
         Returns the machine UUID of the remote object.
 
         :return: machine UUID
@@ -91,6 +91,24 @@ Classes
             def test_string(self) -> str:
                 raise NotImplementedError
 
+
+.. py:class:: DbusObjectManagerInterface(interface_name)
+
+    This class is almost identical to :py:class:`DbusInterfaceCommon`
+    but implements `ObjectManager <https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-objectmanager>`_
+    interface.
+
+    .. py:method:: get_managed_objects()
+
+        Get the objects this object manager in managing.
+
+        :return:
+            Triple nested dictionary that contains all the objects
+            paths with their properties values.
+
+            Dict[ObjectPath, Dict[InterfaceName, Dict[PropertyName, PropertyValue]]]
+
+        :rtype: Dict[str, Dict[str, Dict[str, Any]]]
 
 Decorators
 +++++++++++++++
@@ -170,7 +188,7 @@ Decorators
         Empty signature "" indicates read-only property.
         Defaults to empty signature "".
         Required only for writable properties.
-    
+
     :param int flags: modifies behavior.
         No effect on remote connections.
         Defaults to 0 meaning no special behavior.

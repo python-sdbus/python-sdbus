@@ -19,4 +19,3 @@ interface with all methods being regular ``def`` functions and no signals.
     proxies/dbus
     proxies/notifications
     proxies/systemd
-    proxies/network_manager

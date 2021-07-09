@@ -59,11 +59,10 @@ class DbusPropertyDocumenter(AttributeDocumenter):
     def update_annotations(self,
                            parent: DbusInterfaceCommonAsync) -> None:
 
-        annotation_dict = parent.__annotations__
-        for key, value in parent.__dict__.items():
-            if isinstance(value, DbusPropertyAsync):
-                annotation_dict[key] = value.property_getter.\
-                    __annotations__['return']
+        property_annotation = \
+            self.object.property_getter.__annotations__['return']
+
+        parent.__annotations__[self.object_name] = property_annotation
 
     def add_content(self,
                     *args: Any, **kwargs: Any,
@@ -90,11 +89,10 @@ class DbusSignalDocumenter(AttributeDocumenter):
     def update_annotations(self,
                            parent: DbusInterfaceCommonAsync) -> None:
 
-        annotation_dict = parent.__annotations__
-        for key, value in parent.__dict__.items():
-            if isinstance(value, DbusSignal):
-                annotation_dict[key] = value.original_function.\
-                    __annotations__['return']
+        signal_annotation = \
+            self.object.original_function.__annotations__['return']
+
+        parent.__annotations__[self.object_name] = signal_annotation
 
     def add_content(self,
                     *args: Any, **kwargs: Any,

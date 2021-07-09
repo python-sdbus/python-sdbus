@@ -45,6 +45,17 @@ class DbusMethodDocumenter(MethodDocumenter):
         self.objpath.pop()
         return ret
 
+    def add_content(self,
+                    *args: Any, **kwargs: Any,
+                    ) -> None:
+
+        source_name = self.get_sourcename()
+        self.add_line('', source_name)
+        self.add_line('**D-Bus Method**', source_name)
+        self.add_line('', source_name)
+
+        super().add_content(*args, **kwargs)
+
 
 class DbusPropertyDocumenter(AttributeDocumenter):
 

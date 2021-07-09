@@ -25,8 +25,12 @@ from typing import Any
 from sphinx.application import Sphinx
 from sphinx.ext.autodoc import AttributeDocumenter, MethodDocumenter
 
-from .dbus_proxy_async import (DbusInterfaceCommonAsync, DbusMethodAsync,
-                               DbusPropertyAsync, DbusSignal)
+from .dbus_proxy_async import (
+    DbusInterfaceCommonAsync,
+    DbusMethodAsync,
+    DbusPropertyAsync,
+    DbusSignal
+)
 
 
 class DbusMethodDocumenter(MethodDocumenter):

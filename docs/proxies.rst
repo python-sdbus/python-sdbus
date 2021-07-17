@@ -1,21 +1,8 @@
 Interface repository
 ==========================================
 
-sdbus contains a collection of common and well known interfaces
-for you to use.
+This page contains the known python-sdbus interface
+collections:
 
-Async interfaces can be found under ``sdbus.async_proxies`` and blocking
-under ``sdbus.proxies``
-
-This page document the asyncio interfaces. Blocking interfaces mirror asyncio
-interface with all methods being regular ``def`` functions and no signals.
-
-.. py:currentmodule:: sdbus.async_proxies
-
-.. toctree::
-    :maxdepth: 2
-    :caption: Interfaces:
-
-    proxies/dbus
-    proxies/notifications
-    proxies/systemd
+* :doc:`proxies/dbus` Built-in.
+* `NetworkManager <https://github.com/igo95862/python-sdbus-networkmanager>`_.

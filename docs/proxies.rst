@@ -1,7 +1,19 @@
-Interface repository
+Interfaces repository
 ==========================================
 
-This page contains the known python-sdbus interface
+python-sdbus includes two namespace packages
+``sdbus_async`` and ``sdbus_block`` which are used for
+proxies.
+
+For example, D-Bus daemon interface (which comes by default)
+can be found under
+``sdbus_async.dbus_daemon`` for async binds and
+``sdbus_block.dbus_daemon`` for blocking binds.
+
+Known proxies
+-------------
+
+This list contains the known python-sdbus interface
 collections:
 
 * :doc:`proxies/dbus`. Built-in.

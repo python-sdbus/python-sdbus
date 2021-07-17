@@ -31,16 +31,49 @@ More incoming. (NetworkManager, secrets... )
 
 ## Requirements
 
+### Binary package from PyPI
+
 * Python 3.8 or higher. (3.7 might work but is not supported)
+* `x86_64` or `aarch64` architecture.
+* glibc 2.17 or higher. (released in 2014)
+
+Starting with version `0.8rc2` the libsystemd is statically
+linked and is not required.
+
+Pass `--only-binary ':all:'` to pip to ensure that it
+installs binary package.
+
+`i686`, `ppc64le` and `s390x` can be supported if there is a
+demand. Please open an issue if you are interested in those
+platforms.
+
+### Source package or compiling from source
+
+* Python 3.8 or higher.
+* Python headers. (`python3-dev` package on ubuntu)
+* GCC.
 * libsystemd. (comes with systemd)
+* libsystemd headers. (`libsystemd-dev` package on ubuntu)
+* Python setuptools.
+
+Systemd version should be higher than 246.
+
+### Optional dependencies
+
+* Jinja2 for code generator.
+* Sphinx for autodoc.
 
 ## Installation
 
-From AUR: https://aur.archlinux.org/packages/python-sdbus-git/
+### PyPI
 
-PyPI: https://pypi.org/project/sdbus/
+URL: https://pypi.org/project/sdbus/
 
-`pip install sdbus`
+`pip install --only-binary ':all:' sdbus`
+
+### AUR
+
+URL: https://aur.archlinux.org/packages/python-sdbus-git/
 
 ## Example code
 

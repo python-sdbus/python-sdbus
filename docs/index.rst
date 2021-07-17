@@ -40,6 +40,7 @@ If you are unfamiliar with D-Bus you might want to read following pages:
     exceptions
     examples
     autodoc
+    code_generator
     proxies
     api_index
 

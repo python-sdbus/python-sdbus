@@ -17,15 +17,11 @@ See the
 [documentation](https://python-sdbus.readthedocs.io/en/latest/index.html)
 for tutorial and API reference.
 
-Also includes a
-[repository](https://python-sdbus.readthedocs.io/en/latest/proxies.html)
-of well-known DBus interfaces such as Notifications interface.
+### List of implemented interfaces
 
-### Interfaces included
-
-* D-Bus 
-* Freedesktop Notifications
-* systemd (incomplete)
+* D-Bus (built-in)
+* [Freedesktop Notifications](https://github.com/igo95862/python-sdbus-notifications)
+* [Network Manager](https://github.com/igo95862/python-sdbus-networkmanager)
 
 More incoming. (NetworkManager, secrets... )
 

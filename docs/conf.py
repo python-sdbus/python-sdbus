@@ -19,7 +19,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
 from os.path import abspath
-from pathlib import Path
 from sys import path
 
 project = 'python-sdbus'
@@ -32,7 +31,3 @@ autodoc_typehints = 'description'
 autodoc_member_order = 'bysource'
 
 path.insert(0, abspath('../src'))
-
-
-for an_interface_dir in Path('../interfaces/').iterdir():
-    path.insert(0, str(an_interface_dir.absolute()))

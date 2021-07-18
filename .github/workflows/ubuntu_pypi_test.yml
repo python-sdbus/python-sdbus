@@ -15,9 +15,9 @@ jobs:
           sudo apt update
           sudo apt install python3-setuptools \
             systemd dbus python3 python3-pip python3-jinja2
-      - name: Install package  # TODO set version to generic once 0.8.0 releases
+      - name: Install package
         run: |
-          pip3 install sdbus==0.8.0rc2
+          pip3 install sdbus>=0.8rc2
       - name: Run unit tests
         run: |
           python3 -m unittest

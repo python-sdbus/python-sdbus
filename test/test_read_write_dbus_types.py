@@ -148,6 +148,16 @@ class TestDbusTypes(TempDbusTest):
             self.message.get_contents(),
             (test_string_array, test_bytes_array, test_int_list, []))
 
+    def test_empty_array(self) -> None:
+        test_array = []
+        self.message.append_data("as", test_array)
+
+        self.message.seal()
+
+        self.assertEqual(
+            self.message.get_contents(),
+            test_array)
+
     def test_array_compound(self) -> None:
         test_string_array = ["Ttest", "serawer", "asdadcxzc"]
         test_bytes_array = b"asdasrddjkmlh\ngnmflkdtgh\0oer27852y4785823"
@@ -187,6 +197,13 @@ class TestDbusTypes(TempDbusTest):
 
         self.assertRaises(
             TypeError, self.message.append_data, "{ss}", test_dict)
+
+        self.message.seal()
+        self.assertEqual(self.message.get_contents(), test_dict)
+
+    def test_empty_dict(self) -> None:
+        test_dict = {}
+        self.message.append_data("a{ss}", test_dict)
 
         self.message.seal()
         self.assertEqual(self.message.get_contents(), test_dict)

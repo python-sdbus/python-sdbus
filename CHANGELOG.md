@@ -1,3 +1,7 @@
+## 0.8.1
+
+* Fixed unmapped errors not being raised properly.
+
 ## 0.8.0
 
 * Added binary packages to PyPI. No more issues with libsystem versions.

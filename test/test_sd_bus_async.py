@@ -28,7 +28,10 @@ from sdbus import (DbusFailedError, DbusFileExistsError,
                    DbusInterfaceCommonAsync, DbusNoReplyFlag,
                    dbus_method_async, dbus_method_async_override,
                    dbus_property_async, dbus_property_async_override,
-                   dbus_signal_async, DbusUnknownObjectError)
+                   dbus_signal_async, DbusUnknownObjectError,
+                   SdBusUnmappedMessageError)
+
+from sdbus.sd_bus_internals import DBUS_ERROR_TO_EXCEPTION
 
 from .common_test_util import TempDbusTest
 
@@ -133,6 +136,15 @@ class TestInterface(DbusInterfaceCommonAsync,
     async def raise_custom_error(self) -> None:
         raise DbusErrorTest('Custom')
 
+    @dbus_method_async()
+    async def raise_and_unmap_error(self) -> None:
+        try:
+            DBUS_ERROR_TO_EXCEPTION.pop('org.example.Nothing')
+        except KeyError:
+            ...
+
+        raise DbusErrorUnmappedLater('Should be unmapped')
+
     @dbus_method_async('s', flags=DbusNoReplyFlag)
     async def no_reply_method(self, new_value: str) -> None:
         self.test_no_reply_string = new_value
@@ -140,6 +152,10 @@ class TestInterface(DbusInterfaceCommonAsync,
 
 class DbusErrorTest(DbusFailedError):
     dbus_error_name = 'org.example.Error'
+
+
+class DbusErrorUnmappedLater(DbusFailedError):
+    dbus_error_name = 'org.example.Nothing'
 
 
 class TestProxy(TempDbusTest):
@@ -364,6 +380,18 @@ class TestProxy(TempDbusTest):
                 ...
 
         self.assertRaises(TypeError, bad_exception_no_error_name)
+
+        async def test_unmapped_expection() -> None:
+            await self.test_object_connection.raise_and_unmap_error()
+
+        t4 = loop.create_task(test_unmapped_expection())
+
+        try:
+            await wait_for(t4, timeout=1)
+        except SdBusUnmappedMessageError:
+            ...
+
+        self.assertRaises(SdBusUnmappedMessageError, t4.result)
 
     async def test_no_reply_method(self) -> None:
         await wait_for(self.test_object_connection.no_reply_method('yes'),

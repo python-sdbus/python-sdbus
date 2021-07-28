@@ -35,7 +35,7 @@ def run_podman(
         archive: Path,
         source_root: Path,
         arch: str,) -> None:
-    wheels_root = source_root / 'wheels'
+    wheels_root = source_root / 'dist'
 
     with TemporaryDirectory() as tmpdir:
         run(

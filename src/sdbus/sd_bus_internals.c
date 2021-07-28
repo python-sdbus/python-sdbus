@@ -153,7 +153,6 @@
 static PyObject* unmapped_error_exception = NULL;
 static PyObject* dbus_error_to_exception_dict = NULL;
 static PyObject* exception_to_dbus_error_dict = NULL;
-static PyObject* exception_unmapped_message = NULL;
 static PyObject* exception_base = NULL;
 static PyObject* exception_lib = NULL;
 static PyTypeObject* async_future_type = NULL;
@@ -1659,7 +1658,7 @@ static SdBusMessageObject* SdBus_call(SdBusObject* self, PyObject* const* args, 
 
                 if (exception_to_raise == NULL) {
                         PyObject* exception_tuple CLEANUP_PY_OBJECT = Py_BuildValue("(ss)", error.name, error.message);
-                        PyErr_SetObject(exception_unmapped_message, exception_tuple);
+                        PyErr_SetObject(unmapped_error_exception, exception_tuple);
                         return NULL;
                 } else {
                         PyErr_SetString(exception_to_raise, error.message);

@@ -150,6 +150,7 @@
                 py_object;                         \
         })
 
+static PyObject* unmapped_error_exception = NULL;
 static PyObject* dbus_error_to_exception_dict = NULL;
 static PyObject* exception_to_dbus_error_dict = NULL;
 static PyObject* exception_unmapped_message = NULL;
@@ -1692,7 +1693,7 @@ int future_set_exception_from_message(PyObject* future, sd_bus_message* message)
                 Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, new_exception, NULL)));
         } else {
                 PyObject* new_exception CLEANUP_PY_OBJECT =
-                    CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(exception_unmapped_message, error_name_str, error_message_str, NULL));
+                    CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(unmapped_error_exception, error_name_str, error_message_str, NULL));
                 Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, new_exception, NULL)));
         }
 
@@ -2260,9 +2261,10 @@ PyMODINIT_FUNC PyInit_sd_bus_internals(void) {
         SD_BUS_PY_INIT_ADD_OBJECT("SdBusBaseError", new_base_exception);
         exception_base = new_base_exception;
 
-        PyObject* unmapped_error_exception CLEANUP_PY_OBJECT =
+        PyObject* new_unmapped_error_exception CLEANUP_PY_OBJECT =
             CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.SdBusUnmappedMessageError", new_base_exception, NULL));
-        SD_BUS_PY_INIT_ADD_OBJECT("SdBusUnmappedMessageError", unmapped_error_exception);
+        SD_BUS_PY_INIT_ADD_OBJECT("SdBusUnmappedMessageError", new_unmapped_error_exception);
+        unmapped_error_exception = new_unmapped_error_exception;
 
         PyObject* library_exception CLEANUP_PY_OBJECT =
             CALL_PYTHON_AND_CHECK(PyErr_NewException("sd_bus_internals.SdBusLibraryError", new_base_exception, NULL));

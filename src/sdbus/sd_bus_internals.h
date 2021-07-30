@@ -152,6 +152,9 @@ extern PyObject* empty_str;
 extern PyObject* null_str;
 extern PyObject* extend_str;
 extern PyObject* append_str;
+extern PyObject* call_soon_str;
+extern PyObject* create_task_str;
+
 
 void _cleanup_char_ptr(const char** ptr) {
         if (*ptr != NULL) {
@@ -166,3 +169,55 @@ void PyObject_cleanup(PyObject** object) {
 }
 
 #define CLEANUP_PY_OBJECT __attribute__((cleanup(PyObject_cleanup)))
+
+// SdBusSlot
+typedef struct {
+        PyObject_HEAD;
+        sd_bus_slot* slot_ref;
+} SdBusSlotObject;
+
+void cleanup_SdBusSlot(SdBusSlotObject** object) {
+        Py_XDECREF(*object);
+}
+
+#define CLEANUP_SD_BUS_SLOT __attribute__((cleanup(cleanup_SdBusSlot)))
+
+extern PyTypeObject SdBusSlotType;
+
+// SdBusInterface
+typedef struct {
+        PyObject_HEAD;
+        SdBusSlotObject* interface_slot;
+        PyObject* method_list;
+        PyObject* method_dict;
+        PyObject* property_list;
+        PyObject* property_get_dict;
+        PyObject* property_set_dict;
+        PyObject* signal_list;
+        sd_bus_vtable* vtable;
+} SdBusInterfaceObject;
+
+extern PyTypeObject SdBusInterfaceType;
+
+// SdBusMessage
+typedef struct {
+        PyObject_HEAD;
+        sd_bus_message* message_ref;
+} SdBusMessageObject;
+
+void cleanup_SdBusMessage(SdBusMessageObject** object) {
+        Py_XDECREF(*object);
+}
+
+#define CLEANUP_SD_BUS_MESSAGE __attribute__((cleanup(cleanup_SdBusMessage)))
+
+extern PyTypeObject SdBusMessageType;
+
+// SdBus
+typedef struct {
+        PyObject_HEAD;
+        sd_bus* sd_bus_ref;
+        PyObject* reader_fd;
+} SdBusObject;
+
+extern PyTypeObject SdBusType;

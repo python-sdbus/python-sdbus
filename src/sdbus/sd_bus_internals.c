@@ -40,18 +40,10 @@ PyObject* empty_str = NULL;
 PyObject* null_str = NULL;
 PyObject* extend_str = NULL;
 PyObject* append_str = NULL;
+PyObject* call_soon_str = NULL;
+PyObject* create_task_str = NULL;
 
 // SdBusSlot
-typedef struct {
-        PyObject_HEAD;
-        sd_bus_slot* slot_ref;
-} SdBusSlotObject;
-
-void cleanup_SdBusSlot(SdBusSlotObject** object) {
-        Py_XDECREF(*object);
-}
-
-#define CLEANUP_SD_BUS_SLOT __attribute__((cleanup(cleanup_SdBusSlot)))
 
 static int SdBusSlot_init(SdBusSlotObject* self, PyObject* Py_UNUSED(args), PyObject* Py_UNUSED(kwds)) {
         self->slot_ref = NULL;
@@ -63,7 +55,7 @@ static void SdBusSlot_free(SdBusSlotObject* self) {
         PyObject_Free(self);
 }
 
-static PyTypeObject SdBusSlotType = {
+PyTypeObject SdBusSlotType = {
     PyVarObject_HEAD_INIT(NULL, 0).tp_name = "sd_bus_internals.SdBusSlot",
     .tp_basicsize = sizeof(SdBusSlotObject),
     .tp_itemsize = 0,
@@ -76,18 +68,6 @@ static PyTypeObject SdBusSlotType = {
 
 // SdBusInterface
 // TODO: adding interface to different buses, recalculating vtable
-
-typedef struct {
-        PyObject_HEAD;
-        SdBusSlotObject* interface_slot;
-        PyObject* method_list;
-        PyObject* method_dict;
-        PyObject* property_list;
-        PyObject* property_get_dict;
-        PyObject* property_set_dict;
-        PyObject* signal_list;
-        sd_bus_vtable* vtable;
-} SdBusInterfaceObject;
 
 static int SdBusInterface_init(SdBusInterfaceObject* self, PyObject* Py_UNUSED(args), PyObject* Py_UNUSED(kwds)) {
         self->interface_slot = (SdBusSlotObject*)CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs((PyObject*)&SdBusSlotType, NULL));
@@ -190,9 +170,6 @@ static PyObject* SdBusInterface_add_signal(SdBusInterfaceObject* self, PyObject*
 
         Py_RETURN_NONE;
 }
-
-static PyObject* call_soon_str = NULL;
-static PyObject* create_task_str = NULL;
 
 static int _SdBusInterface_callback(sd_bus_message* m, void* userdata, sd_bus_error* ret_error);
 
@@ -347,7 +324,7 @@ static PyMemberDef SdBusInterface_members[] = {{"method_list", T_OBJECT, offseto
                                                {"signal_list", T_OBJECT, offsetof(SdBusInterfaceObject, signal_list), READONLY, NULL},
                                                {0}};
 
-static PyTypeObject SdBusInterfaceType = {
+PyTypeObject SdBusInterfaceType = {
     PyVarObject_HEAD_INIT(NULL, 0).tp_name = "sd_bus_internals.SdBusInterface",
     .tp_basicsize = sizeof(SdBusInterfaceObject),
     .tp_itemsize = 0,
@@ -360,17 +337,6 @@ static PyTypeObject SdBusInterfaceType = {
 };
 
 // SdBusMessage
-typedef struct {
-        PyObject_HEAD;
-        sd_bus_message* message_ref;
-} SdBusMessageObject;
-
-void cleanup_SdBusMessage(SdBusMessageObject** object) {
-        Py_XDECREF(*object);
-}
-
-#define CLEANUP_SD_BUS_MESSAGE __attribute__((cleanup(cleanup_SdBusMessage)))
-
 static int SdBusMessage_init(SdBusMessageObject* self, PyObject* Py_UNUSED(args), PyObject* Py_UNUSED(kwds)) {
         self->message_ref = NULL;
         return 0;
@@ -412,9 +378,9 @@ typedef struct {
                 return NULL;                                                  \
         }
 
-PyObject* _parse_complete(PyObject* complete_obj, _Parse_state* parser_state);
+static PyObject* _parse_complete(PyObject* complete_obj, _Parse_state* parser_state);
 
-PyObject* _parse_basic(PyObject* basic_obj, _Parse_state* parser_state) {
+static PyObject* _parse_basic(PyObject* basic_obj, _Parse_state* parser_state) {
         char basic_type = parser_state->container_char_ptr[parser_state->index];
         switch (basic_type) {
                 // Unsigned
@@ -580,7 +546,7 @@ PyObject* _parse_basic(PyObject* basic_obj, _Parse_state* parser_state) {
         Py_RETURN_NONE;
 }
 
-size_t _find_struct_end(const char* container_char_ptr, size_t current_index) {
+static size_t _find_struct_end(const char* container_char_ptr, size_t current_index) {
         // Initial state
         // "...(...)..."
         //      ^
@@ -610,7 +576,7 @@ size_t _find_struct_end(const char* container_char_ptr, size_t current_index) {
         return 0;
 }
 
-size_t _find_dict_end(const char* container_char_ptr, size_t current_index) {
+static size_t _find_dict_end(const char* container_char_ptr, size_t current_index) {
         // Initial state
         // "...a{..}..."
         //      ^
@@ -642,7 +608,7 @@ size_t _find_dict_end(const char* container_char_ptr, size_t current_index) {
         return 0;
 }
 
-size_t _find_array_end(const char* container_char_ptr, size_t current_index) {
+static size_t _find_array_end(const char* container_char_ptr, size_t current_index) {
         // Initial state
         // "...as..."
         //     ^
@@ -682,7 +648,7 @@ size_t _find_array_end(const char* container_char_ptr, size_t current_index) {
         return current_index;
 }
 
-const char* _subscript_char_ptr(const char* old_char_ptr, size_t start, size_t end) {
+static const char* _subscript_char_ptr(const char* old_char_ptr, size_t start, size_t end) {
         // "abc(def)..."
         //  01234 |
         //  0123456
@@ -702,7 +668,7 @@ const char* _subscript_char_ptr(const char* old_char_ptr, size_t start, size_t e
         return new_string;
 }
 
-PyObject* _parse_dict(PyObject* dict_object, _Parse_state* parser_state) {
+static PyObject* _parse_dict(PyObject* dict_object, _Parse_state* parser_state) {
         // parser_state->container_char_ptr
         // "{sx}"
         //  ^
@@ -731,7 +697,7 @@ PyObject* _parse_dict(PyObject* dict_object, _Parse_state* parser_state) {
         Py_RETURN_NONE;
 }
 
-PyObject* _parse_array(PyObject* array_object, _Parse_state* parser_state) {
+static PyObject* _parse_array(PyObject* array_object, _Parse_state* parser_state) {
         // Initial state
         // "...as..."
         //     ^
@@ -830,7 +796,7 @@ PyObject* _parse_array(PyObject* array_object, _Parse_state* parser_state) {
         Py_RETURN_NONE;
 }
 
-PyObject* _parse_struct(PyObject* tuple_object, _Parse_state* parser_state) {
+static PyObject* _parse_struct(PyObject* tuple_object, _Parse_state* parser_state) {
         // Initial state
         // "...(...)..."
         //     ^
@@ -870,7 +836,7 @@ PyObject* _parse_struct(PyObject* tuple_object, _Parse_state* parser_state) {
         Py_RETURN_NONE;
 }
 
-PyObject* _parse_variant(PyObject* tuple_object, _Parse_state* parser_state) {
+static PyObject* _parse_variant(PyObject* tuple_object, _Parse_state* parser_state) {
         // Initial state "...v..."
         //                   ^
         if (!PyTuple_Check(tuple_object)) {
@@ -901,7 +867,7 @@ PyObject* _parse_variant(PyObject* tuple_object, _Parse_state* parser_state) {
         Py_RETURN_NONE;
 }
 
-PyObject* _parse_complete(PyObject* complete_obj, _Parse_state* parser_state) {
+static PyObject* _parse_complete(PyObject* complete_obj, _Parse_state* parser_state) {
         // Initial state "..."
         //                ^
         _CHECK_PARSER_NOT_NULL(parser_state);
@@ -1023,7 +989,7 @@ static PyObject* SdBusMessage_send(SdBusMessageObject* self, PyObject* const* Py
         Py_RETURN_NONE;
 }
 
-size_t _container_size(const char* container_sig) {
+static size_t _container_size(const char* container_sig) {
         size_t container_size = 0;
         size_t index = 0;
 
@@ -1050,9 +1016,9 @@ size_t _container_size(const char* container_sig) {
         return container_size;
 }
 
-PyObject* _iter_complete(_Parse_state* parser);
+static PyObject* _iter_complete(_Parse_state* parser);
 
-PyObject* _iter_basic(sd_bus_message* message, char basic_type) {
+static PyObject* _iter_basic(sd_bus_message* message, char basic_type) {
         switch (basic_type) {
                 case 'b': {
                         int new_int = 0;
@@ -1133,7 +1099,7 @@ PyObject* _iter_basic(sd_bus_message* message, char basic_type) {
         }
 }
 
-PyObject* _iter_bytes_array(_Parse_state* parser) {
+static PyObject* _iter_bytes_array(_Parse_state* parser) {
         // Byte array
         const void* char_array = NULL;
         size_t array_size = 0;
@@ -1141,7 +1107,7 @@ PyObject* _iter_bytes_array(_Parse_state* parser) {
         return PyBytes_FromStringAndSize(char_array, (Py_ssize_t)array_size);
 }
 
-PyObject* _iter_dict(_Parse_state* parser) {
+static PyObject* _iter_dict(_Parse_state* parser) {
         PyObject* new_dict CLEANUP_PY_OBJECT = PyDict_New();
 
         char peek_type = '\0';
@@ -1164,7 +1130,7 @@ PyObject* _iter_dict(_Parse_state* parser) {
         return new_dict;
 }
 
-PyObject* _iter_array(_Parse_state* parser) {
+static PyObject* _iter_array(_Parse_state* parser) {
         PyObject* new_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
         char peek_type = '\0';
         const char* container_type = NULL;
@@ -1179,7 +1145,7 @@ PyObject* _iter_array(_Parse_state* parser) {
         return new_list;
 }
 
-PyObject* _iter_struct(_Parse_state* parser) {
+static PyObject* _iter_struct(_Parse_state* parser) {
         const char* container_sig = sd_bus_message_get_signature(parser->message, 0);
         if (container_sig == NULL) {
                 PyErr_SetString(PyExc_TypeError, "Failed to get container signature");
@@ -1200,14 +1166,14 @@ PyObject* _iter_struct(_Parse_state* parser) {
         return new_tuple;
 }
 
-PyObject* _iter_variant(_Parse_state* parser) {
+static PyObject* _iter_variant(_Parse_state* parser) {
         const char* container_sig = sd_bus_message_get_signature(parser->message, 0);
         PyObject* value_object CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(_iter_complete(parser));
         PyObject* variant_sig_str CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString(container_sig));
         return PyTuple_Pack(2, variant_sig_str, value_object);
 }
 
-PyObject* _iter_complete(_Parse_state* parser) {
+static PyObject* _iter_complete(_Parse_state* parser) {
         const char* container_signature = NULL;
         char complete_type = '\0';
         // TODO: can be optimized with custom parser instead of constantly
@@ -1252,7 +1218,7 @@ PyObject* _iter_complete(_Parse_state* parser) {
         }
 }
 
-PyObject* iter_tuple_or_single(_Parse_state* parser) {
+static PyObject* iter_tuple_or_single(_Parse_state* parser) {
         // Calculate the length of message data
         size_t container_size = _container_size(parser->container_char_ptr);
         if (container_size == 0) {
@@ -1266,7 +1232,7 @@ PyObject* iter_tuple_or_single(_Parse_state* parser) {
         }
 }
 
-PyObject* SdBusMessage_get_contents2(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
+static PyObject* SdBusMessage_get_contents2(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
         const char* message_signature = sd_bus_message_get_signature(self->message_ref, 0);
 
         if (message_signature == NULL) {
@@ -1343,7 +1309,7 @@ static PyGetSetDef SdBusMessage_properies[] = {
     {0},
 };
 
-static PyTypeObject SdBusMessageType = {
+PyTypeObject SdBusMessageType = {
     PyVarObject_HEAD_INIT(NULL, 0).tp_name = "sd_bus_internals.SdBusMessage",
     .tp_basicsize = sizeof(SdBusMessageObject),
     .tp_itemsize = 0,
@@ -1382,12 +1348,6 @@ static SdBusMessageObject* SdBusMessage_create_reply(SdBusMessageObject* self, P
 }
 
 // SdBus
-typedef struct {
-        PyObject_HEAD;
-        sd_bus* sd_bus_ref;
-        PyObject* reader_fd;
-} SdBusObject;
-
 static void SdBus_free(SdBusObject* self) {
         sd_bus_unref(self->sd_bus_ref);
         Py_XDECREF(self->reader_fd);
@@ -1874,7 +1834,7 @@ static PyMethodDef SdBus_methods[] = {
     {NULL, NULL, 0, NULL},
 };
 
-static PyTypeObject SdBusType = {
+PyTypeObject SdBusType = {
     PyVarObject_HEAD_INIT(NULL, 0).tp_name = "sd_bus_internals.SdBus",
     .tp_basicsize = sizeof(SdBusObject),
     .tp_itemsize = 0,

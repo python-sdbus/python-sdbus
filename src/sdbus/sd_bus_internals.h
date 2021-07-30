@@ -156,7 +156,7 @@ extern PyObject* call_soon_str;
 extern PyObject* create_task_str;
 
 
-void _cleanup_char_ptr(const char** ptr) {
+__attribute__((used)) static inline void _cleanup_char_ptr(const char** ptr) {
         if (*ptr != NULL) {
                 free((char*)*ptr);
         }
@@ -164,7 +164,7 @@ void _cleanup_char_ptr(const char** ptr) {
 
 #define CLEANUP_STR_MALLOC __attribute__((cleanup(_cleanup_char_ptr)))
 
-void PyObject_cleanup(PyObject** object) {
+__attribute__((used)) static inline void PyObject_cleanup(PyObject** object) {
         Py_XDECREF(*object);
 }
 
@@ -176,7 +176,7 @@ typedef struct {
         sd_bus_slot* slot_ref;
 } SdBusSlotObject;
 
-void cleanup_SdBusSlot(SdBusSlotObject** object) {
+__attribute__((used)) static inline void cleanup_SdBusSlot(SdBusSlotObject** object) {
         Py_XDECREF(*object);
 }
 
@@ -205,9 +205,11 @@ typedef struct {
         sd_bus_message* message_ref;
 } SdBusMessageObject;
 
-void cleanup_SdBusMessage(SdBusMessageObject** object) {
+__attribute__((used)) static inline void cleanup_SdBusMessage(SdBusMessageObject** object) {
         Py_XDECREF(*object);
 }
+
+extern void _SdBusMessage_set_messsage(SdBusMessageObject* self, sd_bus_message* new_message);
 
 #define CLEANUP_SD_BUS_MESSAGE __attribute__((cleanup(cleanup_SdBusMessage)))
 
@@ -221,3 +223,6 @@ typedef struct {
 } SdBusObject;
 
 extern PyTypeObject SdBusType;
+
+// Module level funcions
+extern PyMethodDef SdBusPyInternal_methods[];

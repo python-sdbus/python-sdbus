@@ -72,6 +72,10 @@ if environ.get('PYTHON_SDBUS_USE_STATIC_LINK'):
     link_arguments = ['-Wl,-Bstatic', '-lsystemd', '-lcap',
                       '-Wl,-Bdynamic', '-lrt', '-lpthread']
 
+link_arguments.append('-flto')
+
+compile_arguments: List[str] = ['-flto']
+
 if __name__ == '__main__':
     setup(
         name='sdbus',
@@ -126,7 +130,14 @@ if __name__ == '__main__':
         ext_modules=[
             Extension(
                 'sdbus.sd_bus_internals',
-                ['src/sdbus/sd_bus_internals.c', ],
+                [
+                    'src/sdbus/sd_bus_internals.c',
+                    'src/sdbus/sd_bus_internals_bus.c',
+                    'src/sdbus/sd_bus_internals_funcs.c',
+                    'src/sdbus/sd_bus_internals_interface.c',
+                    'src/sdbus/sd_bus_internals_message.c',
+                ],
+                extra_compile_args=compile_arguments,
                 extra_link_args=link_arguments,
                 define_macros=c_macros,
             )

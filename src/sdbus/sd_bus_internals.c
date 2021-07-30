@@ -43,24 +43,6 @@
                 return NULL;                                                                         \
         }
 
-#define SD_BUS_PY_TUPLE_GET_ITEM_AND_CHECK(var_name, tuple, index) \
-        PyObject* var_name = PyTuple_GetItem(tuple, index);        \
-        if (var_name == NULL) {                                    \
-                return NULL;                                       \
-        }
-
-#define SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(var_name, py_object) \
-        const char* var_name = PyUnicode_AsUTF8(py_object);         \
-        if (var_name == NULL) {                                     \
-                return NULL;                                        \
-        }
-
-#define SD_BUS_PY_GET_INT_FROM_PY_LONG(var_name, py_object) \
-        const char* var_name = PyUnicode_AsUTF8(py_object); \
-        if (var_name == NULL) {                             \
-                return NULL;                                \
-        }
-
 #define CALL_PYTHON_AND_CHECK(py_function)          \
         ({                                          \
                 PyObject* new_object = py_function; \
@@ -1119,8 +1101,8 @@ static PyObject* SdBusMessage_open_container(SdBusMessageObject* self, PyObject*
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
         SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
 
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_type_char_ptr, args[0]);
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_contents_char_ptr, args[1]);
+        const char* container_type_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+        const char* container_contents_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
 
         CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(self->message_ref, container_type_char_ptr[0], container_contents_char_ptr));
 
@@ -1140,8 +1122,8 @@ static PyObject* SdBusMessage_enter_container(SdBusMessageObject* self, PyObject
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
         SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
 
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_type_char_ptr, args[0]);
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(container_contents_char_ptr, args[1]);
+        const char* container_type_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+        const char* container_contents_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
 
         CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, container_type_char_ptr[0], container_contents_char_ptr));
 
@@ -1811,8 +1793,8 @@ static PyObject* SdBus_add_interface(SdBusObject* self, PyObject* const* args, P
         SD_BUS_PY_CHECK_ARG_TYPE(2, PyUnicode_Type);
 
         SdBusInterfaceObject* interface_object = (SdBusInterfaceObject*)args[0];
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(path_char_ptr, args[1]);
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(interface_name_char_ptr, args[2]);
+        const char* path_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
+        const char* interface_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[2]);
 
         PyObject* create_vtable_name CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("_create_vtable"));
 
@@ -1874,10 +1856,10 @@ static PyObject* SdBus_get_signal_queue(SdBusObject* self, PyObject* const* args
         SD_BUS_PY_CHECK_ARG_TYPE(2, PyUnicode_Type);
         SD_BUS_PY_CHECK_ARG_TYPE(3, PyUnicode_Type);
 
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(sender_service_char_ptr, args[0]);
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(path_name_char_ptr, args[1]);
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(interface_name_char_ptr, args[2]);
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(member_name_char_ptr, args[3]);
+        const char* sender_service_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+        const char* path_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
+        const char* interface_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[2]);
+        const char* member_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[3]);
 
         SdBusSlotObject* new_slot CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject*)&SdBusSlotType, NULL));
 
@@ -2143,11 +2125,8 @@ static PyObject* encode_object_path(PyObject* Py_UNUSED(self), PyObject* const* 
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
         SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
 
-        PyObject* prefix_str = args[0];
-        PyObject* external_str = args[1];
-
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(prefix_char_ptr, prefix_str);
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(external_char_ptr, external_str);
+        const char* prefix_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+        const char* external_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
 
         if (!sd_bus_object_path_is_valid(prefix_char_ptr)) {
                 PyErr_SetString(PyExc_ValueError, "Prefix is not a valid object path");
@@ -2167,11 +2146,8 @@ static PyObject* decode_object_path(PyObject* Py_UNUSED(self), PyObject* const* 
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
         SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
 
-        PyObject* prefix_str = args[0];
-        PyObject* full_path_str = args[1];
-
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(prefix_char_ptr, prefix_str);
-        SD_BUS_PY_GET_CHAR_PTR_FROM_PY_UNICODE(full_path_char_ptr, full_path_str);
+        const char* prefix_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+        const char* full_path_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
 
         const char* new_char_ptr CLEANUP_STR_MALLOC = NULL;
 

@@ -61,7 +61,7 @@
         ({                                                                                                                                                    \
                 int return_int = sd_bus_function;                                                                                                             \
                 if (return_int < 0) {                                                                                                                         \
-                        PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error: %s", __LINE__, __FUNCTION__, -return_int); \
+                        PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error: %i", __LINE__, __FUNCTION__, -return_int); \
                         return NULL;                                                                                                                          \
                 }                                                                                                                                             \
                 return_int;                                                                                                                                   \

@@ -19,6 +19,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from unittest import main
 
+from sdbus import SdBusLibraryError
+
 from .common_test_util import TempDbusTest
 
 
@@ -344,6 +346,12 @@ class TestDbusTypes(TempDbusTest):
             self.message.get_contents(),
             test_array
         )
+
+    def test_sealed_message_append(self) -> None:
+        self.message.append_data('s', 'test')
+        self.message.seal()
+        self.assertRaises(SdBusLibraryError,
+                          self.message.append_data, 's', 'error')
 
 
 if __name__ == "__main__":

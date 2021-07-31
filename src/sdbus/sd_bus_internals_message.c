@@ -1015,7 +1015,7 @@ static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* s
         SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
 
         SdBusMessageObject* new_reply_message CLEANUP_SD_BUS_MESSAGE =
-            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject*)&SdBusMessageType, NULL));
+            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
 
         CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_errorf(self->message_ref, &new_reply_message->message_ref, SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]), "%s",
                                                                SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1])));
@@ -1027,7 +1027,7 @@ static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* s
 static SdBusMessageObject* SdBusMessage_create_reply(SdBusMessageObject* self, PyObject* const* Py_UNUSED(args), Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(0);
         SdBusMessageObject* new_reply_message CLEANUP_SD_BUS_MESSAGE =
-            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject*)&SdBusMessageType, NULL));
+            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
 
         CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_return(self->message_ref, &new_reply_message->message_ref));
 

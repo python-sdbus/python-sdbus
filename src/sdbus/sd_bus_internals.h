@@ -200,6 +200,7 @@ __attribute__((used)) static inline void cleanup_SdBusSlot(SdBusSlotObject** obj
 #define CLEANUP_SD_BUS_SLOT __attribute__((cleanup(cleanup_SdBusSlot)))
 
 extern PyTypeObject SdBusSlotType;
+extern PyObject* SdBusSlot_class;
 
 // SdBusInterface
 typedef struct {
@@ -215,6 +216,7 @@ typedef struct {
 } SdBusInterfaceObject;
 
 extern PyTypeObject SdBusInterfaceType;
+extern PyObject* SdBusInterface_class;
 
 // SdBusMessage
 typedef struct {
@@ -231,6 +233,7 @@ extern void _SdBusMessage_set_messsage(SdBusMessageObject* self, sd_bus_message*
 #define CLEANUP_SD_BUS_MESSAGE __attribute__((cleanup(cleanup_SdBusMessage)))
 
 extern PyTypeObject SdBusMessageType;
+extern PyObject* SdBusMessage_class;
 
 // SdBus
 typedef struct {
@@ -240,6 +243,7 @@ typedef struct {
 } SdBusObject;
 
 extern PyTypeObject SdBusType;
+extern PyObject* SdBus_class;
 
 // Module level funcions
 extern PyMethodDef SdBusPyInternal_methods[];

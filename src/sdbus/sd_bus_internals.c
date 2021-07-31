@@ -50,8 +50,8 @@ static int SdBusSlot_init(SdBusSlotObject* self, PyObject* Py_UNUSED(args), PyOb
 }
 
 static void SdBusSlot_dealloc(SdBusSlotObject* self) {
-    sd_bus_slot_unref(self->slot_ref);
-    Py_TYPE(self)->tp_free(self);
+        sd_bus_slot_unref(self->slot_ref);
+        Py_TYPE(self)->tp_free(self);
 }
 
 PyTypeObject SdBusSlotType = {
@@ -69,31 +69,40 @@ static PyModuleDef sd_bus_internals_module = {
     PyModuleDef_HEAD_INIT, .m_name = "sd_bus_internals", .m_doc = "Sd bus internals module.", .m_methods = SdBusPyInternal_methods, .m_size = -1,
 };
 
-#define SD_BUS_PY_INIT_TYPE_READY(type) \
-        if (PyType_Ready(&type) < 0) {  \
-                return NULL;            \
-        }
+PyObject* SdBus_class = NULL;
+PyObject* SdBusMessage_class = NULL;
+PyObject* SdBusSlot_class = NULL;
+PyObject* SdBusInterface_class = NULL;
 
-#define SD_BUS_PY_INIT_ADD_OBJECT(type_name, type)                   \
-        Py_INCREF((PyObject*)type);                                  \
-        if (PyModule_AddObject(m, type_name, (PyObject*)type) < 0) { \
-                Py_DECREF((PyObject*)type);                          \
-                return NULL;                                         \
+#define SD_BUS_PY_INIT_TYPE_READY(type)             \
+        ({                                          \
+                if (PyType_Ready(&type) < 0) {      \
+                        return NULL;                \
+                }                                   \
+                PyObject* class = (PyObject*)&type; \
+                class;                              \
+        })
+
+#define SD_BUS_PY_INIT_ADD_OBJECT(type_name, class)                   \
+        Py_INCREF(class);                                             \
+        if (PyModule_AddObject(m, type_name, (PyObject*)class) < 0) { \
+                Py_DECREF((PyObject*)class);                          \
+                return NULL;                                          \
         }
 
 PyMODINIT_FUNC PyInit_sd_bus_internals(void) {
         PyObject* m CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyModule_Create(&sd_bus_internals_module));
 
 #ifndef Py_LIMITED_API
-        SD_BUS_PY_INIT_TYPE_READY(SdBusType);
-        SD_BUS_PY_INIT_TYPE_READY(SdBusMessageType);
-        SD_BUS_PY_INIT_TYPE_READY(SdBusSlotType);
-        SD_BUS_PY_INIT_TYPE_READY(SdBusInterfaceType);
+        SdBus_class = SD_BUS_PY_INIT_TYPE_READY(SdBusType);
+        SdBusMessage_class = SD_BUS_PY_INIT_TYPE_READY(SdBusMessageType);
+        SdBusSlot_class = SD_BUS_PY_INIT_TYPE_READY(SdBusSlotType);
+        SdBusInterface_class = SD_BUS_PY_INIT_TYPE_READY(SdBusInterfaceType);
 
-        SD_BUS_PY_INIT_ADD_OBJECT("SdBus", &SdBusType);
-        SD_BUS_PY_INIT_ADD_OBJECT("SdBusMessage", &SdBusMessageType);
-        SD_BUS_PY_INIT_ADD_OBJECT("SdBusSlot", &SdBusSlotType);
-        SD_BUS_PY_INIT_ADD_OBJECT("SdBusInterface", &SdBusInterfaceType);
+        SD_BUS_PY_INIT_ADD_OBJECT("SdBus", SdBus_class);
+        SD_BUS_PY_INIT_ADD_OBJECT("SdBusMessage", SdBusMessage_class);
+        SD_BUS_PY_INIT_ADD_OBJECT("SdBusSlot", SdBusSlot_class);
+        SD_BUS_PY_INIT_ADD_OBJECT("SdBusInterface", SdBusInterface_class);
 #else
 #pragma GCC error "stable python module not finished"
 #endif

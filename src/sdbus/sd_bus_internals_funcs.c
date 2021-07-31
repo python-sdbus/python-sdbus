@@ -21,19 +21,19 @@
 #include "sd_bus_internals.h"
 
 static SdBusObject* sd_bus_py_open(PyObject* Py_UNUSED(self), PyObject* Py_UNUSED(ignored)) {
-        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject*)&SdBusType, NULL));
+        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBus_class, NULL));
         CALL_SD_BUS_AND_CHECK(sd_bus_open(&(new_sd_bus->sd_bus_ref)));
         return new_sd_bus;
 }
 
 static SdBusObject* sd_bus_py_open_user(PyObject* Py_UNUSED(self), PyObject* Py_UNUSED(ignored)) {
-        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject*)&SdBusType, NULL));
+        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBus_class, NULL));
         CALL_SD_BUS_AND_CHECK(sd_bus_open_user(&(new_sd_bus->sd_bus_ref)));
         return new_sd_bus;
 }
 
 static SdBusObject* sd_bus_py_open_system(PyObject* Py_UNUSED(self), PyObject* Py_UNUSED(ignored)) {
-        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs((PyObject*)&SdBusType, NULL));
+        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBus_class, NULL));
         CALL_SD_BUS_AND_CHECK(sd_bus_open_system(&(new_sd_bus->sd_bus_ref)));
         return new_sd_bus;
 }

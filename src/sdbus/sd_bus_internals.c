@@ -26,7 +26,6 @@ PyObject* dbus_error_to_exception_dict = NULL;
 PyObject* exception_to_dbus_error_dict = NULL;
 PyObject* exception_base = NULL;
 PyObject* exception_lib = NULL;
-PyTypeObject* async_future_type = NULL;
 PyObject* asyncio_get_running_loop = NULL;
 PyObject* asyncio_queue_class = NULL;
 PyObject* is_coroutine_function = NULL;
@@ -117,7 +116,6 @@ PyMODINIT_FUNC PyInit_sd_bus_internals(void) {
         exception_lib = library_exception;
 
         PyObject* asyncio_module = CALL_PYTHON_AND_CHECK(PyImport_ImportModule("asyncio"));
-        async_future_type = (PyTypeObject*)CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(asyncio_module, "Future"));
 
         asyncio_get_running_loop = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(asyncio_module, "get_running_loop"));
 

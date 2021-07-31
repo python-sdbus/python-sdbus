@@ -138,7 +138,6 @@ extern PyObject* dbus_error_to_exception_dict;
 extern PyObject* exception_to_dbus_error_dict;
 extern PyObject* exception_base;
 extern PyObject* exception_lib;
-extern PyTypeObject* async_future_type;
 extern PyObject* asyncio_get_running_loop;
 extern PyObject* asyncio_queue_class;
 extern PyObject* is_coroutine_function;

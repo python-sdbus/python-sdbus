@@ -151,6 +151,19 @@
                 py_object;                         \
         })
 
+#ifndef Py_LIMITED_API
+#define SD_BUS_DEALLOC_TAIL                      \
+        PyTypeObject* self_type = Py_TYPE(self); \
+        self_type->tp_free(self);                \
+        Py_DECREF(self_type);
+#else
+#define SD_BUS_DEALLOC_TAIL                                                         \
+        PyTypeObject* self_type = Py_TYPE(self);                                    \
+        void (*free_self)(void*) = (freefunc)PyType_GetSlot(self_type, Py_tp_free); \
+        free_self(self);                                                            \
+        Py_DECREF(self_type);
+#endif
+
 // Python functions and objects
 extern PyObject* unmapped_error_exception;
 extern PyObject* dbus_error_to_exception_dict;
@@ -199,7 +212,7 @@ __attribute__((used)) static inline void cleanup_SdBusSlot(SdBusSlotObject** obj
 
 #define CLEANUP_SD_BUS_SLOT __attribute__((cleanup(cleanup_SdBusSlot)))
 
-extern PyTypeObject SdBusSlotType;
+extern PyType_Spec SdBusSlotType;
 extern PyObject* SdBusSlot_class;
 
 // SdBusInterface
@@ -215,7 +228,7 @@ typedef struct {
         sd_bus_vtable* vtable;
 } SdBusInterfaceObject;
 
-extern PyTypeObject SdBusInterfaceType;
+extern PyType_Spec SdBusInterfaceType;
 extern PyObject* SdBusInterface_class;
 
 // SdBusMessage
@@ -232,7 +245,7 @@ extern void _SdBusMessage_set_messsage(SdBusMessageObject* self, sd_bus_message*
 
 #define CLEANUP_SD_BUS_MESSAGE __attribute__((cleanup(cleanup_SdBusMessage)))
 
-extern PyTypeObject SdBusMessageType;
+extern PyType_Spec SdBusMessageType;
 extern PyObject* SdBusMessage_class;
 
 // SdBus
@@ -242,7 +255,7 @@ typedef struct {
         PyObject* reader_fd;
 } SdBusObject;
 
-extern PyTypeObject SdBusType;
+extern PyType_Spec SdBusType;
 extern PyObject* SdBus_class;
 
 // Module level funcions

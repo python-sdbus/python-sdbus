@@ -46,7 +46,7 @@ static void SdBusInterface_dealloc(SdBusInterfaceObject* self) {
                 free(self->vtable);
         }
 
-        Py_TYPE(self)->tp_free(self);
+        SD_BUS_DEALLOC_TAIL;
 }
 
 inline int _check_callable_or_none(PyObject* some_object) {
@@ -278,16 +278,19 @@ static PyMemberDef SdBusInterface_members[] = {{"method_list", T_OBJECT, offseto
                                                {"signal_list", T_OBJECT, offsetof(SdBusInterfaceObject, signal_list), READONLY, NULL},
                                                {0}};
 
-PyTypeObject SdBusInterfaceType = {
-    PyVarObject_HEAD_INIT(NULL, 0).tp_name = "sd_bus_internals.SdBusInterface",
-    .tp_basicsize = sizeof(SdBusInterfaceObject),
-    .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_new = PyType_GenericNew,
-    .tp_init = (initproc)SdBusInterface_init,
-    .tp_dealloc = (destructor)SdBusInterface_dealloc,
-    .tp_methods = SdBusInterface_methods,
-    .tp_members = SdBusInterface_members,
+PyType_Spec SdBusInterfaceType = {
+    .name = "sd_bus_internals.SdBusInterface",
+    .basicsize = sizeof(SdBusInterfaceObject),
+    .itemsize = 0,
+    .flags = Py_TPFLAGS_DEFAULT,
+    .slots =
+        (PyType_Slot[]){
+            {Py_tp_init, (initproc)SdBusInterface_init},
+            {Py_tp_dealloc, (destructor)SdBusInterface_dealloc},
+            {Py_tp_methods, SdBusInterface_methods},
+            {Py_tp_members, SdBusInterface_members},
+            {0, NULL},
+        },
 };
 
 static int _SdBusInterface_callback(sd_bus_message* m, void* userdata, sd_bus_error* ret_error) {

@@ -32,7 +32,7 @@ void _SdBusMessage_set_messsage(SdBusMessageObject* self, sd_bus_message* new_me
 static void SdBusMessage_dealloc(SdBusMessageObject* self) {
         sd_bus_message_unref(self->message_ref);
 
-        Py_TYPE(self)->tp_free(self);
+        SD_BUS_DEALLOC_TAIL;
 }
 
 static PyObject* SdBusMessage_seal(SdBusMessageObject* self, PyObject* const* Py_UNUSED(args), Py_ssize_t nargs) {
@@ -997,16 +997,19 @@ static PyGetSetDef SdBusMessage_properies[] = {
     {0},
 };
 
-PyTypeObject SdBusMessageType = {
-    PyVarObject_HEAD_INIT(NULL, 0).tp_name = "sd_bus_internals.SdBusMessage",
-    .tp_basicsize = sizeof(SdBusMessageObject),
-    .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_new = PyType_GenericNew,
-    .tp_init = (initproc)SdBusMessage_init,
-    .tp_dealloc = (destructor)SdBusMessage_dealloc,
-    .tp_methods = SdBusMessage_methods,
-    .tp_getset = SdBusMessage_properies,
+PyType_Spec SdBusMessageType = {
+    .name = "sd_bus_internals.SdBusMessage",
+    .basicsize = sizeof(SdBusMessageObject),
+    .itemsize = 0,
+    .flags = Py_TPFLAGS_DEFAULT,
+    .slots =
+        (PyType_Slot[]){
+            {Py_tp_init, (initproc)SdBusMessage_init},
+            {Py_tp_dealloc, (destructor)SdBusMessage_dealloc},
+            {Py_tp_methods, SdBusMessage_methods},
+            {Py_tp_getset, SdBusMessage_properies},
+            {0, NULL},
+        },
 };
 
 static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs) {

@@ -24,7 +24,7 @@ static void SdBus_dealloc(SdBusObject* self) {
         sd_bus_unref(self->sd_bus_ref);
         Py_XDECREF(self->reader_fd);
 
-        Py_TYPE(self)->tp_free(self);
+        SD_BUS_DEALLOC_TAIL;
 }
 
 static int SdBus_init(SdBusObject* self, PyObject* Py_UNUSED(args), PyObject* Py_UNUSED(kwds)) {
@@ -511,13 +511,16 @@ static PyMethodDef SdBus_methods[] = {
     {NULL, NULL, 0, NULL},
 };
 
-PyTypeObject SdBusType = {
-    PyVarObject_HEAD_INIT(NULL, 0).tp_name = "sd_bus_internals.SdBus",
-    .tp_basicsize = sizeof(SdBusObject),
-    .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_new = PyType_GenericNew,
-    .tp_init = (initproc)SdBus_init,
-    .tp_dealloc = (destructor)SdBus_dealloc,
-    .tp_methods = SdBus_methods,
+PyType_Spec SdBusType = {
+    .name = "sd_bus_internals.SdBus",
+    .basicsize = sizeof(SdBusObject),
+    .itemsize = 0,
+    .flags = Py_TPFLAGS_DEFAULT,
+    .slots =
+        (PyType_Slot[]){
+            {Py_tp_init, (initproc)SdBus_init},
+            {Py_tp_dealloc, (destructor)SdBus_dealloc},
+            {Py_tp_methods, SdBus_methods},
+            {0, NULL},
+        },
 };

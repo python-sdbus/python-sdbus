@@ -462,7 +462,11 @@ static PyObject* _parse_array(PyObject* array_object, _Parse_state* parser_state
                 // "...a(as)..."
                 //     "(as)"
                 CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(parser_state->message, 'a', array_sig_char_ptr));
+#ifndef Py_LIMITED_API
                 for (Py_ssize_t i = 0; i < PyList_GET_SIZE(array_object); ++i) {
+#else
+                for (Py_ssize_t i = 0; i < PyList_Size(array_object); ++i) {
+#endif
                         CALL_PYTHON_EXPECT_NONE(_parse_complete(PyList_GET_ITEM(array_object, i), &array_parser));
                         array_parser.index = 0;
                 }

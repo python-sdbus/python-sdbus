@@ -81,7 +81,7 @@
                 return_int;                                                \
         })
 
-#define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                        \
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR_UNLIMITED(py_object)              \
         ({                                                              \
                 const char* new_char_ptr = PyUnicode_AsUTF8(py_object); \
                 if (new_char_ptr == NULL) {                             \
@@ -89,6 +89,25 @@
                 }                                                       \
                 new_char_ptr;                                           \
         })
+
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR_STABLE(py_object)                                      \
+        ({                                                                                   \
+                PyObject* utf_8_bytes CLEANUP_PY_OBJECT = PyUnicode_AsUTF8String(py_object); \
+                if (utf_8_bytes == NULL) {                                                   \
+                        return NULL;                                                         \
+                }                                                                            \
+                const char* new_char_ptr = PyBytes_AsString(utf_8_bytes);                    \
+                if (new_char_ptr == NULL) {                                                  \
+                        return NULL;                                                         \
+                }                                                                            \
+                new_char_ptr;                                                                \
+        })
+
+#ifdef Py_LIMITED_API
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR SD_BUS_PY_UNICODE_AS_CHAR_PTR_STABLE
+#else
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR SD_BUS_PY_UNICODE_AS_CHAR_PTR_UNLIMITED
+#endif
 
 #define CALL_PYTHON_ITER(iter, iter_end)                             \
         ({                                                           \
@@ -153,7 +172,6 @@ extern PyObject* extend_str;
 extern PyObject* append_str;
 extern PyObject* call_soon_str;
 extern PyObject* create_task_str;
-
 
 __attribute__((used)) static inline void _cleanup_char_ptr(const char** ptr) {
         if (*ptr != NULL) {

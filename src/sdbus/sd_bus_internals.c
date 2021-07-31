@@ -82,18 +82,21 @@ static PyModuleDef sd_bus_internals_module = {
         }
 
 PyMODINIT_FUNC PyInit_sd_bus_internals(void) {
+        PyObject* m CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyModule_Create(&sd_bus_internals_module));
+
+#ifndef Py_LIMITED_API
         SD_BUS_PY_INIT_TYPE_READY(SdBusType);
         SD_BUS_PY_INIT_TYPE_READY(SdBusMessageType);
         SD_BUS_PY_INIT_TYPE_READY(SdBusSlotType);
         SD_BUS_PY_INIT_TYPE_READY(SdBusInterfaceType);
 
-        PyObject* m CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyModule_Create(&sd_bus_internals_module));
-
         SD_BUS_PY_INIT_ADD_OBJECT("SdBus", &SdBusType);
         SD_BUS_PY_INIT_ADD_OBJECT("SdBusMessage", &SdBusMessageType);
         SD_BUS_PY_INIT_ADD_OBJECT("SdBusSlot", &SdBusSlotType);
         SD_BUS_PY_INIT_ADD_OBJECT("SdBusInterface", &SdBusInterfaceType);
-
+#else
+#pragma GCC error "stable python module not finished"
+#endif
         // Exception map
         dbus_error_to_exception_dict = CALL_PYTHON_AND_CHECK(PyDict_New());
         SD_BUS_PY_INIT_ADD_OBJECT("DBUS_ERROR_TO_EXCEPTION", dbus_error_to_exception_dict);

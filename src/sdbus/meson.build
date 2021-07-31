@@ -19,3 +19,10 @@ sd_bus_internals_module = shared_module(
     dependencies : python3_dep,
     c_args : lint_args,
 )
+
+sd_bus_internals_module_stable = shared_module(
+    'sd_bus_internals_stable',
+    sd_bus_internals_sources,
+    dependencies : python3_dep,
+    c_args : lint_args + ['-DPy_LIMITED_API=0x03070000'],
+)

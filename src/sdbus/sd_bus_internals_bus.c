@@ -20,10 +20,11 @@
 */
 #include "sd_bus_internals.h"
 
-static void SdBus_free(SdBusObject* self) {
+static void SdBus_dealloc(SdBusObject* self) {
         sd_bus_unref(self->sd_bus_ref);
         Py_XDECREF(self->reader_fd);
-        PyObject_Free(self);
+
+        Py_TYPE(self)->tp_free(self);
 }
 
 static int SdBus_init(SdBusObject* self, PyObject* Py_UNUSED(args), PyObject* Py_UNUSED(kwds)) {
@@ -513,6 +514,6 @@ PyTypeObject SdBusType = {
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_new = PyType_GenericNew,
     .tp_init = (initproc)SdBus_init,
-    .tp_free = (freefunc)SdBus_free,
+    .tp_dealloc = (destructor)SdBus_dealloc,
     .tp_methods = SdBus_methods,
 };

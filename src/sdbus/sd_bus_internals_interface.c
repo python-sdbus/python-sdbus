@@ -34,7 +34,7 @@ static int SdBusInterface_init(SdBusInterfaceObject* self, PyObject* Py_UNUSED(a
         return 0;
 }
 
-static void SdBusInterface_free(SdBusInterfaceObject* self) {
+static void SdBusInterface_dealloc(SdBusInterfaceObject* self) {
         Py_XDECREF(self->interface_slot);
         Py_XDECREF(self->method_list);
         Py_XDECREF(self->method_dict);
@@ -45,7 +45,8 @@ static void SdBusInterface_free(SdBusInterfaceObject* self) {
         if (self->vtable) {
                 free(self->vtable);
         }
-        PyObject_Free(self);
+
+        Py_TYPE(self)->tp_free(self);
 }
 
 inline int _check_callable_or_none(PyObject* some_object) {
@@ -284,7 +285,7 @@ PyTypeObject SdBusInterfaceType = {
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_new = PyType_GenericNew,
     .tp_init = (initproc)SdBusInterface_init,
-    .tp_free = (freefunc)SdBusInterface_free,
+    .tp_dealloc = (destructor)SdBusInterface_dealloc,
     .tp_methods = SdBusInterface_methods,
     .tp_members = SdBusInterface_members,
 };

@@ -49,9 +49,9 @@ static int SdBusSlot_init(SdBusSlotObject* self, PyObject* Py_UNUSED(args), PyOb
         return 0;
 }
 
-static void SdBusSlot_free(SdBusSlotObject* self) {
-        sd_bus_slot_unref(self->slot_ref);
-        PyObject_Free(self);
+static void SdBusSlot_dealloc(SdBusSlotObject* self) {
+    sd_bus_slot_unref(self->slot_ref);
+    Py_TYPE(self)->tp_free(self);
 }
 
 PyTypeObject SdBusSlotType = {
@@ -61,7 +61,7 @@ PyTypeObject SdBusSlotType = {
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_new = PyType_GenericNew,
     .tp_init = (initproc)SdBusSlot_init,
-    .tp_free = (freefunc)SdBusSlot_free,
+    .tp_dealloc = (destructor)SdBusSlot_dealloc,
     .tp_methods = NULL,
 };
 

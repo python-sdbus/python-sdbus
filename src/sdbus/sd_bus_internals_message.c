@@ -29,9 +29,10 @@ void _SdBusMessage_set_messsage(SdBusMessageObject* self, sd_bus_message* new_me
         self->message_ref = sd_bus_message_ref(new_message);
 }
 
-static void SdBusMessage_free(SdBusMessageObject* self) {
+static void SdBusMessage_dealloc(SdBusMessageObject* self) {
         sd_bus_message_unref(self->message_ref);
-        PyObject_Free(self);
+
+        Py_TYPE(self)->tp_free(self);
 }
 
 static PyObject* SdBusMessage_seal(SdBusMessageObject* self, PyObject* const* Py_UNUSED(args), Py_ssize_t nargs) {
@@ -1003,7 +1004,7 @@ PyTypeObject SdBusMessageType = {
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_new = PyType_GenericNew,
     .tp_init = (initproc)SdBusMessage_init,
-    .tp_free = (freefunc)SdBusMessage_free,
+    .tp_dealloc = (destructor)SdBusMessage_dealloc,
     .tp_methods = SdBusMessage_methods,
     .tp_getset = SdBusMessage_properies,
 };

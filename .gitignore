@@ -27,3 +27,4 @@ strace*.txt
 *.so
 .cache
 wheels
+*.kate-swp

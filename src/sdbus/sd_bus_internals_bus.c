@@ -33,6 +33,7 @@ static int SdBus_init(SdBusObject* self, PyObject* Py_UNUSED(args), PyObject* Py
         return 0;
 }
 
+#ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBus_new_method_call_message(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(4);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
@@ -44,7 +45,14 @@ static SdBusMessageObject* SdBus_new_method_call_message(SdBusObject* self, PyOb
         const char* object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
         const char* interface_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[2]);
         const char* member_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[3]);
-
+#else
+static SdBusMessageObject* SdBus_new_method_call_message(SdBusObject* self, PyObject* args) {
+        const char* destination_bus_name = NULL;
+        const char* object_path = NULL;
+        const char* interface_name = NULL;
+        const char* member_name = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ssss", &destination_bus_name, &object_path, &interface_name, &member_name, NULL));
+#endif
         SdBusMessageObject* new_message_object CLEANUP_SD_BUS_MESSAGE =
             (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
 
@@ -55,6 +63,7 @@ static SdBusMessageObject* SdBus_new_method_call_message(SdBusObject* self, PyOb
         return new_message_object;
 }
 
+#ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBus_new_property_get_message(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(4);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
@@ -66,7 +75,14 @@ static SdBusMessageObject* SdBus_new_property_get_message(SdBusObject* self, PyO
         const char* object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
         const char* interface_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[2]);
         const char* property_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[3]);
-
+#else
+static SdBusMessageObject* SdBus_new_property_get_message(SdBusObject* self, PyObject* args) {
+        const char* destination_service_name = NULL;
+        const char* object_path = NULL;
+        const char* interface_name = NULL;
+        const char* property_name = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ssss", &destination_service_name, &object_path, &interface_name, &property_name, NULL));
+#endif
         SdBusMessageObject* new_message_object CLEANUP_SD_BUS_MESSAGE =
             (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
         CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_call(self->sd_bus_ref, &new_message_object->message_ref, destination_service_name, object_path,
@@ -80,6 +96,7 @@ static SdBusMessageObject* SdBus_new_property_get_message(SdBusObject* self, PyO
         return new_message_object;
 }
 
+#ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBus_new_property_set_message(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(4);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
@@ -91,7 +108,14 @@ static SdBusMessageObject* SdBus_new_property_set_message(SdBusObject* self, PyO
         const char* object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
         const char* interface_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[2]);
         const char* property_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[3]);
-
+#else
+static SdBusMessageObject* SdBus_new_property_set_message(SdBusObject* self, PyObject* args) {
+        const char* destination_service_name = NULL;
+        const char* object_path = NULL;
+        const char* interface_name = NULL;
+        const char* property_name = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ssss", &destination_service_name, &object_path, &interface_name, &property_name, NULL));
+#endif
         SdBusMessageObject* new_message_object CLEANUP_SD_BUS_MESSAGE =
             (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
         CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_call(self->sd_bus_ref, &new_message_object->message_ref, destination_service_name, object_path,
@@ -105,6 +129,7 @@ static SdBusMessageObject* SdBus_new_property_set_message(SdBusObject* self, PyO
         return new_message_object;
 }
 
+#ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBus_new_signal_message(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(3);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);  // Path
@@ -114,7 +139,13 @@ static SdBusMessageObject* SdBus_new_signal_message(SdBusObject* self, PyObject*
         const char* object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* interface_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
         const char* member_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[2]);
-
+#else
+static SdBusMessageObject* SdBus_new_signal_message(SdBusObject* self, PyObject* args) {
+        char* object_path = NULL;
+        const char* interface_name = NULL;
+        const char* member_name = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "sss", &object_path, &interface_name, &member_name, NULL));
+#endif
         SdBusMessageObject* new_message_object CLEANUP_SD_BUS_MESSAGE =
             (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
 
@@ -124,6 +155,7 @@ static SdBusMessageObject* SdBus_new_signal_message(SdBusObject* self, PyObject*
         return new_message_object;
 }
 
+#ifndef Py_LIMITED_API
 static int _check_sdbus_message(PyObject* something) {
         return PyType_IsSubtype(Py_TYPE(something), (PyTypeObject*)SdBusMessage_class);
 }
@@ -134,7 +166,11 @@ static SdBusMessageObject* SdBus_call(SdBusObject* self, PyObject* const* args, 
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, _check_sdbus_message);
 
         SdBusMessageObject* call_message = (SdBusMessageObject*)args[0];
-
+#else
+static SdBusMessageObject* SdBus_call(SdBusObject* self, PyObject* args) {
+        SdBusMessageObject* call_message = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "O", &call_message, NULL));
+#endif
         SdBusMessageObject* reply_message_object CLEANUP_SD_BUS_MESSAGE =
             (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
 
@@ -274,12 +310,17 @@ int SdBus_async_callback(sd_bus_message* m,
         return 0;
 }
 
+#ifndef Py_LIMITED_API
 static PyObject* SdBus_call_async(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(1);
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, _check_sdbus_message);
 
         SdBusMessageObject* call_message = (SdBusMessageObject*)args[0];
-
+#else
+static PyObject* SdBus_call_async(SdBusObject* self, PyObject* args) {
+        SdBusMessageObject* call_message = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "O", &call_message, NULL));
+#endif
         PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
 
         PyObject* new_future = CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "create_future", ""));
@@ -296,6 +337,7 @@ static PyObject* SdBus_call_async(SdBusObject* self, PyObject* const* args, Py_s
         return new_future;
 }
 
+#ifndef Py_LIMITED_API
 static int _check_is_sdbus_interface(PyObject* type_to_check) {
         return PyType_IsSubtype(Py_TYPE(type_to_check), (PyTypeObject*)SdBusInterface_class);
 }
@@ -309,13 +351,19 @@ static PyObject* SdBus_add_interface(SdBusObject* self, PyObject* const* args, P
         SdBusInterfaceObject* interface_object = (SdBusInterfaceObject*)args[0];
         const char* path_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
         const char* interface_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[2]);
-
+#else
+static PyObject* SdBus_add_interface(SdBusObject* self, PyObject* args) {
+        SdBusInterfaceObject* interface_object = NULL;
+        const char* path_char_ptr = NULL;
+        const char* interface_name_char_ptr = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "Oss", &interface_object, &path_char_ptr, &interface_name_char_ptr, NULL));
+#endif
         PyObject* create_vtable_name CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("_create_vtable"));
 
         Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs((PyObject*)interface_object, create_vtable_name, NULL)));
 
         CALL_SD_BUS_AND_CHECK(sd_bus_add_object_vtable(self->sd_bus_ref, &interface_object->interface_slot->slot_ref, path_char_ptr, interface_name_char_ptr,
-                                                       interface_object->vtable, args[0]));
+                                                       interface_object->vtable, interface_object));
 
         Py_RETURN_NONE;
 }
@@ -363,6 +411,7 @@ int _SdBus_match_signal_instant_callback(sd_bus_message* m, void* userdata, sd_b
         return 0;
 }
 
+#ifndef Py_LIMITED_API
 static PyObject* SdBus_get_signal_queue(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(4);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
@@ -374,7 +423,15 @@ static PyObject* SdBus_get_signal_queue(SdBusObject* self, PyObject* const* args
         const char* path_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
         const char* interface_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[2]);
         const char* member_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[3]);
-
+#else
+static PyObject* SdBus_get_signal_queue(SdBusObject* self, PyObject* args) {
+        const char* sender_service_char_ptr = NULL;
+        const char* path_name_char_ptr = NULL;
+        const char* interface_name_char_ptr = NULL;
+        const char* member_name_char_ptr = NULL;
+        CALL_PYTHON_BOOL_CHECK(
+            PyArg_ParseTuple(args, "ssss", &sender_service_char_ptr, &path_name_char_ptr, &interface_name_char_ptr, &member_name_char_ptr, NULL));
+#endif
         SdBusSlotObject* new_slot CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusSlot_class, NULL));
 
         PyObject* new_queue CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_queue_class, NULL));
@@ -424,6 +481,7 @@ int SdBus_request_callback(sd_bus_message* m,
         return 0;
 }
 
+#ifndef Py_LIMITED_API
 static PyObject* SdBus_request_name_async(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
@@ -434,7 +492,13 @@ static PyObject* SdBus_request_name_async(SdBusObject* self, PyObject* const* ar
         if (PyErr_Occurred()) {
                 return NULL;
         }
-
+#else
+static PyObject* SdBus_request_name_async(SdBusObject* self, PyObject* args) {
+        const char* service_name_char_ptr = NULL;
+        unsigned long long flags_long_long = 0;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "sK", &service_name_char_ptr, &flags_long_long, NULL));
+        uint64_t flags = (uint64_t)flags_long_long;
+#endif
         PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
         PyObject* new_future = CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "create_future", ""));
         SdBusSlotObject* new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusSlot_class, NULL));
@@ -449,6 +513,7 @@ static PyObject* SdBus_request_name_async(SdBusObject* self, PyObject* const* ar
         return new_future;
 }
 
+#ifndef Py_LIMITED_API
 static PyObject* SdBus_request_name(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
@@ -459,17 +524,28 @@ static PyObject* SdBus_request_name(SdBusObject* self, PyObject* const* args, Py
         if (PyErr_Occurred()) {
                 return NULL;
         }
-
+#else
+static PyObject* SdBus_request_name(SdBusObject* self, PyObject* args) {
+        const char* service_name_char_ptr = NULL;
+        unsigned long long flags_long_long = 0;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "sK", &service_name_char_ptr, &flags_long_long, NULL));
+        uint64_t flags = (uint64_t)flags_long_long;
+#endif
         CALL_SD_BUS_AND_CHECK(sd_bus_request_name(self->sd_bus_ref, service_name_char_ptr, flags));
         Py_RETURN_NONE;
 }
 
+#ifndef Py_LIMITED_API
 static SdBusSlotObject* SdBus_add_object_manager(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(1);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
 
         const char* object_manager_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
-
+#else
+static SdBusSlotObject* SdBus_add_object_manager(SdBusObject* self, PyObject* args) {
+        const char* object_manager_path = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &object_manager_path, NULL));
+#endif
         SdBusSlotObject* new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusSlot_class, NULL));
 
         CALL_SD_BUS_AND_CHECK(sd_bus_add_object_manager(self->sd_bus_ref, &new_slot_object->slot_ref, object_manager_path));
@@ -478,36 +554,41 @@ static SdBusSlotObject* SdBus_add_object_manager(SdBusObject* self, PyObject* co
         return new_slot_object;
 }
 
+#ifndef Py_LIMITED_API
 static PyObject* SdBus_emit_object_added(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(1);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
 
         const char* added_object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
-
+#else
+static PyObject* SdBus_emit_object_added(SdBusObject* self, PyObject* args) {
+        const char* added_object_path = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &added_object_path, NULL));
+#endif
         CALL_SD_BUS_AND_CHECK(sd_bus_emit_object_added(self->sd_bus_ref, added_object_path));
 
         Py_RETURN_NONE;
 }
 
 static PyMethodDef SdBus_methods[] = {
-    {"call", (void*)SdBus_call, METH_FASTCALL, "Send message and get reply"},
-    {"call_async", (void*)SdBus_call_async, METH_FASTCALL, "Async send message, returns awaitable future"},
-    {"drive", (void*)SdBus_drive, METH_FASTCALL, "Drive connection"},
-    {"get_fd", (void*)SdBus_get_fd, METH_FASTCALL, "Get file descriptor to await on"},
-    {"new_method_call_message", (void*)SdBus_new_method_call_message, METH_FASTCALL, NULL},
-    {"new_property_get_message", (void*)SdBus_new_property_get_message, METH_FASTCALL, NULL},
-    {"new_property_set_message", (void*)SdBus_new_property_set_message, METH_FASTCALL,
+    {"call", (SD_BUS_PY_FUNC_TYPE)SdBus_call, SD_BUS_PY_METH, "Send message and get reply"},
+    {"call_async", (SD_BUS_PY_FUNC_TYPE)SdBus_call_async, SD_BUS_PY_METH, "Async send message, returns awaitable future"},
+    {"drive", (PyCFunction)SdBus_drive, METH_NOARGS, "Drive connection"},
+    {"get_fd", (SD_BUS_PY_FUNC_TYPE)SdBus_get_fd, SD_BUS_PY_METH, "Get file descriptor to await on"},
+    {"new_method_call_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_method_call_message, SD_BUS_PY_METH, NULL},
+    {"new_property_get_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_property_get_message, SD_BUS_PY_METH, NULL},
+    {"new_property_set_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_property_set_message, SD_BUS_PY_METH,
      "Set object/interface property. User must add variant data to "
      "message"},
-    {"new_signal_message", (void*)SdBus_new_signal_message, METH_FASTCALL, "Create new signal message. User must data to message and send it"},
-    {"add_interface", (void*)SdBus_add_interface, METH_FASTCALL, "Add interface to the bus"},
-    {"get_signal_queue_async", (void*)SdBus_get_signal_queue, METH_FASTCALL,
+    {"new_signal_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_signal_message, SD_BUS_PY_METH, "Create new signal message. User must data to message and send it"},
+    {"add_interface", (SD_BUS_PY_FUNC_TYPE)SdBus_add_interface, SD_BUS_PY_METH, "Add interface to the bus"},
+    {"get_signal_queue_async", (SD_BUS_PY_FUNC_TYPE)SdBus_get_signal_queue, SD_BUS_PY_METH,
      "Returns a future that returns a queue that queues signal "
      "messages"},
-    {"request_name_async", (void*)SdBus_request_name_async, METH_FASTCALL, "Request dbus name async"},
-    {"request_name", (void*)SdBus_request_name, METH_FASTCALL, "Request dbus name blocking"},
-    {"add_object_manager", (void*)SdBus_add_object_manager, METH_FASTCALL, "Add object manager at the path"},
-    {"emit_object_added", (void*)SdBus_emit_object_added, METH_FASTCALL, "Emit signal that object was added"},
+    {"request_name_async", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name_async, SD_BUS_PY_METH, "Request dbus name async"},
+    {"request_name", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name, SD_BUS_PY_METH, "Request dbus name blocking"},
+    {"add_object_manager", (SD_BUS_PY_FUNC_TYPE)SdBus_add_object_manager, SD_BUS_PY_METH, "Add object manager at the path"},
+    {"emit_object_added", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_added, SD_BUS_PY_METH, "Emit signal that object was added"},
     {NULL, NULL, 0, NULL},
 };
 

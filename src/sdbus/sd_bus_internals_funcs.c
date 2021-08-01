@@ -38,17 +38,25 @@ static SdBusObject* sd_bus_py_open_system(PyObject* Py_UNUSED(self), PyObject* P
         return new_sd_bus;
 }
 
+#ifndef Py_LIMITED_API
 static PyObject* encode_object_path(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
-#ifdef LIBSYSTEMD_NO_VALIDATION_FUNCS
-        PyErr_SetString(PyExc_NotImplementedError, "libsystemd<0.29.0 does not support validation functions");
-        return NULL;
-#else
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
         SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
 
         const char* prefix_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* external_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
+
+#else
+static PyObject* encode_object_path(PyObject* Py_UNUSED(self), PyObject* args) {
+        const char* prefix_char_ptr = NULL;
+        const char* external_char_ptr = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ss", &prefix_char_ptr, &external_char_ptr, NULL));
+#endif
+#ifdef LIBSYSTEMD_NO_VALIDATION_FUNCS
+        PyErr_SetString(PyExc_NotImplementedError, "libsystemd<0.29.0 does not support validation functions");
+        return NULL;
+#else
 
         if (!sd_bus_object_path_is_valid(prefix_char_ptr)) {
                 PyErr_SetString(PyExc_ValueError, "Prefix is not a valid object path");
@@ -63,6 +71,7 @@ static PyObject* encode_object_path(PyObject* Py_UNUSED(self), PyObject* const* 
 #endif
 }
 
+#ifndef Py_LIMITED_API
 static PyObject* decode_object_path(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
@@ -70,6 +79,12 @@ static PyObject* decode_object_path(PyObject* Py_UNUSED(self), PyObject* const* 
 
         const char* prefix_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* full_path_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
+#else
+static PyObject* decode_object_path(PyObject* Py_UNUSED(self), PyObject* args) {
+        const char* prefix_char_ptr = NULL;
+        const char* full_path_char_ptr = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ss", &prefix_char_ptr, &full_path_char_ptr, NULL));
+#endif
 
         const char* new_char_ptr CLEANUP_STR_MALLOC = NULL;
 
@@ -82,7 +97,15 @@ static PyObject* decode_object_path(PyObject* Py_UNUSED(self), PyObject* const* 
         }
 }
 
-PyObject* _add_exception_mapping(PyObject* exception) {
+#ifndef Py_LIMITED_API
+static PyObject* add_exception_mapping(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
+        SD_BUS_PY_CHECK_ARGS_NUMBER(1);
+        PyObject* exception = args[0];
+#else
+static PyObject* add_exception_mapping(PyObject* Py_UNUSED(self), PyObject* args) {
+        PyObject* exception = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "O", &exception, NULL));
+#endif
         PyObject* dbus_error_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(exception, "dbus_error_name"));
 
         if (CALL_PYTHON_INT_CHECK(PyDict_Contains(dbus_error_to_exception_dict, dbus_error_string)) > 0) {
@@ -101,19 +124,14 @@ PyObject* _add_exception_mapping(PyObject* exception) {
         Py_RETURN_NONE;
 }
 
-static PyObject* add_exception_mapping(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
-        SD_BUS_PY_CHECK_ARGS_NUMBER(1);
-        return _add_exception_mapping(args[0]);
-}
-
 PyMethodDef SdBusPyInternal_methods[] = {
     {"sd_bus_open", (PyCFunction)sd_bus_py_open, METH_NOARGS,
      "Open dbus connection. Session bus running as user or system bus as "
      "daemon"},
     {"sd_bus_open_user", (PyCFunction)sd_bus_py_open_user, METH_NOARGS, "Open user session dbus"},
     {"sd_bus_open_system", (PyCFunction)sd_bus_py_open_system, METH_NOARGS, "Open system dbus"},
-    {"encode_object_path", (void*)encode_object_path, METH_FASTCALL, "Encode object path with object path prefix and arbitrary string"},
-    {"decode_object_path", (void*)decode_object_path, METH_FASTCALL, "Decode object path with object path prefix and arbitrary string"},
-    {"add_exception_mapping", (void*)add_exception_mapping, METH_FASTCALL, "Add exception to the mapping of dbus error names"},
+    {"encode_object_path", (SD_BUS_PY_FUNC_TYPE)encode_object_path, SD_BUS_PY_METH, "Encode object path with object path prefix and arbitrary string"},
+    {"decode_object_path", (SD_BUS_PY_FUNC_TYPE)decode_object_path, SD_BUS_PY_METH, "Decode object path with object path prefix and arbitrary string"},
+    {"add_exception_mapping", (SD_BUS_PY_FUNC_TYPE)add_exception_mapping, SD_BUS_PY_METH, "Add exception to the mapping of dbus error names"},
     {NULL, NULL, 0, NULL},
 };

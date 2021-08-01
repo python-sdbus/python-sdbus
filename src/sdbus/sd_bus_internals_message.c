@@ -35,15 +35,12 @@ static void SdBusMessage_dealloc(SdBusMessageObject* self) {
         SD_BUS_DEALLOC_TAIL;
 }
 
-static PyObject* SdBusMessage_seal(SdBusMessageObject* self, PyObject* const* Py_UNUSED(args), Py_ssize_t nargs) {
-        SD_BUS_PY_CHECK_ARGS_NUMBER(0);
+static PyObject* SdBusMessage_seal(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
         CALL_SD_BUS_AND_CHECK(sd_bus_message_seal(self->message_ref, 0, 0));
         Py_RETURN_NONE;
 }
 
-static PyObject* SdBusMessage_dump(SdBusMessageObject* self, PyObject* const* Py_UNUSED(args), Py_ssize_t nargs) {
-        SD_BUS_PY_CHECK_ARGS_NUMBER(0);
-
+static PyObject* SdBusMessage_dump(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
         CALL_SD_BUS_AND_CHECK(sd_bus_message_dump(self->message_ref, 0, SD_BUS_MESSAGE_DUMP_WITH_HEADER));
         CALL_SD_BUS_AND_CHECK(sd_bus_message_rewind(self->message_ref, 1));
         Py_RETURN_NONE;
@@ -463,12 +460,8 @@ static PyObject* _parse_array(PyObject* array_object, _Parse_state* parser_state
                 // "...a(as)..."
                 //     "(as)"
                 CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(parser_state->message, 'a', array_sig_char_ptr));
-#ifndef Py_LIMITED_API
-                for (Py_ssize_t i = 0; i < PyList_GET_SIZE(array_object); ++i) {
-#else
-                for (Py_ssize_t i = 0; i < PyList_Size(array_object); ++i) {
-#endif
-                        CALL_PYTHON_EXPECT_NONE(_parse_complete(PyList_GET_ITEM(array_object, i), &array_parser));
+                for (Py_ssize_t i = 0; i < SD_BUS_PY_LIST_GET_SIZE(array_object); ++i) {
+                        CALL_PYTHON_EXPECT_NONE(_parse_complete(SD_BUS_PY_LIST_GET_ITEM(array_object, i), &array_parser));
                         array_parser.index = 0;
                 }
                 CALL_SD_BUS_AND_CHECK(sd_bus_message_close_container(parser_state->message));
@@ -509,10 +502,10 @@ static PyObject* _parse_struct(PyObject* tuple_object, _Parse_state* parser_stat
         //     ^   ^
         //     "..."
         CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(parser_state->message, 'r', struct_signature));
-        for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(tuple_object); ++i) {
+        for (Py_ssize_t i = 0; i < SD_BUS_PY_TUPLE_GET_SIZE(tuple_object); ++i) {
                 // Use original parser as there is not much reason to
                 // create new one
-                CALL_PYTHON_EXPECT_NONE(_parse_complete(PyTuple_GET_ITEM(tuple_object, i), parser_state));
+                CALL_PYTHON_EXPECT_NONE(_parse_complete(SD_BUS_PY_TUPLE_GET_ITEM(tuple_object, i), parser_state));
         }
         CALL_SD_BUS_AND_CHECK(sd_bus_message_close_container(parser_state->message));
         // "...(...)..."
@@ -531,11 +524,11 @@ static PyObject* _parse_variant(PyObject* tuple_object, _Parse_state* parser_sta
                 PyErr_Format(PyExc_TypeError, "Message append error, expected tuple got %R", tuple_object);
                 return NULL;
         }
-        if (PyTuple_GET_SIZE(tuple_object) != 2) {
-                PyErr_Format(PyExc_TypeError, "Expected tuple of only 2 elements got %zi", PyTuple_GET_SIZE(tuple_object));
+        if (SD_BUS_PY_TUPLE_GET_SIZE(tuple_object) != 2) {
+                PyErr_Format(PyExc_TypeError, "Expected tuple of only 2 elements got %zi", SD_BUS_PY_TUPLE_GET_SIZE(tuple_object));
                 return NULL;
         }
-        PyObject* variant_signature = PyTuple_GET_ITEM(tuple_object, 0);
+        PyObject* variant_signature = SD_BUS_PY_TUPLE_GET_ITEM(tuple_object, 0);
         const char* variant_signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(variant_signature);
         _Parse_state variant_parser = {
             .message = parser_state->message,
@@ -545,7 +538,7 @@ static PyObject* _parse_variant(PyObject* tuple_object, _Parse_state* parser_sta
         };
 
         CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(parser_state->message, 'v', variant_signature_char_ptr));
-        PyObject* variant_body = PyTuple_GET_ITEM(tuple_object, 1);
+        PyObject* variant_body = SD_BUS_PY_TUPLE_GET_ITEM(tuple_object, 1);
         CALL_PYTHON_EXPECT_NONE(_parse_complete(variant_body, &variant_parser));
         CALL_SD_BUS_AND_CHECK(sd_bus_message_close_container(parser_state->message));
 
@@ -603,6 +596,7 @@ static PyObject* _parse_complete(PyObject* complete_obj, _Parse_state* parser_st
         Py_RETURN_NONE;
 }
 
+#ifndef Py_LIMITED_API
 static PyObject* SdBusMessage_append_data(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs) {
         if (nargs < 2) {
                 PyErr_SetString(PyExc_TypeError, "Minimum 2 args required");
@@ -622,9 +616,31 @@ static PyObject* SdBusMessage_append_data(SdBusMessageObject* self, PyObject* co
         for (Py_ssize_t i = 1; i < nargs; ++i) {
                 CALL_PYTHON_EXPECT_NONE(_parse_complete(args[i], &parser_state));
         }
+#else
+static PyObject* SdBusMessage_append_data(SdBusMessageObject* self, PyObject* args) {
+        Py_ssize_t num_args = PyTuple_Size(args);
+        if (num_args < 2) {
+                PyErr_SetString(PyExc_TypeError, "Minimum 2 args required");
+                return NULL;
+        }
+        PyObject* signature_str = PyTuple_GetItem(args, 0);
+        const char* signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(signature_str);
+
+        _Parse_state parser_state = {
+            .message = self->message_ref,
+            .container_char_ptr = signature_char_ptr,
+            .index = 0,
+            .max_index = strlen(signature_char_ptr),
+        };
+
+        for (Py_ssize_t i = 1; i < num_args; ++i) {
+                CALL_PYTHON_EXPECT_NONE(_parse_complete(PyTuple_GetItem(args, i), &parser_state));
+        }
+#endif
         Py_RETURN_NONE;
 }
 
+#ifndef Py_LIMITED_API
 static PyObject* SdBusMessage_open_container(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
@@ -632,20 +648,24 @@ static PyObject* SdBusMessage_open_container(SdBusMessageObject* self, PyObject*
 
         const char* container_type_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* container_contents_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
-
+#else
+static PyObject* SdBusMessage_open_container(SdBusMessageObject* self, PyObject* args) {
+        const char* container_type_char_ptr = NULL;
+        const char* container_contents_char_ptr = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ss", &container_type_char_ptr, &container_contents_char_ptr, NULL));
+#endif
         CALL_SD_BUS_AND_CHECK(sd_bus_message_open_container(self->message_ref, container_type_char_ptr[0], container_contents_char_ptr));
 
         Py_RETURN_NONE;
 }
 
-static PyObject* SdBusMessage_close_container(SdBusMessageObject* self, PyObject* const* Py_UNUSED(args), Py_ssize_t nargs) {
-        SD_BUS_PY_CHECK_ARGS_NUMBER(0);
-
+static PyObject* SdBusMessage_close_container(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
         CALL_SD_BUS_AND_CHECK(sd_bus_message_close_container(self->message_ref));
 
         Py_RETURN_NONE;
 }
 
+#ifndef Py_LIMITED_API
 static PyObject* SdBusMessage_enter_container(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
         SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
@@ -653,25 +673,34 @@ static PyObject* SdBusMessage_enter_container(SdBusMessageObject* self, PyObject
 
         const char* container_type_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* container_contents_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
-
+#else
+static PyObject* SdBusMessage_enter_container(SdBusMessageObject* self, PyObject* args) {
+        const char* container_type_char_ptr = NULL;
+        const char* container_contents_char_ptr = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ss", &container_type_char_ptr, &container_contents_char_ptr, NULL));
+#endif
         CALL_SD_BUS_AND_CHECK(sd_bus_message_enter_container(self->message_ref, container_type_char_ptr[0], container_contents_char_ptr));
 
         Py_RETURN_NONE;
 }
 
-static PyObject* SdBusMessage_exit_container(SdBusMessageObject* self, PyObject* const* Py_UNUSED(args), Py_ssize_t nargs) {
-        SD_BUS_PY_CHECK_ARGS_NUMBER(0);
-
+static PyObject* SdBusMessage_exit_container(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
         CALL_SD_BUS_AND_CHECK(sd_bus_message_exit_container(self->message_ref));
 
         Py_RETURN_NONE;
 }
 
-static SdBusMessageObject* SdBusMessage_create_reply(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs);
+static SdBusMessageObject* SdBusMessage_create_reply(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
+        SdBusMessageObject* new_reply_message CLEANUP_SD_BUS_MESSAGE =
+            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
 
-static PyObject* SdBusMessage_send(SdBusMessageObject* self, PyObject* const* Py_UNUSED(args), Py_ssize_t nargs) {
-        SD_BUS_PY_CHECK_ARGS_NUMBER(0);
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_return(self->message_ref, &new_reply_message->message_ref));
 
+        Py_INCREF(new_reply_message);
+        return new_reply_message;
+}
+
+static PyObject* SdBusMessage_send(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
         CALL_SD_BUS_AND_CHECK(sd_bus_send(NULL, self->message_ref, NULL));
 
         Py_RETURN_NONE;
@@ -848,7 +877,7 @@ static PyObject* _iter_struct(_Parse_state* parser) {
         PyObject* new_tuple CLEANUP_PY_OBJECT = PyTuple_New((Py_ssize_t)tuple_size);
         for (size_t i = 0; i < tuple_size; ++i) {
                 PyObject* new_complete = CALL_PYTHON_AND_CHECK(_iter_complete(parser));
-                PyTuple_SET_ITEM(new_tuple, i, new_complete);
+                SD_BUS_PY_TUPLE_SET_ITEM(new_tuple, i, new_complete);
         }
         Py_INCREF(new_tuple);
         return new_tuple;
@@ -954,21 +983,42 @@ static PyObject* SdBusMessage_get_member(SdBusMessageObject* self, PyObject* Py_
         return PyUnicode_FromString(member_char_ptr);
 }
 
-static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs);
+#ifndef Py_LIMITED_API
+static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs) {
+        SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+
+        const char* name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+        const char* error_message = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
+#else
+static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* self, PyObject* args) {
+        const char* name = NULL;
+        const char* error_message = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ss", &name, &error_message, NULL));
+#endif
+        SdBusMessageObject* new_reply_message CLEANUP_SD_BUS_MESSAGE =
+            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
+
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_errorf(self->message_ref, &new_reply_message->message_ref, name, "%s", error_message));
+
+        Py_INCREF(new_reply_message);
+        return new_reply_message;
+}
 
 static PyMethodDef SdBusMessage_methods[] = {
-    {"append_data", (void*)SdBusMessage_append_data, METH_FASTCALL, "Append basic data based on signature."},
-    {"open_container", (void*)SdBusMessage_open_container, METH_FASTCALL, "Open container for writing"},
-    {"close_container", (void*)SdBusMessage_close_container, METH_FASTCALL, "Close container"},
-    {"enter_container", (void*)SdBusMessage_enter_container, METH_FASTCALL, "Enter container for reading"},
-    {"exit_container", (void*)SdBusMessage_exit_container, METH_FASTCALL, "Exit container"},
-    {"dump", (void*)SdBusMessage_dump, METH_FASTCALL, "Dump message to stdout"},
-    {"seal", (void*)SdBusMessage_seal, METH_FASTCALL, "Seal message contents"},
+    {"append_data", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_append_data, SD_BUS_PY_METH, "Append basic data based on signature."},
+    {"open_container", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_open_container, SD_BUS_PY_METH, "Open container for writing"},
+    {"close_container", (PyCFunction)SdBusMessage_close_container, METH_NOARGS, "Close container"},
+    {"enter_container", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_enter_container, SD_BUS_PY_METH, "Enter container for reading"},
+    {"exit_container", (PyCFunction)SdBusMessage_exit_container, METH_NOARGS, "Exit container"},
+    {"dump", (PyCFunction)SdBusMessage_dump, METH_NOARGS, "Dump message to stdout"},
+    {"seal", (PyCFunction)SdBusMessage_seal, METH_NOARGS, "Seal message contents"},
     {"get_contents", (PyCFunction)SdBusMessage_get_contents2, METH_NOARGS, "Iterate over message contents"},
     {"get_member", (PyCFunction)SdBusMessage_get_member, METH_NOARGS, "Get message member field"},
-    {"create_reply", (void*)SdBusMessage_create_reply, METH_FASTCALL, "Create reply message"},
-    {"create_error_reply", (void*)SdBusMessage_create_error_reply, METH_FASTCALL, "Create error reply with error name and error message"},
-    {"send", (void*)SdBusMessage_send, METH_FASTCALL, "Queue message to be sent"},
+    {"create_reply", (PyCFunction)SdBusMessage_create_reply, METH_NOARGS, "Create reply message"},
+    {"create_error_reply", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_create_error_reply, SD_BUS_PY_METH, "Create error reply with error name and error message"},
+    {"send", (PyCFunction)SdBusMessage_send, METH_NOARGS, "Queue message to be sent"},
     {NULL, NULL, 0, NULL},
 };
 
@@ -1011,29 +1061,3 @@ PyType_Spec SdBusMessageType = {
             {0, NULL},
         },
 };
-
-static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs) {
-        SD_BUS_PY_CHECK_ARGS_NUMBER(2);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
-
-        SdBusMessageObject* new_reply_message CLEANUP_SD_BUS_MESSAGE =
-            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
-
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_errorf(self->message_ref, &new_reply_message->message_ref, SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]), "%s",
-                                                               SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1])));
-
-        Py_INCREF(new_reply_message);
-        return new_reply_message;
-}
-
-static SdBusMessageObject* SdBusMessage_create_reply(SdBusMessageObject* self, PyObject* const* Py_UNUSED(args), Py_ssize_t nargs) {
-        SD_BUS_PY_CHECK_ARGS_NUMBER(0);
-        SdBusMessageObject* new_reply_message CLEANUP_SD_BUS_MESSAGE =
-            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
-
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_return(self->message_ref, &new_reply_message->message_ref));
-
-        Py_INCREF(new_reply_message);
-        return new_reply_message;
-}

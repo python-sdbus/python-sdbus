@@ -81,7 +81,8 @@
                 return_int;                                                \
         })
 
-#define SD_BUS_PY_UNICODE_AS_CHAR_PTR_UNLIMITED(py_object)              \
+#ifndef Py_LIMITED_API
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                        \
         ({                                                              \
                 const char* new_char_ptr = PyUnicode_AsUTF8(py_object); \
                 if (new_char_ptr == NULL) {                             \
@@ -89,24 +90,19 @@
                 }                                                       \
                 new_char_ptr;                                           \
         })
-
-#define SD_BUS_PY_UNICODE_AS_CHAR_PTR_STABLE(py_object)                                      \
-        ({                                                                                   \
-                PyObject* utf_8_bytes CLEANUP_PY_OBJECT = PyUnicode_AsUTF8String(py_object); \
-                if (utf_8_bytes == NULL) {                                                   \
-                        return NULL;                                                         \
-                }                                                                            \
-                const char* new_char_ptr = PyBytes_AsString(utf_8_bytes);                    \
-                if (new_char_ptr == NULL) {                                                  \
-                        return NULL;                                                         \
-                }                                                                            \
-                new_char_ptr;                                                                \
-        })
-
-#ifdef Py_LIMITED_API
-#define SD_BUS_PY_UNICODE_AS_CHAR_PTR SD_BUS_PY_UNICODE_AS_CHAR_PTR_STABLE
 #else
-#define SD_BUS_PY_UNICODE_AS_CHAR_PTR SD_BUS_PY_UNICODE_AS_CHAR_PTR_UNLIMITED
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                           \
+        ({                                                                 \
+                PyObject* utf_8_bytes = PyUnicode_AsUTF8String(py_object); \
+                if (utf_8_bytes == NULL) {                                 \
+                        return NULL;                                       \
+                }                                                          \
+                const char* new_char_ptr = PyBytes_AsString(utf_8_bytes);  \
+                if (new_char_ptr == NULL) {                                \
+                        return NULL;                                       \
+                }                                                          \
+                new_char_ptr;                                              \
+        })
 #endif
 
 #define CALL_PYTHON_ITER(iter, iter_end)                             \
@@ -128,6 +124,15 @@
         ({                                    \
                 int return_int = py_function; \
                 if (return_int < 0) {         \
+                        return NULL;          \
+                }                             \
+                return_int;                   \
+        })
+
+#define CALL_PYTHON_BOOL_CHECK(py_function)   \
+        ({                                    \
+                int return_int = py_function; \
+                if (!return_int) {            \
                         return NULL;          \
                 }                             \
                 return_int;                   \
@@ -162,6 +167,48 @@
         void (*free_self)(void*) = (freefunc)PyType_GetSlot(self_type, Py_tp_free); \
         free_self(self);                                                            \
         Py_DECREF(self_type);
+#endif
+
+#ifndef Py_LIMITED_API
+#define SD_BUS_PY_METH METH_FASTCALL
+#else
+#define SD_BUS_PY_METH METH_VARARGS
+#endif
+
+#ifndef Py_LIMITED_API
+#define SD_BUS_PY_FUNC_TYPE void*
+#else
+#define SD_BUS_PY_FUNC_TYPE PyCFunction
+#endif
+
+#ifndef Py_LIMITED_API
+#define SD_BUS_PY_LIST_GET_ITEM PyList_GET_ITEM
+#else
+#define SD_BUS_PY_LIST_GET_ITEM PyList_GetItem
+#endif
+
+#ifndef Py_LIMITED_API
+#define SD_BUS_PY_TUPLE_GET_SIZE PyTuple_GET_SIZE
+#else
+#define SD_BUS_PY_TUPLE_GET_SIZE PyTuple_Size
+#endif
+
+#ifndef Py_LIMITED_API
+#define SD_BUS_PY_TUPLE_GET_ITEM PyTuple_GET_ITEM
+#else
+#define SD_BUS_PY_TUPLE_GET_ITEM PyTuple_GetItem
+#endif
+
+#ifndef Py_LIMITED_API
+#define SD_BUS_PY_TUPLE_SET_ITEM PyTuple_SET_ITEM
+#else
+#define SD_BUS_PY_TUPLE_SET_ITEM PyTuple_SetItem
+#endif
+
+#ifndef Py_LIMITED_API
+#define SD_BUS_PY_LIST_GET_SIZE PyList_GET_SIZE
+#else
+#define SD_BUS_PY_LIST_GET_SIZE PyList_Size
 #endif
 
 // Python functions and objects

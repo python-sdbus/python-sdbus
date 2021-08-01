@@ -76,6 +76,13 @@ link_arguments.append('-flto')
 
 compile_arguments: List[str] = ['-flto']
 
+use_limited_api = False
+
+if environ.get('PYTHON_SDBUS_USE_LIMITED_API'):
+    c_macros.append(('Py_LIMITED_API', '0x03070000'))
+    use_limited_api = True
+
+
 if __name__ == '__main__':
     setup(
         name='sdbus',
@@ -140,6 +147,7 @@ if __name__ == '__main__':
                 extra_compile_args=compile_arguments,
                 extra_link_args=link_arguments,
                 define_macros=c_macros,
+                py_limited_api=use_limited_api,
             )
         ],
     )

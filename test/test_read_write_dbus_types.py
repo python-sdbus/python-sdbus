@@ -25,14 +25,17 @@ from .common_test_util import TempDbusTest
 
 
 class TestDbusTypes(TempDbusTest):
-    async def asyncSetUp(self) -> None:
-        await super().asyncSetUp()
-
+    def create_message(self) -> None:
         self.message = self.bus.new_method_call_message(
             'org.freedesktop.systemd1',
             '/org/freedesktop/systemd1',
             'org.freedesktop.systemd1.Manager',
             'GetUnit')
+
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
+
+        self.create_message()
 
     def test_unsigned(self) -> None:
         int_t_max = 2**64

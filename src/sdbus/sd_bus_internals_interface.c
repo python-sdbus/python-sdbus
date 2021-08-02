@@ -79,11 +79,13 @@ static PyObject* SdBusInterface_add_property(SdBusInterfaceObject* self, PyObjec
 
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "OOOOO", &name, &signature, &getter, &setter, &flags, NULL));
 #endif
-        PyObject* new_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(4, name, signature, flags, setter));
+        PyObject* name_bytes CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(name);
+        PyObject* signature_bytes CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(signature);
+        PyObject* new_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(4, name_bytes, signature_bytes, flags, setter));
 
         CALL_PYTHON_INT_CHECK(PyList_Append(self->property_list, new_tuple));
-        CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->property_get_dict, name, getter));
-        CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->property_set_dict, name, setter));
+        CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->property_get_dict, name_bytes, getter));
+        CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->property_set_dict, name_bytes, setter));
 
         Py_RETURN_NONE;
 }
@@ -123,6 +125,10 @@ static PyObject* SdBusInterface_add_method(SdBusInterfaceObject* self, PyObject*
         CALL_PYTHON_BOOL_CHECK(
             PyArg_ParseTuple(args, "OOOOOOO", &method_name, &input_signature, &input_names, &result_signature, &result_names, &flags, &callback_func, NULL));
 #endif
+        PyObject* method_name_bytes CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(method_name);
+        PyObject* input_signature_bytes CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(input_signature);
+        PyObject* result_signature_bytes CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(result_signature);
+
         PyObject* argument_name_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
         CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, extend_str, input_names, NULL));
         CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, extend_str, result_names, NULL));
@@ -130,13 +136,14 @@ static PyObject* SdBusInterface_add_method(SdBusInterfaceObject* self, PyObject*
         CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, append_str, null_str, NULL));
 
         PyObject* argument_names_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_Join(null_str, argument_name_list));
+        PyObject* argument_names_bytes CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(argument_names_string);
         // Method name, input signature, return signature, arguments names,
         // flags
         PyObject* new_tuple CLEANUP_PY_OBJECT =
-            CALL_PYTHON_AND_CHECK(PyTuple_Pack(5, method_name, input_signature, result_signature, argument_names_string, flags));
+            CALL_PYTHON_AND_CHECK(PyTuple_Pack(5, method_name_bytes, input_signature_bytes, result_signature_bytes, argument_names_bytes, flags));
 
         CALL_PYTHON_INT_CHECK(PyList_Append(self->method_list, new_tuple));
-        CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->method_dict, method_name, callback_func));
+        CALL_PYTHON_INT_CHECK(PyDict_SetItem(self->method_dict, method_name_bytes, callback_func));
 
         Py_RETURN_NONE;
 }
@@ -163,14 +170,18 @@ static PyObject* SdBusInterface_add_signal(SdBusInterfaceObject* self, PyObject*
         PyObject* flags = NULL;
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "OOOO", &signal_name, &signature, &input_names, &flags, NULL));
 #endif
+        PyObject* signal_name_bytes CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(signal_name);
+        PyObject* signature_bytes CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(signature);
+
         PyObject* argument_name_list CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyList_New(0));
         CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, extend_str, input_names, NULL));
         // HACK: add a null separator to the end of the array
         CALL_PYTHON_EXPECT_NONE(PyObject_CallMethodObjArgs(argument_name_list, append_str, null_str, NULL));
 
         PyObject* argument_names_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyUnicode_Join(null_str, argument_name_list));
+        PyObject* argument_names_bytes CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(argument_names_string);
         // Signal name, signature, names of input values, flags
-        PyObject* new_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(4, signal_name, signature, argument_names_string, flags));
+        PyObject* new_tuple CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyTuple_Pack(4, signal_name_bytes, signature_bytes, argument_names_bytes, flags));
 
         CALL_PYTHON_INT_CHECK(PyList_Append(self->signal_list, new_tuple));
 
@@ -220,17 +231,14 @@ static PyObject* SdBusInterface_create_vtable(SdBusInterfaceObject* self, PyObje
                 PyObject* method_tuple = CALL_PYTHON_AND_CHECK(PyList_GetItem(self->method_list, i));
 
                 PyObject* method_name_object = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 0));
-                const char* method_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(method_name_object);
-
                 PyObject* input_signature_object = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 1));
-                const char* input_signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(input_signature_object);
-
                 PyObject* result_signature_object = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 2));
-                const char* result_signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(result_signature_object);
-
                 PyObject* argument_names_string = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 3));
 
-                const char* argument_names_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(argument_names_string);
+                const char* method_name_char_ptr = SD_BUS_PY_BYTES_AS_CHAR_PTR(method_name_object);
+                const char* input_signature_char_ptr = SD_BUS_PY_BYTES_AS_CHAR_PTR(input_signature_object);
+                const char* result_signature_char_ptr = SD_BUS_PY_BYTES_AS_CHAR_PTR(result_signature_object);
+                const char* argument_names_char_ptr = SD_BUS_PY_BYTES_AS_CHAR_PTR(argument_names_string);
 
                 PyObject* flags_object = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 4));
                 unsigned long long flags_long = PyLong_AsUnsignedLongLong(flags_object);
@@ -254,8 +262,8 @@ static PyObject* SdBusInterface_create_vtable(SdBusInterfaceObject* self, PyObje
                 PyObject* property_flags = SD_BUS_PY_TUPLE_GET_ITEM(property_tuple, 2);
                 PyObject* setter_or_none = SD_BUS_PY_TUPLE_GET_ITEM(property_tuple, 3);
 
-                const char* property_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(property_name_str);
-                const char* property_signature_const_char = SD_BUS_PY_UNICODE_AS_CHAR_PTR(property_signature_str);
+                const char* property_name_char_ptr = SD_BUS_PY_BYTES_AS_CHAR_PTR(property_name_str);
+                const char* property_signature_const_char = SD_BUS_PY_BYTES_AS_CHAR_PTR(property_signature_str);
 
                 unsigned long long flags_long = PyLong_AsUnsignedLongLong(property_flags);
                 if (PyErr_Occurred()) {
@@ -293,9 +301,9 @@ static PyObject* SdBusInterface_create_vtable(SdBusInterfaceObject* self, PyObje
                 PyObject* signal_input_names = SD_BUS_PY_TUPLE_GET_ITEM(signal_tuple, 2);
                 PyObject* signal_flags = SD_BUS_PY_TUPLE_GET_ITEM(signal_tuple, 3);
 
-                const char* signal_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(signal_name_str);
-                const char* signal_signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(signal_signature_str);
-                const char* signal_args_names_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(signal_input_names);
+                const char* signal_name_char_ptr = SD_BUS_PY_BYTES_AS_CHAR_PTR(signal_name_str);
+                const char* signal_signature_char_ptr = SD_BUS_PY_BYTES_AS_CHAR_PTR(signal_signature_str);
+                const char* signal_args_names_char_ptr = SD_BUS_PY_BYTES_AS_CHAR_PTR(signal_input_names);
 
                 unsigned long long flags_long = PyLong_AsUnsignedLongLong(signal_flags);
                 if (PyErr_Occurred()) {
@@ -344,10 +352,12 @@ PyType_Spec SdBusInterfaceType = {
 };
 
 static int _SdBusInterface_callback(sd_bus_message* m, void* userdata, sd_bus_error* ret_error) {
+        // TODO: Better error handling
         SdBusInterfaceObject* self = userdata;
         // Get the member name from the message
         const char* member_char_ptr = sd_bus_message_get_member(m);
-        PyObject* callback_object = PyDict_GetItemString(self->method_dict, member_char_ptr);
+        PyObject* member_name_bytes CLEANUP_PY_OBJECT = PyBytes_FromString(member_char_ptr);
+        PyObject* callback_object = PyDict_GetItem(self->method_dict, member_name_bytes);
         if (callback_object == NULL) {
                 sd_bus_error_set(ret_error, SD_BUS_ERROR_UNKNOWN_METHOD, "");
                 return -1;
@@ -404,7 +414,8 @@ static int _SdBusInterface_property_get_callback(sd_bus* Py_UNUSED(bus),
                                                  void* userdata,
                                                  sd_bus_error* Py_UNUSED(ret_error)) {
         SdBusInterfaceObject* self = userdata;
-        PyObject* get_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItemString(self->property_get_dict, property));
+        PyObject* property_name_bytes CLEANUP_PY_OBJECT = PyBytes_FromString(property);
+        PyObject* get_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItem(self->property_get_dict, property_name_bytes));
 
         PyObject* new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, reply);
@@ -421,8 +432,8 @@ static int _SdBusInterface_property_set_callback(sd_bus* Py_UNUSED(bus),
                                                  void* userdata,
                                                  sd_bus_error* Py_UNUSED(ret_error)) {
         SdBusInterfaceObject* self = userdata;
-
-        PyObject* set_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItemString(self->property_set_dict, property));
+        PyObject* property_name_bytes CLEANUP_PY_OBJECT = PyBytes_FromString(property);
+        PyObject* set_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItem(self->property_set_dict, property_name_bytes));
 
         PyObject* new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, value);

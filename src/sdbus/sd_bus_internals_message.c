@@ -213,8 +213,12 @@ static PyObject* _parse_basic(PyObject* basic_obj, _Parse_state* parser_state) {
                                              basic_obj);
                                 return NULL;
                         }
-
+#ifndef Py_LIMITED_API
                         const char* char_ptr_to_append = SD_BUS_PY_UNICODE_AS_CHAR_PTR(basic_obj);
+#else
+                        PyObject* bytes_to_append CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(basic_obj);
+                        const char* char_ptr_to_append = SD_BUS_PY_BYTES_AS_CHAR_PTR(bytes_to_append);
+#endif
                         CALL_SD_BUS_AND_CHECK(sd_bus_message_append_basic(parser_state->message, basic_type, char_ptr_to_append));
                         break;
                 }
@@ -529,7 +533,12 @@ static PyObject* _parse_variant(PyObject* tuple_object, _Parse_state* parser_sta
                 return NULL;
         }
         PyObject* variant_signature = SD_BUS_PY_TUPLE_GET_ITEM(tuple_object, 0);
+#ifndef Py_LIMITED_API
         const char* variant_signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(variant_signature);
+#else
+        PyObject* variant_signature_bytes CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(variant_signature);
+        const char* variant_signature_char_ptr = SD_BUS_PY_BYTES_AS_CHAR_PTR(variant_signature_bytes);
+#endif
         _Parse_state variant_parser = {
             .message = parser_state->message,
             .max_index = strlen(variant_signature_char_ptr),
@@ -624,7 +633,8 @@ static PyObject* SdBusMessage_append_data(SdBusMessageObject* self, PyObject* ar
                 return NULL;
         }
         PyObject* signature_str = PyTuple_GetItem(args, 0);
-        const char* signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(signature_str);
+        PyObject* signature_bytes CLEANUP_PY_OBJECT = SD_BUS_PY_UNICODE_AS_BYTES(signature_str);
+        const char* signature_char_ptr = SD_BUS_PY_BYTES_AS_CHAR_PTR(signature_bytes);
 
         _Parse_state parser_state = {
             .message = self->message_ref,

@@ -81,6 +81,24 @@
                 return_int;                                                \
         })
 
+#define SD_BUS_PY_UNICODE_AS_BYTES(py_unicode)                              \
+        ({                                                                  \
+                PyObject* utf_8_bytes = PyUnicode_AsUTF8String(py_unicode); \
+                if (utf_8_bytes == NULL) {                                  \
+                        return NULL;                                        \
+                }                                                           \
+                utf_8_bytes;                                                \
+        })
+
+#define SD_BUS_PY_BYTES_AS_CHAR_PTR(py_bytes)                          \
+        ({                                                             \
+                const char* new_char_ptr = PyBytes_AsString(py_bytes); \
+                if (new_char_ptr == NULL) {                            \
+                        return NULL;                                   \
+                }                                                      \
+                new_char_ptr;                                          \
+        })
+
 #ifndef Py_LIMITED_API
 #define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                        \
         ({                                                              \
@@ -89,19 +107,6 @@
                         return NULL;                                    \
                 }                                                       \
                 new_char_ptr;                                           \
-        })
-#else
-#define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                           \
-        ({                                                                 \
-                PyObject* utf_8_bytes = PyUnicode_AsUTF8String(py_object); \
-                if (utf_8_bytes == NULL) {                                 \
-                        return NULL;                                       \
-                }                                                          \
-                const char* new_char_ptr = PyBytes_AsString(utf_8_bytes);  \
-                if (new_char_ptr == NULL) {                                \
-                        return NULL;                                       \
-                }                                                          \
-                new_char_ptr;                                              \
         })
 #endif
 

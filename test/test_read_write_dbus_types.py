@@ -20,222 +20,252 @@
 from unittest import main
 
 from sdbus import SdBusLibraryError
+from sdbus.sd_bus_internals import SdBusMessage, SdBus
 
 from .common_test_util import TempDbusTest
 
 
-class TestDbusTypes(TempDbusTest):
-    def create_message(self) -> None:
-        self.message = self.bus.new_method_call_message(
-            'org.freedesktop.systemd1',
-            '/org/freedesktop/systemd1',
-            'org.freedesktop.systemd1.Manager',
-            'GetUnit')
+def create_message(bus: SdBus) -> SdBusMessage:
+    return bus.new_method_call_message(
+        'org.freedesktop.systemd1',
+        '/org/freedesktop/systemd1',
+        'org.freedesktop.systemd1.Manager',
+        'GetUnit')
 
+
+class TestDbusTypes(TempDbusTest):
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
 
-        self.create_message()
-
     def test_unsigned(self) -> None:
+        message = create_message(self.bus)
+
         int_t_max = 2**64
         unsigned_integers = ((2**8)-1, (2**16)-1, (2**32)-1, int_t_max-1)
-        self.message.append_data("yqut", *unsigned_integers)
+        message.append_data("yqut", *unsigned_integers)
         # Test overflows
         self.assertRaises(
-            OverflowError, self.message.append_data, "y", 2**8)
+            OverflowError, message.append_data, "y", 2**8)
 
         self.assertRaises(
-            OverflowError, self.message.append_data, "q", 2**16)
+            OverflowError, message.append_data, "q", 2**16)
 
         self.assertRaises(
-            OverflowError, self.message.append_data, "u", 2**32)
+            OverflowError, message.append_data, "u", 2**32)
 
         self.assertRaises(
-            OverflowError, self.message.append_data, "t", 2**64)
+            OverflowError, message.append_data, "t", 2**64)
 
         self.assertRaises(
-            OverflowError, self.message.append_data, "y", -1)
+            OverflowError, message.append_data, "y", -1)
         self.assertRaises(
-            OverflowError, self.message.append_data, "q", -1)
+            OverflowError, message.append_data, "q", -1)
         self.assertRaises(
-            OverflowError, self.message.append_data, "u", -1)
+            OverflowError, message.append_data, "u", -1)
         self.assertRaises(
-            OverflowError, self.message.append_data, "t", -1)
+            OverflowError, message.append_data, "t", -1)
 
-        self.message.seal()
-        return_integers = self.message.get_contents()
+        message.seal()
+        return_integers = message.get_contents()
         self.assertEqual(unsigned_integers, return_integers)
 
     def test_signed(self) -> None:
+        message = create_message(self.bus)
+
         int_n_max = (2**(16-1))-1
         int_i_max = (2**(32-1))-1
         int_x_max = (2**(64-1))-1
         signed_integers_positive = (int_n_max, int_i_max, int_x_max)
-        self.message.append_data("nix", *signed_integers_positive)
+        message.append_data("nix", *signed_integers_positive)
 
         self.assertRaises(
-            OverflowError, self.message.append_data, "n", int_n_max + 1)
+            OverflowError, message.append_data, "n", int_n_max + 1)
 
         self.assertRaises(
-            OverflowError, self.message.append_data, "i", int_i_max + 1)
+            OverflowError, message.append_data, "i", int_i_max + 1)
 
         self.assertRaises(
-            OverflowError, self.message.append_data, "x", int_x_max + 1)
+            OverflowError, message.append_data, "x", int_x_max + 1)
 
         int_n_min = -(2**(16-1))
         int_i_min = -(2**(32-1))
         int_x_min = -(2**(64-1))
         signed_integers_negative = (int_n_min, int_i_min, int_x_min)
-        self.message.append_data("n", int_n_min)
+        message.append_data("n", int_n_min)
         self.assertRaises(
-            OverflowError, self.message.append_data, "n", int_n_min - 1)
+            OverflowError, message.append_data, "n", int_n_min - 1)
 
-        self.message.append_data("i", int_i_min)
+        message.append_data("i", int_i_min)
         self.assertRaises(
-            OverflowError, self.message.append_data, "i", int_i_min - 1)
+            OverflowError, message.append_data, "i", int_i_min - 1)
 
-        self.message.append_data("x", int_x_min)
+        message.append_data("x", int_x_min)
         self.assertRaises(
-            OverflowError, self.message.append_data, "x", int_x_min - 1)
+            OverflowError, message.append_data, "x", int_x_min - 1)
 
-        self.message.seal()
-        return_integers = self.message.get_contents()
+        message.seal()
+        return_integers = message.get_contents()
         self.assertEqual(signed_integers_positive +
                          signed_integers_negative, return_integers)
 
     def test_strings(self) -> None:
+        message = create_message(self.bus)
+
         test_string = "test"
         test_path = "/test/object"
         test_signature = "say(xsai)o"
 
-        self.message.append_data("sog", test_string, test_path, test_signature)
+        message.append_data("sog", test_string, test_path, test_signature)
 
-        self.message.seal()
-        self.assertEqual(self.message.get_contents(),
+        message.seal()
+        self.assertEqual(message.get_contents(),
                          (test_string, test_path, test_signature))
 
     def test_double(self) -> None:
-        test_double = 1.0
-        self.message.append_data("d", test_double)
+        message = create_message(self.bus)
 
-        self.message.seal()
-        self.assertEqual(self.message.get_contents(), test_double)
+        test_double = 1.0
+        message.append_data("d", test_double)
+
+        message.seal()
+        self.assertEqual(message.get_contents(), test_double)
 
     def test_bool(self) -> None:
+        message = create_message(self.bus)
+
         test_booleans = (True, False, False, True, 1 == 1)
 
-        self.message.append_data("bbbbb", *test_booleans)
+        message.append_data("bbbbb", *test_booleans)
 
-        self.assertRaises(TypeError, self.message.append_data, 'b', 'asdasad')
+        self.assertRaises(TypeError, message.append_data, 'b', 'asdasad')
 
-        self.message.seal()
-        self.assertEqual(self.message.get_contents(), test_booleans)
+        message.seal()
+        self.assertEqual(message.get_contents(), test_booleans)
 
     def test_array(self) -> None:
+        message = create_message(self.bus)
+
         test_string_array = ["Ttest", "serawer", "asdadcxzc"]
-        self.message.append_data("as", test_string_array)
+        message.append_data("as", test_string_array)
 
         test_bytes_array = b"asdasrddjkmlh\ngnmflkdtgh\0oer27852y4785823"
-        self.message.append_data("ay", test_bytes_array)
+        message.append_data("ay", test_bytes_array)
 
         test_int_list = [1234, 123123, 764523]
-        self.message.append_data("ai", test_int_list)
+        message.append_data("ai", test_int_list)
 
-        self.message.append_data("ax", [])
+        message.append_data("ax", [])
 
-        self.assertRaises(TypeError, self.message.append_data,
+        self.assertRaises(TypeError, message.append_data,
                           "a", test_int_list)
 
-        self.message.seal()
+        message.seal()
 
         self.assertEqual(
-            self.message.get_contents(),
+            message.get_contents(),
             (test_string_array, test_bytes_array, test_int_list, []))
 
     def test_empty_array(self) -> None:
-        test_array = []
-        self.message.append_data("as", test_array)
+        message = create_message(self.bus)
 
-        self.message.seal()
+        test_array = []
+        message.append_data("as", test_array)
+
+        message.seal()
 
         self.assertEqual(
-            self.message.get_contents(),
+            message.get_contents(),
             test_array)
 
     def test_array_compound(self) -> None:
+        message = create_message(self.bus)
+
         test_string_array = ["Ttest", "serawer", "asdadcxzc"]
         test_bytes_array = b"asdasrddjkmlh\ngnmflkdtgh\0oer27852y4785823"
         test_int_list = [1234, 123123, 764523]
 
-        self.message.append_data(
+        message.append_data(
             "asayai", test_string_array, test_bytes_array, test_int_list)
 
-        self.message.seal()
+        message.seal()
 
-        self.assertEqual(self.message.get_contents(),
+        self.assertEqual(message.get_contents(),
                          (test_string_array, test_bytes_array, test_int_list))
 
     def test_nested_array(self) -> None:
+        message = create_message(self.bus)
+
         test_string_array_one = ["Ttest", "serawer", "asdadcxzc"]
         test_string_array_two = ["asdaf", "seragdsfrgdswer", "sdfsdgg"]
 
-        self.message.append_data(
+        message.append_data(
             "aas", [test_string_array_one, test_string_array_two])
 
-        self.message.seal()
+        message.seal()
 
-        self.assertEqual(self.message.get_contents(),
+        self.assertEqual(message.get_contents(),
                          [test_string_array_one, test_string_array_two])
 
     def test_struct(self) -> None:
+        message = create_message(self.bus)
+
         struct_data = (123123, "test")
-        self.message.append_data("(xs)", struct_data)
+        message.append_data("(xs)", struct_data)
 
-        self.message.seal()
+        message.seal()
 
-        self.assertEqual(self.message.get_contents(), struct_data)
+        self.assertEqual(message.get_contents(), struct_data)
 
     def test_dict(self) -> None:
+        message = create_message(self.bus)
+
         test_dict = {'test': 'a', 'asdaefd': 'cvbcfg'}
-        self.message.append_data("a{ss}", test_dict)
+        message.append_data("a{ss}", test_dict)
 
         self.assertRaises(
-            TypeError, self.message.append_data, "{ss}", test_dict)
+            TypeError, message.append_data, "{ss}", test_dict)
 
-        self.message.seal()
-        self.assertEqual(self.message.get_contents(), test_dict)
+        message.seal()
+        self.assertEqual(message.get_contents(), test_dict)
 
     def test_empty_dict(self) -> None:
-        test_dict = {}
-        self.message.append_data("a{ss}", test_dict)
+        message = create_message(self.bus)
 
-        self.message.seal()
-        self.assertEqual(self.message.get_contents(), test_dict)
+        test_dict = {}
+        message.append_data("a{ss}", test_dict)
+
+        message.seal()
+        self.assertEqual(message.get_contents(), test_dict)
 
     def test_dict_nested_array(self) -> None:
+        message = create_message(self.bus)
+
         test_array_one = [12, 1234234, 5, 2345, 24, 5623, 46, 2546, 68798]
         test_array_two = [124, 5, 356, 3, 57, 35,
                           67, 356, 2, 647, 36, 5784, 8, 809]
         test_dict = {'test': test_array_one, 'asdaefd': test_array_two}
-        self.message.append_data("a{sax}", test_dict)
+        message.append_data("a{sax}", test_dict)
 
-        self.message.seal()
+        message.seal()
 
-        self.assertEqual(self.message.get_contents(), test_dict)
+        self.assertEqual(message.get_contents(), test_dict)
 
     def test_variant(self) -> None:
+        message = create_message(self.bus)
+
         test_signature = "x"
         test_int = 1241354
 
-        self.message.append_data("v", (test_signature, test_int))
+        message.append_data("v", (test_signature, test_int))
 
-        self.message.seal()
+        message.seal()
 
-        self.assertEqual(self.message.get_contents(),
+        self.assertEqual(message.get_contents(),
                          (test_signature, test_int))
 
     def test_array_of_variant(self) -> None:
+        message = create_message(self.bus)
+
         test_signature_one = "(ssx)"
         test_str_1 = 'asdasdasd'
         test_str_2 = 'asdasdaddasdasdzc'
@@ -244,7 +274,7 @@ class TestDbusTypes(TempDbusTest):
         test_signature_two = "ai"
         test_array = [12, 1234234, 5, 2345, 24, 5623, 46, 2546, 68798]
 
-        self.message.append_data(
+        message.append_data(
             "av",
             [
                 (test_signature_one, (test_str_1, test_str_2, test_int)),
@@ -252,10 +282,10 @@ class TestDbusTypes(TempDbusTest):
             ]
         )
 
-        self.message.seal()
+        message.seal()
 
         self.assertEqual(
-            self.message.get_contents(),
+            message.get_contents(),
             [
                 (test_signature_one, (test_str_1, test_str_2, test_int)),
                 (test_signature_two, test_array)
@@ -263,47 +293,55 @@ class TestDbusTypes(TempDbusTest):
         )
 
     def test_array_of_dict(self) -> None:
+        message = create_message(self.bus)
+
         test_data = [
             {'asdasd': 'asdasd'},
             {'asdasdsg': 'asdasfdaf'},
             {},
         ]
 
-        self.message.append_data("aa{ss}", test_data)
-        self.message.seal()
+        message.append_data("aa{ss}", test_data)
+        message.seal()
 
         self.assertEqual(
-            self.message.get_contents(),
+            message.get_contents(),
             test_data)
 
     def test_array_of_struct(self) -> None:
+        message = create_message(self.bus)
+
         test_data = [
             ('asdasd', 34636),
             ('asdasdads', -5425),
         ]
 
-        self.message.append_data("a(si)", test_data)
-        self.message.seal()
+        message.append_data("a(si)", test_data)
+        message.seal()
 
         self.assertEqual(
-            self.message.get_contents(),
+            message.get_contents(),
             test_data)
 
     def test_dict_of_struct(self) -> None:
+        message = create_message(self.bus)
+
         test_dict = {
             1: ('asdasd', 'xcvghtrh'),
             2: ('rjhtyjdg', 'gbdtsret'),
             3: ('gvsgdthgdeth', 'gsgderfgd'),
         }
 
-        self.message.append_data("a{n(ss)}", test_dict)
-        self.message.seal()
+        message.append_data("a{n(ss)}", test_dict)
+        message.seal()
 
         self.assertEqual(
-            self.message.get_contents(),
+            message.get_contents(),
             test_dict)
 
     def test_struct_with_dict(self) -> None:
+        message = create_message(self.bus)
+
         test_struct = (
             'asdasdag',
             {
@@ -314,47 +352,53 @@ class TestDbusTypes(TempDbusTest):
             True
         )
 
-        self.message.append_data("(sa{sq}ib)", test_struct)
-        self.message.seal()
+        message.append_data("(sa{sq}ib)", test_struct)
+        message.seal()
 
         self.assertEqual(
-            self.message.get_contents(),
+            message.get_contents(),
             test_struct
         )
 
     def test_dict_of_array(self) -> None:
+        message = create_message(self.bus)
+
         test_dict = {
             '/': [341, 134, 764, 8986],
             '/test': [-245, -245, -1, 25],
         }
 
-        self.message.append_data("a{oai}", test_dict)
-        self.message.seal()
+        message.append_data("a{oai}", test_dict)
+        message.seal()
 
         self.assertEqual(
-            self.message.get_contents(),
+            message.get_contents(),
             test_dict
         )
 
     def test_array_of_array(self) -> None:
+        message = create_message(self.bus)
+
         test_array = [
             ['asda', 'afgrfyhgdr', 'adffgvfdrfg'],
             ['afhryfjh', 'sgffgddrhg'],
             []
         ]
-        self.message.append_data("aas", test_array)
-        self.message.seal()
+        message.append_data("aas", test_array)
+        message.seal()
 
         self.assertEqual(
-            self.message.get_contents(),
+            message.get_contents(),
             test_array
         )
 
     def test_sealed_message_append(self) -> None:
-        self.message.append_data('s', 'test')
-        self.message.seal()
+        message = create_message(self.bus)
+
+        message.append_data('s', 'test')
+        message.seal()
         self.assertRaises(SdBusLibraryError,
-                          self.message.append_data, 's', 'error')
+                          message.append_data, 's', 'error')
 
 
 if __name__ == "__main__":

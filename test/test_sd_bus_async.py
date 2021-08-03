@@ -24,6 +24,7 @@ from asyncio import get_running_loop, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 
+
 from sdbus import (DbusFailedError, DbusFileExistsError,
                    DbusInterfaceCommonAsync, DbusNoReplyFlag,
                    dbus_method_async, dbus_method_async_override,
@@ -31,7 +32,7 @@ from sdbus import (DbusFailedError, DbusFileExistsError,
                    dbus_signal_async, DbusUnknownObjectError,
                    SdBusUnmappedMessageError)
 
-from sdbus.sd_bus_internals import DBUS_ERROR_TO_EXCEPTION
+from sdbus.sd_bus_internals import DBUS_ERROR_TO_EXCEPTION, SdBus
 
 from .common_test_util import TempDbusTest
 
@@ -158,75 +159,89 @@ class DbusErrorUnmappedLater(DbusFailedError):
     dbus_error_name = 'org.example.Nothing'
 
 
+def initialize_object(bus: SdBus) -> Tuple[TestInterface, TestInterface]:
+    test_object = TestInterface()
+    test_object.export_to_dbus('/', bus)
+
+    test_object_connection = TestInterface.new_connect(
+        "org.example.test", '/', bus)
+
+    return test_object, test_object_connection
+
+
 class TestProxy(TempDbusTest):
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
         await self.bus.request_name_async("org.example.test", 0)
 
-        self.test_object = TestInterface()
-        self.test_object.export_to_dbus('/', self.bus)
-        self.test_object_connection = TestInterface.new_connect(
+        test_object = TestInterface()
+        test_object.export_to_dbus('/', self.bus)
+        test_object_connection = TestInterface.new_connect(
             "org.example.test", '/', self.bus)
 
-        await self.test_object_connection.dbus_ping()
+        await test_object_connection.dbus_ping()
 
     async def test_method_kwargs(self) -> None:
+        test_object, test_object_connection = initialize_object(self.bus)
 
         with self.subTest('Only Args'):
             self.assertEqual(
                 'TEST',
-                await self.test_object_connection.kwargs_function(
+                await test_object_connection.kwargs_function(
                     'test', True)
             )
 
         with self.subTest('Only defaults'):
             self.assertEqual(
                 'TEST',
-                await self.test_object_connection.kwargs_function())
+                await test_object_connection.kwargs_function())
 
         with self.subTest('Default with kwarg'):
             self.assertEqual(
                 'test',
-                await self.test_object_connection.kwargs_function(
+                await test_object_connection.kwargs_function(
                     is_upper=False))
 
         with self.subTest('Arg with default'):
             self.assertEqual(
                 'ASD',
-                await self.test_object_connection.kwargs_function('asd'))
+                await test_object_connection.kwargs_function('asd'))
 
         with self.subTest('Kwarg with default'):
             self.assertEqual(
                 'ASD',
-                await self.test_object_connection.kwargs_function(input='asd'))
+                await test_object_connection.kwargs_function(input='asd'))
 
         with self.subTest('Arg with kwarg'):
             self.assertEqual(
                 'asd',
-                await self.test_object_connection.kwargs_function(
+                await test_object_connection.kwargs_function(
                     'ASD', is_upper=False))
 
         with self.subTest('Only kwargs'):
             self.assertEqual(
                 'asd',
-                await self.test_object_connection.kwargs_function(
+                await test_object_connection.kwargs_function(
                     input='ASD', is_upper=False))
 
     async def test_method(self) -> None:
+        test_object, test_object_connection = initialize_object(self.bus)
+
         test_string = 'asdafsrfgdrtuhrytuj'
 
         with self.subTest("Test python-to-python"):
             self.assertEqual(test_string.upper(),
-                             await self.test_object.upper(test_string))
+                             await test_object.upper(test_string))
 
         with self.subTest("Test python-dbus-python"):
-            self.assertEqual(1, await self.test_object_connection.test_int())
+            self.assertEqual(1, await test_object_connection.test_int())
 
             self.assertEqual(
                 test_string.upper(),
-                await self.test_object_connection.upper(test_string))
+                await test_object_connection.upper(test_string))
 
     async def test_subclass(self) -> None:
+        test_object, test_object_connection = initialize_object(self.bus)
 
         test_var = ['asdasd']
 
@@ -274,55 +289,58 @@ class TestProxy(TempDbusTest):
         self.assertRaises(TypeError, bad_call)
 
     async def test_properties(self) -> None:
+        test_object, test_object_connection = initialize_object(self.bus)
 
         with self.subTest('Property read: python-python'):
             self.assertEqual(
                 'test_property',
-                await self.test_object.test_property.get_async())
+                await test_object.test_property.get_async())
 
             self.assertEqual(
-                'test_property', await self.test_object.test_property)
+                'test_property', await test_object.test_property)
 
         with self.subTest('Property read: python-dbus-python'):
             self.assertEqual(
-                await wait_for(self.test_object_connection.test_property, 0.5),
-                await self.test_object.test_property)
+                await wait_for(test_object_connection.test_property, 0.5),
+                await test_object.test_property)
 
             self.assertEqual(
                 'test_property',
-                await wait_for(self.test_object_connection.test_property, 0.5))
+                await wait_for(test_object_connection.test_property, 0.5))
 
             self.assertEqual(
-                await self.test_object.test_property_read_only,
+                await test_object.test_property_read_only,
                 await wait_for(
-                    self.test_object_connection.test_property_read_only, 0.5))
+                    test_object_connection.test_property_read_only, 0.5))
 
         with self.subTest('Property write'):
             new_string = 'asdsgrghdthdth'
 
             await wait_for(
-                self.test_object_connection.test_property.set_async(
+                test_object_connection.test_property.set_async(
                     new_string),
                 0.5)
 
             self.assertEqual(
-                new_string, await self.test_object.test_property)
+                new_string, await test_object.test_property)
 
             self.assertEqual(
                 new_string,
-                await wait_for(self.test_object_connection.test_property, 0.5)
+                await wait_for(test_object_connection.test_property, 0.5)
             )
 
     async def test_signal(self) -> None:
+        test_object, test_object_connection = initialize_object(self.bus)
+
         loop = get_running_loop()
 
         test_tuple = ('sgfsretg', 'asd')
 
-        ai_dbus = self.test_object_connection.test_signal.__aiter__()
+        ai_dbus = test_object_connection.test_signal.__aiter__()
         aw_dbus = ai_dbus.__anext__()
-        q = self.test_object.test_signal._get_local_queue()
+        q = test_object.test_signal._get_local_queue()
 
-        loop.call_at(0, self.test_object.test_signal.emit, test_tuple)
+        loop.call_at(0, test_object.test_signal.emit, test_tuple)
 
         with self.subTest('Python-dbus-python'):
             self.assertEqual(test_tuple, await wait_for(aw_dbus, timeout=1))
@@ -331,8 +349,10 @@ class TestProxy(TempDbusTest):
             self.assertEqual(test_tuple, await wait_for(q.get(), timeout=1))
 
     async def test_exceptions(self) -> None:
+        test_object, test_object_connection = initialize_object(self.bus)
+
         async def first_test() -> None:
-            await self.test_object_connection.raise_base_exception()
+            await test_object_connection.raise_base_exception()
 
         loop = get_running_loop()
 
@@ -346,7 +366,7 @@ class TestProxy(TempDbusTest):
         self.assertRaises(DbusFailedError, t1.result)
 
         async def second_test() -> None:
-            await self.test_object_connection.raise_derived_exception()
+            await test_object_connection.raise_derived_exception()
 
         t2 = loop.create_task(second_test())
 
@@ -358,7 +378,7 @@ class TestProxy(TempDbusTest):
         self.assertRaises(DbusFileExistsError, t2.result)
 
         async def third_test() -> None:
-            await self.test_object_connection.raise_custom_error()
+            await test_object_connection.raise_custom_error()
 
         t3 = loop.create_task(third_test())
 
@@ -382,7 +402,7 @@ class TestProxy(TempDbusTest):
         self.assertRaises(TypeError, bad_exception_no_error_name)
 
         async def test_unmapped_expection() -> None:
-            await self.test_object_connection.raise_and_unmap_error()
+            await test_object_connection.raise_and_unmap_error()
 
         t4 = loop.create_task(test_unmapped_expection())
 
@@ -394,19 +414,27 @@ class TestProxy(TempDbusTest):
         self.assertRaises(SdBusUnmappedMessageError, t4.result)
 
     async def test_no_reply_method(self) -> None:
-        await wait_for(self.test_object_connection.no_reply_method('yes'),
+        test_object, test_object_connection = initialize_object(self.bus)
+
+        await wait_for(test_object_connection.no_reply_method('yes'),
                        timeout=1)
 
+        # TODO: Cancel call back if object is no longer alive
+        gc_trick = [test_object]
+        gc_trick.append(gc_trick)
+
     async def test_interface_remove(self) -> None:
+        test_object, test_object_connection = initialize_object(self.bus)
+
         from gc import collect
 
-        del self.test_object
+        del test_object
 
         collect()
 
         loop = get_running_loop()
 
-        t = loop.create_task(self.test_object_connection.dbus_introspect())
+        t = loop.create_task(test_object_connection.dbus_introspect())
 
         try:
             await wait_for(t, timeout=0.2)
@@ -416,24 +444,26 @@ class TestProxy(TempDbusTest):
         self.assertRaises(DbusUnknownObjectError, t.result)
 
     def test_docstring(self) -> None:
+        test_object, test_object_connection = initialize_object(self.bus)
+
         from pydoc import getdoc
 
         with self.subTest('Method local doc'):
-            self.assertTrue(getdoc(self.test_object.upper))
+            self.assertTrue(getdoc(test_object.upper))
 
         with self.subTest('Method remote doc'):
-            self.assertTrue(getdoc(self.test_object_connection.upper))
+            self.assertTrue(getdoc(test_object_connection.upper))
 
         with self.subTest('Property local doc'):
-            self.assertTrue(getdoc(self.test_object.test_property))
+            self.assertTrue(getdoc(test_object.test_property))
 
         with self.subTest('Property remote doc'):
             self.assertTrue(
-                getdoc(self.test_object_connection.test_property))
+                getdoc(test_object_connection.test_property))
 
         with self.subTest('Signal local doc'):
-            self.assertTrue(getdoc(self.test_object.test_signal))
+            self.assertTrue(getdoc(test_object.test_signal))
 
         with self.subTest('Signal remote doc'):
             self.assertTrue(
-                getdoc(self.test_object_connection.test_signal))
+                getdoc(test_object_connection.test_signal))

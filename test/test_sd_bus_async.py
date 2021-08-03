@@ -184,61 +184,52 @@ class TestProxy(TempDbusTest):
     async def test_method_kwargs(self) -> None:
         test_object, test_object_connection = initialize_object(self.bus)
 
-        with self.subTest('Only Args'):
-            self.assertEqual(
-                'TEST',
-                await test_object_connection.kwargs_function(
-                    'test', True)
-            )
+        self.assertEqual(
+            'TEST',
+            await test_object_connection.kwargs_function(
+                'test', True)
+        )
 
-        with self.subTest('Only defaults'):
-            self.assertEqual(
-                'TEST',
-                await test_object_connection.kwargs_function())
+        self.assertEqual(
+            'TEST',
+            await test_object_connection.kwargs_function())
 
-        with self.subTest('Default with kwarg'):
-            self.assertEqual(
-                'test',
-                await test_object_connection.kwargs_function(
-                    is_upper=False))
+        self.assertEqual(
+            'test',
+            await test_object_connection.kwargs_function(
+                is_upper=False))
 
-        with self.subTest('Arg with default'):
-            self.assertEqual(
-                'ASD',
-                await test_object_connection.kwargs_function('asd'))
+        self.assertEqual(
+            'ASD',
+            await test_object_connection.kwargs_function('asd'))
 
-        with self.subTest('Kwarg with default'):
-            self.assertEqual(
-                'ASD',
-                await test_object_connection.kwargs_function(input='asd'))
+        self.assertEqual(
+            'ASD',
+            await test_object_connection.kwargs_function(input='asd'))
 
-        with self.subTest('Arg with kwarg'):
-            self.assertEqual(
-                'asd',
-                await test_object_connection.kwargs_function(
-                    'ASD', is_upper=False))
+        self.assertEqual(
+            'asd',
+            await test_object_connection.kwargs_function(
+                'ASD', is_upper=False))
 
-        with self.subTest('Only kwargs'):
-            self.assertEqual(
-                'asd',
-                await test_object_connection.kwargs_function(
-                    input='ASD', is_upper=False))
+        self.assertEqual(
+            'asd',
+            await test_object_connection.kwargs_function(
+                input='ASD', is_upper=False))
 
     async def test_method(self) -> None:
         test_object, test_object_connection = initialize_object(self.bus)
 
         test_string = 'asdafsrfgdrtuhrytuj'
 
-        with self.subTest("Test python-to-python"):
-            self.assertEqual(test_string.upper(),
-                             await test_object.upper(test_string))
+        self.assertEqual(test_string.upper(),
+                         await test_object.upper(test_string))
 
-        with self.subTest("Test python-dbus-python"):
-            self.assertEqual(1, await test_object_connection.test_int())
+        self.assertEqual(1, await test_object_connection.test_int())
 
-            self.assertEqual(
-                test_string.upper(),
-                await test_object_connection.upper(test_string))
+        self.assertEqual(
+            test_string.upper(),
+            await test_object_connection.upper(test_string))
 
     async def test_subclass(self) -> None:
         test_object, test_object_connection = initialize_object(self.bus)
@@ -263,22 +254,19 @@ class TestProxy(TempDbusTest):
 
         test_subclass.export_to_dbus('/subclass', self.bus)
 
-        with self.subTest('Subclass test: python-python'):
-            self.assertEqual(await test_subclass.test_int(), 2)
+        self.assertEqual(await test_subclass.test_int(), 2)
 
         test_subclass_connection = TestInheritnce.new_connect(
             "org.example.test", '/subclass', self.bus)
 
-        with self.subTest('Subclass test: python-dbus-python'):
-            self.assertEqual(await test_subclass_connection.test_int(), 2)
+        self.assertEqual(await test_subclass_connection.test_int(), 2)
 
-        with self.subTest('Subclass property overload'):
-            self.assertEqual(test_var[0], await test_subclass.test_property)
+        self.assertEqual(test_var[0], await test_subclass.test_property)
 
-            await test_subclass.test_property.set_async('12345')
+        await test_subclass.test_property.set_async('12345')
 
-            self.assertEqual(test_var[0], await test_subclass.test_property)
-            self.assertEqual('12345', await test_subclass.test_property)
+        self.assertEqual(test_var[0], await test_subclass.test_property)
+        self.assertEqual('12345', await test_subclass.test_property)
 
     async def test_bad_subclass(self) -> None:
         def bad_call() -> None:
@@ -291,43 +279,40 @@ class TestProxy(TempDbusTest):
     async def test_properties(self) -> None:
         test_object, test_object_connection = initialize_object(self.bus)
 
-        with self.subTest('Property read: python-python'):
-            self.assertEqual(
-                'test_property',
-                await test_object.test_property.get_async())
+        self.assertEqual(
+            'test_property',
+            await test_object.test_property.get_async())
 
-            self.assertEqual(
-                'test_property', await test_object.test_property)
+        self.assertEqual(
+            'test_property', await test_object.test_property)
 
-        with self.subTest('Property read: python-dbus-python'):
-            self.assertEqual(
-                await wait_for(test_object_connection.test_property, 0.5),
-                await test_object.test_property)
+        self.assertEqual(
+            await wait_for(test_object_connection.test_property, 0.5),
+            await test_object.test_property)
 
-            self.assertEqual(
-                'test_property',
-                await wait_for(test_object_connection.test_property, 0.5))
+        self.assertEqual(
+            'test_property',
+            await wait_for(test_object_connection.test_property, 0.5))
 
-            self.assertEqual(
-                await test_object.test_property_read_only,
-                await wait_for(
-                    test_object_connection.test_property_read_only, 0.5))
-
-        with self.subTest('Property write'):
-            new_string = 'asdsgrghdthdth'
-
+        self.assertEqual(
+            await test_object.test_property_read_only,
             await wait_for(
-                test_object_connection.test_property.set_async(
-                    new_string),
-                0.5)
+                test_object_connection.test_property_read_only, 0.5))
 
-            self.assertEqual(
-                new_string, await test_object.test_property)
+        new_string = 'asdsgrghdthdth'
 
-            self.assertEqual(
-                new_string,
-                await wait_for(test_object_connection.test_property, 0.5)
-            )
+        await wait_for(
+            test_object_connection.test_property.set_async(
+                new_string),
+            0.5)
+
+        self.assertEqual(
+            new_string, await test_object.test_property)
+
+        self.assertEqual(
+            new_string,
+            await wait_for(test_object_connection.test_property, 0.5)
+        )
 
     async def test_signal(self) -> None:
         test_object, test_object_connection = initialize_object(self.bus)
@@ -342,11 +327,9 @@ class TestProxy(TempDbusTest):
 
         loop.call_at(0, test_object.test_signal.emit, test_tuple)
 
-        with self.subTest('Python-dbus-python'):
-            self.assertEqual(test_tuple, await wait_for(aw_dbus, timeout=1))
+        self.assertEqual(test_tuple, await wait_for(aw_dbus, timeout=1))
 
-        with self.subTest('Python-python'):
-            self.assertEqual(test_tuple, await wait_for(q.get(), timeout=1))
+        self.assertEqual(test_tuple, await wait_for(q.get(), timeout=1))
 
     async def test_exceptions(self) -> None:
         test_object, test_object_connection = initialize_object(self.bus)
@@ -448,22 +431,16 @@ class TestProxy(TempDbusTest):
 
         from pydoc import getdoc
 
-        with self.subTest('Method local doc'):
-            self.assertTrue(getdoc(test_object.upper))
+        self.assertTrue(getdoc(test_object.upper))
 
-        with self.subTest('Method remote doc'):
-            self.assertTrue(getdoc(test_object_connection.upper))
+        self.assertTrue(getdoc(test_object_connection.upper))
 
-        with self.subTest('Property local doc'):
-            self.assertTrue(getdoc(test_object.test_property))
+        self.assertTrue(getdoc(test_object.test_property))
 
-        with self.subTest('Property remote doc'):
-            self.assertTrue(
-                getdoc(test_object_connection.test_property))
+        self.assertTrue(
+            getdoc(test_object_connection.test_property))
 
-        with self.subTest('Signal local doc'):
-            self.assertTrue(getdoc(test_object.test_signal))
+        self.assertTrue(getdoc(test_object.test_signal))
 
-        with self.subTest('Signal remote doc'):
-            self.assertTrue(
-                getdoc(test_object_connection.test_signal))
+        self.assertTrue(
+            getdoc(test_object_connection.test_signal))

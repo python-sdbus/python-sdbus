@@ -144,7 +144,7 @@ async def startup() -> None:
 
 
 loop.run_until_complete(startup())
-loop.create_task(clock())
+task_clock = loop.create_task(clock())
 loop.run_forever()
 ```
 
@@ -178,9 +178,10 @@ async def get_hello_world() -> None:
 
 loop = get_event_loop()
 
-loop.create_task(call_upper())
-loop.create_task(print_clock())
-loop.create_task(get_hello_world())
+# Always binds your tasks to a variable
+task_upper = loop.create_task(call_upper())
+task_clock = loop.create_task(print_clock())
+task_hello_world = loop.create_task(get_hello_world())
 
 loop.run_forever()
 ```

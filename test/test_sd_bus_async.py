@@ -20,7 +20,7 @@
 
 from __future__ import annotations
 
-from asyncio import get_running_loop, wait_for
+from asyncio import get_running_loop, wait_for, Event
 from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 
@@ -73,6 +73,7 @@ class TestInterface(DbusInterfaceCommonAsync,
         self.test_string = 'test_property'
         self.test_string_read = 'read'
         self.test_no_reply_string = 'no'
+        self.no_reply_sync = Event()
 
     @dbus_method_async("s", "s")
     async def upper(self, string: str) -> str:
@@ -148,7 +149,7 @@ class TestInterface(DbusInterfaceCommonAsync,
 
     @dbus_method_async('s', flags=DbusNoReplyFlag)
     async def no_reply_method(self, new_value: str) -> None:
-        self.test_no_reply_string = new_value
+        self.no_reply_sync.set()
 
 
 class DbusErrorTest(DbusFailedError):
@@ -402,9 +403,7 @@ class TestProxy(TempDbusTest):
         await wait_for(test_object_connection.no_reply_method('yes'),
                        timeout=1)
 
-        # TODO: Cancel call back if object is no longer alive
-        gc_trick = [test_object]
-        gc_trick.append(gc_trick)
+        await wait_for(test_object.no_reply_sync.wait(), timeout=1)
 
     async def test_interface_remove(self) -> None:
         test_object, test_object_connection = initialize_object(self.bus)

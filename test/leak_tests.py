@@ -17,24 +17,24 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
-
 from __future__ import annotations
 
-from .test_read_write_dbus_types import (
-    TestDbusTypes,
+from asyncio import (
+    FIRST_EXCEPTION,
+    Task,
+    get_running_loop,
+    sleep,
+    wait,
+    wait_for
 )
-
-from .test_sd_bus_async import (
-    TestPing,
-    TestInterface,
-    TestProxy,
-)
+from os import environ
+from resource import RUSAGE_SELF, getrusage
+from typing import List
+from unittest import SkipTest
 
 from .common_test_util import TempDbusTest
-
-from resource import getrusage, RUSAGE_SELF
-from unittest import SkipTest
-from os import environ
+from .test_read_write_dbus_types import TestDbusTypes
+from .test_sd_bus_async import TestPing, TestProxy, initialize_object
 
 
 async def test_strings() -> None:
@@ -110,7 +110,7 @@ class LeakTests(TempDbusTest):
             await TestPing.test_ping(self)
             self.check_memory()
 
-    async def test_object(self) -> None:
+    async def test_objects(self) -> None:
         leak_test_enabled()
         await self.bus.request_name_async("org.example.test", 0)
 
@@ -127,3 +127,46 @@ class LeakTests(TempDbusTest):
             TestProxy.test_docstring(self)
 
             self.check_memory()
+
+    async def test_single_object(self) -> None:
+        leak_test_enabled()
+        await self.bus.request_name_async("org.example.test", 0)
+
+        test_object, test_object_connection = initialize_object(self.bus)
+
+        i = 0
+        num_of_iterations = 10_000
+        num_of_tasks = 5
+
+        async def the_test() -> None:
+            for _ in range(num_of_iterations):
+                self.assertEqual(
+                    'ASD',
+                    await wait_for(test_object_connection.upper('asd'), 0.5))
+
+                await sleep(0)
+                self.assertEqual(
+                    'test_property',
+                    await wait_for(test_object_connection.test_property, 0.5))
+
+                await sleep(0)
+                await wait_for(
+                    test_object_connection.test_property.set_async(
+                        'test_property'), 0.5)
+
+                await sleep(0)
+                self.check_memory()
+
+                nonlocal i
+                i += 1
+
+        tasks: List[Task] = []
+        loop = get_running_loop()
+        for _ in range(num_of_tasks):
+            tasks.append(loop.create_task(the_test()))
+
+        done, pending = await wait(tasks, return_when=FIRST_EXCEPTION)
+
+        self.check_memory()
+
+        self.assertEqual(i, num_of_iterations * num_of_tasks)

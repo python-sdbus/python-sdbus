@@ -17,7 +17,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+from __future__ import annotations
+
 from unittest import main
+from typing import List, Dict
 
 from sdbus import SdBusLibraryError
 from sdbus.sd_bus_internals import SdBusMessage, SdBus
@@ -168,7 +171,7 @@ class TestDbusTypes(TempDbusTest):
     def test_empty_array(self) -> None:
         message = create_message(self.bus)
 
-        test_array = []
+        test_array: List[str] = []
         message.append_data("as", test_array)
 
         message.seal()
@@ -231,7 +234,7 @@ class TestDbusTypes(TempDbusTest):
     def test_empty_dict(self) -> None:
         message = create_message(self.bus)
 
-        test_dict = {}
+        test_dict: Dict[str, str] = {}
         message.append_data("a{ss}", test_dict)
 
         message.seal()

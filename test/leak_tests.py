@@ -29,28 +29,13 @@ from asyncio import (
 )
 from os import environ
 from resource import RUSAGE_SELF, getrusage
-from typing import List
+from typing import List, cast
 from unittest import SkipTest
 
 from .common_test_util import TempDbusTest
 from .test_read_write_dbus_types import TestDbusTypes
 from .test_sd_bus_async import TestPing, TestProxy, initialize_object
 
-
-async def test_strings() -> None:
-    t = TestDbusTypes()
-    t.setUp()
-    await t.asyncSetUp()
-
-    start_mem = getrusage(RUSAGE_SELF).ru_maxrss
-
-    for _ in range(1_000_000):
-        t.create_message()
-        t.test_strings()
-
-        current_usage = getrusage(RUSAGE_SELF).ru_maxrss
-        if current_usage > start_mem * 2:
-            raise RuntimeError('Leaking memory')
 
 ENABLE_LEAK_TEST_VAR = 'PYTHON_SDBUS_TEST_LEAKS'
 
@@ -77,54 +62,60 @@ class LeakTests(TempDbusTest):
     def test_read_write_dbus_types(self) -> None:
         leak_test_enabled()
 
+        pseudo_test = cast(TestDbusTypes, self)
+
         for _ in range(1_000_000):
-            TestDbusTypes.test_unsigned(self)
-            TestDbusTypes.test_signed(self)
-            TestDbusTypes.test_strings(self)
-            TestDbusTypes.test_double(self)
-            TestDbusTypes.test_bool(self)
-            TestDbusTypes.test_array(self)
-            TestDbusTypes.test_empty_array(self)
-            TestDbusTypes.test_array_compound(self)
-            TestDbusTypes.test_nested_array(self)
-            TestDbusTypes.test_struct(self)
-            TestDbusTypes.test_dict(self)
-            TestDbusTypes.test_empty_dict(self)
-            TestDbusTypes.test_dict_nested_array(self)
-            TestDbusTypes.test_variant(self)
-            TestDbusTypes.test_array_of_variant(self)
-            TestDbusTypes.test_array_of_dict(self)
-            TestDbusTypes.test_array_of_struct(self)
-            TestDbusTypes.test_dict_of_struct(self)
-            TestDbusTypes.test_struct_with_dict(self)
-            TestDbusTypes.test_dict_of_array(self)
-            TestDbusTypes.test_array_of_array(self)
-            TestDbusTypes.test_sealed_message_append(self)
+            TestDbusTypes.test_unsigned(pseudo_test)
+            TestDbusTypes.test_signed(pseudo_test)
+            TestDbusTypes.test_strings(pseudo_test)
+            TestDbusTypes.test_double(pseudo_test)
+            TestDbusTypes.test_bool(pseudo_test)
+            TestDbusTypes.test_array(pseudo_test)
+            TestDbusTypes.test_empty_array(pseudo_test)
+            TestDbusTypes.test_array_compound(pseudo_test)
+            TestDbusTypes.test_nested_array(pseudo_test)
+            TestDbusTypes.test_struct(pseudo_test)
+            TestDbusTypes.test_dict(pseudo_test)
+            TestDbusTypes.test_empty_dict(pseudo_test)
+            TestDbusTypes.test_dict_nested_array(pseudo_test)
+            TestDbusTypes.test_variant(pseudo_test)
+            TestDbusTypes.test_array_of_variant(pseudo_test)
+            TestDbusTypes.test_array_of_dict(pseudo_test)
+            TestDbusTypes.test_array_of_struct(pseudo_test)
+            TestDbusTypes.test_dict_of_struct(pseudo_test)
+            TestDbusTypes.test_struct_with_dict(pseudo_test)
+            TestDbusTypes.test_dict_of_array(pseudo_test)
+            TestDbusTypes.test_array_of_array(pseudo_test)
+            TestDbusTypes.test_sealed_message_append(pseudo_test)
 
             self.check_memory()
 
     async def test_ping(self) -> None:
         leak_test_enabled()
 
+        pseudo_test = cast(TestPing, self)
+
         for _ in range(1_000_000):
-            await TestPing.test_ping(self)
+            await TestPing.test_ping(pseudo_test)
             self.check_memory()
 
     async def test_objects(self) -> None:
         leak_test_enabled()
         await self.bus.request_name_async("org.example.test", 0)
 
+        pseudo_test = cast(TestProxy, self)
+
         for _ in range(20_000):
-            await TestProxy.test_method_kwargs(self)
-            await TestProxy.test_method(self)
-            await TestProxy.test_subclass(self)
-            await TestProxy.test_bad_subclass(self)
-            await TestProxy.test_properties(self)
-            await TestProxy.test_signal(self)
-            await TestProxy.test_exceptions(self)
-            # await TestProxy.test_no_reply_method(self)
-            await TestProxy.test_interface_remove(self)
-            TestProxy.test_docstring(self)
+            await TestProxy.test_method_kwargs(pseudo_test)
+            await TestProxy.test_method(pseudo_test)
+            await TestProxy.test_subclass(pseudo_test)
+            await TestProxy.test_bad_subclass(pseudo_test)
+            await TestProxy.test_properties(pseudo_test)
+            await TestProxy.test_signal(pseudo_test)
+            await TestProxy.test_exceptions(pseudo_test)
+            await TestProxy.test_no_reply_method(pseudo_test)
+            await TestProxy.test_interface_remove(pseudo_test)
+            TestProxy.test_docstring(pseudo_test)
 
             self.check_memory()
 
@@ -160,7 +151,7 @@ class LeakTests(TempDbusTest):
                 nonlocal i
                 i += 1
 
-        tasks: List[Task] = []
+        tasks: List[Task[None]] = []
         loop = get_running_loop()
         for _ in range(num_of_tasks):
             tasks.append(loop.create_task(the_test()))

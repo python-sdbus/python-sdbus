@@ -35,12 +35,34 @@ wheel_build_dir = source_root / 'wheel-build'
 
 all_python_dirs = [src_dir, tools_dir, test_dir, wheel_build_dir]
 
+mypy_cache_dir = build_dir / '.mypy_cache'
+
+
+def run_mypy(path: Path) -> None:
+    print(f"Running mypy on {path}")
+    run(
+        args=(
+            'mypy', '--strict',
+            '--cache-dir', mypy_cache_dir,
+            '--python-version', '3.8',
+            '--namespace-packages',
+            path,
+        ),
+        check=True,
+        env={'MYPYPATH': str(src_dir.absolute()), **environ},
+    )
+
 
 def linter_main() -> None:
     run(
         args=('flake8', *all_python_dirs),
         check=True,
     )
+
+    for x in [tools_dir, test_dir, wheel_build_dir,
+              src_dir / 'sdbus', src_dir / 'sdbus_block',
+              src_dir / 'sdbus_async']:
+        run_mypy(x)
 
 
 def formater_main() -> None:

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from os import environ
 from pathlib import Path
+from typing import List
 from subprocess import run
 from argparse import ArgumentParser
 
@@ -33,7 +34,12 @@ src_dir = source_root / 'src'
 test_dir = source_root / 'test'
 wheel_build_dir = source_root / 'wheel-build'
 
-all_python_dirs = [src_dir, tools_dir, test_dir, wheel_build_dir]
+all_python_dirs = [
+    tools_dir, test_dir, wheel_build_dir,
+    src_dir / 'sdbus',
+    src_dir / 'sdbus_async/dbus_daemon',
+    src_dir / 'sdbus_block/dbus_daemon',
+]
 
 mypy_cache_dir = build_dir / '.mypy_cache'
 
@@ -59,14 +65,37 @@ def linter_main() -> None:
         check=True,
     )
 
-    for x in [tools_dir, test_dir, wheel_build_dir,
-              src_dir / 'sdbus', src_dir / 'sdbus_block',
-              src_dir / 'sdbus_async']:
+    for x in all_python_dirs:
         run_mypy(x)
 
 
+def get_all_python_files() -> List[Path]:
+    python_files: List[Path] = []
+
+    for python_dir in all_python_dirs:
+        for a_file in python_dir.iterdir():
+            if a_file.suffix == '.py':
+                python_files.append(a_file)
+
+    return python_files
+
+
 def formater_main() -> None:
-    ...
+    all_python_files = get_all_python_files()
+
+    run(
+        args=('autopep8', '--in-place', *all_python_files),
+        check=True,
+    )
+
+    run(
+        args=(
+            'isort',
+            '-m', 'VERTICAL_HANGING_INDENT',
+            *all_python_files
+        ),
+        check=True,
+    )
 
 
 def main() -> None:

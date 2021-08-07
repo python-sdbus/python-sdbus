@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from importlib.util import find_spec
 from unittest import TestCase, main, SkipTest
 
 from sdbus.interface_generator import (DbusSigToTyping,
@@ -135,9 +136,7 @@ class TestConverter(TestCase):
             )
 
     def test_parsing(self) -> None:
-        try:
-            import jinja2
-        except ImportError:
+        if find_spec('jinja2') is None:
             raise SkipTest('Jinja2 not installed')
 
         print(generate_async_py_file(interfaces_from_str(test_xml)))

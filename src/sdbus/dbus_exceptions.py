@@ -40,7 +40,7 @@ class DbusErrorMeta(type):
 
         add_exception_mapping(cast(Exception, new_cls))
 
-        return cast(DbusErrorMeta, new_cls)
+        return new_cls
 
 
 class DbusFailedError(SdBusBaseError, metaclass=DbusErrorMeta):

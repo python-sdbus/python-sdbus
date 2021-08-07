@@ -626,7 +626,7 @@ class DbusInterfaceMetaAsync(type):
         namespace['_dbus_serving_enabled'] = serving_enabled
         new_cls = super().__new__(cls, name, bases, namespace)
 
-        return cast(DbusInterfaceMetaAsync, new_cls)
+        return new_cls
 
 
 class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):

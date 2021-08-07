@@ -273,7 +273,7 @@ class DbusInterfaceMeta(type):
 
         new_cls = super().__new__(cls, name, bases, namespace)
 
-        return cast(DbusInterfaceMeta, new_cls)
+        return new_cls
 
 
 class DbusInterfaceBase(metaclass=DbusInterfaceMeta):

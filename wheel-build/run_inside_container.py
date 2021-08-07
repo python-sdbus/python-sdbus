@@ -22,10 +22,10 @@
 from __future__ import annotations
 
 from os import environ, execl
-from typing import List
-from subprocess import run, PIPE, CalledProcessError
 from pathlib import Path
 from shutil import copy
+from subprocess import PIPE, CalledProcessError, run
+from typing import List
 
 yum_packages: List[str] = [
     'gettext-autopoint', 'gperf',

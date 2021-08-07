@@ -19,11 +19,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from typing import Dict, List
 from unittest import main
-from typing import List, Dict
+
+from sdbus.sd_bus_internals import SdBus, SdBusMessage
 
 from sdbus import SdBusLibraryError
-from sdbus.sd_bus_internals import SdBusMessage, SdBus
 
 from .common_test_util import TempDbusTest
 

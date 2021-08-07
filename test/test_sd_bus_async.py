@@ -20,19 +20,25 @@
 
 from __future__ import annotations
 
-from asyncio import get_running_loop, wait_for, Event
+from asyncio import Event, get_running_loop, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 
-
-from sdbus import (DbusFailedError, DbusFileExistsError,
-                   DbusInterfaceCommonAsync, DbusNoReplyFlag,
-                   dbus_method_async, dbus_method_async_override,
-                   dbus_property_async, dbus_property_async_override,
-                   dbus_signal_async, DbusUnknownObjectError,
-                   SdBusUnmappedMessageError)
-
 from sdbus.sd_bus_internals import DBUS_ERROR_TO_EXCEPTION, SdBus
+
+from sdbus import (
+    DbusFailedError,
+    DbusFileExistsError,
+    DbusInterfaceCommonAsync,
+    DbusNoReplyFlag,
+    DbusUnknownObjectError,
+    SdBusUnmappedMessageError,
+    dbus_method_async,
+    dbus_method_async_override,
+    dbus_property_async,
+    dbus_property_async_override,
+    dbus_signal_async,
+)
 
 from .common_test_util import TempDbusTest
 

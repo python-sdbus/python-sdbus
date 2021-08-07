@@ -25,7 +25,7 @@ from asyncio import (
     get_running_loop,
     sleep,
     wait,
-    wait_for
+    wait_for,
 )
 from os import environ
 from resource import RUSAGE_SELF, getrusage
@@ -35,7 +35,6 @@ from unittest import SkipTest
 from .common_test_util import TempDbusTest
 from .test_read_write_dbus_types import TestDbusTypes
 from .test_sd_bus_async import TestPing, TestProxy, initialize_object
-
 
 ENABLE_LEAK_TEST_VAR = 'PYTHON_SDBUS_TEST_LEAKS'
 

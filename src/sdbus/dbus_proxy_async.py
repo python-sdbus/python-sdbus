@@ -23,18 +23,39 @@ from asyncio import Queue
 from copy import deepcopy
 from inspect import getmembers, iscoroutinefunction
 from types import FunctionType, MethodType
-from typing import (Any, AsyncGenerator, Callable, Dict, Generator, Generic,
-                    List, Optional, Sequence, Set, Tuple, Type, TypeVar, cast)
+from typing import (
+    Any,
+    AsyncGenerator,
+    Callable,
+    Dict,
+    Generator,
+    Generic,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    cast,
+)
 from weakref import ref as weak_ref
 from weakref import ref as weakref
 
-from .dbus_common import (DbusMethodCommon, DbusSomethingAsync,
-                          DbusSomethingSync, _method_name_converter,
-                          get_default_bus)
+from .dbus_common import (
+    DbusMethodCommon,
+    DbusSomethingAsync,
+    DbusSomethingSync,
+    _method_name_converter,
+    get_default_bus,
+)
 from .dbus_exceptions import DbusFailedError
-from .sd_bus_internals import (DbusNoReplyFlag, SdBus, SdBusInterface,
-                               SdBusMessage)
-
+from .sd_bus_internals import (
+    DbusNoReplyFlag,
+    SdBus,
+    SdBusInterface,
+    SdBusMessage,
+)
 
 T_input = TypeVar('T_input')
 T_result = TypeVar('T_result')

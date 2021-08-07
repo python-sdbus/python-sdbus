@@ -21,12 +21,28 @@ from __future__ import annotations
 
 from inspect import iscoroutinefunction
 from types import FunctionType
-from typing import (Any, Callable, Dict, Generic, Optional, Sequence, Set,
-                    Tuple, Type, TypeVar, cast)
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    cast,
+)
 
-from .dbus_common import (DbusMethodCommon, DbusSomethingAsync,
-                          DbusSomethingSync, _check_sync_in_async_env,
-                          _method_name_converter, get_default_bus)
+from .dbus_common import (
+    DbusMethodCommon,
+    DbusSomethingAsync,
+    DbusSomethingSync,
+    _check_sync_in_async_env,
+    _method_name_converter,
+    get_default_bus,
+)
 from .sd_bus_internals import SdBus
 
 DEFAULT_BUS: Optional[SdBus] = None

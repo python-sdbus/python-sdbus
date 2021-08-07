@@ -21,8 +21,9 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from sdbus import DbusInterfaceCommon, dbus_method, dbus_property
 from sdbus.sd_bus_internals import SdBus
+
+from sdbus import DbusInterfaceCommon, dbus_method, dbus_property
 
 
 class FreedesktopDbus(DbusInterfaceCommon,

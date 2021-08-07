@@ -22,7 +22,7 @@ from .dbus_common import (
     get_default_bus,
     request_default_bus_name,
     request_default_bus_name_async,
-    set_default_bus
+    set_default_bus,
 )
 from .dbus_exceptions import (
     DbusAccessDeniedError,
@@ -55,7 +55,7 @@ from .dbus_exceptions import (
     DbusUnknownInterfaceError,
     DbusUnknownMethodError,
     DbusUnknownObjectError,
-    DbusUnknownPropertyError
+    DbusUnknownPropertyError,
 )
 from .dbus_proxy_async import (
     DbusInterfaceCommonAsync,
@@ -64,13 +64,13 @@ from .dbus_proxy_async import (
     dbus_method_async_override,
     dbus_property_async,
     dbus_property_async_override,
-    dbus_signal_async
+    dbus_signal_async,
 )
 from .dbus_proxy_sync import (
     DbusInterfaceCommon,
     DbusObjectManagerInterface,
     dbus_method,
-    dbus_property
+    dbus_property,
 )
 from .sd_bus_internals import (
     DbusDeprecatedFlag,
@@ -89,7 +89,7 @@ from .sd_bus_internals import (
     encode_object_path,
     sd_bus_open,
     sd_bus_open_system,
-    sd_bus_open_user
+    sd_bus_open_user,
 )
 
 __all__ = [

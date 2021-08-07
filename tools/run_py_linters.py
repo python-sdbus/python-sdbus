@@ -19,12 +19,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from argparse import ArgumentParser
 from os import environ
 from pathlib import Path
-from typing import List
 from subprocess import run
-from argparse import ArgumentParser
-
+from typing import List
 
 source_root = Path(environ['MESON_SOURCE_ROOT'])
 build_dir = Path(environ['MESON_BUILD_ROOT'])
@@ -92,6 +91,7 @@ def formater_main() -> None:
         args=(
             'isort',
             '-m', 'VERTICAL_HANGING_INDENT',
+            '--trailing-comma',
             *all_python_files
         ),
         check=True,

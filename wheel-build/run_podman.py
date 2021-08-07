@@ -23,10 +23,9 @@ from __future__ import annotations
 
 from argparse import ArgumentParser
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from subprocess import run
 from shutil import copy
-
+from subprocess import run
+from tempfile import TemporaryDirectory
 
 MANYLINUX_VERSION = 'manylinux2014'
 

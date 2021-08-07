@@ -29,7 +29,7 @@ from .dbus_proxy_async import (
     DbusInterfaceCommonAsync,
     DbusMethodAsync,
     DbusPropertyAsync,
-    DbusSignal
+    DbusSignal,
 )
 
 

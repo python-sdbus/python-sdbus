@@ -20,8 +20,17 @@
 from __future__ import annotations
 
 from asyncio import Future, Queue
-from typing import (Any, Callable, Coroutine, Dict, List, Optional, Sequence,
-                    Tuple, Union)
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 DbusBasicTypes = Union[str, int, bytes, float, Any]
 DbusStructType = Tuple[DbusBasicTypes, ...]

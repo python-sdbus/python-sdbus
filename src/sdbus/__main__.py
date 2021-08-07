@@ -23,8 +23,11 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import List
 
-from .interface_generator import (DbusInterfaceIntrospection,
-                                  generate_async_py_file, interfaces_from_file)
+from .interface_generator import (
+    DbusInterfaceIntrospection,
+    generate_async_py_file,
+    interfaces_from_file,
+)
 
 
 def run_gen_from_file(namespace: Namespace) -> None:

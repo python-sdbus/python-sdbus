@@ -20,13 +20,15 @@
 from __future__ import annotations
 
 from importlib.util import find_spec
-from unittest import TestCase, main, SkipTest
+from unittest import SkipTest, TestCase, main
 
-from sdbus.interface_generator import (DbusSigToTyping,
-                                       camel_case_to_snake_case,
-                                       generate_async_py_file,
-                                       interface_name_to_class,
-                                       interfaces_from_str)
+from sdbus.interface_generator import (
+    DbusSigToTyping,
+    camel_case_to_snake_case,
+    generate_async_py_file,
+    interface_name_to_class,
+    interfaces_from_str,
+)
 
 test_xml = """
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"

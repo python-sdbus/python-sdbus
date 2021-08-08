@@ -33,11 +33,12 @@ src_dir = source_root / 'src'
 test_dir = source_root / 'test'
 wheel_build_dir = source_root / 'wheel-build'
 
-all_python_dirs = [
+all_python_modules = [
     tools_dir, test_dir, wheel_build_dir,
     src_dir / 'sdbus',
     src_dir / 'sdbus_async/dbus_daemon',
     src_dir / 'sdbus_block/dbus_daemon',
+    source_root / 'setup.py',
 ]
 
 mypy_cache_dir = build_dir / '.mypy_cache'
@@ -51,6 +52,7 @@ def run_mypy(path: Path) -> None:
             '--cache-dir', mypy_cache_dir,
             '--python-version', '3.8',
             '--namespace-packages',
+            '--ignore-missing-imports',
             path,
         ),
         check=True,
@@ -60,21 +62,27 @@ def run_mypy(path: Path) -> None:
 
 def linter_main() -> None:
     run(
-        args=('flake8', *all_python_dirs),
+        args=(
+            'flake8',
+            *all_python_modules,
+        ),
         check=True,
     )
 
-    for x in all_python_dirs:
+    for x in all_python_modules:
         run_mypy(x)
 
 
 def get_all_python_files() -> List[Path]:
-    python_files: List[Path] = []
+    python_files: List[Path] = [source_root / 'setup.py']
 
-    for python_dir in all_python_dirs:
-        for a_file in python_dir.iterdir():
-            if a_file.suffix == '.py':
-                python_files.append(a_file)
+    for python_module in all_python_modules:
+        if python_module.is_dir():
+            for a_file in python_module.iterdir():
+                if a_file.suffix == '.py':
+                    python_files.append(a_file)
+        else:
+            python_files.append(python_module)
 
     return python_files
 
@@ -92,7 +100,7 @@ def formater_main() -> None:
             'isort',
             '-m', 'VERTICAL_HANGING_INDENT',
             '--trailing-comma',
-            *all_python_files
+            *all_python_files,
         ),
         check=True,
     )

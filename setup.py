@@ -60,10 +60,12 @@ def get_libsystemd_version() -> Tuple[int, int, int]:
     return 0, 0, 0
 
 
-LIBSYSTEMD_MAJOR, LIBSYSTEMD_MINOR, LIBSYTEMD_PATCH = get_libsystemd_version()
+if not environ.get('PYTHON_SDBUS_USE_IGNORE_SYSTEMD_VERSION'):
+    LIBSYSTEMD_MAJOR, LIBSYSTEMD_MINOR, LIBSYTEMD_PATCH \
+        = get_libsystemd_version()
 
-if LIBSYSTEMD_MAJOR <= 0 and LIBSYSTEMD_MINOR < 29:
-    c_macros.append(('LIBSYSTEMD_NO_VALIDATION_FUNCS', None))
+    if LIBSYSTEMD_MAJOR <= 0 and LIBSYSTEMD_MINOR < 29:
+        c_macros.append(('LIBSYSTEMD_NO_VALIDATION_FUNCS', None))
 
 link_arguments: List[str] = ['-lsystemd']
 

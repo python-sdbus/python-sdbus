@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  run:
-    name: Run build and unit tests
+  unlimited:
+    name: Run build and unit tests. (unlimited API)
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
@@ -18,6 +18,28 @@ jobs:
           sudo apt install python3-setuptools python3-dev libsystemd-dev \
             systemd dbus python3 gcc
       - name: Build extension
+        run: |
+          python3 setup.py build
+      - name: Install extension
+        run: |
+          sudo python3 setup.py install --old-and-unmanageable
+      - name: Run unit tests
+        run: |
+          python3 -m unittest
+  limited:
+    name: Run build and unit tests. (limited API)
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install python3-setuptools python3-dev libsystemd-dev \
+            systemd dbus python3 gcc
+      - name: Build extension
+        env:
+          PYTHON_SDBUS_USE_LIMITED_API: "1"
         run: |
           python3 setup.py build
       - name: Install extension

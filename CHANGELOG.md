@@ -1,3 +1,10 @@
+## 0.8.2
+
+* Added limited API module.
+  This has advantage of working on multiple Python versions but 5% performance penalty.
+  PyPI will probably use the limited API module.
+* Fixed any libsystemd errors casuing a segmentation fault.
+
 ## 0.8.1
 
 * Fixed unmapped errors not being raised properly.

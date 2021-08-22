@@ -190,26 +190,22 @@ def compile_extension() -> None:
     dist_dir_path = python_sdbus_src_path / 'dist'
     repaired_wheels_path = ROOT_DIR / 'wheels'
 
-    python_executables = ['python3.9', 'python3.8', 'python3.7']
+    run(
+        [
+            'python3.8', setup_py_path,
+            'build', 'bdist_wheel',
+            '--py-limited-api', 'cp37',
+        ],
+        cwd=python_sdbus_src_path,
+        check=True,
+        env={**environ, 'PYTHON_SDBUS_USE_LIMITED_API': '1'},
+    )
 
-    for python in python_executables:
-        run(
-            [python, setup_py_path, 'build'],
-            cwd=python_sdbus_src_path,
-            check=True,
-        )
-
-        run(
-            [python, setup_py_path, 'build', 'bdist_wheel'],
-            cwd=python_sdbus_src_path,
-            check=True,
-        )
-
-        run(
-            ['rm', '--recursive', build_dir_path],
-            cwd=python_sdbus_src_path,
-            check=True,
-        )
+    run(
+        ['rm', '--recursive', build_dir_path],
+        cwd=python_sdbus_src_path,
+        check=True,
+    )
 
     # Repair wheels
     for wheel in dist_dir_path.iterdir():

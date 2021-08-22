@@ -41,7 +41,8 @@ def run_podman(
             ['tar', '--extract',
              '--directory', tmpdir,
              '--file', str(archive)],
-        ).check_returncode()
+            check=True,
+        )
         run(
             ['podman', 'run',
              '--arch', arch,
@@ -51,7 +52,8 @@ def run_podman(
              '/root/python-sdbus/wheel-build/run_inside_container.py',
              ],
             cwd=tmpdir,
-        ).check_returncode()
+            check=True,
+        )
 
         wheels_root.mkdir(exist_ok=True)
         for wheel in (Path(tmpdir) / 'wheels').iterdir():

@@ -37,7 +37,8 @@ def create_archive(build_root: Path, output_file: Path) -> None:
     run(
         ['tar', '--create', '--file', str(output_file.absolute()), '.'],
         cwd=build_root.resolve(),
-    ).check_returncode()
+        check=True,
+    )
 
 
 def download_and_unpack_source(target_dir: Path, url: str) -> None:
@@ -50,14 +51,16 @@ def download_and_unpack_source(target_dir: Path, url: str) -> None:
         run(
             ['curl', '--fail', '--location',
              url, '--output', str(dowload_tar_path)],
-        ).check_returncode()
+            check=True,
+        )
 
         run(
             ['tar',
              '--directory', str(target_dir),
              '--strip-components=1',
              '--extract', '--file', str(dowload_tar_path)],
-        ).check_returncode()
+            check=True,
+        )
 
 
 def download_systemd_source(build_dir: Path) -> None:
@@ -98,9 +101,8 @@ def copy_git_ls_files(source_root: Path, build_root: Path) -> None:
         stdout=PIPE,
         cwd=source_root.resolve(),
         text=True,
+        check=True,
     )
-
-    git_ls.check_returncode()
 
     for file_relative_source_str in git_ls.stdout.splitlines():
         orig_file_path = source_root / file_relative_source_str

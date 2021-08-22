@@ -89,8 +89,8 @@ def setup_env() -> None:
         ['nproc'],
         stdout=PIPE,
         text=True,
+        check=True,
     )
-    nproc.check_returncode()
 
     global NPROC
     NPROC = nproc.stdout.splitlines()[0]
@@ -99,7 +99,8 @@ def setup_env() -> None:
 def install_packages() -> None:
     run(
         ['yum', 'install', '--assumeyes'] + yum_packages,
-    ).check_returncode()
+        check=True,
+    )
 
 
 def install_ninja() -> None:
@@ -109,15 +110,17 @@ def install_ninja() -> None:
     run(
         [ninja_boot_strap_path, '--bootstrap'],
         cwd=ninja_src_path,
-    ).check_returncode()
+        check=True,
+    )
 
     copy(ninja_src_path / 'ninja', '/usr/local/bin')
 
 
 def install_meson() -> None:
     run(
-        ['pip3', 'install', 'meson']
-    ).check_returncode()
+        ['pip3', 'install', 'meson'],
+        check=True,
+    )
 
 
 def install_util_linux() -> None:
@@ -127,7 +130,8 @@ def install_util_linux() -> None:
         [util_linux_src_path / 'autogen.sh'],
         cwd=util_linux_src_path,
         env={'AL_OPTS': '-I/usr/share/aclocal/', **environ},
-    ).check_returncode()
+        check=True,
+    )
 
     run(
         [
@@ -137,12 +141,14 @@ def install_util_linux() -> None:
             '--enable-symvers',
         ],
         cwd=util_linux_src_path,
-    ).check_returncode()
+        check=True,
+    )
 
     run(
         ['make', '--jobs', NPROC, 'install'],
         cwd=util_linux_src_path,
-    ).check_returncode()
+        check=True,
+    )
 
 
 def install_libcap() -> None:
@@ -151,7 +157,8 @@ def install_libcap() -> None:
     run(
         ['make', '--jobs', NPROC, 'install'],
         cwd=libcap_src_path,
-    ).check_returncode()
+        check=True,
+    )
 
 
 def install_systemd() -> None:
@@ -166,12 +173,14 @@ def install_systemd() -> None:
          '-Db_lto=true', '-Db_pie=true',
          ],
         env={**environ, 'PKG_CONFIG_PATH': '/usr/local/lib64/pkgconfig'},
-    ).check_returncode()
+        check=True,
+    )
 
     run(
         ['ninja', 'install'],
         cwd=systemd_build_path,
-    ).check_returncode()
+        check=True,
+    )
 
 
 def compile_extension() -> None:
@@ -187,17 +196,20 @@ def compile_extension() -> None:
         run(
             [python, setup_py_path, 'build'],
             cwd=python_sdbus_src_path,
-        ).check_returncode()
+            check=True,
+        )
 
         run(
             [python, setup_py_path, 'build', 'bdist_wheel'],
             cwd=python_sdbus_src_path,
-        ).check_returncode()
+            check=True,
+        )
 
         run(
             ['rm', '--recursive', build_dir_path],
             cwd=python_sdbus_src_path,
-        ).check_returncode()
+            check=True,
+        )
 
     # Repair wheels
     for wheel in dist_dir_path.iterdir():
@@ -209,7 +221,8 @@ def compile_extension() -> None:
                 '--wheel-dir', repaired_wheels_path,
                 wheel,
             ],
-        ).check_returncode()
+            check=True,
+        )
 
 
 def drop_to_shell() -> None:

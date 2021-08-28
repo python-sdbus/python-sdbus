@@ -594,6 +594,13 @@ class {{ interface.python_name }}(
 
 """
 
+SKIP_INTERFACES = {
+    'org.freedesktop.DBus.Properties',
+    'org.freedesktop.DBus.Introspectable',
+    'org.freedesktop.DBus.Peer',
+    'org.freedesktop.DBus.ObjectManager',
+}
+
 
 def xml_to_interfaces_introspection(
         root: Element) -> List[DbusInterfaceIntrospection]:
@@ -605,6 +612,9 @@ def xml_to_interfaces_introspection(
 
     for interface in root:
         if interface.tag == 'node':
+            continue
+
+        if interface.attrib['name'] in SKIP_INTERFACES:
             continue
 
         list_of_interface_introspection.append(

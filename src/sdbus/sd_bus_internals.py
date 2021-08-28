@@ -220,7 +220,7 @@ def decode_object_path(prefix: str, full_path: str) -> str:
 
 
 def add_exception_mapping(exc: Exception, /) -> None:
-    raise NotImplementedError(__STUB_ERROR)
+    ...  # We want to be able to generate docs without module
 
 
 class SdBusBaseError(Exception):

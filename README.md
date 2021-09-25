@@ -20,10 +20,11 @@ for tutorial and API reference.
 ### List of implemented interfaces
 
 * D-Bus (built-in)
-* [Freedesktop Notifications](https://github.com/igo95862/python-sdbus-notifications)
-* [Network Manager](https://github.com/igo95862/python-sdbus-networkmanager)
+* [Freedesktop Notifications](https://github.com/python-sdbus/python-sdbus-notifications)
+* [Network Manager](https://github.com/python-sdbus/python-sdbus-networkmanager)
+* [Freedesktop Secrets](https://github.com/python-sdbus/python-sdbus-secrets)
 
-More incoming. (NetworkManager, secrets... )
+More incoming. (systemd, Bluez, screen saver... )
 
 ## Requirements
 

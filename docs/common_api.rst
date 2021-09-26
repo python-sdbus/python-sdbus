@@ -54,6 +54,16 @@ Dbus connections calls
     :return: system bus
     :rtype: SdBus
 
+.. py:function:: sd_bus_open_system_remote(host)
+
+    Opens a new system bus connection on a remote host
+    through SSH. Host can be prefixed with ``username@`` and
+    followed by ``:port`` and ``/machine_name`` as in
+    ``systemd-nspawn`` container name.
+
+    :return: Remote system bus
+    :rtype: SdBus
+
 Helper functions
 ++++++++++++++++++++++++++++++++++
 

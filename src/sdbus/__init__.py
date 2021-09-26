@@ -89,6 +89,7 @@ from .sd_bus_internals import (
     encode_object_path,
     sd_bus_open,
     sd_bus_open_system,
+    sd_bus_open_system_remote,
     sd_bus_open_user,
 )
 
@@ -136,5 +137,6 @@ __all__ = [
     'SdBusLibraryError', 'SdBusUnmappedMessageError',
     'decode_object_path', 'encode_object_path',
     'sd_bus_open', 'sd_bus_open_system',
+    'sd_bus_open_system_remote',
     'sd_bus_open_user'
 ]

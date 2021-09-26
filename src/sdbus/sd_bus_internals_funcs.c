@@ -38,6 +38,15 @@ static SdBusObject* sd_bus_py_open_system(PyObject* Py_UNUSED(self), PyObject* P
         return new_sd_bus;
 }
 
+static SdBusObject* sd_bus_py_open_system_remote(PyObject* Py_UNUSED(self), PyObject* args) {
+        const char* remote_host_char_ptr = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &remote_host_char_ptr, NULL));
+
+        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBus_class, NULL));
+        CALL_SD_BUS_AND_CHECK(sd_bus_open_system_remote(&(new_sd_bus->sd_bus_ref), remote_host_char_ptr));
+        return new_sd_bus;
+}
+
 #ifndef Py_LIMITED_API
 static PyObject* encode_object_path(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
@@ -130,6 +139,7 @@ PyMethodDef SdBusPyInternal_methods[] = {
      "daemon"},
     {"sd_bus_open_user", (PyCFunction)sd_bus_py_open_user, METH_NOARGS, "Open user session dbus"},
     {"sd_bus_open_system", (PyCFunction)sd_bus_py_open_system, METH_NOARGS, "Open system dbus"},
+    {"sd_bus_open_system_remote", (PyCFunction)sd_bus_py_open_system_remote, METH_VARARGS, "Open remote system bus over SSH"},
     {"encode_object_path", (SD_BUS_PY_FUNC_TYPE)encode_object_path, SD_BUS_PY_METH, "Encode object path with object path prefix and arbitrary string"},
     {"decode_object_path", (SD_BUS_PY_FUNC_TYPE)decode_object_path, SD_BUS_PY_METH, "Decode object path with object path prefix and arbitrary string"},
     {"add_exception_mapping", (SD_BUS_PY_FUNC_TYPE)add_exception_mapping, SD_BUS_PY_METH, "Add exception to the mapping of dbus error names"},

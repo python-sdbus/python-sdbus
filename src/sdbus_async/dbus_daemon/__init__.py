@@ -21,10 +21,9 @@ from __future__ import annotations
 
 from typing import List, Optional, Tuple
 
-from sdbus.sd_bus_internals import SdBus
-
 from sdbus import (
     DbusInterfaceCommonAsync,
+    SdBus,
     dbus_method_async,
     dbus_property_async,
     dbus_signal_async,

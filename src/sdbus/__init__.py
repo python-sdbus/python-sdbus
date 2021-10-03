@@ -90,8 +90,10 @@ from .sd_bus_internals import (
     encode_object_path,
     sd_bus_open,
     sd_bus_open_system,
+    sd_bus_open_system_machine,
     sd_bus_open_system_remote,
     sd_bus_open_user,
+    sd_bus_open_user_machine,
 )
 
 __all__ = [
@@ -146,6 +148,8 @@ __all__ = [
     'encode_object_path',
     'sd_bus_open',
     'sd_bus_open_system',
+    'sd_bus_open_system_machine',
     'sd_bus_open_system_remote',
     'sd_bus_open_user',
+    'sd_bus_open_user_machine',
 ]

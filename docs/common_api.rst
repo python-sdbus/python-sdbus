@@ -61,6 +61,27 @@ Dbus connections calls
     followed by ``:port`` and ``/machine_name`` as in
     ``systemd-nspawn`` container name.
 
+    :param str host: Host name to connect.
+    :return: Remote system bus
+    :rtype: SdBus
+
+.. py:function:: sd_bus_open_system_machine(machine)
+
+    Opens a new system bus connection in a systemd-nspawn
+    container. Machine name can be prefixed with ``username@``.
+    Special machine name ``.host`` indicates local system.
+
+    :param str machine: Machine (container) name.
+    :return: Remote system bus
+    :rtype: SdBus
+
+.. py:function:: sd_bus_open_user_machine(machine)
+
+    Opens a new user session bus connection in a systemd-nspawn
+    container. Opens root user bus session or can be
+    prefixed with ``username@`` for a specific user.
+
+    :param str machine: Machine (container) name.
     :return: Remote system bus
     :rtype: SdBus
 

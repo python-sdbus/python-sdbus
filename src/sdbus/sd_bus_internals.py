@@ -215,6 +215,14 @@ def sd_bus_open_system_remote(host: str, /) -> SdBus:
     raise NotImplementedError(__STUB_ERROR)
 
 
+def sd_bus_open_user_machine(machine: str, /) -> SdBus:
+    raise NotImplementedError(__STUB_ERROR)
+
+
+def sd_bus_open_system_machine(machine: str, /) -> SdBus:
+    raise NotImplementedError(__STUB_ERROR)
+
+
 def encode_object_path(prefix: str, external: str) -> str:
     raise NotImplementedError(__STUB_ERROR)
 

@@ -67,6 +67,9 @@ if not environ.get('PYTHON_SDBUS_USE_IGNORE_SYSTEMD_VERSION'):
     if LIBSYSTEMD_MAJOR <= 0 and LIBSYSTEMD_MINOR < 29:
         c_macros.append(('LIBSYSTEMD_NO_VALIDATION_FUNCS', None))
 
+    if LIBSYSTEMD_MAJOR <= 0 and LIBSYSTEMD_MINOR < 31:
+        c_macros.append(('LIBSYSTEMD_NO_OPEN_USER_MACHINE', None))
+
 link_arguments: List[str] = ['-lsystemd']
 
 if environ.get('PYTHON_SDBUS_USE_STATIC_LINK'):

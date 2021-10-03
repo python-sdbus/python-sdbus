@@ -57,12 +57,17 @@ static SdBusObject* sd_bus_py_open_system_machine(PyObject* Py_UNUSED(self), PyO
 }
 
 static SdBusObject* sd_bus_py_open_user_machine(PyObject* Py_UNUSED(self), PyObject* args) {
+#ifndef LIBSYSTEMD_NO_OPEN_USER_MACHINE
         const char* remote_host_char_ptr = NULL;
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &remote_host_char_ptr, NULL));
 
         SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBus_class, NULL));
         CALL_SD_BUS_AND_CHECK(sd_bus_open_user_machine(&(new_sd_bus->sd_bus_ref), remote_host_char_ptr));
         return new_sd_bus;
+#else
+        PyErr_SetString(PyExc_NotImplementedError, "libsystemd<0.31.0 does not opening machine user bus");
+        return NULL;
+#endif
 }
 
 #ifndef Py_LIMITED_API

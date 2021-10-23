@@ -72,7 +72,7 @@ There are 3 files:
     async def startup() -> None:
         """Perform async startup actions"""
         # Acquire a known name on the bus
-        # Client will use that name to connect to this server
+        # Clients will use that name to address to this server
         await request_default_bus_name_async('org.example.test')
         # Export the object to dbus
         export_object.export_to_dbus('/')
@@ -90,7 +90,7 @@ There are 3 files:
 
     from example_interface import ExampleInterface
 
-    # Create a new bounded object
+    # Create a new proxy object
     example_object = ExampleInterface.new_connect('org.example.test', '/')
 
 

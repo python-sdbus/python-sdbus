@@ -18,7 +18,7 @@ Classes
 
     .. py:method:: __init__(service_name, object_path, [bus])
 
-        Init will bind to a remote object
+        Init will create a proxy to a remote object
 
         :param str service_name: 
             Remote object dbus connection name. 
@@ -36,13 +36,16 @@ Classes
 
     .. py:method:: dbus_ping()
 
-        Pings the remote object using dbus.
+        Pings the remote service using dbus.
 
-        Useful to test if remote object is alive.
+        Useful to test if connection or remote service is alive.
+
+        .. warning:: This method is ignores the particular object path
+                     meaning it can NOT be used to test if object exist.
 
     .. py:method:: dbus_machine_id()
 
-        Returns the machine UUID of the remote object.
+        Returns the machine UUID of D-Bus the object is connected to.
 
         :return: machine UUID
         :rtype: str

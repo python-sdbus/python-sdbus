@@ -138,7 +138,7 @@ async def clock() -> None:
 async def startup() -> None:
     """Perform async startup actions"""
     # Acquire a known name on the bus
-    # Client will use that name to connect to this server
+    # Clients will use that name to address this server
     await request_default_bus_name_async('org.example.test')
     # Export the object to dbus
     export_object.export_to_dbus('/')
@@ -156,7 +156,7 @@ from asyncio import get_event_loop
 
 from example_interface import ExampleInterface
 
-# Create a new binded object
+# Create a new proxied object
 example_object = ExampleInterface.new_connect('org.example.test', '/')
 
 

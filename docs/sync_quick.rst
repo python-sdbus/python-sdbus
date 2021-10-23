@@ -20,8 +20,8 @@ Example::
                            ):
         ...
 
-Interface class body should contain the definitions of methods, properties and signals using decorators such as
-:py:func:`dbus_method` or :py:func:`dbus_property`.
+Interface class body should contain the definitions of methods and properties using the decorators
+:py:func:`dbus_method` and :py:func:`dbus_property` respectively.
 
 Example::
 
@@ -51,13 +51,13 @@ as regular methods.
 Blocking IO can only interact with existing dbus objects and can not be
 served for other processes to interact with. See :ref:`blocking-vs-async`
 
-Connecting
+Initiating proxy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :py:meth:`DbusInterfaceCommon.__init__` method takes service_name 
-and object_path of the remote object that the object will bind to.
+and object_path of the remote object that the object will proxy to.
 
-Example connecting and calling method::
+Example creating a proxy and calling method::
 
     ...
     # Initialize the object
@@ -67,6 +67,9 @@ Example connecting and calling method::
     )
 
     d.close_notification(1234)
+
+.. note:: Successfully initiating a proxy object does NOT guarantee that the dbus object
+          exists.
 
 Methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -113,7 +116,7 @@ Example: ::
 
 The new property behaves very similar to Pythons :py:func:`property` decorator. ::
 
-    # Initialize the object
+    # Initialize the proxy
     d = ExampleInterface(
         service_name='org.example.test',
         object_path='/',
@@ -162,5 +165,5 @@ Example: ::
         ...
 
 ``MultipleInterfaces`` class will have both ``test_method`` and ``example_method``
-that will be wired to correct interface names. (``org.example.myinterface``
+that will be proxied to correct interface names. (``org.example.myinterface``
 and ``org.example.test`` respectively)

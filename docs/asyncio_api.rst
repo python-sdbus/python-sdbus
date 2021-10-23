@@ -29,13 +29,17 @@ Classes
     .. py:method:: dbus_ping()
         :async:
 
-        Pings the remote object using dbus.
-        Useful to test if remote object is alive.
+        Pings the remote service using dbus.
+
+        Useful to test if connection or remote service is alive.
+
+        .. warning:: This method is ignores the particular object path
+                     meaning it can NOT be used to test if object exist.
 
     .. py:method:: dbus_machine_id()
         :async:
 
-        Returns the machine UUID of the remote object.
+        Returns the machine UUID of D-Bus the object is connected to.
 
         :return: machine UUID
         :rtype: str
@@ -69,8 +73,7 @@ Classes
 
     .. py:method:: _connect(bus, service_name, object_path)
 
-        Binds object to a remote dbus object. Calls
-        will be redirected to remote dbus object.
+        Begin proxying to a remote dbus object.
 
         :param str service_name:
             Remote object dbus connection name. 
@@ -88,7 +91,7 @@ Classes
 
     .. py:classmethod:: new_connect(bus, service_name, object_path)
 
-        Create new bounded object and bypass ``__init__``.
+        Create new proxy object and bypass ``__init__``.
 
         :param str service_name:
             Remote object dbus connection name. 
@@ -267,7 +270,7 @@ Decorators
 
     :param str property_name: Force specific property name
         instead of constructing it based on Python function name.
-     
+
     Properties have following methods:
 
     .. py:decoratormethod:: setter(set_function)
@@ -290,7 +293,7 @@ Decorators
 
         Set property value.
 
-    
+
     Example: ::
 
         from sdbus import DbusInterfaceCommonAsync, dbus_property_async
@@ -299,7 +302,7 @@ Decorators
         class ExampleInterface(DbusInterfaceCommonAsync,
                                interface_name='org.example.test'
                                ):
-            
+
             def __init__(self) -> None:
                 # This is just a generic init
                 self.i = 12345
@@ -330,10 +333,10 @@ Decorators
         Defaults to empty signal.
 
     :param Sequence[str] signal_args_names: sequence of signal argument names.
-        
+
         These names will show up in introspection data but otherwise
         have no effect.
-        
+
         Sequence can be list, tuple, etc...
         Number of elements in the sequence should match
         the number of result arguments otherwise :py:exc:`RuntimeError`
@@ -353,7 +356,7 @@ Decorators
     Signals have following methods:
 
     .. py:method:: __aiter__()
-        
+
         Signal can be used as an async generator for loop:
         ``async for x in something.some_signal:``
 

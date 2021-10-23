@@ -13,6 +13,11 @@ can be found under
 Known proxies
 -------------
 
+.. toctree::
+  :hidden:
+
+  proxies/dbus
+
 This list contains the known python-sdbus interface
 collections:
 

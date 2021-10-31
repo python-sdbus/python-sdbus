@@ -157,7 +157,7 @@ from asyncio import get_event_loop
 from example_interface import ExampleInterface
 
 # Create a new proxied object
-example_object = ExampleInterface.new_connect('org.example.test', '/')
+example_object = ExampleInterface.new_proxy('org.example.test', '/')
 
 
 async def print_clock() -> None:

@@ -71,7 +71,7 @@ Classes
         Invalidated properties : List[str]
             List of property names changed but no new value had been provided
 
-    .. py:method:: _connect(bus, service_name, object_path)
+    .. py:method:: _proxify(bus, service_name, object_path)
 
         Begin proxying to a remote dbus object.
 
@@ -89,7 +89,7 @@ Classes
             Optional dbus connection object.
             If not passed the default dbus will be used.
 
-    .. py:classmethod:: new_connect(bus, service_name, object_path)
+    .. py:classmethod:: new_proxy(bus, service_name, object_path)
 
         Create new proxy object and bypass ``__init__``.
 

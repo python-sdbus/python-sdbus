@@ -766,6 +766,18 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         object_path: str,
         bus: Optional[SdBus] = None,
     ) -> None:
+        self._proxify(
+            service_name,
+            object_path,
+            bus,
+        )
+
+    def _proxify(
+        self,
+        service_name: str,
+        object_path: str,
+        bus: Optional[SdBus] = None,
+    ) -> None:
 
         self._is_binded = True
         self._attached_bus = bus if bus is not None else get_default_bus()
@@ -779,10 +791,23 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         object_path: str,
         bus: Optional[SdBus] = None,
     ) -> T_input:
+        return cls.new_proxy(
+            service_name,
+            object_path,
+            bus,
+        )
+
+    @classmethod
+    def new_proxy(
+        cls: Type[T_input],
+        service_name: str,
+        object_path: str,
+        bus: Optional[SdBus] = None,
+    ) -> T_input:
 
         new_object = cls.__new__(cls)
         assert isinstance(new_object, DbusInterfaceBaseAsync)
-        new_object._connect(service_name, object_path, bus)
+        new_object._proxify(service_name, object_path, bus)
         assert isinstance(new_object, cls)
         return new_object
 

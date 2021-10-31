@@ -170,7 +170,7 @@ def initialize_object(bus: SdBus) -> Tuple[TestInterface, TestInterface]:
     test_object = TestInterface()
     test_object.export_to_dbus('/', bus)
 
-    test_object_connection = TestInterface.new_connect(
+    test_object_connection = TestInterface.new_proxy(
         "org.example.test", '/', bus)
 
     return test_object, test_object_connection
@@ -183,7 +183,7 @@ class TestProxy(TempDbusTest):
 
         test_object = TestInterface()
         test_object.export_to_dbus('/', self.bus)
-        test_object_connection = TestInterface.new_connect(
+        test_object_connection = TestInterface.new_proxy(
             "org.example.test", '/', self.bus)
 
         await test_object_connection.dbus_ping()
@@ -263,7 +263,7 @@ class TestProxy(TempDbusTest):
 
         self.assertEqual(await test_subclass.test_int(), 2)
 
-        test_subclass_connection = TestInheritnce.new_connect(
+        test_subclass_connection = TestInheritnce.new_proxy(
             "org.example.test", '/subclass', self.bus)
 
         self.assertEqual(await test_subclass_connection.test_int(), 2)

@@ -58,9 +58,9 @@ Initiating proxy
 
 :py:class:`DbusInterfaceCommonAsync` provides two methods for proxying remote objects.
 
-:py:meth:`DbusInterfaceCommonAsync.new_connect` class method bypasses the class ``__init__`` and returns proxy object.
+:py:meth:`DbusInterfaceCommonAsync.new_proxy` class method bypasses the class ``__init__`` and returns proxy object.
 
-:py:meth:`DbusInterfaceCommonAsync._connect` should be used inside the ``__init__`` methods if your class is remote only.
+:py:meth:`DbusInterfaceCommonAsync._proxify` should be used inside the ``__init__`` methods if your class is a proxy only.
 
 Recommended to create proxy classes that a subclass of the interface: ::
 
@@ -74,7 +74,7 @@ Recommended to create proxy classes that a subclass of the interface: ::
     class ExampleClient(ExampleInterface):
         def __init__(self) -> None:
             # Your client init can proxy to any object based on passed arguments.
-            self._connect('org.example.test', '/')
+            self._proxify('org.example.test', '/')
 
 
 .. note:: Successfully initiating a proxy object does NOT guarantee that the dbus object exists.
@@ -121,8 +121,8 @@ This is the call to local object: ::
 This is a call to remote object at ``'org.example.test'`` service name
 and ``'/'`` path: ::
 
-    i = ExampleInterface.new_connect('org.example.test', '/')
-    
+    i = ExampleInterface.new_proxy('org.example.test', '/')
+
     async def test() -> None:
         print(await i.double_int(5))  # Will print 10
 

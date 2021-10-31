@@ -46,7 +46,7 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
             If not passed the default dbus will be used.
         """
         super().__init__()
-        self._connect(
+        self._proxify(
             'org.freedesktop.DBus',
             '/org/freedesktop/DBus',
             bus,

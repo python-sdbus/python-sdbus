@@ -27,7 +27,7 @@ from shutil import copy
 from subprocess import PIPE, run
 from tempfile import TemporaryDirectory
 
-SYSTEMD_VERSION = '248.7'
+SYSTEMD_VERSION = '248.9'
 UTIL_LINUX_VERSION = '2.37'
 NINJA_VERSION = '1.10.2'
 LIBCAP_VERSION = '2.59'

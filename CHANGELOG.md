@@ -1,3 +1,8 @@
+## 0.8.4
+
+* Deprecated `DbusInterfaceCommonAsync._connect` and `DbusInterfaceCommonAsync.new_connect` in favor
+  of `DbusInterfaceCommonAsync._proxify` and `DbusInterfaceCommonAsync.new_proxy` respectively.
+
 ## 0.8.3
 
 ### Features:

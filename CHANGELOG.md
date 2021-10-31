@@ -1,3 +1,22 @@
+## 0.8.3
+
+### Features:
+
+* Added `gen-from-connection` command to module that generates interface
+  classes from run-time introspection. Takes service name and one or
+  more object paths as arguments. Outputs to stdout.
+* Added `sd_bus_open_system_remote` call that opens a remote system bus
+  through SSH.
+* Added `sd_bus_open_system_machine` and `sd_bus_open_user_machine` calls
+  that open a bus connection inside systemd-nspawn containers.
+
+### Fixes:
+
+* Typing stub will raise an exception when called in case the C module failed
+  to load. This should reduce crypting erros in case the module failure.
+* Interface generator now skips standard interfaces such as
+  `org.freedesktop.DBus.Introspectable`
+
 ## 0.8.2
 
 * Added limited API module.

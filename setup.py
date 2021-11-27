@@ -130,6 +130,7 @@ if __name__ == '__main__':
             'sdbus': [
                 'py.typed',
                 'sd_bus_internals.pyi',
+                'sd_bus_internals.h',
             ],
             'sdbus_async.dbus_daemon': [
                 'py.typed',

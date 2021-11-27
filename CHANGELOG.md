@@ -1,3 +1,7 @@
+## 0.8.5
+
+* Fixed missing header file from the source package.
+
 ## 0.8.4
 
 * Deprecated `DbusInterfaceCommonAsync._connect` and `DbusInterfaceCommonAsync.new_connect` in favor

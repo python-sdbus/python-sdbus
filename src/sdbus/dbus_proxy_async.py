@@ -791,11 +791,12 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         object_path: str,
         bus: Optional[SdBus] = None,
     ) -> T_input:
-        return cls.new_proxy(
-            service_name,
-            object_path,
-            bus,
-        )
+
+        new_object = cls.__new__(cls)
+        assert isinstance(new_object, DbusInterfaceBaseAsync)
+        new_object._proxify(service_name, object_path, bus)
+        assert isinstance(new_object, cls)
+        return new_object
 
     @classmethod
     def new_proxy(

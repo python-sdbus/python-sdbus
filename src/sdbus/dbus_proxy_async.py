@@ -677,7 +677,6 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
     _dbus_interface_name: Optional[str]
     _dbus_serving_enabled: bool
 
-    # TODO: make all attributes start with _
     def __init__(self) -> None:
         self._activated_interfaces: List[SdBusInterface] = []
         self._is_binded: bool = False

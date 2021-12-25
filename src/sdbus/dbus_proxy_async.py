@@ -40,7 +40,6 @@ from typing import (
     cast,
 )
 from weakref import ref as weak_ref
-from weakref import ref as weakref
 
 from .dbus_common import (
     DbusMethodCommon,
@@ -81,7 +80,7 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
                  dbus_method: DbusMethodAsync,
                  interface: DbusInterfaceBaseAsync):
         self.dbus_method = dbus_method
-        self.interface_ref = weakref(interface)
+        self.interface_ref = weak_ref(interface)
 
         self.__doc__ = dbus_method.__doc__
 
@@ -269,7 +268,7 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
                  dbus_property: DbusPropertyAsync[T],
                  interface: DbusInterfaceBaseAsync):
         self.dbus_property = dbus_property
-        self.interface_ref = weakref(interface)
+        self.interface_ref = weak_ref(interface)
 
         self.__doc__ = dbus_property.__doc__
 
@@ -438,7 +437,7 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
                  dbus_signal: DbusSignal[T],
                  interface: DbusInterfaceBaseAsync):
         self.dbus_signal = dbus_signal
-        self.interface_ref = weakref(interface)
+        self.interface_ref = weak_ref(interface)
 
         self.__doc__ = dbus_signal.__doc__
 

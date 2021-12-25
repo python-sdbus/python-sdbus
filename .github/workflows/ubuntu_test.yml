@@ -48,3 +48,18 @@ jobs:
       - name: Run unit tests
         run: |
           python3 -m unittest
+  lint:
+    name: Run linters on the code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install python3 python3-pip meson
+          sudo pip3 install mypy flake8 pyflakes pycodestyle
+      - name: Run linters
+        run: |
+          meson setup build
+          ninja -C build lint-python

@@ -58,7 +58,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install python3 python3-pip meson
-          sudo pip3 install mypy flake8 pyflakes pycodestyle
+          sudo pip3 install --upgrade mypy flake8 pyflakes pycodestyle jinja2 Sphinx
       - name: Run linters
         run: |
           meson setup build

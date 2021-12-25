@@ -24,7 +24,14 @@ from asyncio import Event, get_running_loop, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 
-from sdbus.sd_bus_internals import DBUS_ERROR_TO_EXCEPTION, SdBus
+from sdbus.dbus_common import PROPERTY_FLAGS_MASK, count_bits
+from sdbus.sd_bus_internals import (
+    DBUS_ERROR_TO_EXCEPTION,
+    DbusDeprecatedFlag,
+    DbusPropertyConstFlag,
+    DbusPropertyEmitsChangeFlag,
+    SdBus,
+)
 
 from sdbus import (
     DbusFailedError,
@@ -94,7 +101,10 @@ class TestInterface(DbusInterfaceCommonAsync,
     async def int_annotated(self) -> int:
         return 1
 
-    @dbus_property_async("s")
+    @dbus_property_async(
+        "s",
+        flags=DbusPropertyEmitsChangeFlag,
+    )
     def test_property(self) -> str:
         """Test property"""
         return self.test_string
@@ -156,6 +166,10 @@ class TestInterface(DbusInterfaceCommonAsync,
     @dbus_method_async('s', flags=DbusNoReplyFlag)
     async def no_reply_method(self, new_value: str) -> None:
         self.no_reply_sync.set()
+
+    @dbus_property_async("s")
+    def test_constant_property(self) -> str:
+        return "a"
 
 
 class DbusErrorTest(DbusFailedError):
@@ -449,3 +463,82 @@ class TestProxy(TempDbusTest):
 
         self.assertTrue(
             getdoc(test_object_connection.test_signal))
+
+    async def test_emits_properties_changed(self) -> None:
+        test_object, test_object_connection = initialize_object(self.bus)
+
+        test_str = 'should_be_emited'
+
+        loop = get_running_loop()
+
+        async def catch_property_emit_connection() -> str:
+            async for x in test_object_connection.properties_changed:
+                for v in x[1].values():
+                    probably_str = v[1]
+                    if isinstance(probably_str, str):
+                        return probably_str
+                    else:
+                        raise TypeError
+            raise ValueError
+
+        async def catch_property_emit_local() -> str:
+            async for x in test_object.properties_changed:
+                for v in x[1].values():
+                    probably_str = v[1]
+                    if isinstance(probably_str, str):
+                        return probably_str
+                    else:
+                        raise TypeError
+            raise ValueError
+
+        t1 = loop.create_task(catch_property_emit_connection())
+        t2 = loop.create_task(catch_property_emit_local())
+
+        await test_object_connection.test_property.set_async(test_str)
+
+        t1_result = await wait_for(t1, timeout=0.2)
+        t2_result = await wait_for(t2, timeout=0.2)
+
+        self.assertEqual(t1_result, test_str)
+        self.assertEqual(t2_result, test_str)
+
+    async def test_property_flags(self) -> None:
+        self.assertEqual(0, PROPERTY_FLAGS_MASK & DbusDeprecatedFlag)
+        self.assertEqual(
+            1,
+            count_bits(PROPERTY_FLAGS_MASK & (DbusDeprecatedFlag
+                                              | DbusPropertyEmitsChangeFlag))
+        )
+        self.assertEqual(
+            2,
+            count_bits(
+                PROPERTY_FLAGS_MASK & (
+                    DbusDeprecatedFlag |
+                    DbusPropertyConstFlag |
+                    DbusPropertyEmitsChangeFlag)))
+
+        def must_raise_value_error() -> None:
+            class InvalidPropertiesFlags(
+                DbusInterfaceCommonAsync,
+                    interface_name='org.test.test'):
+                @dbus_property_async(
+                    "s",
+                    flags=DbusPropertyConstFlag | DbusPropertyEmitsChangeFlag,
+                )
+                def test_constant(self) -> str:
+                    return "a"
+
+        self.assertRaises(ValueError, must_raise_value_error)
+
+        def should_be_no_error() -> None:
+            class ValidPropertiesFlags(
+                DbusInterfaceCommonAsync,
+                    interface_name='org.test.test'):
+                @dbus_property_async(
+                    "s",
+                    flags=DbusDeprecatedFlag | DbusPropertyEmitsChangeFlag,
+                )
+                def test_constant(self) -> str:
+                    return "a"
+
+        should_be_no_error()

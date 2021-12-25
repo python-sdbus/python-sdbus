@@ -24,9 +24,35 @@ from inspect import getfullargspec
 from types import FunctionType
 from typing import Any, Dict, Iterator, List, Optional, Sequence
 
-from .sd_bus_internals import SdBus, sd_bus_open
+from .sd_bus_internals import (
+    DbusPropertyConstFlag,
+    DbusPropertyEmitsChangeFlag,
+    DbusPropertyEmitsInvalidationFlag,
+    DbusPropertyExplicitFlag,
+    SdBus,
+    sd_bus_open,
+)
 
 DEFAULT_BUS: Optional[SdBus] = None
+
+PROPERTY_FLAGS_MASK = (
+    DbusPropertyConstFlag | DbusPropertyEmitsChangeFlag |
+    DbusPropertyEmitsInvalidationFlag | DbusPropertyExplicitFlag
+)
+
+
+def count_bits(i: int) -> int:
+    return bin(i).count('1')
+
+
+def is_property_flags_correct(flags: int) -> None:
+    num_of_flag_bits = count_bits(PROPERTY_FLAGS_MASK & flags)
+    if not 0 <= num_of_flag_bits <= 1:
+        raise ValueError(
+            'Incorrect number of Property flags. '
+            'Only one of DbusPropertyConstFlag, DbusPropertyEmitsChangeFlag, '
+            'DbusPropertyEmitsInvalidationFlag or DbusPropertyExplicitFlag '
+            'is allowed.')
 
 
 def get_default_bus() -> SdBus:

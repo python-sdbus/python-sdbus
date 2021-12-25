@@ -48,10 +48,12 @@ from .dbus_common import (
     DbusSomethingSync,
     _method_name_converter,
     get_default_bus,
+    is_property_flags_correct,
 )
 from .dbus_exceptions import DbusFailedError
 from .sd_bus_internals import (
     DbusNoReplyFlag,
+    DbusPropertyEmitsChangeFlag,
     SdBus,
     SdBusInterface,
     SdBusMessage,
@@ -229,12 +231,17 @@ class DbusProperty(DbusSomethingAsync, Generic[T]):
             flags: int,
 
     ) -> None:
+        is_property_flags_correct(flags)  # Check that number of passed flags
+
         super().__init__()
         self.property_name = property_name
         self.property_signature = property_signature
         self.property_getter = property_getter
         self.property_setter = property_setter
         self.flags = flags
+
+        self.properties_changed_signal: \
+            Optional[DbusSignalBinded[DBUS_PROPERTIES_CHANGED_TYPING]] = None
 
         self.__doc__ = property_getter.__doc__
 
@@ -310,6 +317,21 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
         data_to_set_to: Any = message.get_contents()
 
         self.dbus_property.property_setter(interface, data_to_set_to)
+
+        if self.dbus_property.properties_changed_signal is not None:
+            assert self.dbus_property.interface_name is not None
+            self.dbus_property.properties_changed_signal.emit(
+                (
+                    self.dbus_property.interface_name,
+                    {
+                        self.dbus_property.property_name: (
+                            self.dbus_property.property_signature,
+                            data_to_set_to,
+                        ),
+                    },
+                    []
+                )
+            )
 
     async def set_async(self, complete_object: T) -> None:
         interface = self.interface_ref()
@@ -791,7 +813,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         object_path: str,
         bus: Optional[SdBus] = None,
     ) -> T_input:
-
+        # TODO: Add deprecation warning in 0.9.0
         new_object = cls.__new__(cls)
         assert isinstance(new_object, DbusInterfaceBaseAsync)
         new_object._proxify(service_name, object_path, bus)
@@ -839,15 +861,30 @@ class DbusIntrospectableAsync(
         raise NotImplementedError
 
 
+DBUS_PROPERTIES_CHANGED_TYPING = Tuple[str,
+                                       Dict[str, Tuple[str, Any]],
+                                       List[str]]
+
+
 class DbusPropertiesInterfaceAsync(
     DbusInterfaceBaseAsync,
     interface_name='org.freedesktop.DBus.Properties',
     serving_enabled=False,
 ):
+    def __init__(self) -> None:
+        super().__init__()
+
+        properties_changed_signal = self.properties_changed
+        for key, value in getmembers(self):
+            if isinstance(value, DbusPropertyAsyncBinded):
+                if not value.dbus_property.flags & DbusPropertyEmitsChangeFlag:
+                    continue
+
+                value.dbus_property.properties_changed_signal \
+                    = properties_changed_signal
+
     @dbus_signal_async('sa{sv}as')
-    def properties_changed(self) -> Tuple[str,
-                                          Dict[str, Tuple[str, Any]],
-                                          List[str]]:
+    def properties_changed(self) -> DBUS_PROPERTIES_CHANGED_TYPING:
         ...
 
 

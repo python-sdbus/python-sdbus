@@ -23,15 +23,7 @@ from __future__ import annotations
 from asyncio import Event, get_running_loop, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
-
-from sdbus.dbus_common import PROPERTY_FLAGS_MASK, count_bits
-from sdbus.sd_bus_internals import (
-    DBUS_ERROR_TO_EXCEPTION,
-    DbusDeprecatedFlag,
-    DbusPropertyConstFlag,
-    DbusPropertyEmitsChangeFlag,
-    SdBus,
-)
+from unittest import SkipTest
 
 from sdbus import (
     DbusFailedError,
@@ -46,6 +38,14 @@ from sdbus import (
     dbus_property_async_override,
     dbus_signal_async,
 )
+from sdbus.dbus_common import PROPERTY_FLAGS_MASK, count_bits
+from sdbus.sd_bus_internals import (
+    DBUS_ERROR_TO_EXCEPTION,
+    DbusDeprecatedFlag,
+    DbusPropertyConstFlag,
+    DbusPropertyEmitsChangeFlag,
+    SdBus,
+)
 
 from .common_test_util import TempDbusTest
 
@@ -53,13 +53,17 @@ from .common_test_util import TempDbusTest
 class TestPing(TempDbusTest):
 
     async def test_ping_with_busctl(self) -> None:
-        busctl_process = await create_subprocess_exec(
-            '/usr/bin/busctl',
-            '--user',
-            'call',
-            'org.freedesktop.DBus', '/org/freedesktop/DBus',
-            'org.freedesktop.DBus.Peer', 'Ping',
-        )
+        try:
+            busctl_process = await create_subprocess_exec(
+                '/usr/bin/busctl',
+                '--user',
+                'call',
+                'org.freedesktop.DBus', '/org/freedesktop/DBus',
+                'org.freedesktop.DBus.Peer', 'Ping',
+            )
+        except FileNotFoundError:
+            raise SkipTest('busctl not installed')
+
         return_code = await busctl_process.wait()
         self.assertEqual(return_code, 0)
 

@@ -1,0 +1,21 @@
+FROM docker.io/alpine
+
+COPY ../../src /root/python-sdbus/src
+COPY ../../test /root/python-sdbus/test
+COPY ../../setup.py ../../README.md /root/python-sdbus/
+
+RUN apk update && \
+    apk upgrade && \
+    apk add python3 \
+        py3-setuptools \
+        python3-dev \
+        elogind-dev \
+        musl-dev \
+        gcc \
+        pkgconfig \
+        dbus
+
+WORKDIR /root/python-sdbus/
+
+CMD python3 setup.py build --build-lib build-lib && \
+    PYTHONPATH=./build-lib python3 -m unittest

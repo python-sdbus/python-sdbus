@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from os import environ
-from subprocess import DEVNULL, PIPE, CalledProcessError
+from subprocess import DEVNULL, PIPE
 from subprocess import run as subprocess_run
 from typing import List, Optional, Tuple
 
@@ -30,49 +30,47 @@ from setuptools import Extension, setup
 c_macros: List[Tuple[str, Optional[str]]] = []
 
 
-def get_libsystemd_version() -> Tuple[int, int, int]:
+def get_libsystemd_version() -> int:
     process = subprocess_run(
-        args=('ldconfig', '-f', '/dev/null', '-C', '/dev/null',
-              '-v', '-N', '-X'),
+        args=('pkg-config', '--modversion', 'libsystemd'),
         stderr=DEVNULL,
         stdout=PIPE,
+        check=True,
     )
-
-    try:
-        process.check_returncode()
-    except CalledProcessError:
-        return 0, 0, 0
 
     result_str = process.stdout.decode('utf-8')
 
-    for line in result_str.splitlines():
-        if 'libsystemd.so' in line:
-            version_str = line.split('libsystemd.so')[-1]
-            semver_strs = version_str.split('.')
-            return (
-                int(semver_strs[1]),
-                int(semver_strs[2]),
-                int(semver_strs[3]),
-            )
-
-    return 0, 0, 0
+    return int(result_str)
 
 
 if not environ.get('PYTHON_SDBUS_USE_IGNORE_SYSTEMD_VERSION'):
-    LIBSYSTEMD_MAJOR, LIBSYSTEMD_MINOR, LIBSYTEMD_PATCH \
-        = get_libsystemd_version()
+    systemd_version = get_libsystemd_version()
 
-    if LIBSYSTEMD_MAJOR <= 0 and LIBSYSTEMD_MINOR < 29:
+    if systemd_version < 246:
         c_macros.append(('LIBSYSTEMD_NO_VALIDATION_FUNCS', None))
 
-    if LIBSYSTEMD_MAJOR <= 0 and LIBSYSTEMD_MINOR < 31:
+    if systemd_version < 248:
         c_macros.append(('LIBSYSTEMD_NO_OPEN_USER_MACHINE', None))
 
-link_arguments: List[str] = ['-lsystemd']
+
+def get_link_arguments() -> List[str]:
+    process = subprocess_run(
+        args=('pkg-config', '--libs-only-l', 'libsystemd'),
+        stderr=DEVNULL,
+        stdout=PIPE,
+        check=True,
+    )
+
+    result_str = process.stdout.decode('utf-8')
+
+    return result_str.rstrip(' \n').split(' ')
+
+
+link_arguments: List[str] = get_link_arguments()
 
 if environ.get('PYTHON_SDBUS_USE_STATIC_LINK'):
     # Link statically against libsystemd and libcap
-    link_arguments = ['-Wl,-Bstatic', '-lsystemd', '-lcap',
+    link_arguments = ['-Wl,-Bstatic', *link_arguments, '-lcap',
                       '-Wl,-Bdynamic', '-lrt', '-lpthread']
 
 link_arguments.append('-flto')

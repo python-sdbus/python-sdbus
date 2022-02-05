@@ -36,7 +36,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install python3-setuptools python3-dev libsystemd-dev \
-            systemd dbus python3 gcc
+            systemd dbus python3 gcc pkg-config
       - name: Build extension
         env:
           PYTHON_SDBUS_USE_LIMITED_API: "1"

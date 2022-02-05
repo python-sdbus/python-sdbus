@@ -9,7 +9,7 @@ Features:
 * Asyncio and blocking calls.
 * Type hints. (`mypy --strict` compatible)
 * No Python 2 legacy.
-* Based on fast sd-bus from systemd.
+* Based on fast sd-bus from systemd. (also supports elogind)
 * Unified client/server interface classes. Write interface once!
 * Dbus methods can have keyword and default arguments.
 
@@ -50,9 +50,10 @@ platforms.
 * Python 3.8 or higher.
 * Python headers. (`python3-dev` package on ubuntu)
 * GCC.
-* libsystemd. (comes with systemd)
+* libsystemd or libelogind
 * libsystemd headers. (`libsystemd-dev` package on ubuntu)
 * Python setuptools.
+* pkg-config
 
 Systemd version should be higher than 246.
 

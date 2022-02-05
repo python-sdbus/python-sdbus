@@ -65,7 +65,7 @@ static SdBusObject* sd_bus_py_open_user_machine(PyObject* Py_UNUSED(self), PyObj
         CALL_SD_BUS_AND_CHECK(sd_bus_open_user_machine(&(new_sd_bus->sd_bus_ref), remote_host_char_ptr));
         return new_sd_bus;
 #else
-        PyErr_SetString(PyExc_NotImplementedError, "libsystemd<0.31.0 does not opening machine user bus");
+        PyErr_SetString(PyExc_NotImplementedError, "libsystemd < 248 does not support opening machine user bus");
         return NULL;
 #endif
 }
@@ -86,7 +86,7 @@ static PyObject* encode_object_path(PyObject* Py_UNUSED(self), PyObject* args) {
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ss", &prefix_char_ptr, &external_char_ptr, NULL));
 #endif
 #ifdef LIBSYSTEMD_NO_VALIDATION_FUNCS
-        PyErr_SetString(PyExc_NotImplementedError, "libsystemd<0.29.0 does not support validation functions");
+        PyErr_SetString(PyExc_NotImplementedError, "libsystemd < 246 does not support validation functions");
         return NULL;
 #else
 

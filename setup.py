@@ -26,8 +26,6 @@ from typing import List, Optional, Tuple
 
 from setuptools import Extension, setup
 
-with open('./README.md') as f:
-    long_description = f.read()
 
 c_macros: List[Tuple[str, Optional[str]]] = []
 
@@ -89,6 +87,9 @@ if environ.get('PYTHON_SDBUS_USE_LIMITED_API'):
 
 
 if __name__ == '__main__':
+    with open('./README.md') as f:
+        long_description = f.read()
+
     setup(
         name='sdbus',
         description=('Modern Python D-Bus library. '

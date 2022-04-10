@@ -170,8 +170,15 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
         reply_message = request_message.create_reply()
 
         if isinstance(reply_data, tuple):
-            reply_message.append_data(
-                self.dbus_method.result_signature, *reply_data)
+            try:
+                reply_message.append_data(
+                    self.dbus_method.result_signature, *reply_data)
+            except TypeError:
+                # In case of single struct result type
+                # We can't figure out if return is multiple values
+                # or a tuple
+                reply_message.append_data(
+                    self.dbus_method.result_signature, reply_data)
         elif reply_data is not None:
             reply_message.append_data(
                 self.dbus_method.result_signature, reply_data)

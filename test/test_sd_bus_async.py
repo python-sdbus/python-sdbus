@@ -175,6 +175,18 @@ class TestInterface(DbusInterfaceCommonAsync,
     def test_constant_property(self) -> str:
         return "a"
 
+    @dbus_method_async(
+        result_signature='(ss)'
+    )
+    async def test_struct_return(self) -> Tuple[str, str]:
+        return ('hello', 'world')
+
+    @dbus_method_async(
+        result_signature='(ss)'
+    )
+    async def test_struct_return_workaround(self) -> Tuple[Tuple[str, str]]:
+        return (('hello', 'world'), )
+
 
 class DbusErrorTest(DbusFailedError):
     dbus_error_name = 'org.example.Error'
@@ -255,6 +267,18 @@ class TestProxy(TempDbusTest):
         self.assertEqual(
             test_string.upper(),
             await test_object_connection.upper(test_string))
+
+        self.assertEqual(
+            await wait_for(test_object.test_struct_return(), 0.5),
+            await wait_for(test_object_connection.test_struct_return(), 0.5),
+        )
+
+        self.assertEqual(
+            (await wait_for(
+                test_object.test_struct_return_workaround(), 0.5))[0],
+            await wait_for(
+                test_object_connection.test_struct_return_workaround(), 0.5),
+        )
 
     async def test_subclass(self) -> None:
         test_object, test_object_connection = initialize_object(self.bus)

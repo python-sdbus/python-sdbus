@@ -25,6 +25,15 @@ from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 from unittest import SkipTest
 
+from sdbus.dbus_common import PROPERTY_FLAGS_MASK, count_bits
+from sdbus.sd_bus_internals import (
+    DBUS_ERROR_TO_EXCEPTION,
+    DbusDeprecatedFlag,
+    DbusPropertyConstFlag,
+    DbusPropertyEmitsChangeFlag,
+    SdBus,
+)
+
 from sdbus import (
     DbusFailedError,
     DbusFileExistsError,
@@ -37,14 +46,6 @@ from sdbus import (
     dbus_property_async,
     dbus_property_async_override,
     dbus_signal_async,
-)
-from sdbus.dbus_common import PROPERTY_FLAGS_MASK, count_bits
-from sdbus.sd_bus_internals import (
-    DBUS_ERROR_TO_EXCEPTION,
-    DbusDeprecatedFlag,
-    DbusPropertyConstFlag,
-    DbusPropertyEmitsChangeFlag,
-    SdBus,
 )
 
 from .common_test_util import TempDbusTest

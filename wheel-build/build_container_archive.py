@@ -27,10 +27,10 @@ from shutil import copy
 from subprocess import PIPE, run
 from tempfile import TemporaryDirectory
 
-SYSTEMD_VERSION = '248.9'
+SYSTEMD_VERSION = '248.10'
 UTIL_LINUX_VERSION = '2.37'
 NINJA_VERSION = '1.10.2'
-LIBCAP_VERSION = '2.59'
+LIBCAP_VERSION = '2.63'
 
 
 def create_archive(build_root: Path, output_file: Path) -> None:

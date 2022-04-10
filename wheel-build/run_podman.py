@@ -46,7 +46,7 @@ def run_podman(
         run(
             ['podman', 'run',
              '--arch', arch,
-             '--tty', '--interactive',
+             '--tty', '--interactive', '--rm',
              '--volume', '.:/root',
              f"quay.io/pypa/{MANYLINUX_VERSION}_{arch}",
              '/root/python-sdbus/wheel-build/run_inside_container.py',

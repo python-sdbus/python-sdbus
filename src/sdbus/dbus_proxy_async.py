@@ -39,6 +39,7 @@ from typing import (
     TypeVar,
     cast,
 )
+from warnings import warn
 from weakref import ref as weak_ref
 
 from .dbus_common import (
@@ -698,7 +699,6 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                             bus: Optional[SdBus] = None,
                             ) -> None:
 
-        from warnings import warn
         warn("start_serving is deprecated in favor of export_to_dbus",
              DeprecationWarning)
         self.export_to_dbus(object_path, bus)
@@ -818,7 +818,11 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         object_path: str,
         bus: Optional[SdBus] = None,
     ) -> T_input:
-        # TODO: Add deprecation warning in 0.9.0
+        warn(
+            ("new_connect is deprecated in favor of equivalent new_proxy."
+             "Will be removed in version 1.0.0"),
+            DeprecationWarning,
+        )
         new_object = cls.__new__(cls)
         assert isinstance(new_object, DbusInterfaceBaseAsync)
         new_object._proxify(service_name, object_path, bus)

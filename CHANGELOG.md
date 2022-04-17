@@ -1,3 +1,10 @@
+## 0.9.0
+
+* **pkg-config is now required** when building from source.
+* **Added support for Alpine Linux** and any other distros using elogind instead of systemd.
+* Improved PropertiesChanged signal emissions for python objects.
+* Fixed python D-Bus methods that return single struct.
+
 ## 0.8.5
 
 * Fixed missing header file from the source package.
@@ -22,7 +29,7 @@
 ### Fixes:
 
 * Typing stub will raise an exception when called in case the C module failed
-  to load. This should reduce crypting erros in case the module failure.
+  to load. This should reduce crypting errors in case the module failure.
 * Interface generator now skips standard interfaces such as
   `org.freedesktop.DBus.Introspectable`
 
@@ -31,7 +38,7 @@
 * Added limited API module.
   This has advantage of working on multiple Python versions but 5% performance penalty.
   PyPI will probably use the limited API module.
-* Fixed any libsystemd errors casuing a segmentation fault.
+* Fixed any libsystemd errors causing a segmentation fault.
 
 ## 0.8.1
 
@@ -49,6 +56,6 @@
 * Added `request_default_bus_name` to request name on default
     bus in blocking order.
 * Added `SdBus.request_name` to requests name in blocking
-    order. Usefull to initialize the daemons.
+    order. Useful to initialize the daemons.
 * Fixed any initialized dbus objects never being deleted
     even if there were no more references to them.

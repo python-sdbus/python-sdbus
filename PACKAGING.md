@@ -6,7 +6,7 @@ script using environment variables.
 ### PYTHON_SDBUS_USE_IGNORE_SYSTEMD_VERSION
 
 By default setup.py will try to figure out the libsystemd version
-using the `ldconfig` command to disable certain features if
+using the `pkg-config` command to disable certain features if
 the libsystemd version is too low. If you want to skip the check
 and enable all features set this variable `1`.
 

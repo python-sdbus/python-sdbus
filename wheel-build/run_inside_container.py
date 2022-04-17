@@ -118,7 +118,7 @@ def install_ninja() -> None:
 
 def install_meson() -> None:
     run(
-        ['pip3', 'install', 'meson'],
+        ['pip3', 'install', 'meson==0.62', 'Jinja2==3.1.1'],
         check=True,
     )
 

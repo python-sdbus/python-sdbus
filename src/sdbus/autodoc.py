@@ -20,7 +20,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict
 
 from sphinx.application import Sphinx
 from sphinx.ext.autodoc import AttributeDocumenter, MethodDocumenter
@@ -121,8 +121,12 @@ class DbusSignalDocumenter(AttributeDocumenter):
         super().add_content(*args, **kwargs)
 
 
-def setup(app: Sphinx) -> None:
+def setup(app: Sphinx) -> Dict[str, bool]:
     app.setup_extension('sphinx.ext.autodoc')
     app.add_autodocumenter(DbusMethodDocumenter)
     app.add_autodocumenter(DbusPropertyDocumenter)
     app.add_autodocumenter(DbusSignalDocumenter)
+    return {
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }

@@ -198,6 +198,9 @@ class SdBus:
     def emit_object_added(self, path: str, /) -> None:
         raise NotImplementedError(__STUB_ERROR)
 
+    def close(self) -> None:
+        NotImplementedError(__STUB_ERROR)
+
 
 def sd_bus_open() -> SdBus:
     raise NotImplementedError(__STUB_ERROR)

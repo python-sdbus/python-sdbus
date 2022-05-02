@@ -575,6 +575,11 @@ static PyObject* SdBus_close(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         Py_RETURN_NONE;
 }
 
+static PyObject* SdBus_start(SdBusObject* self, PyObject* Py_UNUSED(args)) {
+        CALL_SD_BUS_AND_CHECK(sd_bus_start(self->sd_bus_ref));
+        Py_RETURN_NONE;
+}
+
 static PyMethodDef SdBus_methods[] = {
     {"call", (SD_BUS_PY_FUNC_TYPE)SdBus_call, SD_BUS_PY_METH, "Send message and get reply"},
     {"call_async", (SD_BUS_PY_FUNC_TYPE)SdBus_call_async, SD_BUS_PY_METH, "Async send message, returns awaitable future"},
@@ -595,6 +600,7 @@ static PyMethodDef SdBus_methods[] = {
     {"add_object_manager", (SD_BUS_PY_FUNC_TYPE)SdBus_add_object_manager, SD_BUS_PY_METH, "Add object manager at the path"},
     {"emit_object_added", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_added, SD_BUS_PY_METH, "Emit signal that object was added"},
     {"close", (PyCFunction)SdBus_close, METH_NOARGS, "Close connection"},
+    {"start", (PyCFunction)SdBus_start, METH_NOARGS, "Start connection"},
     {NULL, NULL, 0, NULL},
 };
 

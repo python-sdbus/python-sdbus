@@ -199,10 +199,10 @@ class SdBus:
         raise NotImplementedError(__STUB_ERROR)
 
     def close(self) -> None:
-        NotImplementedError(__STUB_ERROR)
+        raise NotImplementedError(__STUB_ERROR)
 
     def start(self) -> None:
-        NotImplementedError(__STUB_ERROR)
+        raise NotImplementedError(__STUB_ERROR)
 
 
 def sd_bus_open() -> SdBus:

@@ -141,7 +141,7 @@ class TestConverter(TestCase):
         if find_spec('jinja2') is None:
             raise SkipTest('Jinja2 not installed')
 
-        print(generate_async_py_file(interfaces_from_str(test_xml)))
+        generate_async_py_file(interfaces_from_str(test_xml))
 
 
 if __name__ == "__main__":

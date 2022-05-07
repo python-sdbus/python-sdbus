@@ -107,7 +107,7 @@ Classes
             Optional dbus connection object.
             If not passed the default dbus will be used.
 
-    .. py:method:: export_to_dbus(bus, object_path)
+    .. py:method:: export_to_dbus(object_path, bus)
 
         Object will appear and become callable on dbus.
 

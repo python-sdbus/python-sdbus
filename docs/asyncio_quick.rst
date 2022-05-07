@@ -261,6 +261,10 @@ To catch a signal use ``async for`` loop: ::
     async for x in example_object.name_changed:
         print(x)
 
+.. warning:: If you are creating an asyncio task to listen on signals
+   make sure to bind it to a variable and keep it referenced otherwise
+   garbage collector will destroy your task.
+
 A signal can be emitted with :py:meth:`emit` method.
 
 Example: ::

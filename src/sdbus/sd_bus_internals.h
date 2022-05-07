@@ -57,28 +57,31 @@
                 return NULL;    \
         }
 
-#define CALL_SD_BUS_AND_CHECK(sd_bus_function)                                                                                                                \
-        ({                                                                                                                                                    \
-                int return_int = sd_bus_function;                                                                                                             \
-                if (return_int < 0) {                                                                                                                         \
-                        PyErr_Format(exception_lib, "Line: %d. " #sd_bus_function " in function %s returned error: %i", __LINE__, __FUNCTION__, -return_int); \
-                        return NULL;                                                                                                                          \
-                }                                                                                                                                             \
-                return_int;                                                                                                                                   \
+#define SDBUS_LIBRARY_ERROR_FORMAT(func_call)         \
+        PyErr_Format(exception_lib,                   \
+                     "File: %s Line: %d. " #func_call \
+                     " in function %s returned "      \
+                     "error number: %i",              \
+                     __FILE__, __LINE__, __FUNCTION__, -return_int)
+
+#define CALL_SD_BUS_AND_CHECK(sd_bus_function)                       \
+        ({                                                           \
+                int return_int = sd_bus_function;                    \
+                if (return_int < 0) {                                \
+                        SDBUS_LIBRARY_ERROR_FORMAT(sd_bus_function); \
+                        return NULL;                                 \
+                }                                                    \
+                return_int;                                          \
         })
 
-#define CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_function)                     \
-        ({                                                                 \
-                int return_int = sd_bus_function;                          \
-                if (return_int < 0) {                                      \
-                        PyErr_Format(exception_lib,                        \
-                                     "Line: %d. " #sd_bus_function         \
-                                     " in function %s returned "           \
-                                     "error number: %i",                   \
-                                     __LINE__, __FUNCTION__, -return_int); \
-                        return -1;                                         \
-                }                                                          \
-                return_int;                                                \
+#define CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_function)               \
+        ({                                                           \
+                int return_int = sd_bus_function;                    \
+                if (return_int < 0) {                                \
+                        SDBUS_LIBRARY_ERROR_FORMAT(sd_bus_function); \
+                        return -1;                                   \
+                }                                                    \
+                return_int;                                          \
         })
 
 #define SD_BUS_PY_UNICODE_AS_BYTES(py_unicode)                              \

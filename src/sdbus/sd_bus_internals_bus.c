@@ -18,6 +18,7 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 */
+#include <errno.h>
 #include "sd_bus_internals.h"
 
 static void SdBus_dealloc(SdBusObject* self) {
@@ -264,12 +265,17 @@ static PyObject* SdBus_drive(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         int return_value = 1;
         while (return_value > 0) {
                 return_value = sd_bus_process(self->sd_bus_ref, NULL);
-                if (return_value == -104)  // -ECONNRESET
-                {
+                if (return_value < 0) {
                         CALL_PYTHON_AND_CHECK(unregister_reader(self));
-                        Py_RETURN_NONE;
+                        if (-ECONNRESET == return_value) {
+                                // Connection gracefully terminated
+                                Py_RETURN_NONE;
+                        } else {
+                                // Error occured processing sdbus
+                                CALL_SD_BUS_AND_CHECK(return_value);
+                                return NULL;
+                        }
                 }
-                CALL_SD_BUS_AND_CHECK(return_value);
 
                 if (PyErr_Occurred()) {
                         return NULL;

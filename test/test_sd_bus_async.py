@@ -20,7 +20,7 @@
 
 from __future__ import annotations
 
-from asyncio import Event, get_running_loop, wait_for
+from asyncio import Event, get_running_loop, sleep, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 from unittest import SkipTest
@@ -40,6 +40,7 @@ from sdbus import (
     DbusInterfaceCommonAsync,
     DbusNoReplyFlag,
     DbusUnknownObjectError,
+    SdBusLibraryError,
     SdBusUnmappedMessageError,
     dbus_method_async,
     dbus_method_async_override,
@@ -187,6 +188,10 @@ class TestInterface(DbusInterfaceCommonAsync,
     )
     async def test_struct_return_workaround(self) -> Tuple[Tuple[str, str]]:
         return (('hello', 'world'), )
+
+    @dbus_method_async()
+    async def looong_method(self) -> None:
+        await sleep(100)
 
 
 class DbusErrorTest(DbusFailedError):
@@ -571,3 +576,22 @@ class TestProxy(TempDbusTest):
                     return "a"
 
         should_be_no_error()
+
+    async def test_bus_close(self) -> None:
+        test_object, test_object_connection = initialize_object(self.bus)
+
+        loop = get_running_loop()
+
+        async def too_long_wait() -> None:
+            await test_object_connection.looong_method()
+
+        t1 = loop.create_task(too_long_wait())
+
+        self.bus.close()
+
+        try:
+            await wait_for(t1, timeout=1)
+        except SdBusLibraryError:
+            ...
+
+        self.assertRaises(SdBusLibraryError, t1.result)

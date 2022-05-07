@@ -237,10 +237,12 @@ static PyObject* SdBus_get_fd(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         return PyLong_FromLong((long)file_descriptor);
 }
 
-#define CHECK_SD_BUS_READER            \
-        if (self->reader_fd == NULL) { \
-                register_reader(self); \
-        }
+#define CHECK_SD_BUS_READER                                             \
+        ({                                                              \
+                if (self->reader_fd == NULL) {                          \
+                        CALL_PYTHON_EXPECT_NONE(register_reader(self)); \
+                }                                                       \
+        })
 
 PyObject* register_reader(SdBusObject* self) {
         PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
@@ -450,7 +452,7 @@ static PyObject* SdBus_get_signal_queue(SdBusObject* self, PyObject* args) {
                                                         interface_name_char_ptr, member_name_char_ptr, _SdBus_signal_callback,
                                                         _SdBus_match_signal_instant_callback, new_future));
 
-        CHECK_SD_BUS_READER
+        CHECK_SD_BUS_READER;
         Py_INCREF(new_future);
         return new_future;
 }

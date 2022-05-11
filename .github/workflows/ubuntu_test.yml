@@ -44,6 +44,8 @@ jobs:
         run: |
           python3 setup.py build
       - name: Install extension
+        env:
+          PYTHON_SDBUS_USE_LIMITED_API: "1"
         run: |
           sudo python3 setup.py install --old-and-unmanageable
       - name: Run unit tests

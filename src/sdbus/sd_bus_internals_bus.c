@@ -420,17 +420,23 @@ int _SdBus_match_signal_instant_callback(sd_bus_message* m, void* userdata, sd_b
 }
 
 #ifndef Py_LIMITED_API
+
+static int _unicode_or_none(PyObject* some_object) {
+        return (PyUnicode_Check(some_object) || (Py_None == some_object));
+}
+
 static PyObject* SdBus_get_signal_queue(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(4);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(2, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(3, PyUnicode_Type);
 
-        const char* sender_service_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
-        const char* path_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
-        const char* interface_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[2]);
-        const char* member_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[3]);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, _unicode_or_none);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, _unicode_or_none);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, _unicode_or_none);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(3, _unicode_or_none);
+
+        const char* sender_service_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR_OPTIONAL(args[0]);
+        const char* path_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR_OPTIONAL(args[1]);
+        const char* interface_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR_OPTIONAL(args[2]);
+        const char* member_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR_OPTIONAL(args[3]);
 #else
 static PyObject* SdBus_get_signal_queue(SdBusObject* self, PyObject* args) {
         const char* sender_service_char_ptr = NULL;
@@ -438,7 +444,7 @@ static PyObject* SdBus_get_signal_queue(SdBusObject* self, PyObject* args) {
         const char* interface_name_char_ptr = NULL;
         const char* member_name_char_ptr = NULL;
         CALL_PYTHON_BOOL_CHECK(
-            PyArg_ParseTuple(args, "ssss", &sender_service_char_ptr, &path_name_char_ptr, &interface_name_char_ptr, &member_name_char_ptr, NULL));
+            PyArg_ParseTuple(args, "zzzz", &sender_service_char_ptr, &path_name_char_ptr, &interface_name_char_ptr, &member_name_char_ptr, NULL));
 #endif
         SdBusSlotObject* new_slot CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusSlot_class, NULL));
 

@@ -180,8 +180,8 @@ class SdBus:
 
     def get_signal_queue_async(
         self,
-        destination_name: str, object_path: str,
-        interface_name: str, member_name: str,
+        destination_name: Optional[str], object_path: Optional[str],
+        interface_name: Optional[str], member_name: Optional[str],
         /
     ) -> Future[Queue[SdBusMessage]]:
         raise NotImplementedError(__STUB_ERROR)

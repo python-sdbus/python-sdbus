@@ -595,3 +595,16 @@ class TestProxy(TempDbusTest):
             ...
 
         self.assertRaises(SdBusLibraryError, t1.result)
+
+    async def test_singal_queue_wildcard_match(self) -> None:
+        test_object, test_object_connection = initialize_object(self.bus)
+
+        message_queue = await self.bus.get_signal_queue_async(
+            'org.example.test',
+            None, None, None)
+
+        test_object.test_signal.emit(('test', 'signal'))
+
+        message = await wait_for(message_queue.get(), timeout=1)
+        self.assertEqual(message.get_member(),
+                         test_object.test_signal.dbus_signal.signal_name)

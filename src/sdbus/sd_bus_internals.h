@@ -111,6 +111,15 @@
                 }                                                       \
                 new_char_ptr;                                           \
         })
+
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR_OPTIONAL(py_object)                                \
+        ({                                                                               \
+                const char* new_char_ptr_or_null = NULL;                                 \
+                if (Py_None != py_object) {                                              \
+                        new_char_ptr_or_null = SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object); \
+                }                                                                        \
+                new_char_ptr_or_null;                                                    \
+        })
 #endif
 
 #define CALL_PYTHON_ITER(iter, iter_end)                             \

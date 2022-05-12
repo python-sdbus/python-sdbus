@@ -984,15 +984,6 @@ static PyObject* SdBusMessage_get_contents2(SdBusMessageObject* self, PyObject* 
         return iter_tuple_or_single(&read_parser);
 }
 
-static PyObject* SdBusMessage_get_member(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
-        const char* member_char_ptr = sd_bus_message_get_member(self->message_ref);
-        if (member_char_ptr == NULL) {
-                PyErr_SetString(PyExc_RuntimeError, "Failed to get message member field");
-                return NULL;
-        }
-        return PyUnicode_FromString(member_char_ptr);
-}
-
 #ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
@@ -1025,7 +1016,6 @@ static PyMethodDef SdBusMessage_methods[] = {
     {"dump", (PyCFunction)SdBusMessage_dump, METH_NOARGS, "Dump message to stdout"},
     {"seal", (PyCFunction)SdBusMessage_seal, METH_NOARGS, "Seal message contents"},
     {"get_contents", (PyCFunction)SdBusMessage_get_contents2, METH_NOARGS, "Iterate over message contents"},
-    {"get_member", (PyCFunction)SdBusMessage_get_member, METH_NOARGS, "Get message member field"},
     {"create_reply", (PyCFunction)SdBusMessage_create_reply, METH_NOARGS, "Create reply message"},
     {"create_error_reply", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_create_error_reply, SD_BUS_PY_METH, "Create error reply with error name and error message"},
     {"send", (PyCFunction)SdBusMessage_send, METH_NOARGS, "Queue message to be sent"},
@@ -1052,8 +1042,48 @@ static int SdBusMessage_expect_reply_setter(SdBusMessageObject* self, PyObject* 
         return 0;
 }
 
+static PyObject* SdBusMessage_destination_getter(SdBusMessageObject* self, void* Py_UNUSED(closure)) {
+        const char* destination_char_ptr = sd_bus_message_get_destination(self->message_ref);
+        if (NULL != destination_char_ptr) {
+                return PyUnicode_FromString(destination_char_ptr);
+        } else {
+                Py_RETURN_NONE;
+        }
+}
+
+static PyObject* SdBusMessage_path_getter(SdBusMessageObject* self, void* Py_UNUSED(closure)) {
+        const char* path_char_ptr = sd_bus_message_get_path(self->message_ref);
+        if (NULL != path_char_ptr) {
+                return PyUnicode_FromString(path_char_ptr);
+        } else {
+                Py_RETURN_NONE;
+        }
+}
+
+static PyObject* SdBusMessage_interface_getter(SdBusMessageObject* self, void* Py_UNUSED(closure)) {
+        const char* interface_char_ptr = sd_bus_message_get_interface(self->message_ref);
+        if (NULL != interface_char_ptr) {
+                return PyUnicode_FromString(interface_char_ptr);
+        } else {
+                Py_RETURN_NONE;
+        }
+}
+
+static PyObject* SdBusMessage_member_getter(SdBusMessageObject* self, void* Py_UNUSED(closure)) {
+        const char* member_char_ptr = sd_bus_message_get_member(self->message_ref);
+        if (NULL != member_char_ptr) {
+                return PyUnicode_FromString(member_char_ptr);
+        } else {
+                Py_RETURN_NONE;
+        }
+}
+
 static PyGetSetDef SdBusMessage_properies[] = {
     {"expect_reply", (getter)SdBusMessage_expect_reply_getter, (setter)SdBusMessage_expect_reply_setter, "Expect reply message?", NULL},
+    {"destination", (getter)SdBusMessage_destination_getter, NULL, "Message destination service name", NULL},
+    {"path", (getter)SdBusMessage_path_getter, NULL, "Message destination object path", NULL},
+    {"interface", (getter)SdBusMessage_interface_getter, NULL, "Message destination interface name", NULL},
+    {"member", (getter)SdBusMessage_member_getter, NULL, "Message destination member name", NULL},
     {0},
 };
 

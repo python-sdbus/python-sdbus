@@ -112,9 +112,6 @@ class SdBusMessage:
                      ) -> Tuple[DbusCompleteTypes, ...]:
         raise NotImplementedError(__STUB_ERROR)
 
-    def get_member(self) -> str:
-        raise NotImplementedError(__STUB_ERROR)
-
     def create_reply(self) -> SdBusMessage:
         raise NotImplementedError(__STUB_ERROR)
 
@@ -128,6 +125,10 @@ class SdBusMessage:
         raise NotImplementedError(__STUB_ERROR)
 
     expect_reply: bool = False
+    destination: Optional[str] = None
+    path: Optional[str] = None
+    interface: Optional[str] = None
+    member: Optional[str] = None
 
 
 class SdBus:

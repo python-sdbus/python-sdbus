@@ -404,6 +404,18 @@ class TestDbusTypes(TempDbusTest):
         self.assertRaises(SdBusLibraryError,
                           message.append_data, 's', 'error')
 
+    def test_message_properties(self) -> None:
+        message = create_message(self.bus)
+
+        self.assertEqual(message.destination,
+                         'org.freedesktop.systemd1')
+        self.assertEqual(message.path,
+                         '/org/freedesktop/systemd1')
+        self.assertEqual(message.interface,
+                         'org.freedesktop.systemd1.Manager')
+        self.assertEqual(message.member,
+                         'GetUnit')
+
 
 if __name__ == "__main__":
     main()

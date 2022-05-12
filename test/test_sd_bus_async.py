@@ -606,5 +606,5 @@ class TestProxy(TempDbusTest):
         test_object.test_signal.emit(('test', 'signal'))
 
         message = await wait_for(message_queue.get(), timeout=1)
-        self.assertEqual(message.get_member(),
+        self.assertEqual(message.member,
                          test_object.test_signal.dbus_signal.signal_name)

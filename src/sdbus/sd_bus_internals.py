@@ -181,7 +181,7 @@ class SdBus:
 
     def get_signal_queue_async(
         self,
-        destination_name: Optional[str], object_path: Optional[str],
+        senders_name: Optional[str], object_path: Optional[str],
         interface_name: Optional[str], member_name: Optional[str],
         /
     ) -> Future[Queue[SdBusMessage]]:

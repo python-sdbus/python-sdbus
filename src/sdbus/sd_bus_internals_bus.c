@@ -28,12 +28,6 @@ static void SdBus_dealloc(SdBusObject* self) {
         SD_BUS_DEALLOC_TAIL;
 }
 
-static int SdBus_init(SdBusObject* self, PyObject* Py_UNUSED(args), PyObject* Py_UNUSED(kwds)) {
-        self->sd_bus_ref = NULL;
-        self->reader_fd = NULL;
-        return 0;
-}
-
 #ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBus_new_method_call_message(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(4);
@@ -55,7 +49,7 @@ static SdBusMessageObject* SdBus_new_method_call_message(SdBusObject* self, PyOb
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ssss", &destination_bus_name, &object_path, &interface_name, &member_name, NULL));
 #endif
         SdBusMessageObject* new_message_object CLEANUP_SD_BUS_MESSAGE =
-            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
+            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
 
         CALL_SD_BUS_AND_CHECK(
             sd_bus_message_new_method_call(self->sd_bus_ref, &new_message_object->message_ref, destination_bus_name, object_path, interface_name, member_name));
@@ -85,7 +79,7 @@ static SdBusMessageObject* SdBus_new_property_get_message(SdBusObject* self, PyO
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ssss", &destination_service_name, &object_path, &interface_name, &property_name, NULL));
 #endif
         SdBusMessageObject* new_message_object CLEANUP_SD_BUS_MESSAGE =
-            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
+            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
         CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_call(self->sd_bus_ref, &new_message_object->message_ref, destination_service_name, object_path,
                                                              "org.freedesktop.DBus.Properties", "Get"));
 
@@ -118,7 +112,7 @@ static SdBusMessageObject* SdBus_new_property_set_message(SdBusObject* self, PyO
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ssss", &destination_service_name, &object_path, &interface_name, &property_name, NULL));
 #endif
         SdBusMessageObject* new_message_object CLEANUP_SD_BUS_MESSAGE =
-            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
+            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
         CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_call(self->sd_bus_ref, &new_message_object->message_ref, destination_service_name, object_path,
                                                              "org.freedesktop.DBus.Properties", "Set"));
 
@@ -148,7 +142,7 @@ static SdBusMessageObject* SdBus_new_signal_message(SdBusObject* self, PyObject*
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "sss", &object_path, &interface_name, &member_name, NULL));
 #endif
         SdBusMessageObject* new_message_object CLEANUP_SD_BUS_MESSAGE =
-            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
+            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
 
         CALL_SD_BUS_AND_CHECK(sd_bus_message_new_signal(self->sd_bus_ref, &new_message_object->message_ref, object_path, interface_name, member_name));
 
@@ -173,7 +167,7 @@ static SdBusMessageObject* SdBus_call(SdBusObject* self, PyObject* args) {
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "O", &call_message, NULL));
 #endif
         SdBusMessageObject* reply_message_object CLEANUP_SD_BUS_MESSAGE =
-            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
+            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
 
         sd_bus_error error __attribute__((cleanup(sd_bus_error_free))) = SD_BUS_ERROR_NULL;
 
@@ -299,7 +293,7 @@ int SdBus_async_callback(sd_bus_message* m,
         if (!sd_bus_message_is_method_error(m, NULL)) {
                 // Not Error, set Future result to new message object
 
-                SdBusMessageObject* reply_message_object CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject*)PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL);
+                SdBusMessageObject* reply_message_object CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject*)SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class);
                 if (reply_message_object == NULL) {
                         return -1;
                 }
@@ -333,7 +327,7 @@ static PyObject* SdBus_call_async(SdBusObject* self, PyObject* args) {
 
         PyObject* new_future = CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "create_future", ""));
 
-        SdBusSlotObject* new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusSlot_class, NULL));
+        SdBusSlotObject* new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusSlot_class));
 
         CALL_SD_BUS_AND_CHECK(
             sd_bus_call_async(self->sd_bus_ref, &new_slot_object->slot_ref, call_message->message_ref, SdBus_async_callback, new_future, (uint64_t)0));
@@ -379,7 +373,7 @@ static PyObject* SdBus_add_interface(SdBusObject* self, PyObject* args) {
 int _SdBus_signal_callback(sd_bus_message* m, void* userdata, sd_bus_error* Py_UNUSED(ret_error)) {
         PyObject* async_queue = userdata;
 
-        SdBusMessageObject* new_message_object CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject*)PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL);
+        SdBusMessageObject* new_message_object CLEANUP_SD_BUS_MESSAGE = (SdBusMessageObject*)SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class);
         if (new_message_object == NULL) {
                 return -1;
         }
@@ -446,7 +440,7 @@ static PyObject* SdBus_get_signal_queue(SdBusObject* self, PyObject* args) {
         CALL_PYTHON_BOOL_CHECK(
             PyArg_ParseTuple(args, "zzzz", &sender_service_char_ptr, &path_name_char_ptr, &interface_name_char_ptr, &member_name_char_ptr, NULL));
 #endif
-        SdBusSlotObject* new_slot CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusSlot_class, NULL));
+        SdBusSlotObject* new_slot CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusSlot_class));
 
         PyObject* new_queue CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_queue_class, NULL));
 
@@ -515,7 +509,7 @@ static PyObject* SdBus_request_name_async(SdBusObject* self, PyObject* args) {
 #endif
         PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
         PyObject* new_future = CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "create_future", ""));
-        SdBusSlotObject* new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusSlot_class, NULL));
+        SdBusSlotObject* new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusSlot_class));
 
         CALL_SD_BUS_AND_CHECK(
             sd_bus_request_name_async(self->sd_bus_ref, &new_slot_object->slot_ref, service_name_char_ptr, flags, SdBus_request_callback, new_future));
@@ -560,7 +554,7 @@ static SdBusSlotObject* SdBus_add_object_manager(SdBusObject* self, PyObject* ar
         const char* object_manager_path = NULL;
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &object_manager_path, NULL));
 #endif
-        SdBusSlotObject* new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusSlot_class, NULL));
+        SdBusSlotObject* new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusSlot_class));
 
         CALL_SD_BUS_AND_CHECK(sd_bus_add_object_manager(self->sd_bus_ref, &new_slot_object->slot_ref, object_manager_path));
 
@@ -625,7 +619,7 @@ PyType_Spec SdBusType = {
     .flags = Py_TPFLAGS_DEFAULT,
     .slots =
         (PyType_Slot[]){
-            {Py_tp_init, (initproc)SdBus_init},
+            {Py_tp_new, PyType_GenericNew},
             {Py_tp_dealloc, (destructor)SdBus_dealloc},
             {Py_tp_methods, SdBus_methods},
             {0, NULL},

@@ -44,11 +44,6 @@ PyObject* create_task_str = NULL;
 
 // SdBusSlot
 
-static int SdBusSlot_init(SdBusSlotObject* self, PyObject* Py_UNUSED(args), PyObject* Py_UNUSED(kwds)) {
-        self->slot_ref = NULL;
-        return 0;
-}
-
 static void SdBusSlot_dealloc(SdBusSlotObject* self) {
         sd_bus_slot_unref(self->slot_ref);
 
@@ -62,7 +57,7 @@ PyType_Spec SdBusSlotType = {
     .flags = Py_TPFLAGS_DEFAULT,
     .slots =
         (PyType_Slot[]){
-            {Py_tp_init, (initproc)SdBusSlot_init},
+            {Py_tp_new, PyType_GenericNew},
             {Py_tp_dealloc, (destructor)SdBusSlot_dealloc},
             {0, NULL},
         },

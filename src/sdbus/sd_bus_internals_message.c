@@ -20,11 +20,6 @@
 */
 #include "sd_bus_internals.h"
 
-static int SdBusMessage_init(SdBusMessageObject* self, PyObject* Py_UNUSED(args), PyObject* Py_UNUSED(kwds)) {
-        self->message_ref = NULL;
-        return 0;
-}
-
 void _SdBusMessage_set_messsage(SdBusMessageObject* self, sd_bus_message* new_message) {
         self->message_ref = sd_bus_message_ref(new_message);
 }
@@ -702,7 +697,7 @@ static PyObject* SdBusMessage_exit_container(SdBusMessageObject* self, PyObject*
 
 static SdBusMessageObject* SdBusMessage_create_reply(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
         SdBusMessageObject* new_reply_message CLEANUP_SD_BUS_MESSAGE =
-            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
+            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
 
         CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_return(self->message_ref, &new_reply_message->message_ref));
 
@@ -999,7 +994,7 @@ static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* s
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "ss", &name, &error_message, NULL));
 #endif
         SdBusMessageObject* new_reply_message CLEANUP_SD_BUS_MESSAGE =
-            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
+            (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
 
         CALL_SD_BUS_AND_CHECK(sd_bus_message_new_method_errorf(self->message_ref, &new_reply_message->message_ref, name, "%s", error_message));
 
@@ -1094,7 +1089,7 @@ PyType_Spec SdBusMessageType = {
     .flags = Py_TPFLAGS_DEFAULT,
     .slots =
         (PyType_Slot[]){
-            {Py_tp_init, (initproc)SdBusMessage_init},
+            {Py_tp_new, PyType_GenericNew},
             {Py_tp_dealloc, (destructor)SdBusMessage_dealloc},
             {Py_tp_methods, SdBusMessage_methods},
             {Py_tp_getset, SdBusMessage_properies},

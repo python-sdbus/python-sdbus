@@ -23,7 +23,7 @@
 // TODO: adding interface to different buses, recalculating vtable
 
 static int SdBusInterface_init(SdBusInterfaceObject* self, PyObject* Py_UNUSED(args), PyObject* Py_UNUSED(kwds)) {
-        self->interface_slot = (SdBusSlotObject*)CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(SdBusSlot_class, NULL));
+        self->interface_slot = (SdBusSlotObject*)CALL_PYTHON_CHECK_RETURN_NEG1(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusSlot_class));
         self->method_list = CALL_PYTHON_CHECK_RETURN_NEG1(PyList_New((Py_ssize_t)0));
         self->method_dict = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_New());
         self->property_list = CALL_PYTHON_CHECK_RETURN_NEG1(PyList_New((Py_ssize_t)0));
@@ -343,6 +343,7 @@ PyType_Spec SdBusInterfaceType = {
     .flags = Py_TPFLAGS_DEFAULT,
     .slots =
         (PyType_Slot[]){
+            {Py_tp_new, PyType_GenericNew},
             {Py_tp_init, (initproc)SdBusInterface_init},
             {Py_tp_dealloc, (destructor)SdBusInterface_dealloc},
             {Py_tp_methods, SdBusInterface_methods},
@@ -369,7 +370,7 @@ static int _SdBusInterface_callback(sd_bus_message* m, void* userdata, sd_bus_er
                 return -1;
         }
 
-        PyObject* new_message CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL);
+        PyObject* new_message CLEANUP_PY_OBJECT = SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class);
         if (new_message == NULL) {
                 sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
                 return -1;
@@ -417,7 +418,7 @@ static int _SdBusInterface_property_get_callback(sd_bus* Py_UNUSED(bus),
         PyObject* property_name_bytes CLEANUP_PY_OBJECT = PyBytes_FromString(property);
         PyObject* get_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItem(self->property_get_dict, property_name_bytes));
 
-        PyObject* new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
+        PyObject* new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, reply);
 
         Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(get_call, new_message, NULL)));
@@ -435,7 +436,7 @@ static int _SdBusInterface_property_set_callback(sd_bus* Py_UNUSED(bus),
         PyObject* property_name_bytes CLEANUP_PY_OBJECT = PyBytes_FromString(property);
         PyObject* set_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItem(self->property_set_dict, property_name_bytes));
 
-        PyObject* new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(SdBusMessage_class, NULL));
+        PyObject* new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, value);
 
         Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(set_call, new_message, NULL)));

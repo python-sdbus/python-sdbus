@@ -122,6 +122,16 @@
         })
 #endif
 
+#ifndef Py_LIMITED_API
+#define SD_BUS_PY_CLASS_DUNDER_NEW(py_class) ({ (((PyTypeObject*)py_class)->tp_new(((PyTypeObject*)py_class), NULL, NULL)); })
+#else
+#define SD_BUS_PY_CLASS_DUNDER_NEW(py_class)                                                                                                     \
+        ({                                                                                                                                       \
+                PyObject* (*dunder_new_func)(PyTypeObject*, PyObject*, PyObject*) = (newfunc)PyType_GetSlot((PyTypeObject*)py_class, Py_tp_new); \
+                dunder_new_func((PyTypeObject*)py_class, NULL, NULL);                                                                            \
+        })
+#endif
+
 #define CALL_PYTHON_ITER(iter, iter_end)                             \
         ({                                                           \
                 PyObject* next_object = PyIter_Next(signature_iter); \

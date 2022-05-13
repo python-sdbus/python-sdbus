@@ -21,19 +21,19 @@
 #include "sd_bus_internals.h"
 
 static SdBusObject* sd_bus_py_open(PyObject* Py_UNUSED(self), PyObject* Py_UNUSED(ignored)) {
-        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBus_class, NULL));
+        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBus_class));
         CALL_SD_BUS_AND_CHECK(sd_bus_open(&(new_sd_bus->sd_bus_ref)));
         return new_sd_bus;
 }
 
 static SdBusObject* sd_bus_py_open_user(PyObject* Py_UNUSED(self), PyObject* Py_UNUSED(ignored)) {
-        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBus_class, NULL));
+        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBus_class));
         CALL_SD_BUS_AND_CHECK(sd_bus_open_user(&(new_sd_bus->sd_bus_ref)));
         return new_sd_bus;
 }
 
 static SdBusObject* sd_bus_py_open_system(PyObject* Py_UNUSED(self), PyObject* Py_UNUSED(ignored)) {
-        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBus_class, NULL));
+        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBus_class));
         CALL_SD_BUS_AND_CHECK(sd_bus_open_system(&(new_sd_bus->sd_bus_ref)));
         return new_sd_bus;
 }
@@ -42,7 +42,7 @@ static SdBusObject* sd_bus_py_open_system_remote(PyObject* Py_UNUSED(self), PyOb
         const char* remote_host_char_ptr = NULL;
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &remote_host_char_ptr, NULL));
 
-        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBus_class, NULL));
+        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBus_class));
         CALL_SD_BUS_AND_CHECK(sd_bus_open_system_remote(&(new_sd_bus->sd_bus_ref), remote_host_char_ptr));
         return new_sd_bus;
 }
@@ -51,7 +51,7 @@ static SdBusObject* sd_bus_py_open_system_machine(PyObject* Py_UNUSED(self), PyO
         const char* remote_host_char_ptr = NULL;
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &remote_host_char_ptr, NULL));
 
-        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBus_class, NULL));
+        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBus_class));
         CALL_SD_BUS_AND_CHECK(sd_bus_open_system_machine(&(new_sd_bus->sd_bus_ref), remote_host_char_ptr));
         return new_sd_bus;
 }
@@ -61,7 +61,7 @@ static SdBusObject* sd_bus_py_open_user_machine(PyObject* Py_UNUSED(self), PyObj
         const char* remote_host_char_ptr = NULL;
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &remote_host_char_ptr, NULL));
 
-        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(SdBus_class, NULL));
+        SdBusObject* new_sd_bus = (SdBusObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBus_class));
         CALL_SD_BUS_AND_CHECK(sd_bus_open_user_machine(&(new_sd_bus->sd_bus_ref), remote_host_char_ptr));
         return new_sd_bus;
 #else

@@ -28,6 +28,11 @@ static void SdBus_dealloc(SdBusObject* self) {
         SD_BUS_DEALLOC_TAIL;
 }
 
+static int SdBus_init(SdBusObject* self, PyObject* Py_UNUSED(args), PyObject* Py_UNUSED(kwds)) {
+        CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_new(&(self->sd_bus_ref)));
+        return 0;
+}
+
 #ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBus_new_method_call_message(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(4);
@@ -620,6 +625,7 @@ PyType_Spec SdBusType = {
     .slots =
         (PyType_Slot[]){
             {Py_tp_new, PyType_GenericNew},
+            {Py_tp_init, (initproc)SdBus_init},
             {Py_tp_dealloc, (destructor)SdBus_dealloc},
             {Py_tp_methods, SdBus_methods},
             {0, NULL},

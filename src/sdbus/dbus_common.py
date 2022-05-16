@@ -68,8 +68,6 @@ def get_default_bus() -> SdBus:
 
 def set_default_bus(new_default: SdBus) -> None:
     global DEFAULT_BUS
-    if DEFAULT_BUS is not None:
-        raise RuntimeError('Default bus already exists')
 
     DEFAULT_BUS = new_default
 

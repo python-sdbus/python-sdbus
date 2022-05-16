@@ -30,8 +30,10 @@ Dbus connections calls
     Should be called before you create any objects that might use
     default bus.
 
+    Default bus can be replaced but the change will only affect
+    newly created objects.
+
     :param SdBus new_default: The bus object to set default to.
-    :raises RuntimeError: if default bus is already set.
 
 .. py:function:: get_default_bus(new_default)
 

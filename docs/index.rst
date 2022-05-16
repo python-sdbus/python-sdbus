@@ -39,9 +39,10 @@ If you are unfamiliar with D-Bus you might want to read following pages:
     asyncio_api
     exceptions
     examples
-    autodoc
-    code_generator
     proxies
+    code_generator
+    autodoc
+    unittest
     api_index
 
 

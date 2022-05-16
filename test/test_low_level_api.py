@@ -22,11 +22,10 @@ from __future__ import annotations
 from unittest import main
 
 from sdbus.sd_bus_internals import SdBus
+from sdbus.unittest import IsolatedDbusTestCase
 
-from .common_test_util import TempDbusTest
 
-
-class TestDbusTypes(TempDbusTest):
+class TestDbusTypes(IsolatedDbusTestCase):
     def test_init_bus(self) -> None:
         SdBus()
 

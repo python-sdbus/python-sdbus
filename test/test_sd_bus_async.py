@@ -31,8 +31,8 @@ from sdbus.sd_bus_internals import (
     DbusDeprecatedFlag,
     DbusPropertyConstFlag,
     DbusPropertyEmitsChangeFlag,
-    SdBus,
 )
+from sdbus.unittest import IsolatedDbusTestCase
 
 from sdbus import (
     DbusFailedError,
@@ -49,10 +49,8 @@ from sdbus import (
     dbus_signal_async,
 )
 
-from .common_test_util import TempDbusTest
 
-
-class TestPing(TempDbusTest):
+class TestPing(IsolatedDbusTestCase):
 
     async def test_ping_with_busctl(self) -> None:
         try:
@@ -78,7 +76,7 @@ class TestPing(TempDbusTest):
         self.assertIsNone(r.get_contents())
 
 
-class TestRequestName(TempDbusTest):
+class TestRequestName(IsolatedDbusTestCase):
     async def test_request_name(self) -> None:
         await self.bus.request_name_async("org.example.test", 0)
 
@@ -202,30 +200,23 @@ class DbusErrorUnmappedLater(DbusFailedError):
     dbus_error_name = 'org.example.Nothing'
 
 
-def initialize_object(bus: SdBus) -> Tuple[TestInterface, TestInterface]:
+def initialize_object() -> Tuple[TestInterface, TestInterface]:
     test_object = TestInterface()
-    test_object.export_to_dbus('/', bus)
+    test_object.export_to_dbus('/')
 
     test_object_connection = TestInterface.new_proxy(
-        "org.example.test", '/', bus)
+        "org.example.test", '/')
 
     return test_object, test_object_connection
 
 
-class TestProxy(TempDbusTest):
+class TestProxy(IsolatedDbusTestCase):
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
         await self.bus.request_name_async("org.example.test", 0)
 
-        test_object = TestInterface()
-        test_object.export_to_dbus('/', self.bus)
-        test_object_connection = TestInterface.new_proxy(
-            "org.example.test", '/', self.bus)
-
-        await test_object_connection.dbus_ping()
-
     async def test_method_kwargs(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         self.assertEqual(
             'TEST',
@@ -261,7 +252,7 @@ class TestProxy(TempDbusTest):
                 input='ASD', is_upper=False))
 
     async def test_method(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         test_string = 'asdafsrfgdrtuhrytuj'
 
@@ -287,7 +278,7 @@ class TestProxy(TempDbusTest):
         )
 
     async def test_subclass(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         test_var = ['asdasd']
 
@@ -332,7 +323,7 @@ class TestProxy(TempDbusTest):
         self.assertRaises(TypeError, bad_call)
 
     async def test_properties(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         self.assertEqual(
             'test_property',
@@ -370,7 +361,7 @@ class TestProxy(TempDbusTest):
         )
 
     async def test_signal(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         loop = get_running_loop()
 
@@ -387,7 +378,7 @@ class TestProxy(TempDbusTest):
         self.assertEqual(test_tuple, await wait_for(q.get(), timeout=1))
 
     async def test_exceptions(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         async def first_test() -> None:
             await test_object_connection.raise_base_exception()
@@ -452,7 +443,7 @@ class TestProxy(TempDbusTest):
         self.assertRaises(SdBusUnmappedMessageError, t4.result)
 
     async def test_no_reply_method(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         await wait_for(test_object_connection.no_reply_method('yes'),
                        timeout=1)
@@ -460,7 +451,7 @@ class TestProxy(TempDbusTest):
         await wait_for(test_object.no_reply_sync.wait(), timeout=1)
 
     async def test_interface_remove(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         from gc import collect
 
@@ -480,7 +471,7 @@ class TestProxy(TempDbusTest):
         self.assertRaises(DbusUnknownObjectError, t.result)
 
     def test_docstring(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         from pydoc import getdoc
 
@@ -499,7 +490,7 @@ class TestProxy(TempDbusTest):
             getdoc(test_object_connection.test_signal))
 
     async def test_emits_properties_changed(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         test_str = 'should_be_emited'
 
@@ -578,7 +569,7 @@ class TestProxy(TempDbusTest):
         should_be_no_error()
 
     async def test_bus_close(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         loop = get_running_loop()
 
@@ -597,7 +588,7 @@ class TestProxy(TempDbusTest):
         self.assertRaises(SdBusLibraryError, t1.result)
 
     async def test_singal_queue_wildcard_match(self) -> None:
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         message_queue = await self.bus.get_signal_queue_async(
             'org.example.test',

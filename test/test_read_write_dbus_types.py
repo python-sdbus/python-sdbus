@@ -23,10 +23,9 @@ from typing import Dict, List
 from unittest import main
 
 from sdbus.sd_bus_internals import SdBus, SdBusMessage
+from sdbus.unittest import IsolatedDbusTestCase
 
 from sdbus import SdBusLibraryError
-
-from .common_test_util import TempDbusTest
 
 
 def create_message(bus: SdBus) -> SdBusMessage:
@@ -37,7 +36,7 @@ def create_message(bus: SdBus) -> SdBusMessage:
         'GetUnit')
 
 
-class TestDbusTypes(TempDbusTest):
+class TestDbusTypes(IsolatedDbusTestCase):
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
 

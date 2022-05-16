@@ -32,7 +32,8 @@ from resource import RUSAGE_SELF, getrusage
 from typing import List, cast
 from unittest import SkipTest
 
-from .common_test_util import TempDbusTest
+from sdbus.unittest import IsolatedDbusTestCase
+
 from .test_read_write_dbus_types import TestDbusTypes
 from .test_sd_bus_async import TestPing, TestProxy, initialize_object
 
@@ -48,7 +49,7 @@ def leak_test_enabled() -> None:
         )
 
 
-class LeakTests(TempDbusTest):
+class LeakTests(IsolatedDbusTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.start_mem = getrusage(RUSAGE_SELF).ru_maxrss
@@ -122,7 +123,7 @@ class LeakTests(TempDbusTest):
         leak_test_enabled()
         await self.bus.request_name_async("org.example.test", 0)
 
-        test_object, test_object_connection = initialize_object(self.bus)
+        test_object, test_object_connection = initialize_object()
 
         i = 0
         num_of_iterations = 10_000

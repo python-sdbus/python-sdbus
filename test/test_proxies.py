@@ -21,12 +21,11 @@ from __future__ import annotations
 
 from unittest import main
 
+from sdbus.unittest import IsolatedDbusTestCase
 from sdbus_async.dbus_daemon import FreedesktopDbus
 
-from .common_test_util import TempDbusTest
 
-
-class TestFreedesktopDbus(TempDbusTest):
+class TestFreedesktopDbus(IsolatedDbusTestCase):
     async def test_connection(self) -> None:
         dbus_object = FreedesktopDbus(self.bus)
 

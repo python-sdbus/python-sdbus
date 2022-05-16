@@ -24,7 +24,7 @@ uses it to document the classes.
     has multiple issues. For example, the inheritance ``:inherited-members:``
     does not work on the dbus elements.
 
-Writting docstrings
+Writing docstrings
 -------------------
 
 The dbus methods should be documented same way as the regular function

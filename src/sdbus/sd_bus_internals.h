@@ -332,5 +332,5 @@ typedef struct {
 extern PyType_Spec SdBusType;
 extern PyObject* SdBus_class;
 
-// Module level funcions
+// Module level functions
 extern PyMethodDef SdBusPyInternal_methods[];

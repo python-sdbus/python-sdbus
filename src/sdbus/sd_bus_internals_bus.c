@@ -210,9 +210,9 @@ int future_set_exception_from_message(PyObject* future, sd_bus_message* message)
 
         PyObject* exception_to_raise = PyDict_GetItemWithError(dbus_error_to_exception_dict, error_name_str);
 
-        PyObject* exception_occured = PyErr_Occurred();
-        if (exception_occured) {
-                Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, exception_occured, NULL)));
+        PyObject* exception_occurred = PyErr_Occurred();
+        if (exception_occurred) {
+                Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethodObjArgs(future, set_exception_str, exception_occurred, NULL)));
                 return 0;
         }
 

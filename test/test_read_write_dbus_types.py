@@ -415,6 +415,18 @@ class TestDbusTypes(IsolatedDbusTestCase):
         self.assertEqual(message.member,
                          'GetUnit')
 
+    def test_string_subclass(self) -> None:
+        from enum import Enum
+
+        class TestEnum(str, Enum):
+            SOMETHING = 'test'
+
+        message = create_message(self.bus)
+        message.append_data('s', TestEnum.SOMETHING)
+        message.seal()
+
+        self.assertEqual(message.get_contents(), TestEnum.SOMETHING)
+
 
 if __name__ == "__main__":
     main()

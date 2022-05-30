@@ -333,7 +333,7 @@ Example: ::
         async def join_str(self, str_array: List[str]) -> str:
             return ''.join(str_array)
 
-    
+
     class MultipleInterfaces(TestInterface, ExampleInterface):
         ...
 

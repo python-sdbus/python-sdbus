@@ -125,6 +125,14 @@ Classes
     but implements `ObjectManager <https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-objectmanager>`_
     interface.
 
+    Example of serving objects with ObjectManager::
+
+        my_object_manager = DbusObjectManagerInterfaceAsync()
+        my_object_manager.export_to_dbus('/object/manager')
+
+        managed_object = DbusInterfaceCommonAsync()
+        my_object_manager.export_with_manager('/object/manager/example')
+
     .. py:method:: get_managed_objects()
         :async:
 
@@ -166,6 +174,45 @@ Classes
         Interfaces list : List[str]
             Interfaces names that were removed.
 
+    .. py:method:: export_with_manager(object_path, object_to_export, bus)
+
+        Export object to D-Bus and emit a signal that it was added.
+
+        ObjectManager must be exported first.
+
+        Path should be a subpath of where ObjectManager was exported.
+        Example, if ObjectManager exported to ``/object/manager``, the managed
+        object can be exported at ``/object/manager/test``.
+
+        ObjectManager will keep the reference to the object.
+
+        :param str object_path:
+            Object path that it will be available at.
+
+        :param DbusInterfaceCommonAsync object_to_export:
+            Object to export to D-Bus.
+
+        :param SdBus bus:
+            Optional dbus connection object.
+            If not passed the default dbus will be used.
+
+        :raises RuntimeError: ObjectManager was not exported.
+
+    .. py:method:: remove_managed_object(managed_object)
+
+        Emit signal that object was removed.
+
+        Releases reference to the object.
+
+        .. caution::
+            The object will still be accessible over D-Bus until
+            all references to it will be removed.
+
+        :param DbusInterfaceCommonAsync managed_object:
+            Object to remove from ObjectManager.
+
+        :raises RuntimeError: ObjectManager was not exported.
+        :raises KeyError: Passed object is not managed by ObjectManager.
 
 Decorators
 ++++++++++++++++++++++++

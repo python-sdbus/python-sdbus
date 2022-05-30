@@ -583,6 +583,22 @@ static PyObject* SdBus_emit_object_added(SdBusObject* self, PyObject* args) {
         Py_RETURN_NONE;
 }
 
+#ifndef Py_LIMITED_API
+static PyObject* SdBus_emit_object_removed(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
+        SD_BUS_PY_CHECK_ARGS_NUMBER(1);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+
+        const char* removed_object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+#else
+static PyObject* SdBus_emit_object_removed(SdBusObject* self, PyObject* args) {
+        const char* removed_object_path = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &removed_object_path, NULL));
+#endif
+        CALL_SD_BUS_AND_CHECK(sd_bus_emit_object_removed(self->sd_bus_ref, removed_object_path));
+
+        Py_RETURN_NONE;
+}
+
 static PyObject* SdBus_close(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         sd_bus_close(self->sd_bus_ref);
         Py_RETURN_NONE;
@@ -612,6 +628,7 @@ static PyMethodDef SdBus_methods[] = {
     {"request_name", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name, SD_BUS_PY_METH, "Request dbus name blocking"},
     {"add_object_manager", (SD_BUS_PY_FUNC_TYPE)SdBus_add_object_manager, SD_BUS_PY_METH, "Add object manager at the path"},
     {"emit_object_added", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_added, SD_BUS_PY_METH, "Emit signal that object was added"},
+    {"emit_object_removed", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_removed, SD_BUS_PY_METH, "Emit signal that object was removed"},
     {"close", (PyCFunction)SdBus_close, METH_NOARGS, "Close connection"},
     {"start", (PyCFunction)SdBus_start, METH_NOARGS, "Start connection"},
     {NULL, NULL, 0, NULL},

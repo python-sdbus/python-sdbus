@@ -242,6 +242,22 @@ def add_exception_mapping(exc: Exception, /) -> None:
     ...  # We want to be able to generate docs without module
 
 
+def is_interface_name_valid(string_to_check: str, /) -> bool:
+    raise NotImplementedError(__STUB_ERROR)
+
+
+def is_service_name_valid(string_to_check: str, /) -> bool:
+    raise NotImplementedError(__STUB_ERROR)
+
+
+def is_member_name_valid(string_to_check: str, /) -> bool:
+    raise NotImplementedError(__STUB_ERROR)
+
+
+def is_object_path_valid(string_to_check: str, /) -> bool:
+    raise NotImplementedError(__STUB_ERROR)
+
+
 class SdBusBaseError(Exception):
     ...
 

@@ -19,15 +19,62 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from unittest import main
+from unittest import SkipTest, main
 
-from sdbus.sd_bus_internals import SdBus
+from sdbus.sd_bus_internals import (
+    SdBus,
+    is_interface_name_valid,
+    is_member_name_valid,
+    is_object_path_valid,
+    is_service_name_valid,
+)
 from sdbus.unittest import IsolatedDbusTestCase
 
 
 class TestDbusTypes(IsolatedDbusTestCase):
     def test_init_bus(self) -> None:
         SdBus()
+
+    def test_validation_funcs(self) -> None:
+        try:
+            self.assertTrue(
+                is_interface_name_valid('org.example.test')
+            )
+
+            self.assertFalse(
+                is_interface_name_valid('Not very valid 😀')
+            )
+
+            self.assertTrue(
+                is_service_name_valid('org.example.test')
+            )
+
+            self.assertFalse(
+                is_service_name_valid('Not very valid 😀')
+            )
+
+            self.assertTrue(
+                is_member_name_valid('GetSomething')
+            )
+
+            self.assertFalse(
+                is_member_name_valid('no.dots.in.member.names')
+            )
+
+            self.assertTrue(
+                is_object_path_valid('/test')
+            )
+
+            self.assertFalse(
+                is_object_path_valid('no.dots.in.object.paths')
+            )
+        except NotImplementedError:
+            raise SkipTest(
+                (
+                    "Validation funcs not implemented. "
+                    "Probably too old libsystemd. (< 246)"
+                )
+            )
 
 
 if __name__ == "__main__":

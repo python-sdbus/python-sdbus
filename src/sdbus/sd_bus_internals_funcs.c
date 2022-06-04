@@ -156,6 +156,98 @@ static PyObject* add_exception_mapping(PyObject* Py_UNUSED(self), PyObject* args
         Py_RETURN_NONE;
 }
 
+#ifndef Py_LIMITED_API
+static PyObject* is_interface_name_valid(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
+        SD_BUS_PY_CHECK_ARGS_NUMBER(1);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+
+        const char* string_to_check = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+#else
+static PyObject* is_interface_name_valid(PyObject* Py_UNUSED(self), PyObject* args) {
+        const char* string_to_check = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &string_to_check, NULL));
+#endif
+#ifdef LIBSYSTEMD_NO_VALIDATION_FUNCS
+        PyErr_SetString(PyExc_NotImplementedError, "libsystemd < 246 does not support validation functions");
+        return NULL;
+#else
+        if (sd_bus_interface_name_is_valid(string_to_check)) {
+                Py_RETURN_TRUE;
+        } else {
+                Py_RETURN_FALSE;
+        }
+#endif
+}
+
+#ifndef Py_LIMITED_API
+static PyObject* is_service_name_valid(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
+        SD_BUS_PY_CHECK_ARGS_NUMBER(1);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+
+        const char* string_to_check = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+#else
+static PyObject* is_service_name_valid(PyObject* Py_UNUSED(self), PyObject* args) {
+        const char* string_to_check = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &string_to_check, NULL));
+#endif
+#ifdef LIBSYSTEMD_NO_VALIDATION_FUNCS
+        PyErr_SetString(PyExc_NotImplementedError, "libsystemd < 246 does not support validation functions");
+        return NULL;
+#else
+        if (sd_bus_service_name_is_valid(string_to_check)) {
+                Py_RETURN_TRUE;
+        } else {
+                Py_RETURN_FALSE;
+        }
+#endif
+}
+
+#ifndef Py_LIMITED_API
+static PyObject* is_member_name_valid(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
+        SD_BUS_PY_CHECK_ARGS_NUMBER(1);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+
+        const char* string_to_check = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+#else
+static PyObject* is_member_name_valid(PyObject* Py_UNUSED(self), PyObject* args) {
+        const char* string_to_check = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &string_to_check, NULL));
+#endif
+#ifdef LIBSYSTEMD_NO_VALIDATION_FUNCS
+        PyErr_SetString(PyExc_NotImplementedError, "libsystemd < 246 does not support validation functions");
+        return NULL;
+#else
+        if (sd_bus_member_name_is_valid(string_to_check)) {
+                Py_RETURN_TRUE;
+        } else {
+                Py_RETURN_FALSE;
+        }
+#endif
+}
+
+#ifndef Py_LIMITED_API
+static PyObject* is_object_path_valid(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
+        SD_BUS_PY_CHECK_ARGS_NUMBER(1);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+
+        const char* string_to_check = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+#else
+static PyObject* is_object_path_valid(PyObject* Py_UNUSED(self), PyObject* args) {
+        const char* string_to_check = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "s", &string_to_check, NULL));
+#endif
+#ifdef LIBSYSTEMD_NO_VALIDATION_FUNCS
+        PyErr_SetString(PyExc_NotImplementedError, "libsystemd < 246 does not support validation functions");
+        return NULL;
+#else
+        if (sd_bus_object_path_is_valid(string_to_check)) {
+                Py_RETURN_TRUE;
+        } else {
+                Py_RETURN_FALSE;
+        }
+#endif
+}
+
 PyMethodDef SdBusPyInternal_methods[] = {
     {"sd_bus_open", (PyCFunction)sd_bus_py_open, METH_NOARGS,
      "Open dbus connection. Session bus running as user or system bus as "
@@ -168,5 +260,9 @@ PyMethodDef SdBusPyInternal_methods[] = {
     {"encode_object_path", (SD_BUS_PY_FUNC_TYPE)encode_object_path, SD_BUS_PY_METH, "Encode object path with object path prefix and arbitrary string"},
     {"decode_object_path", (SD_BUS_PY_FUNC_TYPE)decode_object_path, SD_BUS_PY_METH, "Decode object path with object path prefix and arbitrary string"},
     {"add_exception_mapping", (SD_BUS_PY_FUNC_TYPE)add_exception_mapping, SD_BUS_PY_METH, "Add exception to the mapping of dbus error names"},
+    {"is_interface_name_valid", (SD_BUS_PY_FUNC_TYPE)is_interface_name_valid, SD_BUS_PY_METH, "Is the string valid interface name?"},
+    {"is_service_name_valid", (SD_BUS_PY_FUNC_TYPE)is_service_name_valid, SD_BUS_PY_METH, "Is the string valid service name?"},
+    {"is_member_name_valid", (SD_BUS_PY_FUNC_TYPE)is_member_name_valid, SD_BUS_PY_METH, "Is the string valid member name?"},
+    {"is_object_path_valid", (SD_BUS_PY_FUNC_TYPE)is_object_path_valid, SD_BUS_PY_METH, "Is the string valid object path?"},
     {NULL, NULL, 0, NULL},
 };

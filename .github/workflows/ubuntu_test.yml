@@ -23,7 +23,7 @@ jobs:
           python3 setup.py build --build-lib build-lib
       - name: Run unit tests
         run: |
-          PYTHONPATH=./build-lib python3 -m unittest
+          PYTHONPATH=./build-lib python3 -m unittest --verbose
   limited:
     name: Run build and unit tests. (limited API)
     runs-on: ubuntu-20.04
@@ -42,7 +42,7 @@ jobs:
           python3 setup.py build --build-lib build-lib
       - name: Run unit tests
         run: |
-          PYTHONPATH=./build-lib python3 -m unittest
+          PYTHONPATH=./build-lib python3 -m unittest --verbose
   lint:
     name: Run linters on the code
     runs-on: ubuntu-latest

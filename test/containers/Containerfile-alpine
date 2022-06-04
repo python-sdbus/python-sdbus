@@ -18,4 +18,4 @@ RUN apk update && \
 WORKDIR /root/python-sdbus/
 
 CMD python3 setup.py build --build-lib build-lib && \
-    PYTHONPATH=./build-lib python3 -m unittest
+    PYTHONPATH=./build-lib python3 -m unittest --verbose

@@ -31,12 +31,6 @@
                 return NULL;                                                                         \
         }
 
-#define SD_BUS_PY_CHECK_ARG_TYPE(arg_num, arg_expected_type)                                   \
-        if (Py_TYPE(args[arg_num]) != &arg_expected_type) {                                    \
-                PyErr_SetString(PyExc_TypeError, "Argument is not an " #arg_expected_type ""); \
-                return NULL;                                                                   \
-        }
-
 #define SD_BUS_PY_CHECK_ARG_CHECK_FUNC(arg_num, arg_check_function)                                  \
         if (!arg_check_function(args[arg_num])) {                                                    \
                 PyErr_SetString(PyExc_TypeError, "Argument failed a " #arg_check_function " check"); \

@@ -599,3 +599,26 @@ class TestProxy(IsolatedDbusTestCase):
         message = await wait_for(message_queue.get(), timeout=1)
         self.assertEqual(message.member,
                          test_object.test_signal.dbus_signal.signal_name)
+
+    async def test_class_with_string_subclass_parameter(self) -> None:
+        from enum import Enum
+
+        class InterfaceNameEnum(str, Enum):
+            FOO = 'org.example.foo'
+            BAR = 'org.example.bar'
+
+        class ObjectPathEnum(str, Enum):
+            FOO = '/foo'
+            BAR = '/bar'
+
+        class EnumedInterfaceAsync(
+            DbusInterfaceCommonAsync,
+            interface_name=InterfaceNameEnum.BAR,
+        ):
+
+            @dbus_property_async('s')
+            def hello_world(self) -> str:
+                return 'Hello World!'
+
+        test_object = EnumedInterfaceAsync()
+        test_object.export_to_dbus(ObjectPathEnum.FOO)

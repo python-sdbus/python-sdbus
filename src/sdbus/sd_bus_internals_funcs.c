@@ -73,8 +73,8 @@ static SdBusObject* sd_bus_py_open_user_machine(PyObject* Py_UNUSED(self), PyObj
 #ifndef Py_LIMITED_API
 static PyObject* encode_object_path(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
 
         const char* prefix_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* external_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
@@ -106,8 +106,8 @@ static PyObject* encode_object_path(PyObject* Py_UNUSED(self), PyObject* args) {
 #ifndef Py_LIMITED_API
 static PyObject* decode_object_path(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
 
         const char* prefix_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* full_path_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);

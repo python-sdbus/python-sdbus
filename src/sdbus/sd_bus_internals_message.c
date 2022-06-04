@@ -606,7 +606,7 @@ static PyObject* SdBusMessage_append_data(SdBusMessageObject* self, PyObject* co
                 PyErr_SetString(PyExc_TypeError, "Minimum 2 args required");
                 return NULL;
         }
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
 
         const char* signature_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
 
@@ -648,8 +648,8 @@ static PyObject* SdBusMessage_append_data(SdBusMessageObject* self, PyObject* ar
 #ifndef Py_LIMITED_API
 static PyObject* SdBusMessage_open_container(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
 
         const char* container_type_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* container_contents_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
@@ -673,8 +673,8 @@ static PyObject* SdBusMessage_close_container(SdBusMessageObject* self, PyObject
 #ifndef Py_LIMITED_API
 static PyObject* SdBusMessage_enter_container(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
 
         const char* container_type_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* container_contents_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
@@ -982,8 +982,8 @@ static PyObject* SdBusMessage_get_contents2(SdBusMessageObject* self, PyObject* 
 #ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
 
         const char* name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* error_message = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);

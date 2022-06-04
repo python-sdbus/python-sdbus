@@ -58,8 +58,8 @@ static PyObject* SdBusInterface_add_property(SdBusInterfaceObject* self, PyObjec
         // Arguments
         // Name, Signature, Get, Set, Flags
         SD_BUS_PY_CHECK_ARGS_NUMBER(5);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, PyCallable_Check);
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(3, _check_callable_or_none);
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(4, PyLong_Check);
@@ -96,10 +96,10 @@ static PyObject* SdBusInterface_add_method(SdBusInterfaceObject* self, PyObject*
         // Method name, signature, names of input values, result signature,
         // names of result values, flags, callback function or coroutine
         SD_BUS_PY_CHECK_ARGS_NUMBER(7);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, PySequence_Check);
-        SD_BUS_PY_CHECK_ARG_TYPE(3, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(3, PyUnicode_Check);
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(4, PySequence_Check);
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(5, PyLong_Check);
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(6, PyCallable_Check);
@@ -153,8 +153,8 @@ static PyObject* SdBusInterface_add_signal(SdBusInterfaceObject* self, PyObject*
         // Arguments
         // Signal name, signature, names of input values, flags
         SD_BUS_PY_CHECK_ARGS_NUMBER(4);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, PySequence_Check);
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(3, PyLong_Check);
 

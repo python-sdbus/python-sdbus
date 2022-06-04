@@ -36,10 +36,10 @@ static int SdBus_init(SdBusObject* self, PyObject* Py_UNUSED(args), PyObject* Py
 #ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBus_new_method_call_message(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(4);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(2, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(3, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(3, PyUnicode_Check);
 
         const char* destination_bus_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
@@ -66,10 +66,10 @@ static SdBusMessageObject* SdBus_new_method_call_message(SdBusObject* self, PyOb
 #ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBus_new_property_get_message(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(4);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(2, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(3, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(3, PyUnicode_Check);
 
         const char* destination_service_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
@@ -99,10 +99,10 @@ static SdBusMessageObject* SdBus_new_property_get_message(SdBusObject* self, PyO
 #ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBus_new_property_set_message(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(4);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(2, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(3, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(3, PyUnicode_Check);
 
         const char* destination_service_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
@@ -132,9 +132,9 @@ static SdBusMessageObject* SdBus_new_property_set_message(SdBusObject* self, PyO
 #ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBus_new_signal_message(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(3);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);  // Path
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);  // Interface
-        SD_BUS_PY_CHECK_ARG_TYPE(2, PyUnicode_Type);  // Member
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);  // Path
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);  // Interface
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, PyUnicode_Check);  // Member
 
         const char* object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         const char* interface_name = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
@@ -352,8 +352,8 @@ static int _check_is_sdbus_interface(PyObject* type_to_check) {
 static PyObject* SdBus_add_interface(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(3);
         SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, _check_is_sdbus_interface);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(2, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(2, PyUnicode_Check);
 
         SdBusInterfaceObject* interface_object = (SdBusInterfaceObject*)args[0];
         const char* path_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[1]);
@@ -497,8 +497,8 @@ int SdBus_request_callback(sd_bus_message* m,
 #ifndef Py_LIMITED_API
 static PyObject* SdBus_request_name_async(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyLong_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyLong_Check);
 
         const char* service_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         uint64_t flags = PyLong_AsUnsignedLongLong(args[1]);
@@ -529,8 +529,8 @@ static PyObject* SdBus_request_name_async(SdBusObject* self, PyObject* args) {
 #ifndef Py_LIMITED_API
 static PyObject* SdBus_request_name(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
-        SD_BUS_PY_CHECK_ARG_TYPE(1, PyLong_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyLong_Check);
 
         const char* service_name_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
         uint64_t flags = PyLong_AsUnsignedLongLong(args[1]);
@@ -551,7 +551,7 @@ static PyObject* SdBus_request_name(SdBusObject* self, PyObject* args) {
 #ifndef Py_LIMITED_API
 static SdBusSlotObject* SdBus_add_object_manager(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(1);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
 
         const char* object_manager_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
 #else
@@ -570,7 +570,7 @@ static SdBusSlotObject* SdBus_add_object_manager(SdBusObject* self, PyObject* ar
 #ifndef Py_LIMITED_API
 static PyObject* SdBus_emit_object_added(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(1);
-        SD_BUS_PY_CHECK_ARG_TYPE(0, PyUnicode_Type);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
 
         const char* added_object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
 #else

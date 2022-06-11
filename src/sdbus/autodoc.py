@@ -74,6 +74,7 @@ class DbusPropertyDocumenter(AttributeDocumenter):
     def update_annotations(self,
                            parent: DbusInterfaceCommonAsync) -> None:
 
+        assert isinstance(self.object, DbusPropertyAsync)
         property_annotation = \
             self.object.property_getter.__annotations__['return']
 
@@ -104,8 +105,9 @@ class DbusSignalDocumenter(AttributeDocumenter):
     def update_annotations(self,
                            parent: DbusInterfaceCommonAsync) -> None:
 
+        assert isinstance(self.object, DbusSignalAsync)
         signal_annotation = \
-            self.object.original_function.__annotations__['return']
+            self.object.__annotations__['return']
 
         parent.__annotations__[self.object_name] = signal_annotation
 

@@ -249,3 +249,4 @@ class DbusSingalCommon(DbusSomethingCommon):
         self.flags = flags
 
         self.__doc__ = original_method.__doc__
+        self.__annotations__ = original_method.__annotations__

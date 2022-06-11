@@ -57,15 +57,19 @@ from .dbus_exceptions import (
     DbusUnknownObjectError,
     DbusUnknownPropertyError,
 )
-from .dbus_proxy_async import (
+from .dbus_proxy_async_interfaces import (
     DbusInterfaceCommonAsync,
     DbusObjectManagerInterfaceAsync,
+)
+from .dbus_proxy_async_method import (
     dbus_method_async,
     dbus_method_async_override,
+)
+from .dbus_proxy_async_property import (
     dbus_property_async,
     dbus_property_async_override,
-    dbus_signal_async,
 )
+from .dbus_proxy_async_signal import dbus_signal_async
 from .dbus_proxy_sync import (
     DbusInterfaceCommon,
     DbusObjectManagerInterface,
@@ -96,7 +100,7 @@ from .sd_bus_internals import (
     sd_bus_open_user_machine,
 )
 
-__all__ = [
+__all__ = (
     'get_default_bus', 'request_default_bus_name',
     'request_default_bus_name_async', 'set_default_bus',
 
@@ -121,10 +125,16 @@ __all__ = [
     'DbusUnknownMethodError', 'DbusUnknownObjectError',
     'DbusUnknownPropertyError',
 
+    'DbusInterfaceCommonAsync',
     'DbusObjectManagerInterfaceAsync',
-    'DbusInterfaceCommonAsync', 'dbus_method_async',
-    'dbus_method_async_override', 'dbus_property_async',
-    'dbus_property_async_override', 'dbus_signal_async',
+
+    'dbus_method_async',
+    'dbus_method_async_override',
+
+    'dbus_property_async',
+    'dbus_property_async_override',
+
+    'dbus_signal_async',
 
     'DbusInterfaceCommon',
     'DbusObjectManagerInterface',
@@ -152,4 +162,4 @@ __all__ = [
     'sd_bus_open_system_remote',
     'sd_bus_open_user',
     'sd_bus_open_user_machine',
-]
+)

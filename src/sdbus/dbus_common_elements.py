@@ -21,7 +21,16 @@ from __future__ import annotations
 
 from inspect import getfullargspec
 from types import FunctionType
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+)
 
 from .dbus_common_funcs import (
     _is_property_flags_correct,
@@ -250,3 +259,19 @@ class DbusSingalCommon(DbusSomethingCommon):
 
         self.__doc__ = original_method.__doc__
         self.__annotations__ = original_method.__annotations__
+
+
+class DbusBindedAsync:
+    ...
+
+
+T = TypeVar('T')
+
+
+class DbusOverload:
+    def __init__(self, original: T):
+        self.original = original
+        self.setter_overload: Optional[Callable[[Any, T], None]] = None
+
+    def setter(self, new_setter: Optional[Callable[[Any, T], None]]) -> None:
+        self.setter_overload = new_setter

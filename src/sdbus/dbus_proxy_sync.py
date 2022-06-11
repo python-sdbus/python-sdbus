@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-# Copyright (C) 2020, 2021 igo95862
+# Copyright (C) 2020-2022 igo95862
 
 # This file is part of python-sdbus
 
@@ -49,8 +49,6 @@ DEFAULT_BUS: Optional[SdBus] = None
 
 
 T_input = TypeVar('T_input')
-T_result = TypeVar('T_result')
-T_obj = TypeVar('T_obj')
 
 
 class DbusBinded:

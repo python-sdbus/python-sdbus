@@ -70,12 +70,12 @@ from .dbus_proxy_async_property import (
     dbus_property_async_override,
 )
 from .dbus_proxy_async_signal import dbus_signal_async
-from .dbus_proxy_sync import (
+from .dbus_proxy_sync_interfaces import (
     DbusInterfaceCommon,
     DbusObjectManagerInterface,
-    dbus_method,
-    dbus_property,
 )
+from .dbus_proxy_sync_method import dbus_method
+from .dbus_proxy_sync_property import dbus_property
 from .sd_bus_internals import (
     DbusDeprecatedFlag,
     DbusHiddenFlag,
@@ -138,7 +138,9 @@ __all__ = (
 
     'DbusInterfaceCommon',
     'DbusObjectManagerInterface',
+
     'dbus_method',
+
     'dbus_property',
 
     'DbusDeprecatedFlag',

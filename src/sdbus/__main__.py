@@ -35,7 +35,7 @@ def run_gen_from_connection(namespace: Namespace) -> None:
     connection_name = namespace.connection_name
     object_paths = namespace.object_paths
 
-    from .dbus_proxy_sync import DbusInterfaceCommon
+    from .dbus_proxy_sync_interfaces import DbusInterfaceCommon
 
     if namespace.system:
         from .dbus_common_funcs import set_default_bus

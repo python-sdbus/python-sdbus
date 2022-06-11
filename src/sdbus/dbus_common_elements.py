@@ -265,6 +265,10 @@ class DbusBindedAsync:
     ...
 
 
+class DbusBindedSync:
+    ...
+
+
 T = TypeVar('T')
 
 

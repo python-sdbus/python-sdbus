@@ -44,16 +44,16 @@ all_python_modules = [
 mypy_cache_dir = build_dir / '.mypy_cache'
 
 
-def run_mypy(path: Path) -> None:
-    print(f"Running mypy on {path}")
+def run_mypy() -> None:
+    print('Running mypy on all modules')
     run(
         args=(
             'mypy', '--strict',
             '--cache-dir', mypy_cache_dir,
             '--python-version', '3.8',
             '--namespace-packages',
-            '--ignore-missing-imports',
-            path,
+            '--explicit-package-bases',
+            *all_python_modules,
         ),
         check=True,
         env={'MYPYPATH': str(src_dir.absolute()), **environ},
@@ -69,8 +69,7 @@ def linter_main() -> None:
         check=True,
     )
 
-    for x in all_python_modules:
-        run_mypy(x)
+    run_mypy()
 
 
 def get_all_python_files() -> List[Path]:

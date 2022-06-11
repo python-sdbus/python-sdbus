@@ -133,8 +133,8 @@ Default bus
 ++++++++++++++++++++++++++
 
 Most object methods that take a bus as a parameter
-will use a default bus connection if a bus object is
-not explicitly passed.
+will use a thread-local default bus connection if a bus object
+is not explicitly passed.
 
 Session bus is default bus when running as a user and
 system bus otherwise.

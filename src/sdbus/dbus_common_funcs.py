@@ -21,7 +21,8 @@
 from __future__ import annotations
 
 from asyncio import get_running_loop
-from typing import Iterator, Optional
+from contextvars import ContextVar
+from typing import Iterator
 
 from .sd_bus_internals import (
     DbusPropertyConstFlag,
@@ -32,7 +33,7 @@ from .sd_bus_internals import (
     sd_bus_open,
 )
 
-DEFAULT_BUS: Optional[SdBus] = None
+DEFAULT_BUS: ContextVar[SdBus] = ContextVar('DEFAULT_BUS')
 
 PROPERTY_FLAGS_MASK = (
     DbusPropertyConstFlag | DbusPropertyEmitsChangeFlag |
@@ -50,20 +51,16 @@ def _is_property_flags_correct(flags: int) -> bool:
 
 
 def get_default_bus() -> SdBus:
-    global DEFAULT_BUS
-    old_bus = DEFAULT_BUS
-    if old_bus is None:
+    try:
+        return DEFAULT_BUS.get()
+    except LookupError:
         new_bus = sd_bus_open()
-        DEFAULT_BUS = new_bus
+        DEFAULT_BUS.set(new_bus)
         return new_bus
-    else:
-        return old_bus
 
 
 def set_default_bus(new_default: SdBus) -> None:
-    global DEFAULT_BUS
-
-    DEFAULT_BUS = new_default
+    DEFAULT_BUS.set(new_default)
 
 
 async def request_default_bus_name_async(

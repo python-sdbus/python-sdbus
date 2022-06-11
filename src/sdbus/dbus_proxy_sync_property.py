@@ -135,7 +135,6 @@ def dbus_property(
         function: Callable[..., Any]
     ) -> DbusPropertySync[T]:
         assert not iscoroutinefunction(function), "Expected regular function"
-        nonlocal property_name
 
         new_wrapper: DbusPropertySync[T] = DbusPropertySync(
             property_name,

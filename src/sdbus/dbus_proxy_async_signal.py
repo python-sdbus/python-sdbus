@@ -188,7 +188,6 @@ def dbus_signal_async(
 
     def signal_decorator(
             pseudo_function: Callable[[Any], T]) -> DbusSignalAsync[T]:
-        nonlocal signal_name
 
         assert isinstance(pseudo_function, FunctionType)
         return DbusSignalAsync(

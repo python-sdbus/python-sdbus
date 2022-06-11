@@ -228,8 +228,6 @@ def dbus_property_async(
             "Property setter can't be coroutine",
         )
 
-        nonlocal property_name
-
         new_wrapper: DbusPropertyAsync[T] = DbusPropertyAsync(
             property_name,
             property_signature,

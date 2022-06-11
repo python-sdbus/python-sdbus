@@ -36,11 +36,12 @@ from typing import (
 )
 
 from .dbus_common import (
+    DbusInterfaceMetaCommon,
     DbusMethodCommon,
+    DbusPropertyCommon,
     DbusSomethingAsync,
     DbusSomethingSync,
     _check_sync_in_async_env,
-    _method_name_converter,
     get_default_bus,
 )
 from .sd_bus_internals import SdBus
@@ -141,10 +142,10 @@ def dbus_method(
 T = TypeVar('T')
 
 
-class DbusProperty(DbusSomethingSync, Generic[T]):
+class DbusPropertySync(DbusPropertyCommon, DbusSomethingSync, Generic[T]):
     def __init__(
             self,
-            property_name: str,
+            property_name: Optional[str],
             property_signature: str,
             property_getter: Callable[[DbusInterfaceBase],
                                       T],
@@ -154,17 +155,18 @@ class DbusProperty(DbusSomethingSync, Generic[T]):
             flags: int,
 
     ) -> None:
-        super().__init__()
-        self.property_name = property_name
-        self.property_signature = property_signature
+        assert isinstance(property_getter, FunctionType)
+        super().__init__(
+            property_name,
+            property_signature,
+            flags,
+            property_getter,
+        )
         self.property_getter = property_getter
         self.property_setter = property_setter
-        self.flags = flags
 
         self.__doc__ = property_getter.__doc__
 
-
-class DbusPropertySync(DbusProperty[T]):
     def __get__(self,
                 obj: DbusInterfaceBase,
                 obj_class: Optional[Type[DbusInterfaceBase]] = None,
@@ -235,13 +237,6 @@ def dbus_property(
         assert not iscoroutinefunction(function), "Expected regular function"
         nonlocal property_name
 
-        if property_name is None:
-            property_name = ''.join(
-                _method_name_converter(
-                    cast(FunctionType, function).__name__
-                )
-            )
-
         new_wrapper: DbusPropertySync[T] = DbusPropertySync(
             property_name,
             property_signature,
@@ -255,13 +250,13 @@ def dbus_property(
     return property_decorator
 
 
-class DbusInterfaceMeta(type):
+class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
     def __new__(cls, name: str,
                 bases: Tuple[type, ...],
                 namespace: Dict[str, Any],
                 interface_name: Optional[str] = None,
                 serving_enabled: bool = True,
-                ) -> DbusInterfaceMeta:
+                ) -> DbusInterfaceMetaSync:
 
         declared_interfaces = set()
         # Set interface name
@@ -287,12 +282,16 @@ class DbusInterfaceMeta(type):
 
         namespace['_dbus_declared_interfaces'] = declared_interfaces
 
-        new_cls = super().__new__(cls, name, bases, namespace)
+        new_cls = super().__new__(
+            cls, name, bases, namespace,
+            interface_name,
+            serving_enabled,
+        )
 
-        return new_cls
+        return cast(DbusInterfaceMetaSync, new_cls)
 
 
-class DbusInterfaceBase(metaclass=DbusInterfaceMeta):
+class DbusInterfaceBase(metaclass=DbusInterfaceMetaSync):
     _dbus_declared_interfaces: Set[str]
     _dbus_serving_enabled: bool
 

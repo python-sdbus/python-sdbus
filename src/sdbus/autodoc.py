@@ -29,7 +29,7 @@ from .dbus_proxy_async import (
     DbusInterfaceCommonAsync,
     DbusMethodAsync,
     DbusPropertyAsync,
-    DbusSignal,
+    DbusSignalAsync,
 )
 
 
@@ -99,7 +99,7 @@ class DbusSignalDocumenter(AttributeDocumenter):
 
     @classmethod
     def can_document_member(cls, member: Any, *args: Any) -> bool:
-        return isinstance(member, DbusSignal)
+        return isinstance(member, DbusSignalAsync)
 
     def update_annotations(self,
                            parent: DbusInterfaceCommonAsync) -> None:

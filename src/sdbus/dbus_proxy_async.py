@@ -43,12 +43,13 @@ from warnings import warn
 from weakref import ref as weak_ref
 
 from .dbus_common import (
+    DbusInterfaceMetaCommon,
     DbusMethodCommon,
+    DbusPropertyCommon,
+    DbusSingalCommon,
     DbusSomethingAsync,
     DbusSomethingSync,
-    _method_name_converter,
     get_default_bus,
-    is_property_flags_correct,
 )
 from .dbus_exceptions import DbusFailedError
 from .sd_bus_internals import (
@@ -226,10 +227,10 @@ def dbus_method_async(
 T = TypeVar('T')
 
 
-class DbusProperty(DbusSomethingAsync, Generic[T]):
+class DbusPropertyAsync(DbusSomethingAsync, DbusPropertyCommon, Generic[T]):
     def __init__(
             self,
-            property_name: str,
+            property_name: Optional[str],
             property_signature: str,
             property_getter: Callable[[DbusInterfaceBaseAsync],
                                       T],
@@ -239,22 +240,24 @@ class DbusProperty(DbusSomethingAsync, Generic[T]):
             flags: int,
 
     ) -> None:
-        is_property_flags_correct(flags)  # Check that number of passed flags
-
-        super().__init__()
-        self.property_name = property_name
-        self.property_signature = property_signature
-        self.property_getter = property_getter
-        self.property_setter = property_setter
-        self.flags = flags
+        assert isinstance(property_getter, FunctionType)
+        super().__init__(
+            property_name,
+            property_signature,
+            flags,
+            property_getter,
+        )
+        self.property_getter: Callable[
+            [DbusInterfaceBaseAsync], T] = property_getter
+        self.property_setter: Optional[
+            Callable[[DbusInterfaceBaseAsync, T],
+                     None]] = property_setter
 
         self.properties_changed_signal: \
             Optional[DbusSignalBinded[DBUS_PROPERTIES_CHANGED_TYPING]] = None
 
         self.__doc__ = property_getter.__doc__
 
-
-class DbusPropertyAsync(DbusProperty[T]):
     def __get__(self,
                 obj: DbusInterfaceBaseAsync,
                 obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
@@ -396,13 +399,6 @@ def dbus_property_async(
 
         nonlocal property_name
 
-        if property_name is None:
-            property_name = ''.join(
-                _method_name_converter(
-                    cast(FunctionType, function).__name__
-                )
-            )
-
         new_wrapper: DbusPropertyAsync[T] = DbusPropertyAsync(
             property_name,
             property_signature,
@@ -416,23 +412,7 @@ def dbus_property_async(
     return property_decorator
 
 
-class DbusSignal(Generic[T], DbusSomethingAsync):
-    def __init__(
-        self,
-        original_function: Callable[[Any], T],
-        signal_name: str,
-        signature: str = "",
-        args_names: Sequence[str] = (),
-        flags: int = 0,
-    ):
-        super().__init__()
-        self.original_function = original_function
-        self.signal_name = signal_name
-        self.signature = signature
-        self.args_names = args_names
-        self.flags = flags
-
-        self.__doc__ = original_function.__doc__
+class DbusSignalAsync(DbusSomethingAsync, DbusSingalCommon, Generic[T]):
 
     def __get__(self,
                 obj: DbusInterfaceBaseAsync,
@@ -443,7 +423,7 @@ class DbusSignal(Generic[T], DbusSomethingAsync):
 
 class DbusSignalBinded(Generic[T], DbusBindedAsync):
     def __init__(self,
-                 dbus_signal: DbusSignal[T],
+                 dbus_signal: DbusSignalAsync[T],
                  interface: DbusInterfaceBaseAsync):
         self.dbus_signal = dbus_signal
         self.interface_ref = weak_ref(interface)
@@ -526,12 +506,14 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
             self.dbus_signal.signal_name,
         )
 
-        if ((not self.dbus_signal.signature.startswith('('))
+        if ((not self.dbus_signal.signal_signature.startswith('('))
             and
                 isinstance(args, tuple)):
-            signal_message.append_data(self.dbus_signal.signature, *args)
+            signal_message.append_data(
+                self.dbus_signal.signal_signature, *args)
         else:
-            signal_message.append_data(self.dbus_signal.signature, args)
+            signal_message.append_data(
+                self.dbus_signal.signal_signature, args)
 
         signal_message.send()
 
@@ -560,27 +542,24 @@ def dbus_signal_async(
         signal_name: Optional[str] = None,
 ) -> Callable[
     [Callable[[Any], T]],
-    DbusSignal[T]
+    DbusSignalAsync[T]
 ]:
     assert not isinstance(signal_signature, FunctionType), (
         "Passed function to decorator directly. "
         "Did you forget () round brackets?"
     )
 
-    def signal_decorator(pseudo_function: Callable[[Any], T]) -> DbusSignal[T]:
+    def signal_decorator(
+            pseudo_function: Callable[[Any], T]) -> DbusSignalAsync[T]:
         nonlocal signal_name
 
-        if signal_name is None:
-            signal_name = ''.join(
-                _method_name_converter(
-                    cast(FunctionType, pseudo_function).__name__
-                )
-            )
-
-        return DbusSignal(
+        assert isinstance(pseudo_function, FunctionType)
+        return DbusSignalAsync(
+            signal_name,
+            signal_signature,
+            signal_args_names,
+            flags,
             pseudo_function,
-            signal_name, signal_signature,
-            signal_args_names, flags,
         )
 
     return signal_decorator
@@ -615,7 +594,7 @@ def dbus_property_async_override() -> Callable[
     return new_decorator
 
 
-class DbusInterfaceMetaAsync(type):
+class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
     def __new__(cls, name: str,
                 bases: Tuple[type, ...],
                 namespace: Dict[str, Any],
@@ -675,9 +654,13 @@ class DbusInterfaceMetaAsync(type):
 
         namespace['_dbus_interface_name'] = interface_name
         namespace['_dbus_serving_enabled'] = serving_enabled
-        new_cls = super().__new__(cls, name, bases, namespace)
+        new_cls = super().__new__(
+            cls, name, bases, namespace,
+            interface_name,
+            serving_enabled,
+        )
 
-        return new_cls
+        return cast(DbusInterfaceMetaAsync, new_cls)
 
 
 class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
@@ -693,7 +676,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         self._attached_bus: Optional[SdBus] = None
         self._serving_object_path: Optional[str] = None
         self._local_signal_queues: \
-            Dict[DbusSignal[Any], List[weak_ref[Queue[Any]]]] = {}
+            Dict[DbusSignalAsync[Any], List[weak_ref[Queue[Any]]]] = {}
 
     async def start_serving(self,
                             object_path: str,
@@ -777,7 +760,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                 elif isinstance(dbus_something, DbusSignalBinded):
                     new_interface.add_signal(
                         dbus_something.dbus_signal.signal_name,
-                        dbus_something.dbus_signal.signature,
+                        dbus_something.dbus_signal.signal_signature,
                         dbus_something.dbus_signal.args_names,
                         dbus_something.dbus_signal.flags,
                     )

@@ -1,5 +1,5 @@
 ---
-name: Run build and unit tests on Ubuntu 20.04
+name: CI
 on:
   push:
     branches: [master]
@@ -53,7 +53,8 @@ jobs:
         run: |
           sudo apt update
           sudo apt install python3 python3-pip meson
-          sudo pip3 install --upgrade mypy flake8 pyflakes pycodestyle jinja2 Sphinx
+          sudo pip3 install --upgrade mypy isort flake8 pyflakes pycodestyle \
+                                      jinja2 Sphinx types-setuptools
       - name: Run linters
         run: |
           meson setup build

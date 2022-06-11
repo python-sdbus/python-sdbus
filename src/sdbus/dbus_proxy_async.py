@@ -42,15 +42,15 @@ from typing import (
 from warnings import warn
 from weakref import ref as weak_ref
 
-from .dbus_common import (
+from .dbus_common_elements import (
     DbusInterfaceMetaCommon,
     DbusMethodCommon,
     DbusPropertyCommon,
     DbusSingalCommon,
     DbusSomethingAsync,
     DbusSomethingSync,
-    get_default_bus,
 )
+from .dbus_common_funcs import get_default_bus
 from .dbus_exceptions import DbusFailedError
 from .sd_bus_internals import (
     DbusNoReplyFlag,

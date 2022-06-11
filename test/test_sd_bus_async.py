@@ -25,7 +25,7 @@ from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple
 from unittest import SkipTest
 
-from sdbus.dbus_common import PROPERTY_FLAGS_MASK, count_bits
+from sdbus.dbus_common_funcs import PROPERTY_FLAGS_MASK, count_bits
 from sdbus.sd_bus_internals import (
     DBUS_ERROR_TO_EXCEPTION,
     DbusDeprecatedFlag,

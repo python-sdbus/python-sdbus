@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-# Copyright (C) 2020, 2021 igo95862
+# Copyright (C) 2020-2022 igo95862
 
 # This file is part of python-sdbus
 
@@ -18,7 +18,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-from .dbus_common import (
+from .dbus_common_funcs import (
     get_default_bus,
     request_default_bus_name,
     request_default_bus_name_async,

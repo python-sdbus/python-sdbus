@@ -38,7 +38,7 @@ def run_gen_from_connection(namespace: Namespace) -> None:
     from .dbus_proxy_sync import DbusInterfaceCommon
 
     if namespace.system:
-        from .dbus_common import set_default_bus
+        from .dbus_common_funcs import set_default_bus
         from .sd_bus_internals import sd_bus_open_system
         set_default_bus(sd_bus_open_system())
 

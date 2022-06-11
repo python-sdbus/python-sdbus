@@ -35,15 +35,14 @@ from typing import (
     cast,
 )
 
-from .dbus_common import (
+from .dbus_common_elements import (
     DbusInterfaceMetaCommon,
     DbusMethodCommon,
     DbusPropertyCommon,
     DbusSomethingAsync,
     DbusSomethingSync,
-    _check_sync_in_async_env,
-    get_default_bus,
 )
+from .dbus_common_funcs import _check_sync_in_async_env, get_default_bus
 from .sd_bus_internals import SdBus
 
 DEFAULT_BUS: Optional[SdBus] = None

@@ -29,11 +29,17 @@ from asyncio import (
 )
 from os import environ
 from resource import RUSAGE_SELF, getrusage
-from typing import List, cast
+from typing import Any, List, cast
 from unittest import SkipTest
 
 from sdbus.unittest import IsolatedDbusTestCase
 
+from sdbus import DbusFailedError, request_default_bus_name_async
+
+from .test_low_level_errors import (
+    DbusDerivePropertydError,
+    InterfaceWithErrors,
+)
 from .test_read_write_dbus_types import TestDbusTypes
 from .test_sd_bus_async import TestPing, TestProxy, initialize_object
 
@@ -116,6 +122,38 @@ class LeakTests(IsolatedDbusTestCase):
             await TestProxy.test_no_reply_method(pseudo_test)
             await TestProxy.test_interface_remove(pseudo_test)
             TestProxy.test_docstring(pseudo_test)
+
+            self.check_memory()
+
+    async def test_low_level_errors(self) -> None:
+        leak_test_enabled()
+
+        await request_default_bus_name_async('org.test')
+        self.test_object = InterfaceWithErrors()
+        self.test_object.export_to_dbus('/')
+
+        self.test_object_connection = InterfaceWithErrors.new_proxy(
+            'org.test', '/')
+
+        loop = get_running_loop()
+
+        def silence_exceptions(*args: Any, **kwrags: Any) -> None:
+            ...
+
+        loop.set_exception_handler(silence_exceptions)
+
+        for _ in range(150_000):
+            with self.assertRaises(DbusFailedError):
+                await wait_for(
+                    self.test_object_connection.indep_err_getter.get_async(),
+                    timeout=1,
+                )
+
+            with self.assertRaises(DbusDerivePropertydError):
+                await wait_for(
+                    self.test_object_connection.derrive_err_getter.get_async(),
+                    timeout=1,
+                )
 
             self.check_memory()
 

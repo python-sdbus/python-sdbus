@@ -53,12 +53,14 @@ class InterfaceWithErrors(
 
 
 class TestLowLevelErrors(IsolatedDbusTestCase):
-    async def test_low_level_error(self) -> None:
-        await request_default_bus_name_async('org.test')
-        test_object = InterfaceWithErrors()
-        test_object.export_to_dbus('/')
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
 
-        test_object_connection = InterfaceWithErrors.new_proxy(
+        await request_default_bus_name_async('org.test')
+        self.test_object = InterfaceWithErrors()
+        self.test_object.export_to_dbus('/')
+
+        self.test_object_connection = InterfaceWithErrors.new_proxy(
             'org.test', '/')
 
         loop = get_running_loop()
@@ -68,11 +70,12 @@ class TestLowLevelErrors(IsolatedDbusTestCase):
 
         loop.set_exception_handler(silence_exceptions)
 
+    async def test_property_getter_error(self) -> None:
         with self.assertRaises(DbusFailedError) as cm:
-            await wait_for(test_object_connection.test_str.get_async(),
+            await wait_for(self.test_object_connection.test_str.get_async(),
                            timeout=1)
 
         should_be_dbus_failed = cm.exception
         self.assertIs(should_be_dbus_failed.__class__, DbusFailedError)
 
-        await test_object_connection.hello_world()
+        await self.test_object_connection.hello_world()

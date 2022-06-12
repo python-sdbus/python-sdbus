@@ -46,6 +46,15 @@
                 new_object;                         \
         })
 
+#define CALL_PYTHON_GOTO_FAIL(py_function)          \
+        ({                                          \
+                PyObject* new_object = py_function; \
+                if (new_object == NULL) {           \
+                        goto fail;                  \
+                }                                   \
+                new_object;                         \
+        })
+
 #define PYTHON_ERR_OCCURED      \
         if (PyErr_Occurred()) { \
                 return NULL;    \

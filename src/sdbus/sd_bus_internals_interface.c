@@ -18,6 +18,7 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 */
+#include <systemd/sd-bus.h>
 #include "sd_bus_internals.h"
 
 // TODO: adding interface to different buses, recalculating vtable
@@ -413,16 +414,23 @@ static int _SdBusInterface_property_get_callback(sd_bus* Py_UNUSED(bus),
                                                  const char* property,
                                                  sd_bus_message* reply,
                                                  void* userdata,
-                                                 sd_bus_error* Py_UNUSED(ret_error)) {
+                                                 sd_bus_error* ret_error) {
         SdBusInterfaceObject* self = userdata;
-        PyObject* property_name_bytes CLEANUP_PY_OBJECT = PyBytes_FromString(property);
-        PyObject* get_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItem(self->property_get_dict, property_name_bytes));
+        PyObject* property_name_bytes CLEANUP_PY_OBJECT = NULL;
+        PyObject* get_call = NULL;
+        PyObject* new_message CLEANUP_PY_OBJECT = NULL;
 
-        PyObject* new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
+        property_name_bytes = CALL_PYTHON_GOTO_FAIL(PyBytes_FromString(property));
+        get_call = CALL_PYTHON_GOTO_FAIL(PyDict_GetItem(self->property_get_dict, property_name_bytes));
+
+        new_message = CALL_PYTHON_GOTO_FAIL(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, reply);
 
-        Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(get_call, new_message, NULL)));
+        Py_XDECREF(CALL_PYTHON_GOTO_FAIL(PyObject_CallFunctionObjArgs(get_call, new_message, NULL)));
         return 0;
+fail:
+        sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
+        return -1;
 }
 
 static int _SdBusInterface_property_set_callback(sd_bus* Py_UNUSED(bus),

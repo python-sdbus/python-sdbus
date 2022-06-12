@@ -353,6 +353,26 @@ PyType_Spec SdBusInterfaceType = {
         },
 };
 
+static int set_dbus_error_from_python_exception(sd_bus_error* ret_error) {
+        PyObject* current_exception = PyErr_Occurred();
+        if (NULL == current_exception) {
+                return 0;
+        }
+#ifdef Py_LIMITED_API
+        PyObject* dbus_error_bytes CLEANUP_PY_OBJECT = NULL;
+#endif
+        PyObject* dbus_error_str = CALL_PYTHON_GOTO_FAIL(PyDict_GetItem(exception_to_dbus_error_dict, current_exception));
+#ifndef Py_LIMITED_API
+        const char* dbus_error_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR_GOTO_FAIL(dbus_error_str);
+#else
+        dbus_error_bytes = SD_BUS_PY_UNICODE_AS_BYTES_GOTO_FAIL(dbus_error_str);
+        const char* dbus_error_char_ptr = SD_BUS_PY_BYTES_AS_CHAR_PTR_GOTO_FAIL(dbus_error_bytes);
+#endif
+        return sd_bus_error_set(ret_error, dbus_error_char_ptr, "");
+fail:
+        return sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
+}
+
 static int _SdBusInterface_callback(sd_bus_message* m, void* userdata, sd_bus_error* ret_error) {
         // TODO: Better error handling
         SdBusInterfaceObject* self = userdata;
@@ -429,8 +449,7 @@ static int _SdBusInterface_property_get_callback(sd_bus* Py_UNUSED(bus),
         Py_XDECREF(CALL_PYTHON_GOTO_FAIL(PyObject_CallFunctionObjArgs(get_call, new_message, NULL)));
         return 0;
 fail:
-        sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
-        return -1;
+        return set_dbus_error_from_python_exception(ret_error);
 }
 
 static int _SdBusInterface_property_set_callback(sd_bus* Py_UNUSED(bus),

@@ -96,11 +96,29 @@
                 utf_8_bytes;                                                \
         })
 
+#define SD_BUS_PY_UNICODE_AS_BYTES_GOTO_FAIL(py_unicode)                    \
+        ({                                                                  \
+                PyObject* utf_8_bytes = PyUnicode_AsUTF8String(py_unicode); \
+                if (utf_8_bytes == NULL) {                                  \
+                        goto fail;                                          \
+                }                                                           \
+                utf_8_bytes;                                                \
+        })
+
 #define SD_BUS_PY_BYTES_AS_CHAR_PTR(py_bytes)                          \
         ({                                                             \
                 const char* new_char_ptr = PyBytes_AsString(py_bytes); \
                 if (new_char_ptr == NULL) {                            \
                         return NULL;                                   \
+                }                                                      \
+                new_char_ptr;                                          \
+        })
+
+#define SD_BUS_PY_BYTES_AS_CHAR_PTR_GOTO_FAIL(py_bytes)                \
+        ({                                                             \
+                const char* new_char_ptr = PyBytes_AsString(py_bytes); \
+                if (new_char_ptr == NULL) {                            \
+                        goto fail;                                     \
                 }                                                      \
                 new_char_ptr;                                          \
         })
@@ -111,6 +129,15 @@
                 const char* new_char_ptr = PyUnicode_AsUTF8(py_object); \
                 if (new_char_ptr == NULL) {                             \
                         return NULL;                                    \
+                }                                                       \
+                new_char_ptr;                                           \
+        })
+
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR_GOTO_FAIL(py_object)              \
+        ({                                                              \
+                const char* new_char_ptr = PyUnicode_AsUTF8(py_object); \
+                if (new_char_ptr == NULL) {                             \
+                        goto fail;                                      \
                 }                                                       \
                 new_char_ptr;                                           \
         })

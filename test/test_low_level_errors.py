@@ -35,13 +35,25 @@ from sdbus import (
 HELLO_WORLD = 'Hello, world!'
 
 
+class DbusDerivePropertydError(DbusFailedError):
+    dbus_error_name = 'org.example.PropertyError'
+
+
+class IndependentError(Exception):
+    ...
+
+
 class InterfaceWithErrors(
     DbusInterfaceCommonAsync,
     interface_name='org.example.test',
 ):
     @dbus_property_async('s')
-    def test_str(self) -> str:
-        raise RuntimeError
+    def indep_err_getter(self) -> str:
+        raise IndependentError
+
+    @dbus_property_async('s')
+    def derrive_err_getter(self) -> str:
+        raise DbusDerivePropertydError
 
     @dbus_method_async(result_signature='s')
     async def hello_error(self) -> str:
@@ -70,12 +82,21 @@ class TestLowLevelErrors(IsolatedDbusTestCase):
 
         loop.set_exception_handler(silence_exceptions)
 
-    async def test_property_getter_error(self) -> None:
+    async def test_property_getter_independent_error(self) -> None:
         with self.assertRaises(DbusFailedError) as cm:
-            await wait_for(self.test_object_connection.test_str.get_async(),
-                           timeout=1)
+            await wait_for(
+                self.test_object_connection.indep_err_getter.get_async(),
+                timeout=1,
+            )
 
         should_be_dbus_failed = cm.exception
         self.assertIs(should_be_dbus_failed.__class__, DbusFailedError)
 
         await self.test_object_connection.hello_world()
+
+    async def test_property_getter_derived_error(self) -> None:
+        with self.assertRaises(DbusDerivePropertydError):
+            await wait_for(
+                self.test_object_connection.derrive_err_getter.get_async(),
+                timeout=1,
+            )

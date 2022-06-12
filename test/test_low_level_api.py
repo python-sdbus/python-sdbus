@@ -33,7 +33,10 @@ from sdbus.unittest import IsolatedDbusTestCase
 
 class TestDbusTypes(IsolatedDbusTestCase):
     def test_init_bus(self) -> None:
-        SdBus()
+        not_connected_bus = SdBus()
+        self.assertIsNone(not_connected_bus.address)
+
+        self.assertIsNotNone(self.bus.address)
 
     def test_validation_funcs(self) -> None:
         try:

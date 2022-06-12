@@ -634,6 +634,23 @@ static PyMethodDef SdBus_methods[] = {
     {NULL, NULL, 0, NULL},
 };
 
+static PyObject* SdBus_address_getter(SdBusObject* self, void* Py_UNUSED(closure)) {
+        const char* bus_address = NULL;
+        int get_address_result = sd_bus_get_address(self->sd_bus_ref, &bus_address);
+        if (-ENODATA == get_address_result) {
+                // Bus has not been set yet
+                Py_RETURN_NONE;
+        } else {
+                CALL_SD_BUS_AND_CHECK(get_address_result);
+        }
+        return PyUnicode_FromString(bus_address);
+}
+
+static PyGetSetDef SdBus_properies[] = {
+    {"address", (getter)SdBus_address_getter, NULL, "Bus address", NULL},
+    {0},
+};
+
 PyType_Spec SdBusType = {
     .name = "sd_bus_internals.SdBus",
     .basicsize = sizeof(SdBusObject),
@@ -645,6 +662,7 @@ PyType_Spec SdBusType = {
             {Py_tp_init, (initproc)SdBus_init},
             {Py_tp_dealloc, (destructor)SdBus_dealloc},
             {Py_tp_methods, SdBus_methods},
+            {Py_tp_getset, SdBus_properies},
             {0, NULL},
         },
 };

@@ -208,6 +208,8 @@ class SdBus:
     def start(self) -> None:
         raise NotImplementedError(__STUB_ERROR)
 
+    address: Optional[str] = None
+
 
 def sd_bus_open() -> SdBus:
     raise NotImplementedError(__STUB_ERROR)

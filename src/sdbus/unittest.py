@@ -19,10 +19,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from asyncio.subprocess import DEVNULL, create_subprocess_exec
 from os import environ, kill
 from pathlib import Path
 from signal import SIGTERM
+from subprocess import DEVNULL
+from subprocess import run as subprocess_run
 from tempfile import TemporaryDirectory
 from typing import ClassVar
 from unittest import IsolatedAsyncioTestCase
@@ -47,7 +48,7 @@ dbus_config = '''
 class IsolatedDbusTestCase(IsolatedAsyncioTestCase):
     dbus_executable_name: ClassVar[str] = 'dbus-daemon'
 
-    async def asyncSetUp(self) -> None:
+    def setUp(self) -> None:
         self.temp_dir = TemporaryDirectory()
         self.temp_dir_path = Path(self.temp_dir.name)
 
@@ -61,15 +62,15 @@ class IsolatedDbusTestCase(IsolatedAsyncioTestCase):
                 socket_path=self.dbus_socket_path,
                 pidfile_path=self.pid_path))
 
-        self.dbus_process = await create_subprocess_exec(
-            self.dbus_executable_name,
-            '--config-file', self.dbus_config_file,
-            '--fork',
+        subprocess_run(
+            args=(
+                self.dbus_executable_name,
+                '--config-file', self.dbus_config_file,
+                '--fork',
+            ),
             stdin=DEVNULL,
+            check=True,
         )
-        error_code = await self.dbus_process.wait()
-        if error_code != 0:
-            raise ChildProcessError('Failed to start dbus daemon')
 
         self.old_session_bus_address = environ.get('DBUS_SESSION_BUS_ADDRESS')
         environ[
@@ -78,7 +79,10 @@ class IsolatedDbusTestCase(IsolatedAsyncioTestCase):
         self.bus = sd_bus_open_user()
         set_default_bus(self.bus)
 
-    async def asyncTearDown(self) -> None:
+    async def asyncSetUp(self) -> None:
+        set_default_bus(self.bus)
+
+    def tearDown(self) -> None:
         with open(self.pid_path) as pid_file:
             dbus_pid = int(pid_file.read())
 

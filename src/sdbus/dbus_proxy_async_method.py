@@ -146,6 +146,13 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
             )
             error_message.send()
             return
+        except Exception:
+            error_message = request_message.create_error_reply(
+                DbusFailedError.dbus_error_name,
+                "",
+            )
+            error_message.send()
+            return
 
         if not request_message.expect_reply:
             return

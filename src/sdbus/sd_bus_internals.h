@@ -55,6 +55,15 @@
                 new_object;                         \
         })
 
+#define CALL_PYTHON_FAIL_ACTION(py_function, action) \
+        ({                                           \
+                PyObject* new_object = py_function;  \
+                if (new_object == NULL) {            \
+                        action;                      \
+                }                                    \
+                new_object;                          \
+        })
+
 #define PYTHON_ERR_OCCURED      \
         if (PyErr_Occurred()) { \
                 return NULL;    \

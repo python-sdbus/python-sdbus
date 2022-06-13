@@ -372,54 +372,31 @@ fail:
         return sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
 }
 
+#define METHOD_CALLBACK_ERROR_CHECK(py_function) CALL_PYTHON_FAIL_ACTION(py_function, return set_dbus_error_from_python_exception(ret_error))
+
 static int _SdBusInterface_callback(sd_bus_message* m, void* userdata, sd_bus_error* ret_error) {
         // TODO: Better error handling
         SdBusInterfaceObject* self = userdata;
         // Get the member name from the message
         const char* member_char_ptr = sd_bus_message_get_member(m);
-        PyObject* member_name_bytes CLEANUP_PY_OBJECT = PyBytes_FromString(member_char_ptr);
-        PyObject* callback_object = PyDict_GetItem(self->method_dict, member_name_bytes);
-        if (callback_object == NULL) {
-                sd_bus_error_set(ret_error, SD_BUS_ERROR_UNKNOWN_METHOD, "");
-                return -1;
-        };
+        PyObject* member_name_bytes CLEANUP_PY_OBJECT = METHOD_CALLBACK_ERROR_CHECK(PyBytes_FromString(member_char_ptr));
+        PyObject* callback_object = METHOD_CALLBACK_ERROR_CHECK(PyDict_GetItem(self->method_dict, member_name_bytes));
 
-        PyObject* running_loop CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL);
-        if (running_loop == NULL) {
-                sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
-                return -1;
-        }
+        PyObject* running_loop CLEANUP_PY_OBJECT = METHOD_CALLBACK_ERROR_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
 
-        PyObject* new_message CLEANUP_PY_OBJECT = SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class);
-        if (new_message == NULL) {
-                sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
-                return -1;
-        }
+        PyObject* new_message CLEANUP_PY_OBJECT = METHOD_CALLBACK_ERROR_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
+
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, m);
 
-        PyObject* is_coroutine_test_object CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(is_coroutine_function, callback_object, NULL);
-        if (is_coroutine_test_object == NULL) {
-                return -1;
-        }
+        PyObject* is_coroutine_test_object CLEANUP_PY_OBJECT = METHOD_CALLBACK_ERROR_CHECK(PyObject_CallFunctionObjArgs(is_coroutine_function, callback_object, NULL));
 
         if (Py_True == is_coroutine_test_object) {
                 // Create coroutine
-                PyObject* coroutine_activated CLEANUP_PY_OBJECT = PyObject_CallFunctionObjArgs(callback_object, new_message, NULL);
-                if (coroutine_activated == NULL) {
-                        return -1;
-                }
+                PyObject* coroutine_activated CLEANUP_PY_OBJECT = METHOD_CALLBACK_ERROR_CHECK(PyObject_CallFunctionObjArgs(callback_object, new_message, NULL));
 
-                PyObject* task CLEANUP_PY_OBJECT = PyObject_CallMethodObjArgs(running_loop, create_task_str, coroutine_activated, NULL);
-                if (task == NULL) {
-                        sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
-                        return -1;
-                }
+                Py_XDECREF(METHOD_CALLBACK_ERROR_CHECK(PyObject_CallMethodObjArgs(running_loop, create_task_str, coroutine_activated, NULL)));
         } else {
-                PyObject* handle CLEANUP_PY_OBJECT = PyObject_CallMethodObjArgs(running_loop, call_soon_str, callback_object, new_message, NULL);
-                if (handle == NULL) {
-                        sd_bus_error_set(ret_error, SD_BUS_ERROR_FAILED, "");
-                        return -1;
-                }
+                Py_XDECREF(METHOD_CALLBACK_ERROR_CHECK(PyObject_CallFunctionObjArgs(callback_object, new_message, NULL)));
         }
 
         sd_bus_error_set(ret_error, NULL, NULL);

@@ -43,6 +43,9 @@ class IndependentError(Exception):
     ...
 
 
+GOOD_STR = 'Good'
+
+
 class InterfaceWithErrors(
     DbusInterfaceCommonAsync,
     interface_name='org.example.test',
@@ -62,6 +65,22 @@ class InterfaceWithErrors(
     @dbus_method_async(result_signature='s')
     async def hello_world(self) -> str:
         return HELLO_WORLD
+
+    @dbus_property_async('s')
+    def indep_err_setable(self) -> str:
+        return GOOD_STR
+
+    @indep_err_setable.setter
+    def indep_err_setter(self, new_value: str) -> None:
+        raise IndependentError
+
+    @dbus_property_async('s')
+    def derrive_err_settable(self) -> str:
+        return GOOD_STR
+
+    @derrive_err_settable.setter
+    def derrive_err_setter(self, new_value: str) -> None:
+        raise DbusDerivePropertydError
 
 
 class TestLowLevelErrors(IsolatedDbusTestCase):
@@ -100,3 +119,46 @@ class TestLowLevelErrors(IsolatedDbusTestCase):
                 self.test_object_connection.derrive_err_getter.get_async(),
                 timeout=1,
             )
+
+        await self.test_object_connection.hello_world()
+
+    async def test_property_setter_independent_error(self) -> None:
+
+        self.assertEqual(
+            await wait_for(
+                self.test_object_connection.indep_err_setable.get_async(),
+                timeout=1,
+            ),
+            GOOD_STR,
+        )
+
+        with self.assertRaises(DbusFailedError) as cm:
+            await wait_for(
+                self.test_object_connection.
+                indep_err_setable.set_async('Test'),
+                timeout=1,
+            )
+
+        should_be_dbus_failed = cm.exception
+        self.assertIs(should_be_dbus_failed.__class__, DbusFailedError)
+
+        await self.test_object_connection.hello_world()
+
+    async def test_property_setter_derived_error(self) -> None:
+
+        self.assertEqual(
+            await wait_for(
+                self.test_object_connection.derrive_err_settable.get_async(),
+                timeout=1,
+            ),
+            GOOD_STR,
+        )
+
+        with self.assertRaises(DbusDerivePropertydError):
+            await wait_for(
+                self.test_object_connection.
+                derrive_err_settable.set_async('Test'),
+                timeout=1,
+            )
+
+        await self.test_object_connection.hello_world()

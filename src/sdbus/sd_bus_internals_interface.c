@@ -18,7 +18,6 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 */
-#include <systemd/sd-bus.h>
 #include "sd_bus_internals.h"
 
 // TODO: adding interface to different buses, recalculating vtable
@@ -458,14 +457,21 @@ static int _SdBusInterface_property_set_callback(sd_bus* Py_UNUSED(bus),
                                                  const char* property,
                                                  sd_bus_message* value,
                                                  void* userdata,
-                                                 sd_bus_error* Py_UNUSED(ret_error)) {
+                                                 sd_bus_error* ret_error) {
         SdBusInterfaceObject* self = userdata;
-        PyObject* property_name_bytes CLEANUP_PY_OBJECT = PyBytes_FromString(property);
-        PyObject* set_call = CALL_PYTHON_CHECK_RETURN_NEG1(PyDict_GetItem(self->property_set_dict, property_name_bytes));
+        PyObject* property_name_bytes CLEANUP_PY_OBJECT = NULL;
+        PyObject* new_message CLEANUP_PY_OBJECT = NULL;
+        property_name_bytes = PyBytes_FromString(property);
+        if (NULL == property_name_bytes) {
+                goto fail;
+        }
+        PyObject* set_call = CALL_PYTHON_GOTO_FAIL(PyDict_GetItem(self->property_set_dict, property_name_bytes));
 
-        PyObject* new_message CLEANUP_PY_OBJECT = CALL_PYTHON_CHECK_RETURN_NEG1(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
+        new_message = CALL_PYTHON_GOTO_FAIL(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, value);
 
-        Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(set_call, new_message, NULL)));
+        Py_XDECREF(CALL_PYTHON_GOTO_FAIL(PyObject_CallFunctionObjArgs(set_call, new_message, NULL)));
         return 0;
+fail:
+        return set_dbus_error_from_python_exception(ret_error);
 }

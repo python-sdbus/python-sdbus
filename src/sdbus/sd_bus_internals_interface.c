@@ -353,13 +353,13 @@ PyType_Spec SdBusInterfaceType = {
 };
 
 static int set_dbus_error_from_python_exception(sd_bus_error* ret_error) {
+#ifdef Py_LIMITED_API
+        PyObject* dbus_error_bytes CLEANUP_PY_OBJECT = NULL;
+#endif
         PyObject* current_exception = PyErr_Occurred();
         if (NULL == current_exception) {
                 goto fail;
         }
-#ifdef Py_LIMITED_API
-        PyObject* dbus_error_bytes CLEANUP_PY_OBJECT = NULL;
-#endif
         PyObject* dbus_error_str = CALL_PYTHON_GOTO_FAIL(PyDict_GetItem(exception_to_dbus_error_dict, current_exception));
 #ifndef Py_LIMITED_API
         const char* dbus_error_char_ptr = SD_BUS_PY_UNICODE_AS_CHAR_PTR_GOTO_FAIL(dbus_error_str);

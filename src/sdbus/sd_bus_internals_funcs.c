@@ -140,7 +140,8 @@ static PyObject* map_exception_to_dbus_error(PyObject* Py_UNUSED(self), PyObject
 static PyObject* map_exception_to_dbus_error(PyObject* Py_UNUSED(self), PyObject* args) {
         PyObject* exception = NULL;
         PyObject* dbus_error_string = NULL;
-        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "Os", &exception, &dbus_error_string, NULL));
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "O!O!", PyExc_BaseException->ob_type, &exception, &PyUnicode_Type, &dbus_error_string, NULL));
+
 #endif
         if (CALL_PYTHON_INT_CHECK(PyDict_Contains(dbus_error_to_exception_dict, dbus_error_string)) > 0) {
                 PyErr_Format(PyExc_ValueError, "Dbus error %R is already mapped.", dbus_error_string);

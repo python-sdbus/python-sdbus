@@ -21,7 +21,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, Tuple, cast
 
-from .sd_bus_internals import SdBusBaseError, add_exception_mapping
+from .sd_bus_internals import (
+    SdBusBaseError,
+    add_exception_mapping,
+    map_exception_to_dbus_error)
 
 
 class DbusErrorMeta(type):
@@ -166,3 +169,95 @@ class DbusMatchRuleInvalidError(DbusFailedError):
 class DbusInteractiveAuthorizationRequiredError(DbusFailedError):
     dbus_error_name = ('org.freedesktop.DBus.Error'
                        '.InteractiveAuthorizationRequired')
+
+
+map_exception_to_dbus_error(AssertionError,
+                            "org.python.Error.AssertionError")
+map_exception_to_dbus_error(AttributeError,
+                            "org.python.Error.AttributeError")
+map_exception_to_dbus_error(EOFError,
+                            "org.python.Error.EOFError")
+map_exception_to_dbus_error(ImportError,
+                            "org.python.Error.ImportError")
+map_exception_to_dbus_error(ModuleNotFoundError,
+                            "org.python.Error.ModuleNotFoundError")
+map_exception_to_dbus_error(IndexError,
+                            "org.python.Error.IndexError")
+map_exception_to_dbus_error(KeyError,
+                            "org.python.Error.KeyError")
+map_exception_to_dbus_error(NameError,
+                            "org.python.Error.NameError")
+map_exception_to_dbus_error(NotImplementedError,
+                            "org.python.Error.NotImplementedError")
+map_exception_to_dbus_error(OSError,
+                            "org.python.Error.OSError")
+map_exception_to_dbus_error(RecursionError,
+                            "org.python.Error.RecursionError")
+map_exception_to_dbus_error(ReferenceError,
+                            "org.python.Error.ReferenceError")
+map_exception_to_dbus_error(RuntimeError,
+                            "org.python.Error.RuntimeError")
+map_exception_to_dbus_error(SyntaxError,
+                            "org.python.Error.SyntaxError")
+map_exception_to_dbus_error(IndentationError,
+                            "org.python.Error.IndentationError")
+map_exception_to_dbus_error(TabError,
+                            "org.python.Error.TabError")
+map_exception_to_dbus_error(SystemError,
+                            "org.python.Error.SystemError")
+map_exception_to_dbus_error(TypeError,
+                            "org.python.Error.TypeError")
+map_exception_to_dbus_error(UnboundLocalError,
+                            "org.python.Error.UnboundLocalError")
+map_exception_to_dbus_error(UnicodeError,
+                            "org.python.Error.UnicodeError")
+map_exception_to_dbus_error(UnicodeEncodeError,
+                            "org.python.Error.UnicodeEncodeError")
+map_exception_to_dbus_error(UnicodeDecodeError,
+                            "org.python.Error.UnicodeDecodeError")
+map_exception_to_dbus_error(UnicodeTranslateError,
+                            "org.python.Error.UnicodeTranslateError")
+map_exception_to_dbus_error(ValueError,
+                            "org.python.Error.ValueError")
+map_exception_to_dbus_error(EnvironmentError,
+                            "org.python.Error.EnvironmentError")
+map_exception_to_dbus_error(IOError,
+                            "org.python.Error.IOError")
+map_exception_to_dbus_error(BlockingIOError,
+                            "org.python.Error.BlockingIOError")
+map_exception_to_dbus_error(ChildProcessError,
+                            "org.python.Error.ChildProcessError")
+map_exception_to_dbus_error(ConnectionError,
+                            "org.python.Error.ConnectionError")
+map_exception_to_dbus_error(BrokenPipeError,
+                            "org.python.Error.BrokenPipeError")
+map_exception_to_dbus_error(ConnectionAbortedError,
+                            "org.python.Error.ConnectionAbortedError")
+map_exception_to_dbus_error(ConnectionRefusedError,
+                            "org.python.Error.ConnectionRefusedError")
+map_exception_to_dbus_error(ConnectionResetError,
+                            "org.python.Error.ConnectionResetError")
+map_exception_to_dbus_error(FileExistsError,
+                            "org.python.Error.FileExistsError")
+map_exception_to_dbus_error(FileNotFoundError,
+                            "org.python.Error.FileNotFoundError")
+map_exception_to_dbus_error(InterruptedError,
+                            "org.python.Error.InterruptedError")
+map_exception_to_dbus_error(IsADirectoryError,
+                            "org.python.Error.IsADirectoryError")
+map_exception_to_dbus_error(NotADirectoryError,
+                            "org.python.Error.NotADirectoryError")
+map_exception_to_dbus_error(PermissionError,
+                            "org.python.Error.PermissionError")
+map_exception_to_dbus_error(ProcessLookupError,
+                            "org.python.Error.ProcessLookupError")
+map_exception_to_dbus_error(TimeoutError,
+                            "org.python.Error.TimeoutError")
+map_exception_to_dbus_error(ArithmeticError,
+                            "org.python.Error.ArithmeticError")
+map_exception_to_dbus_error(FloatingPointError,
+                            "org.python.Error.FloatingPointError")
+map_exception_to_dbus_error(OverflowError,
+                            "org.python.Error.OverflowError")
+map_exception_to_dbus_error(ZeroDivisionError,
+                            "org.python.Error.ZeroDivisionError")

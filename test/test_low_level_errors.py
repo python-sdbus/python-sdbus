@@ -162,3 +162,13 @@ class TestLowLevelErrors(IsolatedDbusTestCase):
             )
 
         await self.test_object_connection.hello_world()
+
+    async def test_property_callback_error(self) -> None:
+        interface = self.test_object._activated_interfaces[0]
+        interface.property_get_dict.pop(b'DerriveErrSettable')
+
+        with self.assertRaises(DbusFailedError):
+            await wait_for(
+                self.test_object_connection.derrive_err_settable,
+                timeout=1,
+            )

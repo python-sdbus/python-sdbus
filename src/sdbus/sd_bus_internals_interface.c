@@ -355,7 +355,7 @@ PyType_Spec SdBusInterfaceType = {
 static int set_dbus_error_from_python_exception(sd_bus_error* ret_error) {
         PyObject* current_exception = PyErr_Occurred();
         if (NULL == current_exception) {
-                return 0;
+                goto fail;
         }
 #ifdef Py_LIMITED_API
         PyObject* dbus_error_bytes CLEANUP_PY_OBJECT = NULL;

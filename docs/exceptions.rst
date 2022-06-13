@@ -37,6 +37,17 @@ new exception.
 Existing exceptions can be manually binded using :py:func:`map_exception_to_dbus_error`
 function.
 
+Python built-in exceptions
++++++++++++++++++++++++++++
+
+All Python built-in exceptions are mapped to D-Bus errors.
+
+The D-Bus error name is created by appending ``org.python.Error.``
+to the exception name.
+
+For example, ``AssertionError`` is bound
+to ``org.python.Error.AssertionError`` name.
+
 Functions
 +++++++++
 

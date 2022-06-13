@@ -112,7 +112,7 @@ class ExampleInterface(
 Server `example_server.py` file:
 
 ```python
-from asyncio import get_event_loop, sleep
+from asyncio import new_event_loop, sleep
 from random import randint
 from time import time
 
@@ -120,7 +120,7 @@ from example_interface import ExampleInterface
 
 from sdbus import request_default_bus_name_async
 
-loop = get_event_loop()
+loop = new_event_loop()
 
 export_object = ExampleInterface()
 
@@ -153,7 +153,7 @@ loop.run_forever()
 Client `example_client.py` file:
 
 ```python
-from asyncio import get_event_loop
+from asyncio import new_event_loop
 
 from example_interface import ExampleInterface
 
@@ -178,7 +178,7 @@ async def call_upper() -> None:
 async def get_hello_world() -> None:
     print('Remote property: ', await example_object.hello_world)
 
-loop = get_event_loop()
+loop = new_event_loop()
 
 # Always binds your tasks to a variable
 task_upper = loop.create_task(call_upper())

@@ -40,7 +40,6 @@ all_python_modules = [
     src_dir / 'sdbus_async/dbus_daemon',
     src_dir / 'sdbus_block/dbus_daemon',
     source_root / 'setup.py',
-    examples_dir / 'simple',
 ]
 
 mypy_cache_dir = build_dir / '.mypy_cache'

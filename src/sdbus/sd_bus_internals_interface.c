@@ -388,7 +388,8 @@ static int _SdBusInterface_callback(sd_bus_message* m, void* userdata, sd_bus_er
 
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, m);
 
-        PyObject* is_coroutine_test_object CLEANUP_PY_OBJECT = METHOD_CALLBACK_ERROR_CHECK(PyObject_CallFunctionObjArgs(is_coroutine_function, callback_object, NULL));
+        PyObject* is_coroutine_test_object CLEANUP_PY_OBJECT =
+            METHOD_CALLBACK_ERROR_CHECK(PyObject_CallFunctionObjArgs(is_coroutine_function, callback_object, NULL));
 
         if (Py_True == is_coroutine_test_object) {
                 // Create coroutine

@@ -66,7 +66,7 @@ class DbusInterfaceMetaCommon(type):
                     f"Invalid interface name: \"{interface_name}\"; "
                     'Interface names must be composed of 2 or more elements '
                     'separated by a dot \'.\' character. All elements must '
-                    'contain atleast one character, constist of ASCII '
+                    'contain at least one character, constist of ASCII '
                     'characters, first character must not be digit and '
                     'length must not exceed 255 characters.'
                 )

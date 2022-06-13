@@ -270,7 +270,7 @@ static PyObject* SdBus_drive(SdBusObject* self, PyObject* Py_UNUSED(args)) {
                                 // Connection gracefully terminated
                                 Py_RETURN_NONE;
                         } else {
-                                // Error occured processing sdbus
+                                // Error occurred processing sdbus
                                 CALL_SD_BUS_AND_CHECK(return_value);
                                 return NULL;
                         }

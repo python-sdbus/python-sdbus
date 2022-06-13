@@ -1,3 +1,30 @@
+## 0.10.0
+
+### Features:
+
+* **Mapped all built-in Python exceptions to D-Bus errors.**
+* **Default bus connection now uses context/thread-local storage.** This is potentially
+  breaking in code that used bus in a different threads or contexts.
+* Added `map_exception_to_dbus_error` which lets mapping of any exception to D-Bus
+  error name.
+* D-Bus interfaces and member names are now verified before exporting to D-Bus.
+  A helpful error message will be returned if verification fails.
+* Added ability to export and track objects with ObjectManager.
+* Added `sdbus.unittest.IsolatedDbusTestCase` which is a test case that
+  runs on a separated D-Bus instance. Requires `dbus-daemon` command be installed.
+* Allow replacing the default bus. Changing default bus will not have effect on
+  existing objects which will continue to use the old bus.
+
+### Fixes:
+
+* Fixed non-mapped errors in methods called from D-Bus not returning generic
+  error.
+* Fixed errors in properties always returning Access Denied instead of specific
+  or generic D-Bus errors.
+* Fixed `str` and `int` subclasses not being accepted on fast API.
+* Fixes trying to process a disconnected bus and causing high CPU usage.
+* Marked autodoc extension safe for parallel reading and writing.
+
 ## 0.9.0
 
 * **pkg-config is now required** when building from source.

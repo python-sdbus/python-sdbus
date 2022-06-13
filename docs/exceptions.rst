@@ -34,6 +34,20 @@ If ``dbus_error_name`` is not unique the :py:exc:`ValueError` will be raised.
 Defining an exception will automatically bind incoming error message to this
 new exception.
 
+Existing exceptions can be manually binded using :py:func:`map_exception_to_dbus_error`
+function.
+
+Functions
++++++++++
+
+.. py:function:: map_exception_to_dbus_error(exception, dbus_error_name)
+
+    Map exception to a D-bus error. Error name must be unique.
+
+    :param Type[Exception] exception: Exception to bind.
+    :param str dbus_error_name: D-Bus error name to bind to.
+
+
 Other exceptions
 +++++++++++++++++++++++++
 

@@ -54,6 +54,12 @@ class SdBusSlot:
 
 
 class SdBusInterface:
+    method_list: List[object]
+    method_dict: Dict[bytes, object]
+    property_list: List[object]
+    property_get_dict: Dict[bytes, object]
+    property_set_dict: Dict[bytes, object]
+    signal_list: List[object]
 
     def add_method(
         self,

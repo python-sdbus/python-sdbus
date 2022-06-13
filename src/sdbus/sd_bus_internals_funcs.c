@@ -130,6 +130,30 @@ static PyObject* decode_object_path(PyObject* Py_UNUSED(self), PyObject* args) {
 }
 
 #ifndef Py_LIMITED_API
+static PyObject* map_exception_to_dbus_error(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
+        SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyExceptionClass_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PyUnicode_Check);
+        PyObject* exception = args[0];
+        PyObject* dbus_error_string = args[1];
+#else
+static PyObject* map_exception_to_dbus_error(PyObject* Py_UNUSED(self), PyObject* args) {
+        PyObject* exception = NULL;
+        PyObject* dbus_error_string = NULL;
+        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "Os", &exception, &dbus_error_string, NULL));
+#endif
+        if (CALL_PYTHON_INT_CHECK(PyDict_Contains(dbus_error_to_exception_dict, dbus_error_string)) > 0) {
+                PyErr_Format(PyExc_ValueError, "Dbus error %R is already mapped.", dbus_error_string);
+                return NULL;
+        }
+
+        CALL_PYTHON_INT_CHECK(PyDict_SetItem(dbus_error_to_exception_dict, dbus_error_string, exception));
+        CALL_PYTHON_INT_CHECK(PyDict_SetItem(exception_to_dbus_error_dict, exception, dbus_error_string));
+
+        Py_RETURN_NONE;
+}
+
+#ifndef Py_LIMITED_API
 static PyObject* add_exception_mapping(PyObject* Py_UNUSED(self), PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(1);
         PyObject* exception = args[0];
@@ -259,6 +283,7 @@ PyMethodDef SdBusPyInternal_methods[] = {
     {"sd_bus_open_system_machine", (PyCFunction)sd_bus_py_open_system_machine, METH_VARARGS, "Open user bus in systemd-nspawn container"},
     {"encode_object_path", (SD_BUS_PY_FUNC_TYPE)encode_object_path, SD_BUS_PY_METH, "Encode object path with object path prefix and arbitrary string"},
     {"decode_object_path", (SD_BUS_PY_FUNC_TYPE)decode_object_path, SD_BUS_PY_METH, "Decode object path with object path prefix and arbitrary string"},
+    {"map_exception_to_dbus_error", (SD_BUS_PY_FUNC_TYPE)map_exception_to_dbus_error, SD_BUS_PY_METH, "Map exception to a D-Bus error name"},
     {"add_exception_mapping", (SD_BUS_PY_FUNC_TYPE)add_exception_mapping, SD_BUS_PY_METH, "Add exception to the mapping of dbus error names"},
     {"is_interface_name_valid", (SD_BUS_PY_FUNC_TYPE)is_interface_name_valid, SD_BUS_PY_METH, "Is the string valid interface name?"},
     {"is_service_name_valid", (SD_BUS_PY_FUNC_TYPE)is_service_name_valid, SD_BUS_PY_METH, "Is the string valid service name?"},

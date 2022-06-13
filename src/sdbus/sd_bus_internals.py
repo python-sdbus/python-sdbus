@@ -243,6 +243,11 @@ def decode_object_path(prefix: str, full_path: str) -> str:
     raise NotImplementedError(__STUB_ERROR)
 
 
+def map_exception_to_dbus_error(exc: Exception,
+                                dbus_error_name: str, /) -> None:
+    ...  # We want to be able to generate docs without module
+
+
 def add_exception_mapping(exc: Exception, /) -> None:
     ...  # We want to be able to generate docs without module
 

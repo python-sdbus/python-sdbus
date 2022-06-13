@@ -49,7 +49,7 @@ static void SdBusInterface_dealloc(SdBusInterfaceObject* self) {
         SD_BUS_DEALLOC_TAIL;
 }
 
-inline int _check_callable_or_none(PyObject* some_object) {
+static inline int _check_callable_or_none(PyObject* some_object) {
         return PyCallable_Check(some_object) || (Py_None == some_object);
 }
 

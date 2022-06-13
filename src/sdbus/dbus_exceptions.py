@@ -176,12 +176,16 @@ map_exception_to_dbus_error(AssertionError,
                             "org.python.Error.AssertionError")
 map_exception_to_dbus_error(AttributeError,
                             "org.python.Error.AttributeError")
+map_exception_to_dbus_error(BufferError,
+                            "org.python.Error.BufferError")
 map_exception_to_dbus_error(EOFError,
                             "org.python.Error.EOFError")
 map_exception_to_dbus_error(ImportError,
                             "org.python.Error.ImportError")
 map_exception_to_dbus_error(ModuleNotFoundError,
                             "org.python.Error.ModuleNotFoundError")
+map_exception_to_dbus_error(LookupError,
+                            "org.python.Error.LookupError")
 map_exception_to_dbus_error(IndexError,
                             "org.python.Error.IndexError")
 map_exception_to_dbus_error(KeyError,

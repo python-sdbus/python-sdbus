@@ -32,6 +32,7 @@ tools_dir = source_root / 'tools'
 src_dir = source_root / 'src'
 test_dir = source_root / 'test'
 wheel_build_dir = source_root / 'wheel-build'
+examples_dir = source_root / 'examples'
 
 all_python_modules = [
     tools_dir, test_dir, wheel_build_dir,
@@ -39,6 +40,7 @@ all_python_modules = [
     src_dir / 'sdbus_async/dbus_daemon',
     src_dir / 'sdbus_block/dbus_daemon',
     source_root / 'setup.py',
+    examples_dir / 'simple',
 ]
 
 mypy_cache_dir = build_dir / '.mypy_cache'

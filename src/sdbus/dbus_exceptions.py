@@ -24,7 +24,8 @@ from typing import Any, Dict, Tuple, cast
 from .sd_bus_internals import (
     SdBusBaseError,
     add_exception_mapping,
-    map_exception_to_dbus_error)
+    map_exception_to_dbus_error,
+)
 
 
 class DbusErrorMeta(type):

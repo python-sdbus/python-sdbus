@@ -29,6 +29,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Type,
     Union,
 )
 
@@ -243,7 +244,7 @@ def decode_object_path(prefix: str, full_path: str) -> str:
     raise NotImplementedError(__STUB_ERROR)
 
 
-def map_exception_to_dbus_error(exc: Exception,
+def map_exception_to_dbus_error(exc: Type[Exception],
                                 dbus_error_name: str, /) -> None:
     ...  # We want to be able to generate docs without module
 

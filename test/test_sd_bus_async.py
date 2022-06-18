@@ -384,40 +384,20 @@ class TestProxy(IsolatedDbusTestCase):
         async def first_test() -> None:
             await test_object_connection.raise_base_exception()
 
-        loop = get_running_loop()
-
-        t1 = loop.create_task(first_test())
-
-        try:
-            await wait_for(t1, timeout=1)
-        except DbusFailedError:
-            ...
-
-        self.assertRaises(DbusFailedError, t1.result)
+        with self.assertRaises(DbusFailedError):
+            await wait_for(first_test(), timeout=1)
 
         async def second_test() -> None:
             await test_object_connection.raise_derived_exception()
 
-        t2 = loop.create_task(second_test())
-
-        try:
-            await wait_for(t2, timeout=1)
-        except DbusFileExistsError:
-            ...
-
-        self.assertRaises(DbusFileExistsError, t2.result)
+        with self.assertRaises(DbusFileExistsError):
+            await wait_for(second_test(), timeout=1)
 
         async def third_test() -> None:
             await test_object_connection.raise_custom_error()
 
-        t3 = loop.create_task(third_test())
-
-        try:
-            await wait_for(t3, timeout=1)
-        except DbusFailedError:
-            ...
-
-        self.assertRaises(DbusErrorTest, t3.result)
+        with self.assertRaises(DbusErrorTest):
+            await wait_for(third_test(), timeout=1)
 
         def bad_exception_error_name_used() -> None:
             class BadDbusError(DbusFailedError):
@@ -434,14 +414,8 @@ class TestProxy(IsolatedDbusTestCase):
         async def test_unmapped_expection() -> None:
             await test_object_connection.raise_and_unmap_error()
 
-        t4 = loop.create_task(test_unmapped_expection())
-
-        try:
-            await wait_for(t4, timeout=1)
-        except SdBusUnmappedMessageError:
-            ...
-
-        self.assertRaises(SdBusUnmappedMessageError, t4.result)
+        with self.assertRaises(SdBusUnmappedMessageError):
+            await wait_for(test_unmapped_expection(), timeout=1)
 
     async def test_no_reply_method(self) -> None:
         test_object, test_object_connection = initialize_object()
@@ -460,16 +434,9 @@ class TestProxy(IsolatedDbusTestCase):
 
         collect()
 
-        loop = get_running_loop()
-
-        t = loop.create_task(test_object_connection.dbus_introspect())
-
-        try:
-            await wait_for(t, timeout=0.2)
-        except DbusUnknownObjectError:
-            ...
-
-        self.assertRaises(DbusUnknownObjectError, t.result)
+        with self.assertRaises(DbusUnknownObjectError):
+            await wait_for(test_object_connection.dbus_introspect(),
+                           timeout=0.2)
 
     def test_docstring(self) -> None:
         test_object, test_object_connection = initialize_object()
@@ -576,21 +543,13 @@ class TestProxy(IsolatedDbusTestCase):
     async def test_bus_close(self) -> None:
         test_object, test_object_connection = initialize_object()
 
-        loop = get_running_loop()
-
         async def too_long_wait() -> None:
             await test_object_connection.looong_method()
 
-        t1 = loop.create_task(too_long_wait())
-
         self.bus.close()
 
-        try:
-            await wait_for(t1, timeout=1)
-        except SdBusLibraryError:
-            ...
-
-        self.assertRaises(SdBusLibraryError, t1.result)
+        with self.assertRaises(SdBusLibraryError):
+            await wait_for(too_long_wait(), timeout=1)
 
     async def test_singal_queue_wildcard_match(self) -> None:
         test_object, test_object_connection = initialize_object()

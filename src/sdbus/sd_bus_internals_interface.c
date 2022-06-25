@@ -417,16 +417,14 @@ static int _SdBusInterface_property_get_callback(sd_bus* Py_UNUSED(bus),
         PyObject* get_call = NULL;
         PyObject* new_message CLEANUP_PY_OBJECT = NULL;
 
-        property_name_bytes = CALL_PYTHON_GOTO_FAIL(PyBytes_FromString(property));
-        get_call = CALL_PYTHON_GOTO_FAIL(PyDict_GetItem(self->property_get_dict, property_name_bytes));
+        property_name_bytes = METHOD_CALLBACK_ERROR_CHECK(PyBytes_FromString(property));
+        get_call = METHOD_CALLBACK_ERROR_CHECK(PyDict_GetItem(self->property_get_dict, property_name_bytes));
 
-        new_message = CALL_PYTHON_GOTO_FAIL(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
+        new_message = METHOD_CALLBACK_ERROR_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, reply);
 
-        Py_XDECREF(CALL_PYTHON_GOTO_FAIL(PyObject_CallFunctionObjArgs(get_call, new_message, NULL)));
+        Py_XDECREF(METHOD_CALLBACK_ERROR_CHECK(PyObject_CallFunctionObjArgs(get_call, new_message, NULL)));
         return 0;
-fail:
-        return set_dbus_error_from_python_exception(ret_error);
 }
 
 static int _SdBusInterface_property_set_callback(sd_bus* Py_UNUSED(bus),
@@ -437,19 +435,13 @@ static int _SdBusInterface_property_set_callback(sd_bus* Py_UNUSED(bus),
                                                  void* userdata,
                                                  sd_bus_error* ret_error) {
         SdBusInterfaceObject* self = userdata;
-        PyObject* property_name_bytes CLEANUP_PY_OBJECT = NULL;
-        PyObject* new_message CLEANUP_PY_OBJECT = NULL;
-        property_name_bytes = PyBytes_FromString(property);
-        if (NULL == property_name_bytes) {
-                goto fail;
-        }
-        PyObject* set_call = CALL_PYTHON_GOTO_FAIL(PyDict_GetItem(self->property_set_dict, property_name_bytes));
+        PyObject* property_name_bytes CLEANUP_PY_OBJECT = METHOD_CALLBACK_ERROR_CHECK(PyBytes_FromString(property));
 
-        new_message = CALL_PYTHON_GOTO_FAIL(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
+        PyObject* set_call = METHOD_CALLBACK_ERROR_CHECK(PyDict_GetItem(self->property_set_dict, property_name_bytes));
+
+        PyObject* new_message CLEANUP_PY_OBJECT = METHOD_CALLBACK_ERROR_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
         _SdBusMessage_set_messsage((SdBusMessageObject*)new_message, value);
 
-        Py_XDECREF(CALL_PYTHON_GOTO_FAIL(PyObject_CallFunctionObjArgs(set_call, new_message, NULL)));
+        Py_XDECREF(METHOD_CALLBACK_ERROR_CHECK(PyObject_CallFunctionObjArgs(set_call, new_message, NULL)));
         return 0;
-fail:
-        return set_dbus_error_from_python_exception(ret_error);
 }

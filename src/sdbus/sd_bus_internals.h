@@ -37,23 +37,7 @@
                 return NULL;                                                                         \
         }
 
-#define CALL_PYTHON_AND_CHECK(py_function)          \
-        ({                                          \
-                PyObject* new_object = py_function; \
-                if (new_object == NULL) {           \
-                        return NULL;                \
-                }                                   \
-                new_object;                         \
-        })
-
-#define CALL_PYTHON_GOTO_FAIL(py_function)          \
-        ({                                          \
-                PyObject* new_object = py_function; \
-                if (new_object == NULL) {           \
-                        goto fail;                  \
-                }                                   \
-                new_object;                         \
-        })
+// Call Python macros
 
 #define CALL_PYTHON_FAIL_ACTION(py_function, action) \
         ({                                           \
@@ -62,6 +46,37 @@
                         action;                      \
                 }                                    \
                 new_object;                          \
+        })
+
+#define CALL_PYTHON_AND_CHECK(py_function) CALL_PYTHON_FAIL_ACTION(py_function, return NULL)
+#define CALL_PYTHON_CHECK_RETURN_NEG1(py_function) CALL_PYTHON_FAIL_ACTION(py_function, return -1)
+#define CALL_PYTHON_GOTO_FAIL(py_function) CALL_PYTHON_FAIL_ACTION(py_function, goto fail)
+
+#define CALL_PYTHON_INT_CHECK(py_function)    \
+        ({                                    \
+                int return_int = py_function; \
+                if (return_int < 0) {         \
+                        return NULL;          \
+                }                             \
+                return_int;                   \
+        })
+
+#define CALL_PYTHON_BOOL_CHECK(py_function)   \
+        ({                                    \
+                int return_int = py_function; \
+                if (!return_int) {            \
+                        return NULL;          \
+                }                             \
+                return_int;                   \
+        })
+
+#define CALL_PYTHON_EXPECT_NONE(py_function)      \
+        ({                                        \
+                PyObject* none_obj = py_function; \
+                if (none_obj == NULL) {           \
+                        return NULL;              \
+                }                                 \
+                Py_DECREF(none_obj);              \
         })
 
 #define PYTHON_ERR_OCCURED      \
@@ -96,60 +111,42 @@
                 return_int;                                          \
         })
 
-#define SD_BUS_PY_UNICODE_AS_BYTES(py_unicode)                              \
+#define SD_BUS_PY_UNICODE_AS_BYTES_ERROR_ACTION(py_unicode, action)         \
         ({                                                                  \
                 PyObject* utf_8_bytes = PyUnicode_AsUTF8String(py_unicode); \
                 if (utf_8_bytes == NULL) {                                  \
-                        return NULL;                                        \
+                        action;                                             \
                 }                                                           \
                 utf_8_bytes;                                                \
         })
 
-#define SD_BUS_PY_UNICODE_AS_BYTES_GOTO_FAIL(py_unicode)                    \
-        ({                                                                  \
-                PyObject* utf_8_bytes = PyUnicode_AsUTF8String(py_unicode); \
-                if (utf_8_bytes == NULL) {                                  \
-                        goto fail;                                          \
-                }                                                           \
-                utf_8_bytes;                                                \
-        })
+#define SD_BUS_PY_UNICODE_AS_BYTES(py_unicode) SD_BUS_PY_UNICODE_AS_BYTES_ERROR_ACTION(py_unicode, return NULL)
+#define SD_BUS_PY_UNICODE_AS_BYTES_GOTO_FAIL(py_unicode) SD_BUS_PY_UNICODE_AS_BYTES_ERROR_ACTION(py_unicode, goto fail)
 
-#define SD_BUS_PY_BYTES_AS_CHAR_PTR(py_bytes)                          \
+#define SD_BUS_PY_BYTES_AS_CHAR_PTR_ERROR_ACTION(py_bytes, action)     \
         ({                                                             \
                 const char* new_char_ptr = PyBytes_AsString(py_bytes); \
                 if (new_char_ptr == NULL) {                            \
-                        return NULL;                                   \
+                        action;                                        \
                 }                                                      \
                 new_char_ptr;                                          \
         })
 
-#define SD_BUS_PY_BYTES_AS_CHAR_PTR_GOTO_FAIL(py_bytes)                \
-        ({                                                             \
-                const char* new_char_ptr = PyBytes_AsString(py_bytes); \
-                if (new_char_ptr == NULL) {                            \
-                        goto fail;                                     \
-                }                                                      \
-                new_char_ptr;                                          \
-        })
+#define SD_BUS_PY_BYTES_AS_CHAR_PTR(py_bytes) SD_BUS_PY_BYTES_AS_CHAR_PTR_ERROR_ACTION(py_bytes, return NULL)
+#define SD_BUS_PY_BYTES_AS_CHAR_PTR_GOTO_FAIL(py_bytes) SD_BUS_PY_BYTES_AS_CHAR_PTR_ERROR_ACTION(py_bytes, goto fail)
 
 #ifndef Py_LIMITED_API
-#define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object)                        \
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR_ERROR_ACTION(py_object, action)   \
         ({                                                              \
                 const char* new_char_ptr = PyUnicode_AsUTF8(py_object); \
                 if (new_char_ptr == NULL) {                             \
-                        return NULL;                                    \
+                        action;                                         \
                 }                                                       \
                 new_char_ptr;                                           \
         })
 
-#define SD_BUS_PY_UNICODE_AS_CHAR_PTR_GOTO_FAIL(py_object)              \
-        ({                                                              \
-                const char* new_char_ptr = PyUnicode_AsUTF8(py_object); \
-                if (new_char_ptr == NULL) {                             \
-                        goto fail;                                      \
-                }                                                       \
-                new_char_ptr;                                           \
-        })
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR(py_object) SD_BUS_PY_UNICODE_AS_CHAR_PTR_ERROR_ACTION(py_object, return NULL)
+#define SD_BUS_PY_UNICODE_AS_CHAR_PTR_GOTO_FAIL(py_object) SD_BUS_PY_UNICODE_AS_CHAR_PTR_ERROR_ACTION(py_object, goto fail)
 
 #define SD_BUS_PY_UNICODE_AS_CHAR_PTR_OPTIONAL(py_object)                                \
         ({                                                                               \
@@ -184,42 +181,6 @@
                         }                                            \
                 }                                                    \
                 next_object;                                         \
-        })
-
-#define CALL_PYTHON_INT_CHECK(py_function)    \
-        ({                                    \
-                int return_int = py_function; \
-                if (return_int < 0) {         \
-                        return NULL;          \
-                }                             \
-                return_int;                   \
-        })
-
-#define CALL_PYTHON_BOOL_CHECK(py_function)   \
-        ({                                    \
-                int return_int = py_function; \
-                if (!return_int) {            \
-                        return NULL;          \
-                }                             \
-                return_int;                   \
-        })
-
-#define CALL_PYTHON_EXPECT_NONE(py_function)      \
-        ({                                        \
-                PyObject* none_obj = py_function; \
-                if (none_obj == NULL) {           \
-                        return NULL;              \
-                }                                 \
-                Py_DECREF(none_obj);              \
-        })
-
-#define CALL_PYTHON_CHECK_RETURN_NEG1(py_function) \
-        ({                                         \
-                PyObject* py_object = py_function; \
-                if (py_object == NULL) {           \
-                        return -1;                 \
-                }                                  \
-                py_object;                         \
         })
 
 #ifndef Py_LIMITED_API

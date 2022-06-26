@@ -61,13 +61,20 @@ class DbusSignalAsync(DbusSomethingAsync, DbusSingalCommon, Generic[T]):
 class DbusSignalBinded(Generic[T], DbusBindedAsync):
     def __init__(self,
                  dbus_signal: DbusSignalAsync[T],
-                 interface: DbusInterfaceBaseAsync):
+                 interface: Optional[DbusInterfaceBaseAsync]):
         self.dbus_signal = dbus_signal
-        self.interface_ref = weak_ref(interface)
+        if interface is not None:
+            self.interface_ref: Optional[weak_ref[DbusInterfaceBaseAsync]] \
+                = weak_ref(interface)
+        else:
+            self.interface_ref = None
 
         self.__doc__ = dbus_signal.__doc__
 
     async def _get_dbus_queue(self) -> Queue[SdBusMessage]:
+        assert self.interface_ref is not None, (
+            "Called method from class?"
+        )
         interface = self.interface_ref()
         assert interface is not None
 
@@ -87,12 +94,18 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
     def _cleanup_local_queue(
             self,
             queue_ref: weak_ref[Queue[T]]) -> None:
+        assert self.interface_ref is not None, (
+            "Called method from class?"
+        )
         interface = self.interface_ref()
         assert interface is not None
 
         interface._local_signal_queues[self.dbus_signal].remove(queue_ref)
 
     def _get_local_queue(self) -> Queue[T]:
+        assert self.interface_ref is not None, (
+            "Called method from class?"
+        )
         interface = self.interface_ref()
         assert interface is not None
 
@@ -110,8 +123,10 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
 
         return new_queue
 
-    async def __aiter__(self) -> AsyncGenerator[T, None]:
-
+    async def catch(self) -> AsyncGenerator[T, None]:
+        assert self.interface_ref is not None, (
+            "Called method from class?"
+        )
         interface = self.interface_ref()
         assert interface is not None
 
@@ -128,7 +143,12 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
                 next_data = await data_queue.get()
                 yield next_data
 
+    __aiter__ = catch
+
     def _emit_message(self, args: T) -> None:
+        assert self.interface_ref is not None, (
+            "Called method from class?"
+        )
         interface = self.interface_ref()
         assert interface is not None
 
@@ -155,6 +175,9 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
         signal_message.send()
 
     def emit(self, args: T) -> None:
+        assert self.interface_ref is not None, (
+            "Called method from class?"
+        )
         interface = self.interface_ref()
         assert interface is not None
 

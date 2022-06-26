@@ -465,7 +465,7 @@ class TestProxy(IsolatedDbusTestCase):
         loop = get_running_loop()
 
         async def catch_property_emit_connection() -> str:
-            async for x in test_object_connection.properties_changed:
+            async for x in test_object_connection.properties_changed.catch():
                 for v in x[1].values():
                     probably_str = v[1]
                     if isinstance(probably_str, str):
@@ -475,7 +475,7 @@ class TestProxy(IsolatedDbusTestCase):
             raise ValueError
 
         async def catch_property_emit_local() -> str:
-            async for x in test_object.properties_changed:
+            async for x in test_object.properties_changed.catch():
                 for v in x[1].values():
                     probably_str = v[1]
                     if isinstance(probably_str, str):

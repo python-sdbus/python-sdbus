@@ -402,14 +402,17 @@ Decorators
 
     Signals have following methods:
 
-    .. py:method:: __aiter__()
+    .. py:method:: catch()
 
-        Signal can be used as an async generator for loop:
-        ``async for x in something.some_signal:``
+        Catch D-Bus signals using the async generator for loop:
+        ``async for x in something.some_signal.catch():``
 
         This is main way to await for new events.
 
         Both remote and local objects operate the same way.
+
+        Signal objects can also be async iterated directly:
+        ``async for x in something.some_signal``
 
     .. py:method:: emit(args)
 

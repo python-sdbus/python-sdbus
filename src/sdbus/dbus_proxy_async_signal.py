@@ -29,6 +29,7 @@ from typing import (
     Generic,
     Optional,
     Sequence,
+    Tuple,
     Type,
     TypeVar,
     cast,
@@ -40,7 +41,8 @@ from .dbus_common_elements import (
     DbusSingalCommon,
     DbusSomethingAsync,
 )
-from .sd_bus_internals import SdBusMessage
+from .dbus_common_funcs import get_default_bus
+from .sd_bus_internals import SdBus, SdBusMessage
 
 T = TypeVar('T')
 
@@ -52,7 +54,7 @@ if TYPE_CHECKING:
 class DbusSignalAsync(DbusSomethingAsync, DbusSingalCommon, Generic[T]):
 
     def __get__(self,
-                obj: DbusInterfaceBaseAsync,
+                obj: Optional[DbusInterfaceBaseAsync],
                 obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
                 ) -> DbusSignalBinded[T]:
         return DbusSignalBinded(self, obj)
@@ -144,6 +146,53 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
                 yield next_data
 
     __aiter__ = catch
+
+    async def catch_anywhere(
+            self,
+            service_name: Optional[str] = None,
+            bus: Optional[SdBus] = None,
+    ) -> AsyncGenerator[Tuple[str, T], None]:
+        if service_name is None:
+            if self.interface_ref is not None:
+                interface = self.interface_ref()
+                assert interface is not None
+                if interface._remote_service_name is None:
+                    raise NotImplementedError(
+                        'catch_anywhere not implemented for '
+                        'local objects'
+                    )
+
+                service_name = interface._remote_service_name
+            else:
+                raise ValueError(
+                    'Called catch_anywhere from class '
+                    'but service name was not provided'
+                )
+
+        if bus is None:
+            if self.interface_ref is not None:
+                interface = self.interface_ref()
+                assert interface is not None
+                assert interface._attached_bus is not None
+                bus = interface._attached_bus
+            else:
+                bus = get_default_bus()
+
+        message_queue = await bus.get_signal_queue_async(
+            service_name,
+            None,
+            self.dbus_signal.interface_name,
+            self.dbus_signal.signal_name,
+        )
+
+        while True:
+            next_signal_message = await message_queue.get()
+            signal_path = next_signal_message.path
+            assert signal_path is not None
+            yield (
+                signal_path,
+                cast(T, next_signal_message.get_contents())
+            )
 
     def _emit_message(self, args: T) -> None:
         assert self.interface_ref is not None, (

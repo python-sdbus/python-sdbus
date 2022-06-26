@@ -271,6 +271,18 @@ Example: ::
 
     example_object.name_changed.emit('test')
 
+Signals can also be caught from multiple D-Bus objects using
+:py:meth:`catch_anywhere` method. The async iterator will yield
+the path of the object that emitted the signal and the signal data.
+
+:py:meth:`catch_anywhere` can be called from class but in such case
+the service name must be provided.
+
+Example::
+
+    async for path, x in ExampleInterface.name_changed('org.example.test'):
+        print(f"On {path} caught: {x}")
+
 Subclass Overrides
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

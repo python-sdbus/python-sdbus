@@ -201,12 +201,15 @@ class DbusErrorUnmappedLater(DbusFailedError):
     dbus_error_name = 'org.example.Nothing'
 
 
+TEST_SERVICE_NAME = 'org.example.test'
+
+
 def initialize_object() -> Tuple[TestInterface, TestInterface]:
     test_object = TestInterface()
     test_object.export_to_dbus('/')
 
     test_object_connection = TestInterface.new_proxy(
-        "org.example.test", '/')
+        TEST_SERVICE_NAME, '/')
 
     return test_object, test_object_connection
 
@@ -214,7 +217,7 @@ def initialize_object() -> Tuple[TestInterface, TestInterface]:
 class TestProxy(IsolatedDbusTestCase):
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
-        await self.bus.request_name_async("org.example.test", 0)
+        await self.bus.request_name_async(TEST_SERVICE_NAME, 0)
 
     async def test_method_kwargs(self) -> None:
         test_object, test_object_connection = initialize_object()
@@ -304,7 +307,7 @@ class TestProxy(IsolatedDbusTestCase):
         self.assertEqual(await test_subclass.test_int(), 2)
 
         test_subclass_connection = TestInheritnce.new_proxy(
-            "org.example.test", '/subclass', self.bus)
+            TEST_SERVICE_NAME, '/subclass', self.bus)
 
         self.assertEqual(await test_subclass_connection.test_int(), 2)
 
@@ -377,6 +380,72 @@ class TestProxy(IsolatedDbusTestCase):
         self.assertEqual(test_tuple, await wait_for(aw_dbus, timeout=1))
 
         self.assertEqual(test_tuple, await wait_for(q.get(), timeout=1))
+
+    async def test_signal_catch_anywhere(self) -> None:
+        test_object, test_object_connection = initialize_object()
+
+        loop = get_running_loop()
+
+        test_tuple = ('sgfsretg', 'asd')
+
+        with self.subTest('Catch anywhere over D-Bus object'):
+            async def catch_anywhere_oneshot_dbus(
+            ) -> Tuple[str, Tuple[str, str]]:
+                async for x in test_object_connection.test_signal\
+                        .catch_anywhere():
+                    return x
+
+                raise RuntimeError
+
+            catch_anywhere_over_dbus_task \
+                = loop.create_task(catch_anywhere_oneshot_dbus())
+
+            await sleep(0)
+
+            test_object.test_signal.emit(test_tuple)
+
+            self.assertEqual(
+                ('/', test_tuple),
+                await wait_for(catch_anywhere_over_dbus_task, timeout=1),
+            )
+
+        with self.subTest('Catch anywhere over D-Bus class'):
+            async def catch_anywhere_oneshot_from_class(
+            ) -> Tuple[str, Tuple[str, str]]:
+                async for x in TestInterface.test_signal.catch_anywhere(
+                        TEST_SERVICE_NAME, self.bus):
+                    return x
+
+                raise RuntimeError
+
+            catch_anywhere_from_class_task \
+                = loop.create_task(catch_anywhere_oneshot_from_class())
+
+            await sleep(0)
+
+            test_object.test_signal.emit(test_tuple)
+
+            self.assertEqual(
+                ('/', test_tuple),
+                await wait_for(catch_anywhere_from_class_task, timeout=1),
+            )
+
+        with self.subTest('Catch anywhere over local object'):
+            async def catch_anywhere_oneshot_local(
+            ) -> Tuple[str, Tuple[str, str]]:
+                async for x in test_object.test_signal.catch_anywhere():
+                    return x
+
+                raise RuntimeError
+
+            catch_anywhere_over_local_task \
+                = loop.create_task(catch_anywhere_oneshot_local())
+
+            with self.assertRaises(NotImplementedError):
+                await wait_for(
+                    catch_anywhere_over_local_task,
+                    timeout=1,
+                )
 
     async def test_exceptions(self) -> None:
         test_object, test_object_connection = initialize_object()
@@ -555,7 +624,7 @@ class TestProxy(IsolatedDbusTestCase):
         test_object, test_object_connection = initialize_object()
 
         message_queue = await self.bus.get_signal_queue_async(
-            'org.example.test',
+            TEST_SERVICE_NAME,
             None, None, None)
 
         test_object.test_signal.emit(('test', 'signal'))

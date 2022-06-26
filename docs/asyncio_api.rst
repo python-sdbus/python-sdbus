@@ -414,6 +414,28 @@ Decorators
         Signal objects can also be async iterated directly:
         ``async for x in something.some_signal``
 
+    .. py:method:: catch_anywhere(service_name, bus)
+
+        Catch signal independent of path.
+        Yields tuple of path of the object that emitted signal and signal data.
+
+        ``async for path, data in something.some_signal.catch_anywhere():``
+
+        This method can be called from both an proxy object and class.
+        However, it cannot be called on local objects and will raise
+        ``NotImplementedError``.
+
+        :param str service_name:
+            Service name of which signals belong to.
+            Required if called from class. When called from proxy object
+            the service name of the proxy will be used.
+
+        :param str bus:
+            Optional dbus connection object.
+            If not passed when called from proxy the bus connected
+            to proxy will be used or when called from class default
+            bus will be used.
+
     .. py:method:: emit(args)
 
         Emit a new signal with *args* data.

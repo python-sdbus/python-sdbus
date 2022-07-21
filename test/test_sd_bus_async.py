@@ -48,6 +48,7 @@ from sdbus import (
     dbus_property_async,
     dbus_property_async_override,
     dbus_signal_async,
+    get_current_message,
 )
 
 
@@ -97,6 +98,11 @@ class TestInterface(DbusInterfaceCommonAsync,
     async def upper(self, string: str) -> str:
         """Uppercase the input"""
         return string.upper()
+
+    @dbus_method_async(result_signature='s')
+    async def get_sender(self) -> str:
+        message = get_current_message()
+        return message.sender or ''
 
     @dbus_method_async(result_signature='x')
     async def test_int(self) -> int:
@@ -280,6 +286,8 @@ class TestProxy(IsolatedDbusTestCase):
             await wait_for(
                 test_object_connection.test_struct_return_workaround(), 0.5),
         )
+
+        self.assertTrue(await test_object_connection.get_sender())
 
     async def test_subclass(self) -> None:
         test_object, test_object_connection = initialize_object()

@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from contextvars import ContextVar, copy_context
 from inspect import iscoroutinefunction
 from types import FunctionType
 from typing import (
@@ -41,6 +42,13 @@ from .dbus_common_elements import (
 )
 from .dbus_exceptions import DbusFailedError
 from .sd_bus_internals import DbusNoReplyFlag, SdBusMessage
+
+CURRENT_MESSAGE: ContextVar[SdBusMessage] = ContextVar('CURRENT_MESSAGE')
+
+
+def get_current_message() -> SdBusMessage:
+    return CURRENT_MESSAGE.get()
+
 
 T_input = TypeVar('T_input')
 T = TypeVar('T')
@@ -118,24 +126,38 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
             return self.dbus_method.original_method(
                 interface, *args, **kwargs)
 
+    async def _call_method_from_dbus(
+            self,
+            request_message: SdBusMessage,
+            interface: DbusInterfaceBaseAsync) -> Any:
+        request_data = request_message.get_contents()
+
+        local_method = self.dbus_method.original_method.__get__(
+            interface, None)
+
+        CURRENT_MESSAGE.set(request_message)
+
+        if isinstance(request_data, tuple):
+            return await local_method(*request_data)
+        elif request_data is None:
+            return await local_method()
+        else:
+            return await local_method(request_data)
+
     async def _call_from_dbus(
             self,
             request_message: SdBusMessage) -> None:
         interface = self.interface_ref()
         assert interface is not None
 
-        request_data = request_message.get_contents()
-
-        local_method = self.dbus_method.original_method.__get__(
-            interface, None)
+        call_context = copy_context()
 
         try:
-            if isinstance(request_data, tuple):
-                reply_data = await local_method(*request_data)
-            elif request_data is None:
-                reply_data = await local_method()
-            else:
-                reply_data = await local_method(request_data)
+            reply_data = await call_context.run(
+                self._call_method_from_dbus,
+                request_message,
+                interface,
+            )
         except DbusFailedError as e:
             if not request_message.expect_reply:
                 return

@@ -1073,12 +1073,22 @@ static PyObject* SdBusMessage_member_getter(SdBusMessageObject* self, void* Py_U
         }
 }
 
+static PyObject* SdBusMessage_sender_getter(SdBusMessageObject* self, void* Py_UNUSED(closure)) {
+        const char* sender_char_ptr = sd_bus_message_get_sender(self->message_ref);
+        if (NULL != sender_char_ptr) {
+                return PyUnicode_FromString(sender_char_ptr);
+        } else {
+                Py_RETURN_NONE;
+        }
+}
+
 static PyGetSetDef SdBusMessage_properies[] = {
     {"expect_reply", (getter)SdBusMessage_expect_reply_getter, (setter)SdBusMessage_expect_reply_setter, "Expect reply message?", NULL},
     {"destination", (getter)SdBusMessage_destination_getter, NULL, "Message destination service name", NULL},
     {"path", (getter)SdBusMessage_path_getter, NULL, "Message destination object path", NULL},
     {"interface", (getter)SdBusMessage_interface_getter, NULL, "Message destination interface name", NULL},
     {"member", (getter)SdBusMessage_member_getter, NULL, "Message destination member name", NULL},
+    {"sender", (getter)SdBusMessage_sender_getter, NULL, "Message sender name", NULL},
     {0},
 };
 

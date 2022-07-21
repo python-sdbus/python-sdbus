@@ -415,6 +415,8 @@ class TestDbusTypes(IsolatedDbusTestCase):
         self.assertEqual(message.member,
                          'GetUnit')
 
+        self.assertIsNone(message.sender)
+
     def test_string_subclass(self) -> None:
         from enum import Enum
 

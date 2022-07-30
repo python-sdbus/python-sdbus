@@ -65,11 +65,11 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
                  dbus_signal: DbusSignalAsync[T],
                  interface: Optional[DbusInterfaceBaseAsync]):
         self.dbus_signal = dbus_signal
-        if interface is not None:
-            self.interface_ref: Optional[weak_ref[DbusInterfaceBaseAsync]] \
-                = weak_ref(interface)
-        else:
-            self.interface_ref = None
+        self.interface_ref = (
+            weak_ref(interface)
+            if interface is not None
+            else None
+        )
 
         self.__doc__ = dbus_signal.__doc__
 

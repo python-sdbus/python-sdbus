@@ -111,7 +111,11 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
                  dbus_property: DbusPropertyAsync[T],
                  interface: DbusInterfaceBaseAsync):
         self.dbus_property = dbus_property
-        self.interface_ref = weak_ref(interface)
+        self.interface_ref = (
+            weak_ref(interface)
+            if interface is not None
+            else None
+        )
 
         self.__doc__ = dbus_property.__doc__
 
@@ -119,6 +123,7 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
         return self.get_async().__await__()
 
     async def get_async(self) -> T:
+        assert self.interface_ref is not None
         interface = self.interface_ref()
         assert interface is not None
 
@@ -145,6 +150,7 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
         return cast(T, reply_message.get_contents()[1])
 
     def _reply_get_sync(self, message: SdBusMessage) -> None:
+        assert self.interface_ref is not None
         interface = self.interface_ref()
         assert interface is not None
 
@@ -152,6 +158,7 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
         message.append_data(self.dbus_property.property_signature, reply_data)
 
     def _reply_set_sync(self, message: SdBusMessage) -> None:
+        assert self.interface_ref is not None
         interface = self.interface_ref()
         assert interface is not None
 
@@ -176,6 +183,7 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
             )
 
     async def set_async(self, complete_object: T) -> None:
+        assert self.interface_ref is not None
         interface = self.interface_ref()
         assert interface is not None
 

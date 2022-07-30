@@ -71,11 +71,16 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
                  dbus_method: DbusMethodAsync,
                  interface: DbusInterfaceBaseAsync):
         self.dbus_method = dbus_method
-        self.interface_ref = weak_ref(interface)
+        self.interface_ref = (
+            weak_ref(interface)
+            if interface is not None
+            else None
+        )
 
         self.__doc__ = dbus_method.__doc__
 
     async def _call_dbus_async(self, *args: Any) -> Any:
+        assert self.interface_ref is not None
         interface = self.interface_ref()
         assert interface is not None
 
@@ -105,6 +110,7 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
         return reply_message.get_contents()
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        assert self.interface_ref is not None
         interface = self.interface_ref()
         assert interface is not None
 
@@ -147,6 +153,7 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
     async def _call_from_dbus(
             self,
             request_message: SdBusMessage) -> None:
+        assert self.interface_ref is not None
         interface = self.interface_ref()
         assert interface is not None
 

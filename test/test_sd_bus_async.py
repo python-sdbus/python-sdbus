@@ -294,7 +294,7 @@ class TestProxy(IsolatedDbusTestCase):
 
         test_var = ['asdasd']
 
-        class TestInheritnce(TestInterface):
+        class TestInheritence(TestInterface):
             @dbus_method_async_override()
             async def test_int(self) -> int:
                 return 2
@@ -308,13 +308,13 @@ class TestProxy(IsolatedDbusTestCase):
                 nonlocal test_var
                 test_var.insert(0, var)
 
-        test_subclass = TestInheritnce()
+        test_subclass = TestInheritence()
 
         test_subclass.export_to_dbus('/subclass', self.bus)
 
         self.assertEqual(await test_subclass.test_int(), 2)
 
-        test_subclass_connection = TestInheritnce.new_proxy(
+        test_subclass_connection = TestInheritence.new_proxy(
             TEST_SERVICE_NAME, '/subclass', self.bus)
 
         self.assertEqual(await test_subclass_connection.test_int(), 2)
@@ -343,12 +343,16 @@ class TestProxy(IsolatedDbusTestCase):
             )
 
     async def test_bad_subclass(self) -> None:
-        def bad_call() -> None:
-            class TestInheritnce(TestInterface):
+        with self.assertRaises(TypeError):
+            class TestInheritence(TestInterface):
                 async def test_int(self) -> int:
                     return 2
 
-        self.assertRaises(TypeError, bad_call)
+        with self.assertRaises(TypeError):
+            class TestInheritence2(TestInterface):
+                @dbus_method_async_override()
+                async def test_unrelated(self) -> int:
+                    return 2
 
     async def test_properties(self) -> None:
         test_object, test_object_connection = initialize_object()

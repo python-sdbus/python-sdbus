@@ -27,6 +27,8 @@ from .dbus_common_elements import (
     DbusSomethingSync,
 )
 from .dbus_common_funcs import get_default_bus
+from .dbus_proxy_sync_method import DbusMethodSync
+from .dbus_proxy_sync_property import DbusPropertySync
 from .sd_bus_internals import SdBus
 
 
@@ -38,6 +40,7 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
                 serving_enabled: bool = True,
                 ) -> DbusInterfaceMetaSync:
 
+        dbus_to_python_name_map: Dict[str, str] = {}
         declared_interfaces = set()
         # Set interface name
         for key, value in namespace.items():
@@ -50,17 +53,27 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
                 value.serving_enabled = serving_enabled
                 declared_interfaces.add(key)
 
+            if isinstance(value, DbusMethodSync):
+                dbus_to_python_name_map[value.method_name] = key
+            elif isinstance(value, DbusPropertySync):
+                dbus_to_python_name_map[value.property_name] = key
+
         super_declared_interfaces = set()
         for base in bases:
             if issubclass(base, DbusInterfaceBase):
                 super_declared_interfaces.update(
                     base._dbus_declared_interfaces)
 
+                dbus_to_python_name_map.update(
+                    base._dbus_to_python_name_map
+                )
+
         for key in super_declared_interfaces & namespace.keys():
             raise TypeError("Attempted to overload dbus definition"
                             " sync interfaces do not support overloading")
 
         namespace['_dbus_declared_interfaces'] = declared_interfaces
+        namespace['_dbus_to_python_name_map'] = dbus_to_python_name_map
 
         new_cls = super().__new__(
             cls, name, bases, namespace,
@@ -74,6 +87,7 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
 class DbusInterfaceBase(metaclass=DbusInterfaceMetaSync):
     _dbus_declared_interfaces: Set[str]
     _dbus_serving_enabled: bool
+    _dbus_to_python_name_map: Dict[str, str]
 
     def __init__(
             self,

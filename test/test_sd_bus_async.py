@@ -326,6 +326,22 @@ class TestProxy(IsolatedDbusTestCase):
         self.assertEqual(test_var[0], await test_subclass.test_property)
         self.assertEqual('12345', await test_subclass.test_property)
 
+        with self.subTest('Test dbus to python mapping'):
+            self.assertIn(
+                test_object.properties_changed.dbus_signal.signal_name,
+                test_object._dbus_to_python_name_map,
+            )
+
+            self.assertIn(
+                test_subclass.properties_changed.dbus_signal.signal_name,
+                test_subclass._dbus_to_python_name_map,
+            )
+
+            self.assertIn(
+                test_subclass.test_property.dbus_property.property_name,
+                test_subclass._dbus_to_python_name_map,
+            )
+
     async def test_bad_subclass(self) -> None:
         def bad_call() -> None:
             class TestInheritnce(TestInterface):

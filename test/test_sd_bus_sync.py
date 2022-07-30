@@ -53,6 +53,12 @@ class TestSync(IsolatedDbusTestCase):
 
         self.assertTrue(s.get_name_owner('org.example.test'))
 
+        with self.subTest('Test dbus to python name map'):
+            self.assertEqual(
+                'features',
+                s._dbus_to_python_name_map['Features'],
+            )
+
     def test_docstring(self) -> None:
         from pydoc import getdoc
 

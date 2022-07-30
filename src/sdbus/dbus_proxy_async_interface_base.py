@@ -65,6 +65,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                 serving_enabled: bool = True,
                 ) -> DbusInterfaceMetaAsync:
 
+        dbus_to_python_name_map: Dict[str, str] = {}
         declared_interfaces = set()
         # Set interface name
         for key, value in namespace.items():
@@ -77,14 +78,26 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                 value.serving_enabled = serving_enabled
                 declared_interfaces.add(key)
 
+            if isinstance(value, DbusMethodAsync):
+                dbus_to_python_name_map[value.method_name] = key
+            elif isinstance(value, DbusPropertyAsync):
+                dbus_to_python_name_map[value.property_name] = key
+            elif isinstance(value, DbusSignalAsync):
+                dbus_to_python_name_map[value.signal_name] = key
+
         super_declared_interfaces = set()
         for base in bases:
             if issubclass(base, DbusInterfaceBaseAsync):
                 super_declared_interfaces.update(
                     base._dbus_declared_interfaces)
 
+                dbus_to_python_name_map.update(
+                    base._dbus_to_python_name_map
+                )
+
         for key in super_declared_interfaces & namespace.keys():
             value = namespace[key]
+
             if isinstance(value, DbusOverload):
                 for base in bases:
                     try:
@@ -114,7 +127,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                                 " without using @dbus_overload decorator")
 
         namespace['_dbus_declared_interfaces'] = declared_interfaces
-
+        namespace['_dbus_to_python_name_map'] = dbus_to_python_name_map
         namespace['_dbus_interface_name'] = interface_name
         namespace['_dbus_serving_enabled'] = serving_enabled
         new_cls = super().__new__(
@@ -130,6 +143,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
     _dbus_declared_interfaces: Set[str]
     _dbus_interface_name: Optional[str]
     _dbus_serving_enabled: bool
+    _dbus_to_python_name_map: Dict[str, str]
 
     def __init__(self) -> None:
         self._activated_interfaces: List[SdBusInterface] = []

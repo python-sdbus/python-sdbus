@@ -82,6 +82,23 @@ class DbusPropertiesInterfaceAsync(
     def properties_changed(self) -> DBUS_PROPERTIES_CHANGED_TYPING:
         ...
 
+    @dbus_method_async('s', 'a{sv}', method_name='GetAll')
+    async def _properties_get_all(
+            self, interface_name: str) -> Dict[str, Tuple[str, Any]]:
+        raise NotImplementedError
+
+    async def properties_get_all_dict(self) -> Dict[str, Any]:
+        properties: Dict[str, Any] = {}
+
+        for interface_name in self._dbus_served_interfaces_names:
+            dbus_properties_data = await self._properties_get_all(
+                interface_name)
+            for member_name, variant in dbus_properties_data.items():
+                python_name = self._dbus_to_python_name_map[member_name]
+                properties[python_name] = variant[1]
+
+        return properties
+
 
 class DbusInterfaceCommonAsync(
         DbusPeerInterfaceAsync, DbusPropertiesInterfaceAsync,

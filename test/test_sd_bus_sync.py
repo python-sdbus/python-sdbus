@@ -59,6 +59,9 @@ class TestSync(IsolatedDbusTestCase):
                 s._dbus_to_python_name_map['Features'],
             )
 
+        with self.subTest('Test properties_get_all_dict'):
+            self.assertIn('features', s.properties_get_all_dict())
+
     def test_docstring(self) -> None:
         from pydoc import getdoc
 

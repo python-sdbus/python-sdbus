@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 from .dbus_proxy_sync_interface_base import DbusInterfaceBase
 from .dbus_proxy_sync_method import dbus_method
@@ -51,8 +51,33 @@ class DbusIntrospectable(
         raise NotImplementedError
 
 
+class DbusPropertiesInterface(
+    DbusInterfaceBase,
+    interface_name='org.freedesktop.DBus.Properties',
+    serving_enabled=False,
+):
+    @dbus_method('s', 'a{sv}', method_name='GetAll')
+    def _properties_get_all(
+            self, interface_name: str) -> Dict[str, Tuple[str, Any]]:
+        raise NotImplementedError
+
+    def properties_get_all_dict(self) -> Dict[str, Any]:
+        properties: Dict[str, Any] = {}
+
+        for interface_name in self._dbus_served_interfaces_names:
+            dbus_properties_data = self._properties_get_all(
+                interface_name)
+            for member_name, variant in dbus_properties_data.items():
+                python_name = self._dbus_to_python_name_map[member_name]
+                properties[python_name] = variant[1]
+
+        return properties
+
+
 class DbusInterfaceCommon(
-        DbusPeerInterface, DbusIntrospectable):
+        DbusPeerInterface,
+        DbusIntrospectable,
+        DbusPropertiesInterface):
     ...
 
 

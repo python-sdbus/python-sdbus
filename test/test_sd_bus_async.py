@@ -759,3 +759,21 @@ class TestProxy(IsolatedDbusTestCase):
             '^Invalid signal name',
             test_bad_signal_name,
         )
+
+    async def test_properties_get_all_dict(self) -> None:
+        test_object, test_object_connection = initialize_object()
+
+        dbus_dict = await test_object_connection._properties_get_all(
+            'org.test.test')
+
+        self.assertEqual(
+            await test_object.test_property,
+            dbus_dict['TestProperty'][1],
+        )
+
+        self.assertEqual(
+            await test_object.test_property,
+            (
+                await test_object_connection.properties_get_all_dict()
+            )['test_property'],
+        )

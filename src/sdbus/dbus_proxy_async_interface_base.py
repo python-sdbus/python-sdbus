@@ -29,6 +29,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Set,
     Tuple,
     Type,
     TypeVar,
@@ -64,6 +65,11 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                 serving_enabled: bool = True,
                 ) -> DbusInterfaceMetaAsync:
 
+        dbus_served_interfaces_names = (
+            {interface_name}
+            if serving_enabled and interface_name is not None
+            else set()
+        )
         dbus_to_python_name_map: Dict[str, str] = {}
         superclass_members: Dict[str, DbusBindedAsync] = {}
 
@@ -71,6 +77,9 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
             if issubclass(base, DbusInterfaceBaseAsync):
                 dbus_to_python_name_map.update(
                     base._dbus_to_python_name_map
+                )
+                dbus_served_interfaces_names.update(
+                    base._dbus_served_interfaces_names
                 )
 
                 for name, value in getmembers(base):
@@ -139,6 +148,8 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                         " without using @dbus_overload decorator"
                     )
 
+        namespace['_dbus_served_interfaces_names'] = \
+            dbus_served_interfaces_names
         namespace['_dbus_to_python_name_map'] = dbus_to_python_name_map
         namespace['_dbus_interface_name'] = interface_name
         namespace['_dbus_serving_enabled'] = serving_enabled
@@ -155,6 +166,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
     _dbus_interface_name: Optional[str]
     _dbus_serving_enabled: bool
     _dbus_to_python_name_map: Dict[str, str]
+    _dbus_served_interfaces_names: Set[str]
 
     def __init__(self) -> None:
         self._activated_interfaces: List[SdBusInterface] = []

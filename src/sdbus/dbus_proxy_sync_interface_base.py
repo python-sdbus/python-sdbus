@@ -40,6 +40,11 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
                 serving_enabled: bool = True,
                 ) -> DbusInterfaceMetaSync:
 
+        dbus_served_interfaces_names = (
+            {interface_name}
+            if serving_enabled and interface_name is not None
+            else set()
+        )
         dbus_to_python_name_map: Dict[str, str] = {}
         declared_interfaces = set()
         # Set interface name
@@ -70,8 +75,10 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
 
         for key in super_declared_interfaces & namespace.keys():
             raise TypeError("Attempted to overload dbus definition"
-                            " sync interfaces do not support overloading")
+                            " blocking interfaces do not support overloading")
 
+        namespace['_dbus_served_interfaces_names'] = \
+            dbus_served_interfaces_names
         namespace['_dbus_declared_interfaces'] = declared_interfaces
         namespace['_dbus_to_python_name_map'] = dbus_to_python_name_map
 
@@ -88,6 +95,7 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMetaSync):
     _dbus_declared_interfaces: Set[str]
     _dbus_serving_enabled: bool
     _dbus_to_python_name_map: Dict[str, str]
+    _dbus_served_interfaces_names: Set[str]
 
     def __init__(
             self,

@@ -59,6 +59,18 @@ Classes
         :return: string with introspection XML
         :rtype: str
 
+    .. py:method:: properties_get_all_dict()
+
+        Get all object properties as a dictionary where keys are member
+        names and values are properties values.
+
+        Equivalent to ``GetAll`` method of the ``org.freedesktop.DBus.Properties``
+        interface but the member names are automatically translated to python
+        names. (internally calls it for each interface used in class definition)
+
+        :return: dictionary of properties
+        :rtype: Dict[str, Any]
+
     Example: ::
 
         from sdbus import (DbusInterfaceCommon,

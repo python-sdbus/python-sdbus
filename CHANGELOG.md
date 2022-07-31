@@ -1,3 +1,16 @@
+## 0.10.1
+
+### Features:
+
+* Added `catch_anywhere` method to dbus signals.
+  Creates an async iterator which yields object path that emitted
+  signal and signal data. Can be called from class but requires explicit
+  service name in that case.
+* Added `properties_get_all_dict()` method to `DbusInterfaceCommonAsync` and
+  `DbusInterfaceCommon` classes. Retrieves all D-Bus object properties as
+  a dictionary where keys are member names translated to Python names and
+  values are property values.
+
 ## 0.10.0
 
 ### Features:

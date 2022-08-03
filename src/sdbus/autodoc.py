@@ -20,10 +20,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from sphinx.application import Sphinx
 from sphinx.ext.autodoc import AttributeDocumenter, MethodDocumenter
+from sphinx.util.docstrings import prepare_docstring
 
 from .dbus_proxy_async_interfaces import DbusInterfaceCommonAsync
 from .dbus_proxy_async_method import DbusMethodAsyncBinded
@@ -79,6 +80,9 @@ class DbusPropertyDocumenter(AttributeDocumenter):
 
         parent.__annotations__[self.object_name] = property_annotation
 
+    def get_doc(self) -> List[List[str]]:
+        return [prepare_docstring(self.object.__doc__)]
+
     def add_content(self,
                     *args: Any, **kwargs: Any,
                     ) -> None:
@@ -109,6 +113,9 @@ class DbusSignalDocumenter(AttributeDocumenter):
             self.object.dbus_signal.__annotations__['return']
 
         parent.__annotations__[self.object_name] = signal_annotation
+
+    def get_doc(self) -> List[List[str]]:
+        return [prepare_docstring(self.object.__doc__)]
 
     def add_content(self,
                     *args: Any, **kwargs: Any,

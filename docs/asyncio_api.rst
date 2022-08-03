@@ -64,6 +64,9 @@ Classes
         interface but the member names are automatically translated to python
         names. (internally calls it for each interface used in class definition)
 
+        :param str on_unknown_member: If an unknown D-Bus property was encountered
+            either raise an ``"error"`` (default), ``"ignore"`` the property
+            or ``"reuse"`` the D-Bus name for the member.
         :return: dictionary of properties
         :rtype: Dict[str, Any]
 

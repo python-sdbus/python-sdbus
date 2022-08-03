@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Literal, Tuple
 
 from .dbus_proxy_sync_interface_base import DbusInterfaceBase
 from .dbus_proxy_sync_method import dbus_method
@@ -61,14 +61,28 @@ class DbusPropertiesInterface(
             self, interface_name: str) -> Dict[str, Tuple[str, Any]]:
         raise NotImplementedError
 
-    def properties_get_all_dict(self) -> Dict[str, Any]:
+    def properties_get_all_dict(
+            self,
+            on_unknown_member: Literal['error', 'ignore', 'reuse'] = 'error',
+    ) -> Dict[str, Any]:
         properties: Dict[str, Any] = {}
 
         for interface_name in self._dbus_served_interfaces_names:
             dbus_properties_data = self._properties_get_all(
                 interface_name)
             for member_name, variant in dbus_properties_data.items():
-                python_name = self._dbus_to_python_name_map[member_name]
+                try:
+                    python_name = self._dbus_to_python_name_map[member_name]
+                except KeyError:
+                    if on_unknown_member == 'error':
+                        raise
+                    elif on_unknown_member == 'ignore':
+                        continue
+                    elif on_unknown_member == 'reuse':
+                        python_name = member_name
+                    else:
+                        raise ValueError
+
                 properties[python_name] = variant[1]
 
         return properties

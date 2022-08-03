@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from inspect import getmembers
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from .dbus_common_funcs import get_default_bus
 from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
@@ -87,14 +87,30 @@ class DbusPropertiesInterfaceAsync(
             self, interface_name: str) -> Dict[str, Tuple[str, Any]]:
         raise NotImplementedError
 
-    async def properties_get_all_dict(self) -> Dict[str, Any]:
+    async def properties_get_all_dict(
+            self,
+            on_unknown_member: Literal['error', 'ignore', 'reuse'] = 'error',
+    ) -> Dict[str, Any]:
+
         properties: Dict[str, Any] = {}
 
         for interface_name in self._dbus_served_interfaces_names:
             dbus_properties_data = await self._properties_get_all(
                 interface_name)
+
             for member_name, variant in dbus_properties_data.items():
-                python_name = self._dbus_to_python_name_map[member_name]
+                try:
+                    python_name = self._dbus_to_python_name_map[member_name]
+                except KeyError:
+                    if on_unknown_member == 'error':
+                        raise
+                    elif on_unknown_member == 'ignore':
+                        continue
+                    elif on_unknown_member == 'reuse':
+                        python_name = member_name
+                    else:
+                        raise ValueError
+
                 properties[python_name] = variant[1]
 
         return properties

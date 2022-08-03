@@ -68,8 +68,9 @@ class DbusPropertiesInterface(
             dbus_properties_data = self._properties_get_all(
                 interface_name)
             for member_name, variant in dbus_properties_data.items():
-                python_name = self._dbus_to_python_name_map[member_name]
-                properties[python_name] = variant[1]
+                python_name = self._dbus_to_python_name_map.get(member_name)
+                if python_name:
+                    properties[python_name] = variant[1]
 
         return properties
 

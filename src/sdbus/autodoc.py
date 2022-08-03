@@ -26,22 +26,23 @@ from sphinx.application import Sphinx
 from sphinx.ext.autodoc import AttributeDocumenter, MethodDocumenter
 
 from .dbus_proxy_async_interfaces import DbusInterfaceCommonAsync
-from .dbus_proxy_async_method import DbusMethodAsync
-from .dbus_proxy_async_property import DbusPropertyAsync
-from .dbus_proxy_async_signal import DbusSignalAsync
+from .dbus_proxy_async_method import DbusMethodAsyncBinded
+from .dbus_proxy_async_property import DbusPropertyAsyncBinded
+from .dbus_proxy_async_signal import DbusSignalBinded
 
 
 class DbusMethodDocumenter(MethodDocumenter):
 
-    objtype = 'DbusMethodAsync'
+    objtype = 'DbusMethodAsyncBinded'
     directivetype = 'method'
     priority = 100 + MethodDocumenter.priority
 
     @classmethod
     def can_document_member(cls, member: Any, *args: Any) -> bool:
-        return isinstance(member, DbusMethodAsync)
+        return isinstance(member, DbusMethodAsyncBinded)
 
     def import_object(self, raiseerror: bool = False) -> bool:
+        self.objpath.append('dbus_method')
         self.objpath.append('original_method')
         ret = super().import_object(raiseerror)
         self.objpath.pop()
@@ -61,20 +62,20 @@ class DbusMethodDocumenter(MethodDocumenter):
 
 class DbusPropertyDocumenter(AttributeDocumenter):
 
-    objtype = 'DbusPropertyAsync'
+    objtype = 'DbusPropertyAsyncBinded'
     directivetype = 'attribute'
     priority = 100 + AttributeDocumenter.priority
 
     @classmethod
     def can_document_member(cls, member: Any, *args: Any) -> bool:
-        return isinstance(member, DbusPropertyAsync)
+        return isinstance(member, DbusPropertyAsyncBinded)
 
     def update_annotations(self,
                            parent: DbusInterfaceCommonAsync) -> None:
 
-        assert isinstance(self.object, DbusPropertyAsync)
+        assert isinstance(self.object, DbusPropertyAsyncBinded)
         property_annotation = \
-            self.object.property_getter.__annotations__['return']
+            self.object.dbus_property.property_getter.__annotations__['return']
 
         parent.__annotations__[self.object_name] = property_annotation
 
@@ -92,20 +93,20 @@ class DbusPropertyDocumenter(AttributeDocumenter):
 
 class DbusSignalDocumenter(AttributeDocumenter):
 
-    objtype = 'DbusSignal'
+    objtype = 'DbusSignalBinded'
     directivetype = 'attribute'
     priority = 100 + AttributeDocumenter.priority
 
     @classmethod
     def can_document_member(cls, member: Any, *args: Any) -> bool:
-        return isinstance(member, DbusSignalAsync)
+        return isinstance(member, DbusSignalBinded)
 
     def update_annotations(self,
                            parent: DbusInterfaceCommonAsync) -> None:
 
-        assert isinstance(self.object, DbusSignalAsync)
+        assert isinstance(self.object, DbusSignalBinded)
         signal_annotation = \
-            self.object.__annotations__['return']
+            self.object.dbus_signal.__annotations__['return']
 
         parent.__annotations__[self.object_name] = signal_annotation
 

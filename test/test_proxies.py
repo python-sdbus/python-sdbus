@@ -35,6 +35,9 @@ class TestFreedesktopDbus(IsolatedDbusTestCase):
         self.assertIsInstance(await dbus_object.get_id(), str)
         self.assertIsInstance(await dbus_object.features, list)
 
+        with self.subTest('Check __name__'):
+            self.assertEqual(FreedesktopDbus.__name__, 'FreedesktopDbus')
+
 
 if __name__ == "__main__":
     main()

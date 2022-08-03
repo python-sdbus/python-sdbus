@@ -71,7 +71,8 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
             else set()
         )
         dbus_to_python_name_map: Dict[str, str] = {}
-        superclass_members: Dict[str, DbusBindedAsync] = {}
+        dbus_declared_members: Dict[str, DbusSomethingAsync] = {}
+        superclass_members: Dict[str, DbusSomethingAsync] = {}
 
         for base in bases:
             if issubclass(base, DbusInterfaceBaseAsync):
@@ -82,15 +83,9 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                     base._dbus_served_interfaces_names
                 )
 
-                for name, value in getmembers(base):
-                    if isinstance(
-                            value,
-                            (
-                                DbusMethodAsyncBinded,
-                                DbusPropertyAsyncBinded,
-                            )
-                    ):
-                        superclass_members[name] = value
+                superclass_members.update(
+                    base._dbus_declared_members
+                )
 
         for key, value in namespace.items():
             assert not isinstance(value, DbusSomethingSync), (
@@ -100,6 +95,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
             if isinstance(value, DbusSomethingAsync):
                 value.interface_name = interface_name
                 value.serving_enabled = serving_enabled
+                dbus_declared_members[key] = value
 
             if isinstance(value, DbusMethodAsync):
                 dbus_to_python_name_map[value.method_name] = key
@@ -109,50 +105,47 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                 dbus_to_python_name_map[value.signal_name] = key
 
             try:
-                superclass_dbus_def = superclass_members[key]
+                super_dbus_def = superclass_members[key]
             except KeyError:
                 if isinstance(value, DbusOverload):
                     raise TypeError(
                         f"No D-Bus member '{key}' to overload with."
                     )
             else:
-                if isinstance(value, DbusOverload):
-                    if isinstance(
-                            superclass_dbus_def,
-                            DbusMethodAsyncBinded):
-                        new_method_def = deepcopy(
-                            superclass_dbus_def.dbus_method)
-                        new_method_def.original_method = cast(
-                            MethodType, value.original)
-
-                        namespace[key] = new_method_def
-                    elif isinstance(
-                            superclass_dbus_def,
-                            DbusPropertyAsyncBinded):
-                        new_property_def = deepcopy(
-                            superclass_dbus_def.dbus_property)
-                        new_property_def.property_getter = cast(
-                            Callable[[DbusInterfaceBaseAsync], Any],
-                            value.original)
-                        if value.setter_overload is not None:
-                            new_property_def.property_setter = (
-                                value.setter_overload
-                            )
-
-                        namespace[key] = new_property_def
-                    else:
-                        raise TypeError('Unknown D-Bus overload')
-                else:
+                if not isinstance(value, DbusOverload):
                     raise TypeError(
                         "Attempted to overload dbus definition"
                         " without using @dbus_overload decorator"
                     )
+
+                if isinstance(super_dbus_def, DbusMethodAsync):
+                    new_method_def = deepcopy(super_dbus_def)
+                    new_method_def.original_method = cast(
+                        MethodType, value.original)
+
+                    namespace[key] = new_method_def
+                elif isinstance(super_dbus_def, DbusPropertyAsync):
+                    new_property_def = deepcopy(super_dbus_def)
+                    new_property_def.property_getter = cast(
+                        Callable[[DbusInterfaceBaseAsync], Any],
+                        value.original)
+                    if value.setter_overload is not None:
+                        new_property_def.property_setter = (
+                            value.setter_overload
+                        )
+
+                    namespace[key] = new_property_def
+                else:
+                    raise TypeError('Unknown D-Bus overload')
+
+        dbus_declared_members.update(superclass_members)
 
         namespace['_dbus_served_interfaces_names'] = \
             dbus_served_interfaces_names
         namespace['_dbus_to_python_name_map'] = dbus_to_python_name_map
         namespace['_dbus_interface_name'] = interface_name
         namespace['_dbus_serving_enabled'] = serving_enabled
+        namespace['_dbus_declared_members'] = dbus_declared_members
         new_cls = super().__new__(
             cls, name, bases, namespace,
             interface_name,
@@ -167,6 +160,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
     _dbus_serving_enabled: bool
     _dbus_to_python_name_map: Dict[str, str]
     _dbus_served_interfaces_names: Set[str]
+    _dbus_declared_members: Dict[str, DbusSomethingAsync]
 
     def __init__(self) -> None:
         self._activated_interfaces: List[SdBusInterface] = []

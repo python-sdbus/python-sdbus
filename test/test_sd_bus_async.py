@@ -342,6 +342,31 @@ class TestProxy(IsolatedDbusTestCase):
                 test_subclass._dbus_to_python_name_map,
             )
 
+        with self.subTest('Tripple subclass'):
+            class TestInheritenceTri(TestInheritence):
+                @dbus_method_async_override()
+                async def test_int(self) -> int:
+                    return 3
+
+                @dbus_property_async_override()
+                def test_property(self) -> str:
+                    return 'tri'
+
+            test_subclass_tri = TestInheritenceTri()
+
+            test_subclass_tri.export_to_dbus('/subclass/tri', self.bus)
+
+            self.assertEqual(await test_subclass_tri.test_int(), 3)
+
+            test_subclass_tri_connection = TestInheritenceTri.new_proxy(
+                TEST_SERVICE_NAME, '/subclass/tri', self.bus)
+
+            self.assertEqual(await test_subclass_tri_connection.test_int(), 3)
+
+            self.assertEqual(await test_subclass_tri.test_property, 'tri')
+            self.assertEqual(
+                await test_subclass_tri_connection.test_property, 'tri')
+
     async def test_bad_subclass(self) -> None:
         with self.assertRaises(TypeError):
             class TestInheritence(TestInterface):

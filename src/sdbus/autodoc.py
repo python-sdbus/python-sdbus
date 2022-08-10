@@ -20,16 +20,17 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from sphinx.application import Sphinx
 from sphinx.ext.autodoc import AttributeDocumenter, MethodDocumenter
-from sphinx.util.docstrings import prepare_docstring
 
-from .dbus_proxy_async_interfaces import DbusInterfaceCommonAsync
 from .dbus_proxy_async_method import DbusMethodAsyncBinded
-from .dbus_proxy_async_property import DbusPropertyAsyncBinded
-from .dbus_proxy_async_signal import DbusSignalBinded
+from .dbus_proxy_async_property import (
+    DbusPropertyAsync,
+    DbusPropertyAsyncBinded,
+)
+from .dbus_proxy_async_signal import DbusSignalAsync, DbusSignalBinded
 
 
 class DbusMethodDocumenter(MethodDocumenter):
@@ -71,25 +72,32 @@ class DbusPropertyDocumenter(AttributeDocumenter):
     def can_document_member(cls, member: Any, *args: Any) -> bool:
         return isinstance(member, DbusPropertyAsyncBinded)
 
-    def update_annotations(self,
-                           parent: DbusInterfaceCommonAsync) -> None:
+    def import_object(self, raiseerror: bool = False) -> bool:
 
-        assert isinstance(self.object, DbusPropertyAsyncBinded)
-        property_annotation = \
-            self.object.dbus_property.property_getter.__annotations__['return']
-
-        parent.__annotations__[self.object_name] = property_annotation
-
-    def get_doc(self) -> List[List[str]]:
-        return [prepare_docstring(self.object.__doc__)]
+        self.objpath.append('dbus_property')
+        ret = super().import_object(raiseerror)
+        self.objpath.pop()
+        return ret
 
     def add_content(self,
                     *args: Any, **kwargs: Any,
                     ) -> None:
 
+        assert isinstance(self.object, DbusPropertyAsync)
+        python_type = self.object.property_getter.__annotations__['return']
+        dbus_type = self.object.property_signature
+
         source_name = self.get_sourcename()
         self.add_line('', source_name)
         self.add_line('**D-Bus property**', source_name)
+        self.add_line('', source_name)
+        self.add_line(
+            f"**Python type**: *{python_type}*", source_name
+        )
+        self.add_line('', source_name)
+        self.add_line(
+            f"**D-Bus type**: {dbus_type}", source_name
+        )
         self.add_line('', source_name)
 
         super().add_content(*args, **kwargs)
@@ -105,25 +113,32 @@ class DbusSignalDocumenter(AttributeDocumenter):
     def can_document_member(cls, member: Any, *args: Any) -> bool:
         return isinstance(member, DbusSignalBinded)
 
-    def update_annotations(self,
-                           parent: DbusInterfaceCommonAsync) -> None:
+    def import_object(self, raiseerror: bool = False) -> bool:
 
-        assert isinstance(self.object, DbusSignalBinded)
-        signal_annotation = \
-            self.object.dbus_signal.__annotations__['return']
-
-        parent.__annotations__[self.object_name] = signal_annotation
-
-    def get_doc(self) -> List[List[str]]:
-        return [prepare_docstring(self.object.__doc__)]
+        self.objpath.append('dbus_signal')
+        ret = super().import_object(raiseerror)
+        self.objpath.pop()
+        return ret
 
     def add_content(self,
                     *args: Any, **kwargs: Any,
                     ) -> None:
 
+        assert isinstance(self.object, DbusSignalAsync)
+        python_type = self.object.__annotations__['return']
+        dbus_type = self.object.signal_signature
+
         source_name = self.get_sourcename()
         self.add_line('', source_name)
         self.add_line('**D-Bus signal**', source_name)
+        self.add_line('', source_name)
+        self.add_line(
+            f"**Python type**: *{python_type}*", source_name
+        )
+        self.add_line('', source_name)
+        self.add_line(
+            f"**D-Bus type**: {dbus_type}", source_name
+        )
         self.add_line('', source_name)
 
         super().add_content(*args, **kwargs)

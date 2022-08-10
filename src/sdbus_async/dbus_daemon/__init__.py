@@ -41,7 +41,7 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
         predetermined.
         (at ``'org.freedesktop.DBus'``, ``'/org/freedesktop/DBus'``)
 
-        :param bus:
+        :param SdBus bus:
             Optional dbus connection.
             If not passed the default dbus will be used.
         """
@@ -56,7 +56,7 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
     async def get_connection_pid(self, service_name: str) -> int:
         """Get process ID that owns a specified name.
 
-        :param service_name: Service name to query.
+        :param str service_name: Service name to query.
         :return: PID of name owner
         :raises DbusNameHasNoOwnerError: Nobody owns that name
         """
@@ -66,7 +66,7 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
     async def get_connection_uid(self, service_name: str) -> int:
         """Get process user ID that owns a specified name.
 
-        :param service_name: Service name to query.
+        :param str service_name: Service name to query.
         :return: User ID of name owner
         :raises DbusNameHasNoOwnerError: Nobody owns that name
         """
@@ -84,7 +84,7 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
     async def get_name_owner(self, service_name: str) -> str:
         """Returns unique bus name (i.e. ``':1.94'``) for given service name.
 
-        :param service_name: Service name to query.
+        :param str service_name: Service name to query.
         :return: Unique bus name.
         :raises DbusNameHasNoOwnerError: Nobody owns that name
         """
@@ -112,7 +112,7 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
         Return True if someone already owns the name,
         False if nobody does.
 
-        :param service_name: Service name to query.
+        :param str service_name: Service name to query.
         :return: Is the name owned?
         """
         raise NotImplementedError
@@ -127,8 +127,8 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
         Flags parameter is not used currently and should be
         omitted or set to 0.
 
-        :param service_name: Service name to start.
-        :param flags: Not used. Omit or pass 0.
+        :param str service_name: Service name to start.
+        :param int flags: Not used. Omit or pass 0.
         :return: 1 on success, 2 if already started.
         """
         raise NotImplementedError
@@ -153,17 +153,17 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
         """Extra dbus daemon interfaces"""
         raise NotImplementedError
 
-    @dbus_signal_async()
+    @dbus_signal_async('s')
     def name_acquired(self) -> str:
         """Signal when current process acquires a bus name."""
         raise NotImplementedError
 
-    @dbus_signal_async()
+    @dbus_signal_async('s')
     def name_lost(self) -> str:
         """Signal when current process loses a bus name."""
         raise NotImplementedError
 
-    @dbus_signal_async()
+    @dbus_signal_async('sss')
     def name_owner_changed(self) -> Tuple[str, str, str]:
         """Signal when some name on a bus changes owner.
 

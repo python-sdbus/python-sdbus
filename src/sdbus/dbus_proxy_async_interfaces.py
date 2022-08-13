@@ -69,14 +69,10 @@ class DbusPropertiesInterfaceAsync(
     def __init__(self) -> None:
         super().__init__()
 
-        properties_changed_signal = self.properties_changed
         for key, value in getmembers(self):
             if isinstance(value, DbusPropertyAsyncBinded):
                 if not value.dbus_property.flags & DbusPropertyEmitsChangeFlag:
                     continue
-
-                value.dbus_property.properties_changed_signal \
-                    = properties_changed_signal
 
     @dbus_signal_async('sa{sv}as')
     def properties_changed(self) -> DBUS_PROPERTIES_CHANGED_TYPING:

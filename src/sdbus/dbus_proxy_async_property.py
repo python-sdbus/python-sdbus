@@ -25,12 +25,9 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
     Generator,
     Generic,
-    List,
     Optional,
-    Tuple,
     Type,
     TypeVar,
     cast,
@@ -50,12 +47,6 @@ T = TypeVar('T')
 
 if TYPE_CHECKING:
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
-    from .dbus_proxy_async_signal import DbusSignalBinded
-
-
-DBUS_PROPERTIES_CHANGED_TYPING = Tuple[str,
-                                       Dict[str, Tuple[str, Any]],
-                                       List[str]]
 
 
 class DbusPropertyAsync(DbusSomethingAsync, DbusPropertyCommon, Generic[T]):
@@ -83,9 +74,6 @@ class DbusPropertyAsync(DbusSomethingAsync, DbusPropertyCommon, Generic[T]):
         self.property_setter: Optional[
             Callable[[DbusInterfaceBaseAsync, T],
                      None]] = property_setter
-
-        self.properties_changed_signal: \
-            Optional[DbusSignalBinded[DBUS_PROPERTIES_CHANGED_TYPING]] = None
 
         self.__doc__ = property_getter.__doc__
 
@@ -167,9 +155,13 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
 
         self.dbus_property.property_setter(interface, data_to_set_to)
 
-        if self.dbus_property.properties_changed_signal is not None:
-            assert self.dbus_property.interface_name is not None
-            self.dbus_property.properties_changed_signal.emit(
+        assert self.dbus_property.interface_name is not None
+        try:
+            properties_changed = getattr(interface, 'properties_changed')
+        except AttributeError:
+            ...
+        else:
+            properties_changed.emit(
                 (
                     self.dbus_property.interface_name,
                     {

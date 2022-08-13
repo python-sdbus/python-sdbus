@@ -1,3 +1,18 @@
+## 0.10.2
+
+### Features:
+
+* Added `on_unknown_member` option to the `properties_get_all_dict`
+  method. Specifies the action on what to do with unknown property.
+  (`"error"` (default), `"ignore"`, `"reuse"`)
+
+### Fixes:
+
+* Fixed autodoc regressions introduced in `0.10.1`.
+  Properties and signals headers have been redesigned.
+* Fixed PropertiesChanged signal emitting only the newest object
+  path.
+
 ## 0.10.1
 
 ### Features:

@@ -48,6 +48,7 @@ class DbusMethodDocumenter(MethodDocumenter):
         self.objpath.append('original_method')
         ret = super().import_object(raiseerror)
         self.objpath.pop()
+        self.objpath.pop()
         return ret
 
     def add_content(self,

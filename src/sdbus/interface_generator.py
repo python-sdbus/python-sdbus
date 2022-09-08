@@ -415,7 +415,7 @@ class DbusPropertyIntrospection(DbusMemberAbstract):
 
         self.dbus_signature = element.attrib['type']
 
-        self.emits_changed: Optional[str] = None
+        self.emits_changed: Optional[str] = 'DbusPropertyEmitsChangeFlag'
         self.is_explicit = False
 
         access_type = element.attrib['access']

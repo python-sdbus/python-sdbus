@@ -20,7 +20,16 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, List, Optional, Tuple, Union
+from typing import (
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+)
 from xml.etree.ElementTree import Element
 from xml.etree.ElementTree import fromstring as etree_from_str
 from xml.etree.ElementTree import parse as etree_from_file
@@ -402,12 +411,12 @@ class DbusMethodInrospection(DbusMemberAbstract):
 
 
 class DbusPropertyIntrospection(DbusMemberAbstract):
-    _EMITS_CHANGED_MAP: Dict[str, Optional[str]] = {
-        'true': 'DbusPropertyEmitsChangeFlag',
-        'false': None,
-        'invalidates': 'DbusPropertyEmitsInvalidationFlag',
-        'const': 'DbusPropertyConstFlag',
-    }
+    _EMITS_CHANGED_MAP: \
+        Dict[Union[bool, None, Literal['const', 'invalidates']], str] = {
+            True: 'DbusPropertyEmitsChangeFlag',
+            'invalidates': 'DbusPropertyEmitsInvalidationFlag',
+            'const': 'DbusPropertyConstFlag',
+        }
 
     def __init__(self, element: Element):
         if element.tag != 'property':
@@ -415,7 +424,8 @@ class DbusPropertyIntrospection(DbusMemberAbstract):
 
         self.dbus_signature = element.attrib['type']
 
-        self.emits_changed: Optional[str] = None
+        self.emits_changed: \
+            Union[bool, Literal['const', 'invalidates'], None] = None
         self.is_explicit = False
 
         access_type = element.attrib['access']
@@ -429,8 +439,9 @@ class DbusPropertyIntrospection(DbusMemberAbstract):
         super().__init__(element)
 
     def _flags_iter(self) -> Iterator[str]:
-        if self.emits_changed is not None:
-            yield self.emits_changed
+        emits_changed_str = self._EMITS_CHANGED_MAP.get(self.emits_changed)
+        if emits_changed_str is not None:
+            yield emits_changed_str
 
         yield from super()._flags_iter()
 
@@ -440,11 +451,17 @@ class DbusPropertyIntrospection(DbusMemberAbstract):
 
         if annotation_name == ('org.freedesktop.DBus.Property'
                                '.EmitsChangedSignal'):
-            if annotation_value not in self._EMITS_CHANGED_MAP:
+            if annotation_value == 'true':
+                self.emits_changed = True
+            elif annotation_value == 'false':
+                self.emits_changed = False
+            elif annotation_value == 'const':
+                self.emits_changed = 'const'
+            elif annotation_value == 'invalidates':
+                self.emits_changed = 'invalidates'
+            else:
                 raise ValueError('Unknown EmitsChanged value',
                                  annotation_value)
-
-            self.emits_changed = self._EMITS_CHANGED_MAP[annotation_value]
         elif annotation_name == 'org.freedesktop.systemd1.Explicit':
             self.is_explicit = parse_str_bool(annotation_value)
 

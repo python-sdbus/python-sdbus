@@ -53,6 +53,18 @@ test_xml = """
         <arg name="new_value" type="b"/>
       </signal>
       <property name="Bar" type="y" access="readwrite"/>
+      <property name="FooFoo" type="as" access="read">
+        <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="false"/>
+      </property>
+      <property name="BoundBy" type="as" access="read">
+        <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="const"/>
+      </property>
+      <property name="FooInvalidates" type="s" access="read">
+        <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="invalidates"/>
+      </property>
     </interface>
     <node name="child_of_sample_object"/>
     <node name="another_child_of_sample_object"/>
@@ -141,7 +153,36 @@ class TestConverter(TestCase):
         if find_spec('jinja2') is None:
             raise SkipTest('Jinja2 not installed')
 
-        generate_async_py_file(interfaces_from_str(test_xml))
+        interfaces_intro = interfaces_from_str(test_xml)
+
+        with self.subTest('Test introspection details'):
+            test_interface = interfaces_intro[0]
+
+            for test_property in test_interface.properties:
+                if test_property.method_name == 'BoundBy':
+                    self.assertEqual(
+                        test_property.emits_changed,
+                        'const',
+                    )
+                elif test_property.method_name == 'Bar':
+                    self.assertEqual(
+                        test_property.emits_changed,
+                        None,
+                    )
+                elif test_property.method_name == 'FooInvalidates':
+                    self.assertEqual(
+                        test_property.emits_changed,
+                        'invalidates',
+                    )
+                elif test_property.method_name == 'FooFoo':
+                    self.assertEqual(
+                        test_property.emits_changed,
+                        False,
+                    )
+
+        generated = generate_async_py_file(interfaces_intro)
+        self.assertIn('flags=DbusPropertyEmitsInvalidationFlag', generated)
+        self.assertIn('flags=DbusPropertyConstFlag', generated)
 
 
 if __name__ == "__main__":

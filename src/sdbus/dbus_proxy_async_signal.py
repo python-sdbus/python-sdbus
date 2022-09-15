@@ -217,6 +217,8 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
                 isinstance(args, tuple)):
             signal_message.append_data(
                 self.dbus_signal.signal_signature, *args)
+        elif self.dbus_signal.signal_signature == '' and args is None:
+            ...
         else:
             signal_message.append_data(
                 self.dbus_signal.signal_signature, args)

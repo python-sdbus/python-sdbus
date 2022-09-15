@@ -198,6 +198,10 @@ class TestInterface(DbusInterfaceCommonAsync,
     async def looong_method(self) -> None:
         await sleep(100)
 
+    @dbus_signal_async()
+    def empty_signal(self) -> None:
+        raise NotImplementedError
+
 
 class DbusErrorTest(DbusFailedError):
     dbus_error_name = 'org.example.Error'
@@ -802,3 +806,18 @@ class TestProxy(IsolatedDbusTestCase):
                 await test_object_connection.properties_get_all_dict()
             )['test_property'],
         )
+
+    async def test_empty_signal(self) -> None:
+        test_object, test_object_connection = initialize_object()
+
+        loop = get_running_loop()
+
+        ai_dbus = test_object_connection.empty_signal.__aiter__()
+        aw_dbus = ai_dbus.__anext__()
+        q = test_object.empty_signal._get_local_queue()
+
+        loop.call_at(0, test_object.empty_signal.emit, None)
+
+        self.assertIsNone(await wait_for(aw_dbus, timeout=1))
+
+        self.assertIsNone(await wait_for(q.get(), timeout=1))

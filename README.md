@@ -23,8 +23,9 @@ for tutorial and API reference.
 * [Freedesktop Notifications](https://github.com/python-sdbus/python-sdbus-notifications)
 * [Network Manager](https://github.com/python-sdbus/python-sdbus-networkmanager)
 * [Freedesktop Secrets](https://github.com/python-sdbus/python-sdbus-secrets)
+* [Systemd](https://github.com/bernhardkaindl/python-sdbus-systemd) (starting/stopping of units)
 
-More incoming. (systemd, Bluez, screen saver... )
+More incoming. (Bluez, screen saver... )
 
 ## Requirements
 

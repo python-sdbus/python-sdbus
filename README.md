@@ -26,6 +26,10 @@ for tutorial and API reference.
 
 More incoming. (systemd, Bluez, screen saver... )
 
+### Community interfaces
+
+* [systemd](https://github.com/bernhardkaindl/python-sdbus-systemd) (by [@bernhardkaindl](https://github.com/bernhardkaindl))
+
 ## Requirements
 
 ### Binary package from PyPI

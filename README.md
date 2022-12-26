@@ -1,5 +1,4 @@
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/igo95862/python-sdbus.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/igo95862/python-sdbus/alerts/)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/igo95862/python-sdbus.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/igo95862/python-sdbus/context:python)
+[![CodeQL](https://github.com/python-sdbus/python-sdbus/actions/workflows/codeql.yml/badge.svg)](https://github.com/python-sdbus/python-sdbus/actions/workflows/codeql.yml)
 [![Documentation Status](https://readthedocs.org/projects/python-sdbus/badge/?version=latest)](https://python-sdbus.readthedocs.io/en/latest/?badge=latest)
 
 # Modern Python library for D-Bus

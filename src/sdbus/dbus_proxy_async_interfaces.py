@@ -76,7 +76,7 @@ class DbusPropertiesInterfaceAsync(
 
     @dbus_signal_async('sa{sv}as')
     def properties_changed(self) -> DBUS_PROPERTIES_CHANGED_TYPING:
-        ...
+        raise NotImplementedError
 
     @dbus_method_async('s', 'a{sv}', method_name='GetAll')
     async def _properties_get_all(

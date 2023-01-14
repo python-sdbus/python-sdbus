@@ -1,5 +1,15 @@
 # Deprecation information
 
+## Awaiting on `request_default_bus_name`
+
+By mistake `request_default_bus_name` was made in to async function
+even though it was never documented to be one. It is now a blocking
+function but returns an awaitable for backwards compatibility.
+
+* **Since**: 0.11.0
+* **Warning**: 0.11.0
+* **Removed**: 1.0.0
+
 ## Importing exceptions from `sdbus` module
 
 All exceptions have been moved to `sdbus.exceptions` to clean up imports.

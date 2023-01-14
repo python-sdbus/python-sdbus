@@ -8,21 +8,39 @@ These calls are shared between async and blocking API.
 Dbus connections calls
 ++++++++++++++++++++++++++++++++++
 
-.. py:function:: request_default_bus_name_async(new_name)
+.. py:function:: request_default_bus_name_async(new_name, allow_replacement, replace_existing, queue)
     :async:
 
     Acquire a name on the default bus async.
 
     :param str new_name: the name to acquire.
         Must be a valid dbus service name.
+    :param str new_name: the name to acquire.
+        Must be a valid dbus service name.
+    :param bool allow_replacement: If name was acquired allow other peers
+        to take away the name.
+    :param bool replace_existing: If current name owner allows, take
+        away the name.
+    :param bool queue: Queue up for name acquisition.
+        :py:exc:`.SdBusRequestNameInQueueError` will be raised when successfully
+        placed in queue. :py:meth:`Ownership change signal <sdbus_async.dbus_daemon.FreedesktopDbus.name_owner_changed>`
+        should be monitored get notified when the name was acquired.
     :raises: :ref:`name-request-exceptions` and other D-Bus exceptions.
 
-.. py:function:: request_default_bus_name(new_name)
+.. py:function:: request_default_bus_name(new_name, allow_replacement, replace_existing, queue)
 
     Acquire a name on the default bus.
 
     :param str new_name: the name to acquire.
         Must be a valid dbus service name.
+    :param bool allow_replacement: If name was acquired allow other peers
+        to take away the name.
+    :param bool replace_existing: If current name owner allows, take
+        away the name.
+    :param bool queue: Queue up for name acquisition.
+        :py:exc:`.SdBusRequestNameInQueueError` will be raised when successfully
+        placed in queue. :py:meth:`Ownership change signal <sdbus_async.dbus_daemon.FreedesktopDbus.name_owner_changed>`
+        should be monitored get notified when the name was acquired.
     :raises: :ref:`name-request-exceptions` and other D-Bus exceptions.
 
 .. py:function:: set_default_bus(new_default)

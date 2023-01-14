@@ -29,19 +29,20 @@ from sdbus.exceptions import (
     SdBusRequestNameExistsError,
     SdBusRequestNameInQueueError,
 )
-from sdbus.sd_bus_internals import NameQueueFlag
+from sdbus.sd_bus_internals import NameAllowReplacementFlag, NameQueueFlag
 from sdbus.unittest import IsolatedDbusTestCase
 
-from sdbus import sd_bus_open_user
+from sdbus import (
+    request_default_bus_name,
+    request_default_bus_name_async,
+    sd_bus_open_user,
+)
 
 TEST_BUS_NAME = 'com.example.test'
 TEST_BUS_NAME_regex_match = TEST_BUS_NAME.replace('.', r'\.')
 
 
-class TestRequestName(IsolatedDbusTestCase):
-    async def asyncSetUp(self) -> None:
-        await super().asyncSetUp()
-
+class TestRequestNameLowLevel(IsolatedDbusTestCase):
     def test_request_name_exception_tree(self) -> None:
         # Test that SdBusRequestNameError is super class
         # of other request name exceptions
@@ -156,6 +157,52 @@ class TestRequestName(IsolatedDbusTestCase):
         extra_bus.close()
         with self.assertRaises(SdBusLibraryError):
             extra_bus.request_name(TEST_BUS_NAME, 0)
+
+
+class TestRequestNameBlock(IsolatedDbusTestCase):
+    def test_request_name_replacement(self) -> None:
+        extra_bus = sd_bus_open_user()
+        extra_bus.request_name(TEST_BUS_NAME, NameAllowReplacementFlag)
+
+        with self.assertRaises(SdBusRequestNameExistsError):
+            request_default_bus_name(TEST_BUS_NAME)
+
+        request_default_bus_name(
+            TEST_BUS_NAME,
+            replace_existing=True,
+        )
+
+
+class TestRequestNameAsync(IsolatedDbusTestCase):
+    async def test_request_name_replacement(self) -> None:
+        extra_bus = sd_bus_open_user()
+        await extra_bus.request_name_async(
+            TEST_BUS_NAME,
+            NameAllowReplacementFlag,
+        )
+
+        with self.assertRaises(SdBusRequestNameExistsError):
+            await request_default_bus_name_async(TEST_BUS_NAME)
+
+        await request_default_bus_name_async(
+            TEST_BUS_NAME,
+            replace_existing=True,
+        )
+
+    async def test_request_name_queue(self) -> None:
+        extra_bus = sd_bus_open_user()
+        await extra_bus.request_name_async(TEST_BUS_NAME, 0)
+
+        with self.assertRaises(SdBusRequestNameInQueueError):
+            await request_default_bus_name_async(
+                TEST_BUS_NAME,
+                queue=True,
+            )
+
+        extra_bus.close()
+
+        with self.assertRaises(SdBusRequestNameAlreadyOwnerError):
+            await request_default_bus_name_async(TEST_BUS_NAME)
 
 
 if __name__ == '__main__':

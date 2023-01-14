@@ -1,7 +1,7 @@
 
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-# Copyright (C) 2020-2022 igo95862
+# Copyright (C) 2020-2023 igo95862
 
 # This file is part of python-sdbus
 
@@ -20,15 +20,19 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from asyncio import get_running_loop
+from asyncio import Future, get_running_loop
 from contextvars import ContextVar
-from typing import Iterator
+from typing import Generator, Iterator
+from warnings import warn
 
 from .sd_bus_internals import (
     DbusPropertyConstFlag,
     DbusPropertyEmitsChangeFlag,
     DbusPropertyEmitsInvalidationFlag,
     DbusPropertyExplicitFlag,
+    NameAllowReplacementFlag,
+    NameQueueFlag,
+    NameReplaceExistingFlag,
     SdBus,
     sd_bus_open,
 )
@@ -50,6 +54,20 @@ def _is_property_flags_correct(flags: int) -> bool:
     return (0 <= num_of_flag_bits <= 1)
 
 
+def _prepare_request_name_flags(
+        allow_replacement: bool,
+        replace_existing: bool,
+        queue: bool,
+) -> int:
+    return (
+        (NameAllowReplacementFlag if allow_replacement else 0)
+        +
+        (NameReplaceExistingFlag if replace_existing else 0)
+        +
+        (NameQueueFlag if queue else 0)
+    )
+
+
 def get_default_bus() -> SdBus:
     try:
         return DEFAULT_BUS.get()
@@ -65,16 +83,51 @@ def set_default_bus(new_default: SdBus) -> None:
 
 async def request_default_bus_name_async(
         new_name: str,
-        flags: int = 0,) -> None:
+        allow_replacement: bool = False,
+        replace_existing: bool = False,
+        queue: bool = False,
+) -> None:
     default_bus = get_default_bus()
-    await default_bus.request_name_async(new_name, flags)
+    await default_bus.request_name_async(
+        new_name,
+        _prepare_request_name_flags(
+            allow_replacement,
+            replace_existing,
+            queue,
+        )
+    )
 
 
-async def request_default_bus_name(
+class _DeprecationAwaitable:
+    def __await__(self) -> Generator[Future[None], None, None]:
+        warn(
+            (
+                'Awaiting on request_default_bus_name'
+                'is deprecated and will be removed.'
+            ),
+            DeprecationWarning,
+        )
+        f: Future[None] = Future()
+        f.set_result(None)
+        yield from f
+
+
+def request_default_bus_name(
         new_name: str,
-        flags: int = 0,) -> None:
+        allow_replacement: bool = False,
+        replace_existing: bool = False,
+        queue: bool = False,
+) -> _DeprecationAwaitable:
     default_bus = get_default_bus()
-    default_bus.request_name(new_name, flags)
+    default_bus.request_name(
+        new_name,
+        _prepare_request_name_flags(
+            allow_replacement,
+            replace_existing,
+            queue,
+        )
+    )
+    return _DeprecationAwaitable()
 
 
 def _method_name_converter(python_name: str) -> Iterator[str]:

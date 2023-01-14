@@ -19,15 +19,23 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from asyncio import wait_for
 from unittest import main
 
 from sdbus.exceptions import (
+    SdBusLibraryError,
     SdBusRequestNameAlreadyOwnerError,
     SdBusRequestNameError,
     SdBusRequestNameExistsError,
     SdBusRequestNameInQueueError,
 )
+from sdbus.sd_bus_internals import NameQueueFlag
 from sdbus.unittest import IsolatedDbusTestCase
+
+from sdbus import sd_bus_open_user
+
+TEST_BUS_NAME = 'com.example.test'
+TEST_BUS_NAME_regex_match = TEST_BUS_NAME.replace('.', r'\.')
 
 
 class TestRequestName(IsolatedDbusTestCase):
@@ -74,6 +82,80 @@ class TestRequestName(IsolatedDbusTestCase):
                 SdBusRequestNameAlreadyOwnerError,
             )
         )
+
+    async def test_name_exists_async(self) -> None:
+        extra_bus = sd_bus_open_user()
+        await self.bus.request_name_async(TEST_BUS_NAME, 0)
+
+        with self.assertRaises(SdBusRequestNameExistsError):
+            await wait_for(
+                extra_bus.request_name_async(TEST_BUS_NAME, 0),
+                timeout=1,
+            )
+
+    async def test_name_already_async(self) -> None:
+        await self.bus.request_name_async(TEST_BUS_NAME, 0)
+
+        with self.assertRaises(SdBusRequestNameAlreadyOwnerError):
+            await wait_for(
+                self.bus.request_name_async(TEST_BUS_NAME, 0),
+                timeout=1,
+            )
+
+    async def test_name_queued_async(self) -> None:
+        extra_bus = sd_bus_open_user()
+        await self.bus.request_name_async(TEST_BUS_NAME, 0)
+
+        with self.assertRaises(SdBusRequestNameInQueueError):
+            await wait_for(
+                extra_bus.request_name_async(TEST_BUS_NAME, NameQueueFlag),
+                timeout=1,
+            )
+
+    async def test_name_other_error_async(self) -> None:
+        extra_bus = sd_bus_open_user()
+        extra_bus.close()
+
+        with self.assertRaises(SdBusLibraryError):
+            await wait_for(
+                extra_bus.request_name_async(TEST_BUS_NAME, 0),
+                timeout=1,
+            )
+
+    def test_name_exists_block(self) -> None:
+        extra_bus = sd_bus_open_user()
+        self.bus.request_name(TEST_BUS_NAME, 0)
+
+        with self.assertRaisesRegex(
+            SdBusRequestNameExistsError,
+            TEST_BUS_NAME_regex_match,
+        ):
+            extra_bus.request_name(TEST_BUS_NAME, 0)
+
+    def test_name_already_block(self) -> None:
+        self.bus.request_name(TEST_BUS_NAME, 0)
+
+        with self.assertRaisesRegex(
+            SdBusRequestNameAlreadyOwnerError,
+            TEST_BUS_NAME_regex_match,
+        ):
+            self.bus.request_name(TEST_BUS_NAME, 0)
+
+    def test_name_queued_block(self) -> None:
+        extra_bus = sd_bus_open_user()
+        self.bus.request_name(TEST_BUS_NAME, 0)
+
+        with self.assertRaisesRegex(
+            SdBusRequestNameInQueueError,
+            TEST_BUS_NAME_regex_match,
+        ):
+            extra_bus.request_name(TEST_BUS_NAME, NameQueueFlag)
+
+    def test_name_other_error_block(self) -> None:
+        extra_bus = sd_bus_open_user()
+        extra_bus.close()
+        with self.assertRaises(SdBusLibraryError):
+            extra_bus.request_name(TEST_BUS_NAME, 0)
 
 
 if __name__ == '__main__':

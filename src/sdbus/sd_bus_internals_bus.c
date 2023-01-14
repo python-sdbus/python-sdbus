@@ -468,9 +468,9 @@ static PyObject* SdBus_get_signal_queue(SdBusObject* self, PyObject* args) {
         return new_future;
 }
 
-int SdBus_request_callback(sd_bus_message* m,
-                           void* userdata,  // Should be the asyncio.Future
-                           sd_bus_error* Py_UNUSED(ret_error)) {
+int SdBus_request_name_callback(sd_bus_message* m,
+                                void* userdata,  // Should be the asyncio.Future
+                                sd_bus_error* Py_UNUSED(ret_error)) {
         PyObject* py_future = userdata;
         PyObject* is_cancelled CLEANUP_PY_OBJECT = PyObject_CallMethod(py_future, "cancelled", "");
         if (Py_True == is_cancelled) {
@@ -479,11 +479,31 @@ int SdBus_request_callback(sd_bus_message* m,
         }
 
         if (!sd_bus_message_is_method_error(m, NULL)) {
-                // Not Error, set Future result to new message object
-                PyObject* return_object CLEANUP_PY_OBJECT = PyObject_CallMethod(py_future, "set_result", "O", Py_None);
-                if (return_object == NULL) {
-                        return -1;
+                uint32_t request_name_result = 0;
+                CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_message_read_basic(m, 'u', &request_name_result));
+                if (1 == request_name_result) {
+                        // Successfully acquired the name
+                        Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethod(py_future, "set_result", "O", Py_None)));
+                        return 0;
                 }
+
+                PyObject* exception_to_raise CLEANUP_PY_OBJECT = NULL;
+                switch (request_name_result) {
+                        case 2:
+                                exception_to_raise = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(exception_request_name_in_queue, NULL));
+                                break;
+                        case 3:
+                                exception_to_raise = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(exception_request_name_exists, NULL));
+                                break;
+                        case 4:
+                                exception_to_raise = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(exception_request_name_already_owner, NULL));
+                                break;
+                        default:
+                                exception_to_raise = CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallFunctionObjArgs(exception_request_name, NULL));
+                                break;
+                }
+                Py_XDECREF(CALL_PYTHON_CHECK_RETURN_NEG1(PyObject_CallMethod(py_future, "set_exception", "O", exception_to_raise)));
+                return -1;
         } else {
                 // An Error, set exception
                 if (future_set_exception_from_message(py_future, m) < 0) {
@@ -517,11 +537,9 @@ static PyObject* SdBus_request_name_async(SdBusObject* self, PyObject* args) {
         SdBusSlotObject* new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusSlot_class));
 
         CALL_SD_BUS_AND_CHECK(
-            sd_bus_request_name_async(self->sd_bus_ref, &new_slot_object->slot_ref, service_name_char_ptr, flags, SdBus_request_callback, new_future));
+            sd_bus_request_name_async(self->sd_bus_ref, &new_slot_object->slot_ref, service_name_char_ptr, flags, SdBus_request_name_callback, new_future));
 
-        if (PyObject_SetAttrString(new_future, "_sd_bus_py_slot", (PyObject*)new_slot_object) < 0) {
-                return NULL;
-        }
+        CALL_PYTHON_INT_CHECK(PyObject_SetAttrString(new_future, "_sd_bus_py_slot", (PyObject*)new_slot_object));
         CHECK_SD_BUS_READER;
         return new_future;
 }
@@ -544,8 +562,25 @@ static PyObject* SdBus_request_name(SdBusObject* self, PyObject* args) {
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "sK", &service_name_char_ptr, &flags_long_long, NULL));
         uint64_t flags = (uint64_t)flags_long_long;
 #endif
-        CALL_SD_BUS_AND_CHECK(sd_bus_request_name(self->sd_bus_ref, service_name_char_ptr, flags));
-        Py_RETURN_NONE;
+        int request_name_return_code = sd_bus_request_name(self->sd_bus_ref, service_name_char_ptr, flags);
+        switch (request_name_return_code) {
+                case -EEXIST:
+                        return PyErr_Format(exception_request_name_exists, "Name \"%s\" already owned.", service_name_char_ptr, NULL);
+                        break;
+                case -EALREADY:
+                        return PyErr_Format(exception_request_name_already_owner, "Already own name \"%s\".", service_name_char_ptr, NULL);
+                        break;
+                case 0:
+                        return PyErr_Format(exception_request_name_in_queue, "Queued up to acquire name \"%s\".", service_name_char_ptr, NULL);
+                        break;
+                case 1:
+                        Py_RETURN_NONE;
+                        break;
+                default:
+                        CALL_SD_BUS_AND_CHECK(request_name_return_code);
+                        break;
+        }
+        Py_UNREACHABLE();
 }
 
 #ifndef Py_LIMITED_API

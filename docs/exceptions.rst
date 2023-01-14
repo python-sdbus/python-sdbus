@@ -1,6 +1,8 @@
 Exceptions
 ========================
 
+.. py:currentmodule:: sdbus.exceptions
+
 Error name bound exceptions
 +++++++++++++++++++++++++++++++
 
@@ -78,6 +80,32 @@ Other exceptions
     sd-bus library returned error.
 
     Exception message contains line number and the error name.
+
+
+.. _name-request-exceptions:
+
+Name request exceptions
++++++++++++++++++++++++
+
+These exceptions will be raise if an error related to ownership of D-Bus
+names occurs when calling :py:func:`.request_default_bus_name_async` or
+:py:func:`.request_default_bus_name`.
+
+.. py:exception:: SdBusRequestNameError
+
+    Common base exception for any name ownership error.
+
+.. py:exception:: SdBusRequestNameInQueueError
+
+    Someone already owns the name but the request has been placed in queue.
+
+.. py:exception:: SdBusRequestNameExistsError
+
+    Someone already owns the name.
+
+.. py:exception:: SdBusRequestNameAlreadyOwnerError
+
+    The caller already owns the name.
 
 
 .. _list of error exceptions:

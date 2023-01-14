@@ -65,70 +65,82 @@ Blocking:
 Exceptions:
 ++++++++++++++++++++++++++
 
-:py:exc:`DbusAccessDeniedError`
+:py:exc:`exceptions.DbusAccessDeniedError`
 
-:py:exc:`DbusAddressInUseError`
+:py:exc:`exceptions.DbusAccessDeniedError`
 
-:py:exc:`DbusAuthFailedError`
+:py:exc:`exceptions.DbusAddressInUseError`
 
-:py:exc:`DbusBadAddressError`
+:py:exc:`exceptions.DbusAuthFailedError`
 
-:py:exc:`DbusDisconnectedError`
+:py:exc:`exceptions.DbusBadAddressError`
 
-:py:exc:`DbusFailedError`
+:py:exc:`exceptions.DbusDisconnectedError`
 
-:py:exc:`DbusFileExistsError`
+:py:exc:`exceptions.DbusFailedError`
 
-:py:exc:`DbusFileNotFoundError`
+:py:exc:`exceptions.DbusFileExistsError`
 
-:py:exc:`DbusInconsistentMessageError`
+:py:exc:`exceptions.DbusFileNotFoundError`
 
-:py:exc:`DbusInteractiveAuthorizationRequiredError`
+:py:exc:`exceptions.DbusInconsistentMessageError`
 
-:py:exc:`DbusInvalidArgsError`
+:py:exc:`exceptions.DbusInteractiveAuthorizationRequiredError`
 
-:py:exc:`DbusInvalidFileContentError`
+:py:exc:`exceptions.DbusInvalidArgsError`
 
-:py:exc:`DbusInvalidSignatureError`
+:py:exc:`exceptions.DbusInvalidFileContentError`
 
-:py:exc:`DbusIOError`
+:py:exc:`exceptions.DbusInvalidSignatureError`
 
-:py:exc:`DbusLimitsExceededError`
+:py:exc:`exceptions.DbusIOError`
 
-:py:exc:`DbusMatchRuleInvalidError`
+:py:exc:`exceptions.DbusLimitsExceededError`
 
-:py:exc:`DbusMatchRuleNotFound`
+:py:exc:`exceptions.DbusMatchRuleInvalidError`
 
-:py:exc:`DbusNameHasNoOwnerError`
+:py:exc:`exceptions.DbusMatchRuleNotFound`
 
-:py:exc:`DbusNoMemoryError`
+:py:exc:`exceptions.DbusNameHasNoOwnerError`
 
-:py:exc:`DbusNoNetworkError`
+:py:exc:`exceptions.DbusNoMemoryError`
 
-:py:exc:`DbusNoReplyError`
+:py:exc:`exceptions.DbusNoNetworkError`
 
-:py:exc:`DbusNoServerError`
+:py:exc:`exceptions.DbusNoReplyError`
 
-:py:exc:`DbusNotSupportedError`
+:py:exc:`exceptions.DbusNoServerError`
 
-:py:exc:`DbusPropertyReadOnlyError`
+:py:exc:`exceptions.DbusNotSupportedError`
 
-:py:exc:`DbusServiceUnknownError`
+:py:exc:`exceptions.DbusPropertyReadOnlyError`
 
-:py:exc:`DbusTimeoutError`
+:py:exc:`exceptions.DbusServiceUnknownError`
 
-:py:exc:`DbusUnixProcessIdUnknownError`
+:py:exc:`exceptions.DbusTimeoutError`
 
-:py:exc:`DbusUnknownInterfaceError`
+:py:exc:`exceptions.DbusUnixProcessIdUnknownError`
 
-:py:exc:`DbusUnknownMethodError`
+:py:exc:`exceptions.DbusUnknownInterfaceError`
 
-:py:exc:`DbusUnknownObjectError`
+:py:exc:`exceptions.DbusUnknownMethodError`
 
-:py:exc:`DbusUnknownPropertyError`
+:py:exc:`exceptions.DbusUnknownObjectError`
 
-:py:exc:`SdBusBaseError`
+:py:exc:`exceptions.DbusUnknownPropertyError`
 
-:py:exc:`SdBusLibraryError`
+:py:exc:`exceptions.SdBusBaseError`
 
-:py:exc:`SdBusUnmappedMessageError`
+:py:exc:`exceptions.SdBusLibraryError`
+
+:py:exc:`exceptions.SdBusUnmappedMessageError`
+
+:py:func:`exceptions.map_exception_to_dbus_error`
+
+:py:exc:`exceptions.SdBusRequestNameError`
+
+:py:exc:`exceptions.SdBusRequestNameInQueueError`
+
+:py:exc:`exceptions.SdBusRequestNameExistsError`
+
+:py:exc:`exceptions.SdBusRequestNameAlreadyOwnerError`

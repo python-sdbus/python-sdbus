@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-# Copyright (C) 2020, 2021 igo95862
+# Copyright (C) 2020-2023 igo95862
 
 # This file is part of python-sdbus
 
@@ -285,6 +285,22 @@ class SdBusUnmappedMessageError(SdBusBaseError):
 
 
 class SdBusLibraryError(SdBusBaseError):
+    ...
+
+
+class SdBusRequestNameError(SdBusBaseError):
+    ...
+
+
+class SdBusRequestNameInQueueError(SdBusRequestNameError):
+    ...
+
+
+class SdBusRequestNameExistsError(SdBusRequestNameError):
+    ...
+
+
+class SdBusRequestNameAlreadyOwnerError(SdBusRequestNameError):
     ...
 
 

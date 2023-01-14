@@ -135,7 +135,7 @@ Methods have to be async function, otherwise :py:exc:`AssertionError` will be ra
 
 While method calls are async there is a inherit timeout timer for any method call.
 
-To return an error to caller you need to raise exception which has a :py:exc:`DbusFailedError` as base.
+To return an error to caller you need to raise exception which has a :py:exc:`.DbusFailedError` as base.
 Regular exceptions will not propagate.
 
 See :doc:`/exceptions`.

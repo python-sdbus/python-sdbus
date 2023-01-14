@@ -22,10 +22,9 @@ from __future__ import annotations
 
 from unittest import main
 
+from sdbus.exceptions import DbusPropertyReadOnlyError
 from sdbus.unittest import IsolatedDbusTestCase
 from sdbus_block.dbus_daemon import FreedesktopDbus
-
-from sdbus import DbusPropertyReadOnlyError
 
 
 class TestSync(IsolatedDbusTestCase):

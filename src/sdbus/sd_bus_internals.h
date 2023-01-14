@@ -239,11 +239,6 @@
 #endif
 
 // Python functions and objects
-extern PyObject* unmapped_error_exception;
-extern PyObject* dbus_error_to_exception_dict;
-extern PyObject* exception_to_dbus_error_dict;
-extern PyObject* exception_base;
-extern PyObject* exception_lib;
 extern PyObject* asyncio_get_running_loop;
 extern PyObject* asyncio_queue_class;
 extern PyObject* is_coroutine_function;
@@ -259,6 +254,17 @@ extern PyObject* extend_str;
 extern PyObject* append_str;
 extern PyObject* call_soon_str;
 extern PyObject* create_task_str;
+// Exceptions
+extern PyObject* exception_base;
+extern PyObject* unmapped_error_exception;
+extern PyObject* exception_lib;
+extern PyObject* exception_request_name;                // Base to any request name exception
+extern PyObject* exception_request_name_in_queue;       // Queued up to acquire name
+extern PyObject* exception_request_name_exists;         // Someone already owns the name
+extern PyObject* exception_request_name_already_owner;  // Already an owner of the name
+
+extern PyObject* dbus_error_to_exception_dict;
+extern PyObject* exception_to_dbus_error_dict;
 
 __attribute__((used)) static inline void _cleanup_char_ptr(const char** ptr) {
         if (*ptr != NULL) {

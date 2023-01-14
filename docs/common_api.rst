@@ -15,6 +15,7 @@ Dbus connections calls
 
     :param str new_name: the name to acquire.
         Must be a valid dbus service name.
+    :raises: :ref:`name-request-exceptions` and other D-Bus exceptions.
 
 .. py:function:: request_default_bus_name(new_name)
 
@@ -22,6 +23,7 @@ Dbus connections calls
 
     :param str new_name: the name to acquire.
         Must be a valid dbus service name.
+    :raises: :ref:`name-request-exceptions` and other D-Bus exceptions.
 
 .. py:function:: set_default_bus(new_default)
 

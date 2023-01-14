@@ -76,7 +76,7 @@ Methods
 
 Methods are functions wrapped with :py:func:`dbus_method` decorator.
 
-If the remote object sends an error reply an exception with base of :py:exc:`DbusFailedError`
+If the remote object sends an error reply an exception with base of :py:exc:`.DbusFailedError`
 will be raised. See :doc:`/exceptions` for list of exceptions.
 
 The wrapped function will not be called. Its recommended to set the function to ``raise NotImplementedError``.
@@ -128,7 +128,7 @@ The new property behaves very similar to Pythons :py:func:`property` decorator. 
     # Assign new string
     d.test_string = 'some_string'
 
-If property is read-only when :py:exc:`DbusPropertyReadOnlyError` will be raised.
+If property is read-only when :py:exc:`.DbusPropertyReadOnlyError` will be raised.
 
 Multiple interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

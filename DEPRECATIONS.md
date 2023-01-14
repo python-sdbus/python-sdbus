@@ -1,5 +1,13 @@
 # Deprecation information
 
+## Importing exceptions from `sdbus` module
+
+All exceptions have been moved to `sdbus.exceptions` to clean up imports.
+
+* **Since**: 0.11.0
+* **Warning**: Not possible?
+* **Removed**: 1.0.0
+
 ## `_connect` and `new_connect` of the `DbusInterfaceCommonAsync` class
 
 Replaced with equivalent `_proxify` and `new_proxy`.

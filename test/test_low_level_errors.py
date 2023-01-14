@@ -22,10 +22,10 @@ from __future__ import annotations
 from asyncio import get_running_loop, wait_for
 from typing import Any
 
+from sdbus.exceptions import DbusFailedError
 from sdbus.unittest import IsolatedDbusTestCase
 
 from sdbus import (
-    DbusFailedError,
     DbusInterfaceCommonAsync,
     dbus_method_async,
     dbus_property_async,

@@ -32,9 +32,10 @@ from resource import RUSAGE_SELF, getrusage
 from typing import Any, List, cast
 from unittest import SkipTest
 
+from sdbus.exceptions import DbusFailedError
 from sdbus.unittest import IsolatedDbusTestCase
 
-from sdbus import DbusFailedError, request_default_bus_name_async
+from sdbus import request_default_bus_name_async
 
 from .test_low_level_errors import (
     DbusDerivePropertydError,

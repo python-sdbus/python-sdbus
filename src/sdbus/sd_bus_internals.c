@@ -181,6 +181,10 @@ PyMODINIT_FUNC PyInit_sd_bus_internals(void) {
         CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusPropertyExplicitFlag", SD_BUS_VTABLE_PROPERTY_EXPLICIT));
         CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusSensitiveFlag", SD_BUS_VTABLE_SENSITIVE));
 
+        CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "NameAllowReplacementFlag", SD_BUS_NAME_ALLOW_REPLACEMENT));
+        CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "NameReplaceExistingFlag", SD_BUS_NAME_REPLACE_EXISTING));
+        CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "NameQueueFlag", SD_BUS_NAME_QUEUE));
+
         Py_INCREF(m);
         return m;
 }

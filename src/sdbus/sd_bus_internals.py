@@ -317,3 +317,7 @@ DbusPropertyEmitsChangeFlag: int = 0
 DbusPropertyEmitsInvalidationFlag: int = 0
 DbusPropertyExplicitFlag: int = 0
 DbusSensitiveFlag: int = 0
+
+NameAllowReplacementFlag: int = 0
+NameReplaceExistingFlag: int = 0
+NameQueueFlag: int = 0

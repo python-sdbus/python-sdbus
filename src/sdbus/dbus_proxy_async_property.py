@@ -225,7 +225,7 @@ def dbus_property_async(
     ) -> DbusPropertyAsync[T]:
 
         assert not iscoroutinefunction(function), (
-            "Property setter can't be coroutine",
+            "Property getter can't be coroutine",
         )
 
         new_wrapper: DbusPropertyAsync[T] = DbusPropertyAsync(

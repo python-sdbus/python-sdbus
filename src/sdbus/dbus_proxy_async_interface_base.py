@@ -238,18 +238,23 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                     )
                 elif isinstance(dbus_something, DbusPropertyAsyncBinded):
                     getter = dbus_something._reply_get_sync
+                    dbus_property = dbus_something.dbus_property
 
-                    setter = (dbus_something._reply_set_sync
-                              if dbus_something.dbus_property.property_setter
-                              is not None
-                              else None)
+                    if (
+                        dbus_property.property_setter is not None
+                        and
+                        dbus_property.property_setter_is_public
+                    ):
+                        setter = dbus_something._reply_set_sync
+                    else:
+                        setter = None
 
                     new_interface.add_property(
-                        dbus_something.dbus_property.property_name,
-                        dbus_something.dbus_property.property_signature,
+                        dbus_property.property_name,
+                        dbus_property.property_signature,
                         getter,
                         setter,
-                        dbus_something.dbus_property.flags,
+                        dbus_property.flags,
                     )
                 elif isinstance(dbus_something, DbusSignalBinded):
                     new_interface.add_signal(

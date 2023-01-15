@@ -74,6 +74,7 @@ class DbusPropertyAsync(DbusSomethingAsync, DbusPropertyCommon, Generic[T]):
         self.property_setter: Optional[
             Callable[[DbusInterfaceBaseAsync, T],
                      None]] = property_setter
+        self.property_setter_is_public: bool = True
 
         self.__doc__ = property_getter.__doc__
 
@@ -86,12 +87,26 @@ class DbusPropertyAsync(DbusSomethingAsync, DbusPropertyCommon, Generic[T]):
     def setter(self,
                new_set_function: Callable[
                    [Any, T],
-                   None]
+                   None],
                ) -> None:
+        assert self.property_setter is None, "Setter already defined"
         assert not iscoroutinefunction(new_set_function), (
             "Property setter can't be coroutine",
         )
         self.property_setter = new_set_function
+
+    def setter_private(
+        self,
+        new_set_function: Callable[
+            [Any, T],
+            None],
+    ) -> None:
+        assert self.property_setter is None, "Setter already defined"
+        assert not iscoroutinefunction(new_set_function), (
+            "Property setter can't be coroutine",
+        )
+        self.property_setter = new_set_function
+        self.property_setter_is_public = False
 
 
 class DbusPropertyAsyncBinded(DbusBindedAsync):
@@ -185,6 +200,24 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
 
             self.dbus_property.property_setter(
                 interface, complete_object)
+
+            try:
+                properties_changed = getattr(interface, 'properties_changed')
+            except AttributeError:
+                ...
+            else:
+                properties_changed.emit(
+                    (
+                        self.dbus_property.interface_name,
+                        {
+                            self.dbus_property.property_name: (
+                                self.dbus_property.property_signature,
+                                complete_object,
+                            ),
+                        },
+                        []
+                    )
+                )
 
             return
 

@@ -30,6 +30,7 @@ from sdbus.dbus_proxy_async_interfaces import DBUS_PROPERTIES_CHANGED_TYPING
 from sdbus.exceptions import (
     DbusFailedError,
     DbusFileExistsError,
+    DbusPropertyReadOnlyError,
     DbusUnknownObjectError,
     SdBusLibraryError,
     SdBusUnmappedMessageError,
@@ -96,6 +97,7 @@ class TestInterface(DbusInterfaceCommonAsync,
         self.test_string = 'test_property'
         self.test_string_read = 'read'
         self.test_no_reply_string = 'no'
+        self.property_private = 100
         self.no_reply_sync = Event()
 
     @dbus_method_async("s", "s")
@@ -131,6 +133,14 @@ class TestInterface(DbusInterfaceCommonAsync,
     @dbus_property_async("s")
     def test_property_read_only(self) -> str:
         return self.test_string_read
+
+    @dbus_property_async("x")
+    def test_property_private(self) -> int:
+        return self.property_private
+
+    @test_property_private.setter_private
+    def test_private_setter(self, new_value: int) -> None:
+        self.property_private = new_value
 
     @dbus_method_async("sb", "s")
     async def kwargs_function(
@@ -864,3 +874,32 @@ class TestProxy(IsolatedDbusTestCase):
         )
         self.assertIsNone(
             parsed_dict_with_invalidation['invalidated_property'])
+
+    async def test_property_private_setter(self) -> None:
+        test_object, test_object_connection = initialize_object()
+
+        new_value = 200
+        self.assertNotEqual(
+            await test_object_connection.test_property_private,
+            new_value
+        )
+
+        with self.assertRaises(DbusPropertyReadOnlyError):
+            await test_object_connection.test_property_private.set_async(
+                new_value)
+
+        q = await test_object_connection.properties_changed._get_dbus_queue()
+
+        await test_object.test_property_private.set_async(new_value)
+
+        self.assertEqual(
+            await test_object_connection.test_property_private,
+            new_value
+        )
+
+        changed_properties = cast(
+            DBUS_PROPERTIES_CHANGED_TYPING,
+            (await q.get()).get_contents(),
+        )
+
+        self.assertIn('TestPropertyPrivate', changed_properties[1])

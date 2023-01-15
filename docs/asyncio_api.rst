@@ -344,7 +344,17 @@ Decorators
         Defines the setter function.
         This makes the property read/write instead of read-only.
 
-        See example on how to use. 
+        See example on how to use.
+
+    .. py:decoratormethod:: setter_private(set_function)
+
+        Defines the private setter function.
+        The setter can be called locally but property
+        will be read-only from D-Bus.
+
+        Calling the setter locally will emit
+        :py:attr:`properties_changed <DbusInterfaceCommonAsync.properties_changed>`
+        signal to D-Bus.
 
     .. py:method:: get_async()
         :async:

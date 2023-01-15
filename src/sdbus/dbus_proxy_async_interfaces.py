@@ -22,7 +22,7 @@ from __future__ import annotations
 from inspect import getmembers
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
-from .dbus_common_funcs import get_default_bus
+from .dbus_common_funcs import _parse_properties_vardict, get_default_bus
 from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
 from .dbus_proxy_async_method import dbus_method_async
 from .dbus_proxy_async_property import DbusPropertyAsyncBinded
@@ -94,20 +94,13 @@ class DbusPropertiesInterfaceAsync(
             dbus_properties_data = await self._properties_get_all(
                 interface_name)
 
-            for member_name, variant in dbus_properties_data.items():
-                try:
-                    python_name = self._dbus_to_python_name_map[member_name]
-                except KeyError:
-                    if on_unknown_member == 'error':
-                        raise
-                    elif on_unknown_member == 'ignore':
-                        continue
-                    elif on_unknown_member == 'reuse':
-                        python_name = member_name
-                    else:
-                        raise ValueError
-
-                properties[python_name] = variant[1]
+            properties.update(
+                _parse_properties_vardict(
+                    self._dbus_to_python_name_map,
+                    dbus_properties_data,
+                    on_unknown_member,
+                )
+            )
 
         return properties
 

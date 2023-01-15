@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-# Copyright (C) 2020, 2021 igo95862
+# Copyright (C) 2020-2023 igo95862
 
 # This file is part of python-sdbus
 
@@ -22,10 +22,11 @@ from __future__ import annotations
 
 from asyncio import Event, get_running_loop, sleep, wait_for
 from asyncio.subprocess import create_subprocess_exec
-from typing import Tuple
+from typing import Tuple, cast
 from unittest import SkipTest
 
 from sdbus.dbus_common_funcs import PROPERTY_FLAGS_MASK, count_bits
+from sdbus.dbus_proxy_async_interfaces import DBUS_PROPERTIES_CHANGED_TYPING
 from sdbus.exceptions import (
     DbusFailedError,
     DbusFileExistsError,
@@ -41,6 +42,7 @@ from sdbus.sd_bus_internals import (
     is_interface_name_valid,
 )
 from sdbus.unittest import IsolatedDbusTestCase
+from sdbus.utils import parse_properties_changed
 
 from sdbus import (
     DbusInterfaceCommonAsync,
@@ -823,3 +825,42 @@ class TestProxy(IsolatedDbusTestCase):
         self.assertIsNone(await wait_for(aw_dbus, timeout=1))
 
         self.assertIsNone(await wait_for(q.get(), timeout=1))
+
+    async def test_properties_changed(self) -> None:
+        test_object, test_object_connection = initialize_object()
+
+        test_str = 'should_be_emited'
+
+        q = await test_object_connection.properties_changed._get_dbus_queue()
+
+        async def set_property() -> None:
+            await test_object_connection.test_property.set_async(test_str)
+
+        await set_property()
+
+        properties_changed_data = cast(
+            DBUS_PROPERTIES_CHANGED_TYPING,
+            (await q.get()).get_contents(),
+        )
+
+        parsed_dict_from_class = parse_properties_changed(
+            TestInterface, properties_changed_data)
+        self.assertEqual(
+            test_str,
+            parsed_dict_from_class['test_property'],
+        )
+
+        parsed_dict_from_object = parse_properties_changed(
+            test_object_connection, properties_changed_data)
+        self.assertEqual(
+            test_str,
+            parsed_dict_from_object['test_property'],
+        )
+
+        properties_changed_data[2].append('invalidated_property')
+        parsed_dict_with_invalidation = parse_properties_changed(
+            test_object, properties_changed_data,
+            on_unknown_member='reuse',
+        )
+        self.assertIsNone(
+            parsed_dict_with_invalidation['invalidated_property'])

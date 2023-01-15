@@ -75,6 +75,9 @@ Classes
 
         Signal when one of the objects properties changes.
 
+        :py:func:`sdbus.utils.parse_properties_changed` can be used to transform
+        this signal data in to an easier to work with dictionary.
+
         Signal data is:
 
         Interface name : str

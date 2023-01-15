@@ -38,6 +38,7 @@ If you are unfamiliar with D-Bus you might want to read following pages:
     asyncio_quick
     asyncio_api
     exceptions
+    utils
     examples
     proxies
     code_generator

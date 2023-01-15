@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from asyncio import Future, get_running_loop
 from contextvars import ContextVar
-from typing import Generator, Iterator
+from typing import Any, Dict, Generator, Iterator, Literal, Tuple
 from warnings import warn
 
 from .sd_bus_internals import (
@@ -159,3 +159,29 @@ def _check_sync_in_async_env() -> bool:
         return False
     except RuntimeError:
         return True
+
+
+def _parse_properties_vardict(
+        properties_name_map: Dict[str, str],
+        properties_vardict: Dict[str, Tuple[str, Any]],
+        on_unknown_member: Literal['error', 'ignore', 'reuse'],
+) -> Dict[str, Any]:
+
+    properties_translated: Dict[str, Any] = {}
+
+    for member_name, variant in properties_vardict.items():
+        try:
+            python_name = properties_name_map[member_name]
+        except KeyError:
+            if on_unknown_member == 'error':
+                raise
+            elif on_unknown_member == 'ignore':
+                continue
+            elif on_unknown_member == 'reuse':
+                python_name = member_name
+            else:
+                raise ValueError
+
+        properties_translated[python_name] = variant[1]
+
+    return properties_translated

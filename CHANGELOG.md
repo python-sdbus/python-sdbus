@@ -1,3 +1,38 @@
+## 0.11.0
+
+### Features:
+
+* Added support for `None` signals without data.
+* Added boolean flags for the name request functions
+  which can be used to specify replacements or queueing.
+* Added `sdbus.utils.parse_properties_changed` helper function.
+  Parses signal data to python member names and values.
+* Added `sdbus.utils.parse_interfaces_added` helper function.
+  Parses signal data to path, python class and python member names
+  and values.
+* Added `sdbus.utils.parse_interfaces_removed` helper function.
+  Parses signal data to path and python class.
+* Added `setter_private` decorator to async properties. Private
+  setter can only be called locally but to D-Bus property will
+  appear as read only.
+* Added new exceptions for when D-Bus name requests fail.
+  * `SdBusRequestNameExistsError`: Someone already owns name.
+  * `SdBusRequestNameAlreadyOwnerError`: Caller already owns name.
+  * `SdBusRequestNameInQueueError`: Name request queued up.
+
+### Deprecations:
+
+* Moved all exceptions to `sdbus.exceptions` module.
+  For backwards compatibility old exceptions will be
+  available from the root module until the version `1.0.0`.
+
+### Fixes:
+
+* Fixed autodoc adding `dbus_method` to dbus methods names
+* Fix async D-Bus name requests not raising appropriate exceptions.
+* Fixed `request_default_bus_name` being an async function.
+  For backwards compatibility it returns an awaitable that raises a warning.
+
 ## 0.10.2
 
 ### Features:

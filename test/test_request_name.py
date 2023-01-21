@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from asyncio import wait_for
+from asyncio import get_running_loop, sleep, wait_for
 from unittest import main
 
 from sdbus.exceptions import (
@@ -31,6 +31,7 @@ from sdbus.exceptions import (
 )
 from sdbus.sd_bus_internals import NameAllowReplacementFlag, NameQueueFlag
 from sdbus.unittest import IsolatedDbusTestCase
+from sdbus_async.dbus_daemon import FreedesktopDbus
 
 from sdbus import (
     request_default_bus_name,
@@ -199,7 +200,24 @@ class TestRequestNameAsync(IsolatedDbusTestCase):
                 queue=True,
             )
 
+        async def catch_owner_changed() -> str:
+            dbus = FreedesktopDbus()
+            async for name, old, new in dbus.name_owner_changed:
+                if name != TEST_BUS_NAME:
+                    continue
+
+                if old and new:
+                    return new
+
+            raise RuntimeError
+
+        loop = get_running_loop()
+        owner_changed_task = loop.create_task(catch_owner_changed())
+        await sleep(0)
+
         extra_bus.close()
+
+        await wait_for(owner_changed_task, timeout=0.5)
 
         with self.assertRaises(SdBusRequestNameAlreadyOwnerError):
             await request_default_bus_name_async(TEST_BUS_NAME)

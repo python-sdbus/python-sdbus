@@ -29,6 +29,18 @@ More incoming. (systemd, Bluez, screen saver... )
 
 * [systemd](https://github.com/bernhardkaindl/python-sdbus-systemd) (by [@bernhardkaindl](https://github.com/bernhardkaindl))
 
+## Stability
+
+Python-sdbus is under development and its API is not stable. Generally
+anything documented in the official documentation is considered
+stable but might be deprecated. Using deprecated feature will
+raise a warning and the feature will be eventually removed.
+
+See the [deprecations list](DEPRECATIONS.md).
+
+If there is a feature that is not documented but you would like to use
+please open a new issue.
+
 ## Requirements
 
 ### Binary package from PyPI

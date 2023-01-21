@@ -18,6 +18,7 @@ Parsing utilities
     :param str on_unknown_member: If an unknown D-Bus property was encountered
             either raise an ``"error"`` (default), ``"ignore"`` the property
             or ``"reuse"`` the D-Bus name for the member.
+    :rtype: Dict[str, Any]
     :returns: Dictionary of changed properties with keys translated to python
             names. Invalidated properties will have value of None.
 

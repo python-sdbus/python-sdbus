@@ -171,6 +171,9 @@ Classes
         Signal when a new object is added or and existing object
         gains a new interface.
 
+        :py:func:`sdbus.utils.parse_interfaces_added` can be used
+        to make signal data easier to work with.
+
         Signal data is:
 
         Object path : str

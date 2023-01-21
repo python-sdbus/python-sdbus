@@ -19,7 +19,17 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import Any, Dict, Literal, Type, Union
+from typing import (
+    Any,
+    Dict,
+    FrozenSet,
+    Iterable,
+    Literal,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 from .dbus_common_funcs import _parse_properties_vardict
 from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
@@ -43,6 +53,87 @@ def parse_properties_changed(
     )
 
 
+SKIP_INTERFACES = frozenset((
+    'org.freedesktop.DBus.Properties',
+    'org.freedesktop.DBus.Introspectable',
+    'org.freedesktop.DBus.Peer',
+    'org.freedesktop.DBus.ObjectManager',
+))
+
+
+def parse_interfaces_added(
+    interfaces: Union[
+        Union[
+            DbusInterfaceBaseAsync,
+            Type[DbusInterfaceBaseAsync],
+        ],
+        Iterable[
+            Union[
+                DbusInterfaceBaseAsync,
+                Type[DbusInterfaceBaseAsync],
+            ],
+        ],
+    ],
+    interfaces_added_data: Tuple[str, Dict[str, Dict[str, Any]]],
+    on_unknown_interface: Literal['error', 'none'] = 'error',
+    on_unknown_member: Literal['error', 'ignore', 'reuse'] = 'error',
+) -> Tuple[str, Optional[Type[DbusInterfaceBaseAsync]], Dict[str, Any]]:
+    interfaces_to_class_map: Dict[
+        FrozenSet[str],
+        Type[DbusInterfaceBaseAsync],
+    ] = {}
+
+    if isinstance(interfaces,
+                  (DbusInterfaceBaseAsync, type)):
+        interfaces_iter = iter((interfaces, ))
+    else:
+        interfaces_iter = iter(interfaces)
+
+    for interface in interfaces_iter:
+        if (
+            isinstance(interface, DbusInterfaceBaseAsync)
+        ):
+            interfaces_to_class_map[
+                frozenset(interface._dbus_served_interfaces_names)
+            ] = type(interface)
+        elif (
+                isinstance(interface, type)
+                and
+                issubclass(interface, DbusInterfaceBaseAsync)
+        ):
+            interfaces_to_class_map[
+                frozenset(interface._dbus_served_interfaces_names)
+            ] = interface
+        else:
+            raise TypeError('Expected D-Bus interface, got: ', interface)
+
+    path, properties_data = interfaces_added_data
+
+    class_set = frozenset(properties_data.keys()) - SKIP_INTERFACES
+    try:
+        python_class = interfaces_to_class_map[class_set]
+        dbus_to_python_member_map = python_class._dbus_to_python_name_map
+    except KeyError:
+        if on_unknown_interface == 'error':
+            raise
+
+        python_class = None
+        dbus_to_python_member_map = {}
+
+    python_properties: Dict[str, Any] = {}
+    for _, properties in properties_data.items():
+        python_properties.update(
+            _parse_properties_vardict(
+                dbus_to_python_member_map,
+                properties,
+                on_unknown_member,
+            )
+        )
+
+    return path, python_class, python_properties
+
+
 __all__ = (
     'parse_properties_changed',
+    'parse_interfaces_added',
 )

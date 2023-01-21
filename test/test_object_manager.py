@@ -24,6 +24,7 @@ from asyncio import get_running_loop, sleep, wait_for
 from typing import Any, Dict, List, Tuple
 
 from sdbus.unittest import IsolatedDbusTestCase
+from sdbus.utils import parse_interfaces_added
 
 from sdbus import (
     DbusInterfaceCommonAsync,
@@ -118,6 +119,9 @@ class TestObjectManager(IsolatedDbusTestCase):
             TEST_NUMBER,
         )
 
+        with self.subTest("Test interfaces added parser"):
+            parse_interfaces_added(ManagedInterface, caught_added)
+
         object_manager.remove_managed_object(managed_object)
 
         path_removed, interfaces_removed = await wait_for(
@@ -138,3 +142,105 @@ class TestObjectManager(IsolatedDbusTestCase):
             MANAGED_PATH,
             managed_object,
         )
+
+    async def test_parse_interfaces_added(self) -> None:
+        MANAGED_TWO_INTERFACE_NAME = MANAGED_INTERFACE_NAME + 'Two'
+
+        class ManagedTwoInterface(
+            ManagedInterface,
+            interface_name=MANAGED_TWO_INTERFACE_NAME,
+        ):
+
+            @dbus_property_async('s')
+            def test_str(self) -> str:
+                return 'test'
+
+        loop = get_running_loop()
+        await self.bus.request_name_async(CONNECTION_NAME, 0)
+
+        object_manager = DbusObjectManagerInterfaceAsync()
+        object_manager.export_to_dbus(OBJECT_MANAGER_PATH)
+
+        object_manager_connection = DbusObjectManagerInterfaceAsync.new_proxy(
+            CONNECTION_NAME, OBJECT_MANAGER_PATH)
+
+        async def catch_interfaces_added() -> Tuple[str,
+                                                    Dict[str,
+                                                         Dict[str, Any]]]:
+            async for x in object_manager_connection.interfaces_added:
+                return x
+
+            raise RuntimeError
+
+        catch_added_task = loop.create_task(catch_interfaces_added())
+
+        await sleep(0)
+
+        managed_object = ManagedTwoInterface()
+
+        object_manager.export_with_manager(MANAGED_PATH, managed_object)
+
+        caught_added = await wait_for(catch_added_task, timeout=0.5)
+
+        with self.subTest('Parse class'):
+            path, python_class, python_properties = (
+                parse_interfaces_added(ManagedTwoInterface, caught_added)
+            )
+
+            self.assertEqual(path, MANAGED_PATH)
+            self.assertEqual(python_class, ManagedTwoInterface)
+            self.assertIn('test_str', python_properties)
+            self.assertIn('test_int', python_properties)
+
+        with self.subTest('Parse object'):
+            path, python_class, python_properties = (
+                parse_interfaces_added(managed_object, caught_added)
+            )
+
+            self.assertEqual(path, MANAGED_PATH)
+            self.assertEqual(python_class, ManagedTwoInterface)
+            self.assertIn('test_str', python_properties)
+            self.assertIn('test_int', python_properties)
+
+        with self.subTest('Parse iterable'):
+            path, python_class, python_properties = (
+                parse_interfaces_added(
+                    (ManagedInterface, ManagedTwoInterface),
+                    caught_added)
+            )
+
+            self.assertEqual(path, MANAGED_PATH)
+            self.assertEqual(python_class, ManagedTwoInterface)
+            self.assertIn('test_str', python_properties)
+            self.assertIn('test_int', python_properties)
+
+        with self.subTest('Parse unknown'):
+            with self.assertRaises(KeyError):
+                path, python_class, python_properties = (
+                    parse_interfaces_added(
+                        ManagedInterface,
+                        caught_added)
+                )
+
+            with self.assertRaises(KeyError):
+                path, python_class, python_properties = (
+                    parse_interfaces_added(
+                        ManagedInterface,
+                        caught_added,
+                        on_unknown_interface='none',
+                    )
+                )
+
+            path, python_class, python_properties = (
+                parse_interfaces_added(
+                    ManagedInterface,
+                    caught_added,
+                    on_unknown_interface='none',
+                    on_unknown_member='reuse',
+                )
+            )
+
+            self.assertEqual(path, MANAGED_PATH)
+            self.assertIsNone(python_class)
+            self.assertIn('TestStr', python_properties)
+            self.assertIn('TestInt', python_properties)

@@ -188,6 +188,9 @@ Classes
         Signal when existing object or and interface of
         existing object is removed.
 
+        :py:func:`sdbus.utils.parse_interfaces_removed` can be used
+        to make signal data easier to work with.
+
         Signal data is:
 
         Object path : str

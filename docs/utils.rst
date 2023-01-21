@@ -42,3 +42,20 @@ Parsing utilities
     :rtype: Tuple[str, Optional[Type[DbusInterfaceBaseAsync]], Dict[str, Any]]
     :returns: Path of new added object, object's class (or ``None``) and dictionary
             of python translated members and their values.
+
+.. py:function:: parse_interfaces_removed(interfaces, interfaces_removed_data, on_unknown_interface='error')
+
+    Parse data from :py:meth:`interfaces_added <sdbus.DbusObjectManagerInterfaceAsync.interfaces_removed>` signal.
+
+    Takes an iterable of D-Bus interface classes (or a single class) and the signal data.
+    Returns the path of removed object andthe class of the added object.
+    (if it matched one of passed interface classes)
+
+    :param Iterable[DbusInterfaceBaseAsync] interfaces: Possible interfaces that were removed.
+        Can accept classes with multiple interfaces defined.
+    :param Tuple interfaces_added_data: Tuple caught from signal.
+    :param str on_unknown_member: If an unknown D-Bus interface was encountered
+            either raise an ``"error"`` (default) or return ``"none"`` instead
+            of interface class.
+    :rtype: Tuple[str, Optional[Type[DbusInterfaceBaseAsync]]]
+    :returns: Path of removed object and object's class (or ``None``).

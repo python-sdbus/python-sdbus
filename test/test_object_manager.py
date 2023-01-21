@@ -24,7 +24,7 @@ from asyncio import get_running_loop, sleep, wait_for
 from typing import Any, Dict, List, Tuple
 
 from sdbus.unittest import IsolatedDbusTestCase
-from sdbus.utils import parse_interfaces_added
+from sdbus.utils import parse_interfaces_added, parse_interfaces_removed
 
 from sdbus import (
     DbusInterfaceCommonAsync,
@@ -143,7 +143,7 @@ class TestObjectManager(IsolatedDbusTestCase):
             managed_object,
         )
 
-    async def test_parse_interfaces_added(self) -> None:
+    async def test_parse_interfaces_added_removed(self) -> None:
         MANAGED_TWO_INTERFACE_NAME = MANAGED_INTERFACE_NAME + 'Two'
 
         class ManagedTwoInterface(
@@ -174,6 +174,14 @@ class TestObjectManager(IsolatedDbusTestCase):
 
         catch_added_task = loop.create_task(catch_interfaces_added())
 
+        async def catch_interfaces_removed() -> Tuple[str, List[str]]:
+            async for x in object_manager_connection.interfaces_removed:
+                return x
+
+            raise RuntimeError
+
+        catch_removed_task = loop.create_task(catch_interfaces_removed())
+
         await sleep(0)
 
         managed_object = ManagedTwoInterface()
@@ -182,7 +190,7 @@ class TestObjectManager(IsolatedDbusTestCase):
 
         caught_added = await wait_for(catch_added_task, timeout=0.5)
 
-        with self.subTest('Parse class'):
+        with self.subTest('Parse added class'):
             path, python_class, python_properties = (
                 parse_interfaces_added(ManagedTwoInterface, caught_added)
             )
@@ -192,7 +200,7 @@ class TestObjectManager(IsolatedDbusTestCase):
             self.assertIn('test_str', python_properties)
             self.assertIn('test_int', python_properties)
 
-        with self.subTest('Parse object'):
+        with self.subTest('Parse added object'):
             path, python_class, python_properties = (
                 parse_interfaces_added(managed_object, caught_added)
             )
@@ -202,7 +210,7 @@ class TestObjectManager(IsolatedDbusTestCase):
             self.assertIn('test_str', python_properties)
             self.assertIn('test_int', python_properties)
 
-        with self.subTest('Parse iterable'):
+        with self.subTest('Parse added iterable'):
             path, python_class, python_properties = (
                 parse_interfaces_added(
                     (ManagedInterface, ManagedTwoInterface),
@@ -214,7 +222,7 @@ class TestObjectManager(IsolatedDbusTestCase):
             self.assertIn('test_str', python_properties)
             self.assertIn('test_int', python_properties)
 
-        with self.subTest('Parse unknown'):
+        with self.subTest('Parse added unknown'):
             with self.assertRaises(KeyError):
                 path, python_class, python_properties = (
                     parse_interfaces_added(
@@ -244,3 +252,39 @@ class TestObjectManager(IsolatedDbusTestCase):
             self.assertIsNone(python_class)
             self.assertIn('TestStr', python_properties)
             self.assertIn('TestInt', python_properties)
+
+        object_manager.remove_managed_object(managed_object)
+
+        interfaces_removed_data = await wait_for(
+            catch_removed_task, timeout=1)
+
+        with self.subTest('Parse removed class'):
+            path, python_class = (
+                parse_interfaces_removed(
+                    ManagedTwoInterface,
+                    interfaces_removed_data,
+                )
+            )
+
+            self.assertEqual(path, MANAGED_PATH)
+            self.assertEqual(python_class, ManagedTwoInterface)
+
+        with self.subTest('Parse removed unknown'):
+            with self.assertRaises(KeyError):
+                path, python_class = (
+                    parse_interfaces_removed(
+                        ManagedInterface,
+                        interfaces_removed_data,
+                    )
+                )
+
+            path, python_class = (
+                parse_interfaces_removed(
+                    ManagedInterface,
+                    interfaces_removed_data,
+                    on_unknown_interface='none',
+                )
+            )
+
+            self.assertEqual(path, MANAGED_PATH)
+            self.assertIsNone(python_class)

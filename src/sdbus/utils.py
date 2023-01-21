@@ -24,6 +24,7 @@ from typing import (
     Dict,
     FrozenSet,
     Iterable,
+    List,
     Literal,
     Optional,
     Tuple,
@@ -61,33 +62,18 @@ SKIP_INTERFACES = frozenset((
 ))
 
 
-def parse_interfaces_added(
-    interfaces: Union[
+def _create_interfaces_map(
+    interfaces_iter: Iterable[
         Union[
             DbusInterfaceBaseAsync,
             Type[DbusInterfaceBaseAsync],
-        ],
-        Iterable[
-            Union[
-                DbusInterfaceBaseAsync,
-                Type[DbusInterfaceBaseAsync],
-            ],
-        ],
-    ],
-    interfaces_added_data: Tuple[str, Dict[str, Dict[str, Any]]],
-    on_unknown_interface: Literal['error', 'none'] = 'error',
-    on_unknown_member: Literal['error', 'ignore', 'reuse'] = 'error',
-) -> Tuple[str, Optional[Type[DbusInterfaceBaseAsync]], Dict[str, Any]]:
+        ]
+    ]
+) -> Dict[FrozenSet[str], Type[DbusInterfaceBaseAsync]]:
     interfaces_to_class_map: Dict[
         FrozenSet[str],
         Type[DbusInterfaceBaseAsync],
     ] = {}
-
-    if isinstance(interfaces,
-                  (DbusInterfaceBaseAsync, type)):
-        interfaces_iter = iter((interfaces, ))
-    else:
-        interfaces_iter = iter(interfaces)
 
     for interface in interfaces_iter:
         if (
@@ -106,6 +92,35 @@ def parse_interfaces_added(
             ] = interface
         else:
             raise TypeError('Expected D-Bus interface, got: ', interface)
+
+    return interfaces_to_class_map
+
+
+def parse_interfaces_added(
+    interfaces: Union[
+        Union[
+            DbusInterfaceBaseAsync,
+            Type[DbusInterfaceBaseAsync],
+        ],
+        Iterable[
+            Union[
+                DbusInterfaceBaseAsync,
+                Type[DbusInterfaceBaseAsync],
+            ],
+        ],
+    ],
+    interfaces_added_data: Tuple[str, Dict[str, Dict[str, Any]]],
+    on_unknown_interface: Literal['error', 'none'] = 'error',
+    on_unknown_member: Literal['error', 'ignore', 'reuse'] = 'error',
+) -> Tuple[str, Optional[Type[DbusInterfaceBaseAsync]], Dict[str, Any]]:
+
+    if isinstance(interfaces,
+                  (DbusInterfaceBaseAsync, type)):
+        interfaces_iter = iter((interfaces, ))
+    else:
+        interfaces_iter = iter(interfaces)
+
+    interfaces_to_class_map = _create_interfaces_map(interfaces_iter)
 
     path, properties_data = interfaces_added_data
 
@@ -131,6 +146,44 @@ def parse_interfaces_added(
         )
 
     return path, python_class, python_properties
+
+
+def parse_interfaces_removed(
+    interfaces: Union[
+        Union[
+            DbusInterfaceBaseAsync,
+            Type[DbusInterfaceBaseAsync],
+        ],
+        Iterable[
+            Union[
+                DbusInterfaceBaseAsync,
+                Type[DbusInterfaceBaseAsync],
+            ],
+        ],
+    ],
+    interfaces_removed_data: Tuple[str, List[str]],
+    on_unknown_interface: Literal['error', 'none'] = 'error',
+) -> Tuple[str, Optional[Type[DbusInterfaceBaseAsync]]]:
+    if isinstance(interfaces,
+                  (DbusInterfaceBaseAsync, type)):
+        interfaces_iter = iter((interfaces, ))
+    else:
+        interfaces_iter = iter(interfaces)
+
+    interfaces_to_class_map = _create_interfaces_map(interfaces_iter)
+
+    path, interfaces_removed = interfaces_removed_data
+
+    class_set = frozenset(interfaces_removed) - SKIP_INTERFACES
+    try:
+        python_class = interfaces_to_class_map[class_set]
+    except KeyError:
+        if on_unknown_interface == 'error':
+            raise
+
+        python_class = None
+
+    return path, python_class
 
 
 __all__ = (

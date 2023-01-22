@@ -169,6 +169,7 @@ def install_systemd() -> None:
         ['meson', 'setup',
          systemd_build_path, systemd_src_path,
          '-Dstatic-libsystemd=pic',
+         '-Dtests=false',
          '--buildtype', 'plain',
          '-Db_lto=true', '-Db_pie=true',
          ],

@@ -28,6 +28,7 @@ More incoming. (systemd, Bluez, screen saver... )
 ### Community interfaces
 
 * [systemd](https://github.com/bernhardkaindl/python-sdbus-systemd) (by [@bernhardkaindl](https://github.com/bernhardkaindl))
+* [modemmanager](https://github.com/zhanglongqi/python-sdbus-modemmanager) (by [@zhanglongqi](https://github.com/zhanglongqi))
 
 ## Stability
 

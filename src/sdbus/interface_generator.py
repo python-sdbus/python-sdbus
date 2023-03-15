@@ -61,10 +61,10 @@ def _camel_case_to_snake_case_generator(camel: str) -> Iterator[str]:
         else:
             yield c
 
-
-def camel_case_to_snake_case(camel: str) -> str:
+def camel_case_to_snake_case(camel: str) -> str:   
+    if camel.isupper():
+        camel = camel.lower()
     return ''.join(_camel_case_to_snake_case_generator(camel))
-
 
 def _iterface_name_to_class_generator(interface_name: str) -> Iterator[str]:
     i = iter(interface_name)

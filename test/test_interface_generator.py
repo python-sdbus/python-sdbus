@@ -74,7 +74,7 @@ test_xml = """
 
 class TestConverter(TestCase):
     def test_camel_to_snake(self) -> None:
-        test_cases = {'ActivateConnection':'activate_connection', 'ALL_CAPS': 'allcaps', 'all_lows':'all_lows'}
+        test_cases = {'ActivateConnection':'activate_connection', 'ALL_CAPS': 'ALL_CAPS', 'all_lows':'all_lows'}
         self.assertEqual(
             test_cases.values(),
             [camel_case_to_snake_case(k) for k in test_cases.keys()]

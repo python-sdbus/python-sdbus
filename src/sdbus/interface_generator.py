@@ -46,9 +46,12 @@ def _camel_case_to_snake_case_generator(camel: str) -> Iterator[str]:
 
     yield first_char.lower()
 
+    last_character = first_char
+
     # Yield every character
     # if upper is encountered
-    # yield _ and lower
+    # yield _ only if previous character
+    # was not already uppercase or underscore
     while True:
         try:
             c = next(i)
@@ -56,10 +59,14 @@ def _camel_case_to_snake_case_generator(camel: str) -> Iterator[str]:
             return
 
         if c.isupper():
-            yield '_'
+            if not last_character.isupper() and not last_character == "_":
+                yield '_'
+
             yield c.lower()
         else:
             yield c
+
+        last_character = c
 
 
 def camel_case_to_snake_case(camel: str) -> str:

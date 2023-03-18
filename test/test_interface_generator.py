@@ -74,10 +74,23 @@ test_xml = """
 
 class TestConverter(TestCase):
     def test_camel_to_snake(self) -> None:
-        self.assertEqual(
-            'activate_connection',
-            camel_case_to_snake_case('ActivateConnection'),
-        )
+        with self.subTest("CamelCase"):
+            self.assertEqual(
+                'activate_connection',
+                camel_case_to_snake_case('ActivateConnection'),
+            )
+
+        with self.subTest("Already snake case"):
+            self.assertEqual(
+                'activate_connection',
+                camel_case_to_snake_case('activate_connection'),
+            )
+
+        with self.subTest("Upper snake case"):
+            self.assertEqual(
+                'activate_connection',
+                camel_case_to_snake_case('ACTIVATE_CONNECTION'),
+            )
 
     def test_interface_name_to_class(self) -> None:
         self.assertEqual(

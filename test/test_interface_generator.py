@@ -25,7 +25,7 @@ from unittest import SkipTest, TestCase, main
 from sdbus.interface_generator import (
     DbusSigToTyping,
     camel_case_to_snake_case,
-    generate_async_py_file,
+    generate_py_file,
     interface_name_to_class,
     interfaces_from_str,
 )
@@ -193,7 +193,7 @@ class TestConverter(TestCase):
                         False,
                     )
 
-        generated = generate_async_py_file(interfaces_intro)
+        generated = generate_py_file(interfaces_intro)
         self.assertIn('flags=DbusPropertyEmitsInvalidationFlag', generated)
         self.assertIn('flags=DbusPropertyConstFlag', generated)
 

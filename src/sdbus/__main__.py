@@ -25,7 +25,7 @@ from typing import List
 
 from .interface_generator import (
     DbusInterfaceIntrospection,
-    generate_async_py_file,
+    generate_py_file,
     interfaces_from_file,
     interfaces_from_str,
 )
@@ -48,9 +48,11 @@ def run_gen_from_connection(namespace: Namespace) -> None:
         itrospection = connection.dbus_introspect()
         interfaces.extend(interfaces_from_str(itrospection))
 
-    print(
-        generate_async_py_file(
-            interfaces, namespace.no_imports_header))
+    print(generate_py_file(
+        interfaces,
+        namespace.no_imports_header,
+        namespace.generate_blocking,
+    ))
 
 
 def run_gen_from_file(namespace: Namespace) -> None:
@@ -59,9 +61,11 @@ def run_gen_from_file(namespace: Namespace) -> None:
     for file in namespace.filenames:
         interfaces.extend(interfaces_from_file(file))
 
-    print(
-        generate_async_py_file(
-            interfaces, namespace.no_imports_header))
+    print(generate_py_file(
+        interfaces,
+        namespace.no_imports_header,
+        namespace.generate_blocking,
+    ))
 
 
 def generator_main() -> None:
@@ -78,6 +82,10 @@ def generator_main() -> None:
     generate_from_file_parser.add_argument(
         '--no-imports-header', action='store_false', default=True,
         help="Do NOT include 'import' header",
+    )
+    generate_from_file_parser.add_argument(
+        '--generate-blocking', action='store_true', default=False,
+        help='Generate a blocking interface class. Default is async.'
     )
 
     generate_from_connection = subparsers.add_parser('gen-from-connection')
@@ -101,6 +109,10 @@ def generator_main() -> None:
     generate_from_connection.add_argument(
         '--no-imports-header', action='store_false', default=True,
         help="Do NOT include 'import' header",
+    )
+    generate_from_connection.add_argument(
+        '--generate-blocking', action='store_true', default=False,
+        help='Generate a blocking interface class. Default is async.'
     )
     generate_from_connection.add_argument(
         '--system',

@@ -10,7 +10,7 @@ Features:
 * No Python 2 legacy.
 * Based on fast sd-bus from systemd. (also supports elogind)
 * Unified client/server interface classes. Write interface once!
-* Dbus methods can have keyword and default arguments.
+* D-Bus methods can have keyword and default arguments.
 
 See the
 [documentation](https://python-sdbus.readthedocs.io/en/latest/index.html)
@@ -157,7 +157,7 @@ async def startup() -> None:
     # Acquire a known name on the bus
     # Clients will use that name to address this server
     await request_default_bus_name_async('org.example.test')
-    # Export the object to dbus
+    # Export the object to D-Bus
     export_object.export_to_dbus('/')
 
 

@@ -8,8 +8,8 @@ Classes
 
 .. py:class:: DbusInterfaceCommonAsync(interface_name)
 
-    Dbus async interface class.
-    Dbus methods and properties should be defined using
+    D-Bus async interface class.
+    D-Bus methods and properties should be defined using
     :py:func:`dbus_property_async`, :py:func:`dbus_signal_async`,
     and :py:func:`dbus_method_async` decorators.
 
@@ -17,19 +17,19 @@ Classes
         Don't forget to call ``super().__init__()`` in derived classes
         init calls as it sets up important attributes.
 
-    :param str interface_name: Sets the dbus interface
+    :param str interface_name: Sets the D-Bus interface
         name that will be used for all properties, methods
         and signals defined in the body of the class.
 
     :param bool serving_enabled: If set to :py:obj:`True`
-        the interface will not be served on dbus. Mostly used
+        the interface will not be served on D-Bus. Mostly used
         for interfaces that sd-bus already provides such as
         ``org.freedesktop.DBus.Peer``.
 
     .. py:method:: dbus_ping()
         :async:
 
-        Pings the remote service using dbus.
+        Pings the remote service using D-Bus.
 
         Useful to test if connection or remote service is alive.
 
@@ -47,7 +47,7 @@ Classes
     .. py:method:: dbus_introspect()
         :async:
 
-        Get dbus introspection XML.
+        Get D-Bus introspection XML.
 
         It is users responsibility to parse that data.
 
@@ -92,50 +92,50 @@ Classes
 
     .. py:method:: _proxify(bus, service_name, object_path)
 
-        Begin proxying to a remote dbus object.
+        Begin proxying to a remote D-Bus object.
 
         :param str service_name:
-            Remote object dbus connection name. 
+            Remote object D-Bus connection name.
             For example, systemd uses ``org.freedesktop.systemd1``
 
         :param str object_path:
-            Remote object dbus path.
+            Remote object D-Bus path.
             Should be a forward slash separated path.
             Starting object is usually ``/``.
             Example: ``/org/freedesktop/systemd/unit/dbus_2eservice``
 
         :param SdBus bus:
-            Optional dbus connection object.
-            If not passed the default dbus will be used.
+            Optional D-Bus connection object.
+            If not passed the default D-Bus will be used.
 
     .. py:classmethod:: new_proxy(bus, service_name, object_path)
 
         Create new proxy object and bypass ``__init__``.
 
         :param str service_name:
-            Remote object dbus connection name. 
+            Remote object D-Bus connection name.
             For example, systemd uses ``org.freedesktop.systemd1``
 
         :param str object_path:
-            Remote object dbus path.
+            Remote object D-Bus path.
             Should be a forward slash separated path.
             Starting object is usually ``/``.
             Example: ``/org/freedesktop/systemd/unit/dbus_2eservice``
 
         :param SdBus bus:
-            Optional dbus connection object.
-            If not passed the default dbus will be used.
+            Optional D-Bus connection object.
+            If not passed the default D-Bus will be used.
 
     .. py:method:: export_to_dbus(object_path, bus)
 
-        Object will appear and become callable on dbus.
+        Object will appear and become callable on D-Bus.
 
         :param str object_path:
             Object path that it will be available at.
 
         :param SdBus bus:
-            Optional dbus connection object.
-            If not passed the default dbus will be used.
+            Optional D-Bus connection object.
+            If not passed the default D-Bus will be used.
 
 
 .. py:class:: DbusObjectManagerInterfaceAsync(interface_name)
@@ -218,8 +218,8 @@ Classes
             Object to export to D-Bus.
 
         :param SdBus bus:
-            Optional dbus connection object.
-            If not passed the default dbus will be used.
+            Optional D-Bus connection object.
+            If not passed the default D-Bus will be used.
 
         :raises RuntimeError: ObjectManager was not exported.
 
@@ -248,11 +248,11 @@ Decorators
 
     Underlying function must be a coroutine function.
 
-    :param str input_signature: dbus input signature.
+    :param str input_signature: D-Bus input signature.
         Defaults to "" meaning method takes no arguments.
         Required if you intend to connect to a remote object.
 
-    :param str result_signature: dbus result signature.
+    :param str result_signature: D-Bus result signature.
         Defaults to "" meaning method returns empty reply on success.
         Required if you intend to serve the object.
 
@@ -290,7 +290,7 @@ Decorators
         argument names will be used otherwise input arguments 
         will be nameless
 
-    :param str method_name: Force specific dbus method name 
+    :param str method_name: Force specific D-Bus method name
         instead of being based on Python function name.
 
     Example: ::
@@ -318,7 +318,7 @@ Decorators
 
 .. py:decorator:: dbus_property_async(property_signature, [flags, [property_name]])
 
-    Declare a dbus property.
+    Declare a D-Bus property.
 
     The underlying function has to be a regular ``def`` function.
 
@@ -331,7 +331,7 @@ Decorators
         does not perform heavy IO or computation
         as that will block other methods or properties.
 
-    :param str property_signature: Property dbus signature.
+    :param str property_signature: Property D-Bus signature.
         Has to be a single type or container.
 
     :param int flags: modifies behavior.
@@ -407,11 +407,11 @@ Decorators
 
 .. py:decorator:: dbus_signal_async([signal_signature, [signal_args_names, [flags, [signal_name]]]])
 
-    Defines a dbus signal.
+    Defines a D-Bus signal.
 
     Underlying function return type hint is used for signal type hints.
 
-    :param str signal_signature: signal dbus signature.
+    :param str signal_signature: signal D-Bus signature.
         Defaults to empty signal.
 
     :param Sequence[str] signal_args_names: sequence of signal argument names.
@@ -466,7 +466,7 @@ Decorators
             the service name of the proxy will be used.
 
         :param str bus:
-            Optional dbus connection object.
+            Optional D-Bus connection object.
             If not passed when called from proxy the bus connected
             to proxy will be used or when called from class default
             bus will be used.

@@ -74,7 +74,7 @@ There are 3 files:
         # Acquire a known name on the bus
         # Clients will use that name to address to this server
         await request_default_bus_name_async('org.example.test')
-        # Export the object to dbus
+        # Export the object to D-Bus
         export_object.export_to_dbus('/')
 
 

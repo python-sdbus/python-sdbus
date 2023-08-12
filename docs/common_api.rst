@@ -5,7 +5,7 @@ These calls are shared between async and blocking API.
 
 .. py:currentmodule:: sdbus
 
-Dbus connections calls
+D-Bus connections calls
 ++++++++++++++++++++++++++++++++++
 
 .. py:function:: request_default_bus_name_async(new_name, allow_replacement, replace_existing, queue)
@@ -14,9 +14,9 @@ Dbus connections calls
     Acquire a name on the default bus async.
 
     :param str new_name: the name to acquire.
-        Must be a valid dbus service name.
+        Must be a valid D-Bus service name.
     :param str new_name: the name to acquire.
-        Must be a valid dbus service name.
+        Must be a valid D-Bus service name.
     :param bool allow_replacement: If name was acquired allow other peers
         to take away the name.
     :param bool replace_existing: If current name owner allows, take
@@ -32,7 +32,7 @@ Dbus connections calls
     Acquire a name on the default bus.
 
     :param str new_name: the name to acquire.
-        Must be a valid dbus service name.
+        Must be a valid D-Bus service name.
     :param bool allow_replacement: If name was acquired allow other peers
         to take away the name.
     :param bool replace_existing: If current name owner allows, take
@@ -120,13 +120,13 @@ Helper functions
     :return: valid object path
     :rtype: str
 
-    Example on how systemd encodes unit names on dbus: ::
+    Example on how systemd encodes unit names on D-Bus: ::
 
         from sdbus import encode_object_path
 
 
         # System uses /org/freedesktop/systemd1/unit as prefix of all units
-        # dbus.service is a name of dbus unit but dot . is not a valid object path
+        # dbus.service is a name of D-Bus unit but dot . is not a valid object path
         s = encode_object_path('/org/freedesktop/systemd1/unit', 'dbus.service')
         print(s)
         # Prints: /org/freedesktop/systemd1/unit/dbus_2eservice

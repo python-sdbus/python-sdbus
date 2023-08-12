@@ -29,15 +29,15 @@ class FreedesktopDbus(DbusInterfaceCommon,
     """D-Bus daemon."""
 
     def __init__(self, bus: Optional[SdBus] = None):
-        """This is the dbus daemon interface. Used for querying dbus state.
+        """This is the D-Bus daemon interface. Used for querying D-Bus state.
 
-        Dbus interface object path and service name is
+        D-Bus interface object path and service name is
         predetermined.
         (at ``'org.freedesktop.DBus'``, ``'/org/freedesktop/DBus'``)
 
         :param SdBus bus:
-            Optional dbus connection.
-            If not passed the default dbus will be used.
+            Optional D-Bus connection.
+            If not passed the default D-Bus will be used.
         """
         super().__init__(
             'org.freedesktop.DBus',
@@ -126,7 +126,7 @@ class FreedesktopDbus(DbusInterfaceCommon,
 
     @dbus_property('as')
     def features(self) -> List[str]:
-        """List of dbus daemon features.
+        """List of D-Bus daemon features.
 
         Features include:
 
@@ -135,11 +135,11 @@ class FreedesktopDbus(DbusInterfaceCommon,
                               header fields.
         * 'SELinux' - Messages filtered by SELinux on this bus.
         * 'SystemdActivation' - services activated by systemd if their \
-                               .service file specifies a dbus name.
+                               .service file specifies a D-Bus name.
         """
         raise NotImplementedError
 
     @dbus_property('as')
     def interfaces(self) -> List[str]:
-        """Extra dbus daemon interfaces"""
+        """Extra D-Bus daemon interfaces"""
         raise NotImplementedError

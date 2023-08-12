@@ -2,7 +2,7 @@ Autodoc extensions
 ==================
 
 Python-sdbus has an extension for Sphinx autodoc that can
-document dbus interfaces.
+document D-Bus interfaces.
 
 To use it include ``"sdbus.autodoc"`` extension in your
 ``conf.py`` file.
@@ -22,16 +22,16 @@ uses it to document the classes.
 
 .. warning:: Autodoc extension is early in development and
     has multiple issues. For example, the inheritance ``:inherited-members:``
-    does not work on the dbus elements.
+    does not work on the D-Bus elements.
 
 Writing docstrings
 -------------------
 
-The dbus methods should be documented same way as the regular function
+The D-Bus methods should be documented same way as the regular function
 would. See `Sphinx documentation on possible fields \
 <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#info-field-lists>`_
 
-Example docstring for a dbus method:
+Example docstring for a D-Bus method:
 
 .. code-block:: python
 
@@ -45,14 +45,14 @@ Example docstring for a dbus method:
         """
         raise NotImplementedError
 
-Dbus properties and signals will be annotated with type taken from the
+D-Bus properties and signals will be annotated with type taken from the
 stub function.
 
 .. code-block:: python
 
     @dbus_property_async('as')
     def features(self) -> List[str]:
-        """List of dbus daemon features.
+        """List of D-Bus daemon features.
 
         Features include:
 
@@ -61,7 +61,7 @@ stub function.
                               header fields.
         * 'SELinux' - Messages filtered by SELinux on this bus.
         * 'SystemdActivation' - services activated by systemd if their \
-                               .service file specifies a dbus name.
+                               .service file specifies a D-Bus name.
         """
         raise NotImplementedError
 

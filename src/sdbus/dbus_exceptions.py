@@ -38,7 +38,7 @@ class DbusErrorMeta(type):
         dbus_error_name = namespace.get('dbus_error_name')
 
         if dbus_error_name is None:
-            raise TypeError('Dbus error name not passed')
+            raise TypeError('D-Bus error name not passed')
 
         new_cls = super().__new__(cls, name, bases, namespace)
 

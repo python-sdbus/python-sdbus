@@ -6,7 +6,7 @@ Exceptions
 Error name bound exceptions
 +++++++++++++++++++++++++++++++
 
-These exceptions are bound to specific dbus error names. For example, 
+These exceptions are bound to specific D-Bus error names. For example,
 :py:exc:`DbusFailedError` is bound to `org.freedesktop.DBus.Error.Failed`
 error name.
 
@@ -230,7 +230,7 @@ Error name exception list
 
     No network access.
 
-    Encountered you use Dbus over TCP or SSH.
+    Encountered you use D-Bus over TCP or SSH.
 
     .. py:attribute:: dbus_error_name
         :type: str
@@ -280,7 +280,7 @@ Error name exception list
 
 .. py:exception:: DbusUnknownMethodError
 
-    Unknown dbus method.
+    Unknown D-Bus method.
 
     .. py:attribute:: dbus_error_name
         :type: str
@@ -288,7 +288,7 @@ Error name exception list
 
 .. py:exception:: DbusUnknownObjectError
 
-    Unknown dbus object.
+    Unknown D-Bus object.
 
     .. py:attribute:: dbus_error_name
         :type: str
@@ -296,7 +296,7 @@ Error name exception list
 
 .. py:exception:: DbusUnknownInterfaceError
 
-    Unknown dbus interface.
+    Unknown D-Bus interface.
 
     .. py:attribute:: dbus_error_name
         :type: str
@@ -304,7 +304,7 @@ Error name exception list
 
 .. py:exception:: DbusUnknownPropertyError
 
-    Unknown dbus property.
+    Unknown D-Bus property.
 
     .. py:attribute:: dbus_error_name
         :type: str
@@ -312,7 +312,7 @@ Error name exception list
 
 .. py:exception:: DbusPropertyReadOnlyError
 
-    Dbus property is read only.
+    D-Bus property is read only.
 
     .. py:attribute:: dbus_error_name
         :type: str
@@ -328,7 +328,7 @@ Error name exception list
 
 .. py:exception:: DbusInvalidSignatureError
 
-    Invalid dbus type signature.
+    Invalid D-Bus type signature.
 
     .. py:attribute:: dbus_error_name
         :type: str
@@ -344,7 +344,7 @@ Error name exception list
 
 .. py:exception:: DbusInconsistentMessageError
 
-    Dbus message is malformed.
+    D-Bus message is malformed.
 
     .. py:attribute:: dbus_error_name
         :type: str

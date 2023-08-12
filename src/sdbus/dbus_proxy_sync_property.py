@@ -98,7 +98,7 @@ class DbusPropertySync(DbusPropertyCommon, DbusSomethingSync, Generic[T]):
         )
 
         if not self.property_signature:
-            raise AttributeError('Dbus property is read only')
+            raise AttributeError('D-Bus property is read only')
 
         assert obj._attached_bus is not None
         assert obj._remote_service_name is not None

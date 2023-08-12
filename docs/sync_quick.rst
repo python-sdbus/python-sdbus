@@ -10,8 +10,8 @@ Python-sdbus works by declaring interface classes.
 
 Interface classes for blocking IO should be derived from :py:class:`DbusInterfaceCommon`.
 
-The class constructor takes ``interface_name`` keyword to determine the dbus interface name for all
-dbus elements declared in the class body.
+The class constructor takes ``interface_name`` keyword to determine the D-Bus interface name for all
+D-Bus elements declared in the class body.
 
 Example::
 
@@ -42,13 +42,13 @@ Example::
         def test_int(self) -> int:
             raise NotImplementedError
 
-This is an interface of that defines a one dbus method and one property.
+This is an interface of that defines a one D-Bus method and one property.
 
 The actual body of the decorated function will not be called. Instead the call will be routed
-through dbus to a another process. Interface can have non-decorated functions that will act
+through D-Bus to a another process. Interface can have non-decorated functions that will act
 as regular methods.
 
-Blocking IO can only interact with existing dbus objects and can not be
+Blocking IO can only interact with existing D-Bus objects and can not be
 served for other processes to interact with. See :ref:`blocking-vs-async`
 
 Initiating proxy
@@ -68,7 +68,7 @@ Example creating a proxy and calling method::
 
     d.close_notification(1234)
 
-.. note:: Successfully initiating a proxy object does NOT guarantee that the dbus object
+.. note:: Successfully initiating a proxy object does NOT guarantee that the D-Bus object
           exists.
 
 Methods
@@ -98,7 +98,7 @@ Example: ::
 Properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-DBus property is defined by wrapping a function with :py:func:`dbus_property` decorator.
+D-Bus property is defined by wrapping a function with :py:func:`dbus_property` decorator.
 
 Example: ::
 
@@ -133,7 +133,7 @@ If property is read-only when :py:exc:`.DbusPropertyReadOnlyError` will be raise
 Multiple interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A dbus object can have multiple interfaces with different methods and properties.
+A D-Bus object can have multiple interfaces with different methods and properties.
 
 To implement this define multiple interface classes and do a
 multiple inheritance on all interfaces the object has.

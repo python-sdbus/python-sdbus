@@ -8,11 +8,11 @@ Classes
 
 .. py:class:: DbusInterfaceCommon(interface_name)
 
-    Dbus interface class.
-    Dbus methods and properties should be defined using
+    D-Bus interface class.
+    D-Bus methods and properties should be defined using
     :py:func:`dbus_property` and :py:func:`dbus_method` decorators.
 
-    :param str interface_name: Sets the dbus interface
+    :param str interface_name: Sets the D-Bus interface
         name that will be used for all properties and methods
         defined in the body of the class
 
@@ -21,22 +21,22 @@ Classes
         Init will create a proxy to a remote object
 
         :param str service_name: 
-            Remote object dbus connection name. 
+            Remote object D-Bus connection name.
             For example, systemd uses ``org.freedesktop.systemd1``
 
         :param str object_path:
-            Remote object dbus path.
+            Remote object D-Bus path.
             Should be a forward slash separated path.
             Starting object is usually ``/``.
             Example: ``/org/freedesktop/systemd/unit/dbus_2eservice``
 
         :param SdBus bus:
-            Optional dbus connection object.
-            If not passed the default dbus will be used.
+            Optional D-Bus connection object.
+            If not passed the default D-Bus will be used.
 
     .. py:method:: dbus_ping()
 
-        Pings the remote service using dbus.
+        Pings the remote service using D-Bus.
 
         Useful to test if connection or remote service is alive.
 
@@ -52,7 +52,7 @@ Classes
 
     .. py:method:: dbus_introspect()
 
-        Get dbus introspection XML.
+        Get D-Bus introspection XML.
 
         It is users responsibility to parse that data.
 
@@ -132,13 +132,13 @@ Decorators
 +++++++++++++++
 
 .. py:decorator:: dbus_method([input_signature, [flags, [method_name]]])
-    
-    Define dbus method
 
-    Decorated function becomes linked to dbus method.
+    Define D-Bus method
+
+    Decorated function becomes linked to D-Bus method.
     Always use round brackets () even when not passing any arguments.
 
-    :param str input_signature: dbus input signature.
+    :param str input_signature: D-Bus input signature.
         Defaults to "" meaning method takes no arguments.
         Required if method takes any arguments.
 
@@ -193,16 +193,16 @@ Decorators
 
 .. py:decorator:: dbus_property([property_signature, [flags, [property_name]]])
 
-    Define dbus property
+    Define D-Bus property
 
     Property works just like @property decorator would.
     Always use round brackets () even when not passing any arguments.
 
-    Read only property can be indicated by passing empty dbus signature "".
+    Read only property can be indicated by passing empty D-Bus signature "".
 
     Trying to assign a read only property will raise :py:exc:`AttributeError`
 
-    :param str property_signature: dbus property signature.
+    :param str property_signature: D-Bus property signature.
         Empty signature "" indicates read-only property.
         Defaults to empty signature "".
         Required only for writable properties.

@@ -347,7 +347,7 @@ class DbusArgsIntrospection:
         return DbusSigToTyping.typing_complete(self.dbus_type)
 
     def __repr__(self) -> str:
-        return (f"Dbus Arg: {self.name}, "
+        return (f"D-Bus Arg: {self.name}, "
                 f"type: {self.dbus_type}, "
                 f"is input: {self.is_input}")
 
@@ -412,7 +412,7 @@ class DbusMethodInrospection(DbusMemberAbstract):
             [x.dbus_type for x in self.result_args])
 
     def __repr__(self) -> str:
-        return (f"Dbus Method: {self.method_name}, "
+        return (f"D-Bus Method: {self.method_name}, "
                 f"args: {self.args_names_and_typing}, "
                 f"result: {self.dbus_result_signature}")
 
@@ -538,7 +538,7 @@ class DbusInterfaceIntrospection:
                 else:
                     ...
             else:
-                raise ValueError(f'Unknown dbus member {dbus_member}')
+                raise ValueError(f'Unknown D-Bus member {dbus_member}')
 
     def generate_interface_class(self) -> str:
         from jinja2 import Environment as JinjaEnv

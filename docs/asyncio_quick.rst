@@ -10,8 +10,8 @@ Python-sdbus works by declaring interface classes.
 
 Interface classes for async IO should be derived from :py:class:`DbusInterfaceCommonAsync`.
 
-The class constructor takes ``interface_name`` keyword to determine the dbus interface name for all
-dbus elements declared in the class body.
+The class constructor takes ``interface_name`` keyword to determine the D-Bus interface name for all
+D-Bus elements declared in the class body.
 
 Example: ::
 
@@ -77,14 +77,14 @@ Recommended to create proxy classes that a subclass of the interface: ::
             self._proxify('org.example.test', '/')
 
 
-.. note:: Successfully initiating a proxy object does NOT guarantee that the dbus object exists.
+.. note:: Successfully initiating a proxy object does NOT guarantee that the D-Bus object exists.
 
 Serving objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :py:meth:`DbusInterfaceCommonAsync.export_to_dbus` method
-will export the object to the dbus. After calling it the object
-becomes visible on dbus for other processes to call.
+will export the object to the D-Bus. After calling it the object
+becomes visible on D-Bus for other processes to call.
 
 Example using ExampleInterface from before: ::
 
@@ -238,7 +238,7 @@ Example: ::
 Signals
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To define a dbus signal wrap a function with :py:func:`dbus_signal_async` decorator.
+To define a D-Bus signal wrap a function with :py:func:`dbus_signal_async` decorator.
 
 The function is only used for type hints information. It is recommended
 to just put ``raise NotImplementedError`` in to the body of the function.
@@ -286,7 +286,7 @@ Example::
 Subclass Overrides
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you define a subclass which overrides a declared dbus method or property
+If you define a subclass which overrides a declared D-Bus method or property
 you need to use :py:func:`dbus_method_async_override` and :py:func:`dbus_property_async_override`
 decorators. Overridden property can decorate a new setter.
 
@@ -318,7 +318,7 @@ Example: ::
 Multiple interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A dbus object can have multiple interfaces with different methods and properties.
+A D-Bus object can have multiple interfaces with different methods and properties.
 
 To implement this define multiple interface classes and do a
 multiple inheritance on all interfaces the object has.

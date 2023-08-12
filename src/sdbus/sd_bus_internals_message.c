@@ -577,7 +577,7 @@ static PyObject* _parse_complete(PyObject* complete_obj, _Parse_state* parser_st
                 }
                 case '{': {
                         // Dict
-                        PyErr_SetString(PyExc_TypeError, "Dbus dict can't be outside of array");
+                        PyErr_SetString(PyExc_TypeError, "D-Bus dict can't be outside of array");
                         return NULL;
                         break;
                 }

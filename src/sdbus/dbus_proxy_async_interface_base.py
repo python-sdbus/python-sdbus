@@ -114,7 +114,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
             else:
                 if not isinstance(value, DbusOverload):
                     raise TypeError(
-                        "Attempted to overload dbus definition"
+                        "Attempted to overload D-Bus definition"
                         " without using @dbus_overload decorator"
                     )
 

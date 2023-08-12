@@ -659,8 +659,8 @@ static PyMethodDef SdBus_methods[] = {
     {"get_signal_queue_async", (SD_BUS_PY_FUNC_TYPE)SdBus_get_signal_queue, SD_BUS_PY_METH,
      "Returns a future that returns a queue that queues signal "
      "messages"},
-    {"request_name_async", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name_async, SD_BUS_PY_METH, "Request dbus name async"},
-    {"request_name", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name, SD_BUS_PY_METH, "Request dbus name blocking"},
+    {"request_name_async", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name_async, SD_BUS_PY_METH, "Request D-Bus name async"},
+    {"request_name", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name, SD_BUS_PY_METH, "Request D-Bus name blocking"},
     {"add_object_manager", (SD_BUS_PY_FUNC_TYPE)SdBus_add_object_manager, SD_BUS_PY_METH, "Add object manager at the path"},
     {"emit_object_added", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_added, SD_BUS_PY_METH, "Emit signal that object was added"},
     {"emit_object_removed", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_removed, SD_BUS_PY_METH, "Emit signal that object was removed"},

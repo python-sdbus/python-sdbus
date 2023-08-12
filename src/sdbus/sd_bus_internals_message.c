@@ -1003,17 +1003,18 @@ static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* s
 }
 
 static PyMethodDef SdBusMessage_methods[] = {
-    {"append_data", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_append_data, SD_BUS_PY_METH, "Append basic data based on signature."},
-    {"open_container", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_open_container, SD_BUS_PY_METH, "Open container for writing"},
-    {"close_container", (PyCFunction)SdBusMessage_close_container, METH_NOARGS, "Close container"},
-    {"enter_container", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_enter_container, SD_BUS_PY_METH, "Enter container for reading"},
-    {"exit_container", (PyCFunction)SdBusMessage_exit_container, METH_NOARGS, "Exit container"},
-    {"dump", (PyCFunction)SdBusMessage_dump, METH_NOARGS, "Dump message to stdout"},
-    {"seal", (PyCFunction)SdBusMessage_seal, METH_NOARGS, "Seal message contents"},
-    {"get_contents", (PyCFunction)SdBusMessage_get_contents2, METH_NOARGS, "Iterate over message contents"},
-    {"create_reply", (PyCFunction)SdBusMessage_create_reply, METH_NOARGS, "Create reply message"},
-    {"create_error_reply", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_create_error_reply, SD_BUS_PY_METH, "Create error reply with error name and error message"},
-    {"send", (PyCFunction)SdBusMessage_send, METH_NOARGS, "Queue message to be sent"},
+    {"append_data", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_append_data, SD_BUS_PY_METH, PyDoc_STR("Append basic data based on signature.")},
+    {"open_container", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_open_container, SD_BUS_PY_METH, PyDoc_STR("Open container for writing.")},
+    {"close_container", (PyCFunction)SdBusMessage_close_container, METH_NOARGS, PyDoc_STR("Close container.")},
+    {"enter_container", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_enter_container, SD_BUS_PY_METH, PyDoc_STR("Enter container for reading.")},
+    {"exit_container", (PyCFunction)SdBusMessage_exit_container, METH_NOARGS, PyDoc_STR("Exit container.")},
+    {"dump", (PyCFunction)SdBusMessage_dump, METH_NOARGS, PyDoc_STR("Dump message to stdout.")},
+    {"seal", (PyCFunction)SdBusMessage_seal, METH_NOARGS, PyDoc_STR("Seal message contents.")},
+    {"get_contents", (PyCFunction)SdBusMessage_get_contents2, METH_NOARGS, PyDoc_STR("Iterate over message contents.")},
+    {"create_reply", (PyCFunction)SdBusMessage_create_reply, METH_NOARGS, PyDoc_STR("Create reply message.")},
+    {"create_error_reply", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_create_error_reply, SD_BUS_PY_METH,
+     PyDoc_STR("Create error reply with error name and error message.")},
+    {"send", (PyCFunction)SdBusMessage_send, METH_NOARGS, PyDoc_STR("Queue message to be sent.")},
     {NULL, NULL, 0, NULL},
 };
 
@@ -1083,12 +1084,12 @@ static PyObject* SdBusMessage_sender_getter(SdBusMessageObject* self, void* Py_U
 }
 
 static PyGetSetDef SdBusMessage_properies[] = {
-    {"expect_reply", (getter)SdBusMessage_expect_reply_getter, (setter)SdBusMessage_expect_reply_setter, "Expect reply message?", NULL},
-    {"destination", (getter)SdBusMessage_destination_getter, NULL, "Message destination service name", NULL},
-    {"path", (getter)SdBusMessage_path_getter, NULL, "Message destination object path", NULL},
-    {"interface", (getter)SdBusMessage_interface_getter, NULL, "Message destination interface name", NULL},
-    {"member", (getter)SdBusMessage_member_getter, NULL, "Message destination member name", NULL},
-    {"sender", (getter)SdBusMessage_sender_getter, NULL, "Message sender name", NULL},
+    {"expect_reply", (getter)SdBusMessage_expect_reply_getter, (setter)SdBusMessage_expect_reply_setter, PyDoc_STR("Expect reply message?"), NULL},
+    {"destination", (getter)SdBusMessage_destination_getter, NULL, PyDoc_STR("Message destination service name."), NULL},
+    {"path", (getter)SdBusMessage_path_getter, NULL, PyDoc_STR("Message destination object path."), NULL},
+    {"interface", (getter)SdBusMessage_interface_getter, NULL, PyDoc_STR("Message destination interface name."), NULL},
+    {"member", (getter)SdBusMessage_member_getter, NULL, PyDoc_STR("Message destination member name."), NULL},
+    {"sender", (getter)SdBusMessage_sender_getter, NULL, PyDoc_STR("Message sender name."), NULL},
     {0},
 };
 

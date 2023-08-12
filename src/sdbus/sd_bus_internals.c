@@ -70,7 +70,7 @@ PyType_Spec SdBusSlotType = {
 };
 
 static PyModuleDef sd_bus_internals_module = {
-    PyModuleDef_HEAD_INIT, .m_name = "sd_bus_internals", .m_doc = "Sd bus internals module.", .m_methods = SdBusPyInternal_methods, .m_size = -1,
+    PyModuleDef_HEAD_INIT, .m_name = "sd_bus_internals", .m_doc = PyDoc_STR("Sd bus internals module."), .m_methods = SdBusPyInternal_methods, .m_size = -1,
 };
 
 PyObject* SdBus_class = NULL;

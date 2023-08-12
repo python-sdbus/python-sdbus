@@ -645,27 +645,24 @@ static PyObject* SdBus_start(SdBusObject* self, PyObject* Py_UNUSED(args)) {
 }
 
 static PyMethodDef SdBus_methods[] = {
-    {"call", (SD_BUS_PY_FUNC_TYPE)SdBus_call, SD_BUS_PY_METH, "Send message and get reply"},
-    {"call_async", (SD_BUS_PY_FUNC_TYPE)SdBus_call_async, SD_BUS_PY_METH, "Async send message, returns awaitable future"},
-    {"drive", (PyCFunction)SdBus_drive, METH_NOARGS, "Drive connection"},
-    {"get_fd", (SD_BUS_PY_FUNC_TYPE)SdBus_get_fd, SD_BUS_PY_METH, "Get file descriptor to await on"},
-    {"new_method_call_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_method_call_message, SD_BUS_PY_METH, NULL},
-    {"new_property_get_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_property_get_message, SD_BUS_PY_METH, NULL},
-    {"new_property_set_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_property_set_message, SD_BUS_PY_METH,
-     "Set object/interface property. User must add variant data to "
-     "message"},
-    {"new_signal_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_signal_message, SD_BUS_PY_METH, "Create new signal message. User must data to message and send it"},
-    {"add_interface", (SD_BUS_PY_FUNC_TYPE)SdBus_add_interface, SD_BUS_PY_METH, "Add interface to the bus"},
+    {"call", (SD_BUS_PY_FUNC_TYPE)SdBus_call, SD_BUS_PY_METH, PyDoc_STR("Send message and block until the reply.")},
+    {"call_async", (SD_BUS_PY_FUNC_TYPE)SdBus_call_async, SD_BUS_PY_METH, PyDoc_STR("Async send message, returns awaitable future.")},
+    {"drive", (PyCFunction)SdBus_drive, METH_NOARGS, PyDoc_STR("Drive connection.")},
+    {"get_fd", (SD_BUS_PY_FUNC_TYPE)SdBus_get_fd, SD_BUS_PY_METH, PyDoc_STR("Get file descriptor to poll on.")},
+    {"new_method_call_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_method_call_message, SD_BUS_PY_METH, PyDoc_STR("Create new empty method call message.")},
+    {"new_property_get_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_property_get_message, SD_BUS_PY_METH, PyDoc_STR("Create new empty property get message.")},
+    {"new_property_set_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_property_set_message, SD_BUS_PY_METH, PyDoc_STR("Create new empty property set message.")},
+    {"new_signal_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_signal_message, SD_BUS_PY_METH, PyDoc_STR("Create new empty signal message.")},
+    {"add_interface", (SD_BUS_PY_FUNC_TYPE)SdBus_add_interface, SD_BUS_PY_METH, PyDoc_STR("Add interface to the bus.")},
     {"get_signal_queue_async", (SD_BUS_PY_FUNC_TYPE)SdBus_get_signal_queue, SD_BUS_PY_METH,
-     "Returns a future that returns a queue that queues signal "
-     "messages"},
-    {"request_name_async", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name_async, SD_BUS_PY_METH, "Request D-Bus name async"},
-    {"request_name", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name, SD_BUS_PY_METH, "Request D-Bus name blocking"},
-    {"add_object_manager", (SD_BUS_PY_FUNC_TYPE)SdBus_add_object_manager, SD_BUS_PY_METH, "Add object manager at the path"},
-    {"emit_object_added", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_added, SD_BUS_PY_METH, "Emit signal that object was added"},
-    {"emit_object_removed", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_removed, SD_BUS_PY_METH, "Emit signal that object was removed"},
-    {"close", (PyCFunction)SdBus_close, METH_NOARGS, "Close connection"},
-    {"start", (PyCFunction)SdBus_start, METH_NOARGS, "Start connection"},
+     PyDoc_STR("Returns a future that returns a queue that queues signal messages.")},
+    {"request_name_async", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name_async, SD_BUS_PY_METH, PyDoc_STR("Request D-Bus name async.")},
+    {"request_name", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name, SD_BUS_PY_METH, PyDoc_STR("Request D-Bus name blocking.")},
+    {"add_object_manager", (SD_BUS_PY_FUNC_TYPE)SdBus_add_object_manager, SD_BUS_PY_METH, PyDoc_STR("Add object manager at the path.")},
+    {"emit_object_added", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_added, SD_BUS_PY_METH, PyDoc_STR("Emit signal that object was added.")},
+    {"emit_object_removed", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_removed, SD_BUS_PY_METH, PyDoc_STR("Emit signal that object was removed.")},
+    {"close", (PyCFunction)SdBus_close, METH_NOARGS, PyDoc_STR("Close connection.")},
+    {"start", (PyCFunction)SdBus_start, METH_NOARGS, PyDoc_STR("Start connection.")},
     {NULL, NULL, 0, NULL},
 };
 
@@ -682,7 +679,7 @@ static PyObject* SdBus_address_getter(SdBusObject* self, void* Py_UNUSED(closure
 }
 
 static PyGetSetDef SdBus_properies[] = {
-    {"address", (getter)SdBus_address_getter, NULL, "Bus address", NULL},
+    {"address", (getter)SdBus_address_getter, NULL, PyDoc_STR("Bus address."), NULL},
     {0},
 };
 

@@ -321,10 +321,10 @@ static PyObject* SdBusInterface_create_vtable(SdBusInterfaceObject* self, PyObje
 }
 
 static PyMethodDef SdBusInterface_methods[] = {
-    {"add_method", (SD_BUS_PY_FUNC_TYPE)SdBusInterface_add_method, SD_BUS_PY_METH, "Add method to the dbus interface"},
-    {"add_property", (SD_BUS_PY_FUNC_TYPE)SdBusInterface_add_property, SD_BUS_PY_METH, "Add property to the dbus interface"},
-    {"add_signal", (SD_BUS_PY_FUNC_TYPE)SdBusInterface_add_signal, SD_BUS_PY_METH, "Add signal to the dbus interface"},
-    {"_create_vtable", (PyCFunction)SdBusInterface_create_vtable, METH_NOARGS, "Creates the vtable"},
+    {"add_method", (SD_BUS_PY_FUNC_TYPE)SdBusInterface_add_method, SD_BUS_PY_METH, PyDoc_STR("Add method to the D-Bus interface.")},
+    {"add_property", (SD_BUS_PY_FUNC_TYPE)SdBusInterface_add_property, SD_BUS_PY_METH, PyDoc_STR("Add property to the D-Bus interface.")},
+    {"add_signal", (SD_BUS_PY_FUNC_TYPE)SdBusInterface_add_signal, SD_BUS_PY_METH, PyDoc_STR("Add signal to the D-Bus interface.")},
+    {"_create_vtable", (PyCFunction)SdBusInterface_create_vtable, METH_NOARGS, PyDoc_STR("Creates the vtable.")},
     {NULL, NULL, 0, NULL},
 };
 

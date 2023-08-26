@@ -436,12 +436,12 @@ class DbusPropertyIntrospection(DbusMemberAbstract):
         self.is_explicit = False
 
         access_type = element.attrib['access']
-        if access_type == 'readwrite':
+        if access_type == 'readwrite' or access_type == 'write':
             self.is_read_only = False
         elif access_type == 'read':
             self.is_read_only = True
         else:
-            raise ValueError(f"Unknown property access {self.is_read_only}")
+            raise ValueError(f"Unknown property access {access_type}")
 
         super().__init__(element)
 

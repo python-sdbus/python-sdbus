@@ -25,6 +25,7 @@ project = 'python-sdbus'
 author = 'igo95862'
 source_suffix = '.rst'
 extensions = ['sdbus.autodoc']
+html_theme = "sphinx_rtd_theme"
 
 autoclass_content = 'both'
 autodoc_typehints = 'description'

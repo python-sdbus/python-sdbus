@@ -19,15 +19,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from inspect import getmembers
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from .dbus_common_funcs import _parse_properties_vardict, get_default_bus
 from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
 from .dbus_proxy_async_method import dbus_method_async
-from .dbus_proxy_async_property import DbusPropertyAsyncBinded
 from .dbus_proxy_async_signal import dbus_signal_async
-from .sd_bus_internals import DbusPropertyEmitsChangeFlag, SdBus, SdBusSlot
+from .sd_bus_internals import SdBus, SdBusSlot
 
 
 class DbusPeerInterfaceAsync(
@@ -66,13 +64,6 @@ class DbusPropertiesInterfaceAsync(
     interface_name='org.freedesktop.DBus.Properties',
     serving_enabled=False,
 ):
-    def __init__(self) -> None:
-        super().__init__()
-
-        for key, value in getmembers(self):
-            if isinstance(value, DbusPropertyAsyncBinded):
-                if not value.dbus_property.flags & DbusPropertyEmitsChangeFlag:
-                    continue
 
     @dbus_signal_async('sa{sv}as')
     def properties_changed(self) -> DBUS_PROPERTIES_CHANGED_TYPING:

@@ -429,6 +429,14 @@ class TestDbusTypes(IsolatedDbusTestCase):
 
         self.assertEqual(message.get_contents(), TestEnum.SOMETHING)
 
+    def test_reading_multiple_times(self) -> None:
+        message = create_message(self.bus)
+        message.append_data('s', 'test')
+        message.seal()
+
+        for _ in range(5):
+            message.get_contents()
+
 
 if __name__ == "__main__":
     main()

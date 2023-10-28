@@ -21,7 +21,9 @@ from __future__ import annotations
 
 from importlib.util import find_spec
 from unittest import SkipTest, TestCase, main
+from unittest.mock import MagicMock, patch
 
+from sdbus.__main__ import generator_main
 from sdbus.interface_generator import (
     DbusSigToTyping,
     camel_case_to_snake_case,
@@ -29,6 +31,7 @@ from sdbus.interface_generator import (
     interface_name_to_class,
     interfaces_from_str,
 )
+from sdbus.unittest import IsolatedDbusTestCase
 
 test_xml = """
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
@@ -196,6 +199,35 @@ class TestConverter(TestCase):
         generated = generate_async_py_file(interfaces_intro)
         self.assertIn('flags=DbusPropertyEmitsInvalidationFlag', generated)
         self.assertIn('flags=DbusPropertyConstFlag', generated)
+
+
+class TestGeneratorAgainstDbus(IsolatedDbusTestCase):
+    def test_generate_from_connection(self) -> None:
+        if find_spec('jinja2') is None:
+            raise SkipTest('Jinja2 not installed')
+
+        with patch("sdbus.__main__.stdout") as stdout_mock:
+            generator_main(
+                [
+                    "gen-from-connection",
+                    "org.freedesktop.DBus",
+                    "/org/freedesktop/DBus",
+                ]
+            )
+
+        write_mock: MagicMock = stdout_mock.write
+        write_mock.assert_called_once()
+
+        generated_interface = write_mock.call_args.args[0]
+
+        self.assertIn(
+            "OrgFreedesktopDBusDebugStatsInterface",
+            generated_interface,
+        )
+        self.assertIn(
+            "get_connection_unix_process_id",
+            generated_interface,
+        )
 
 
 if __name__ == "__main__":

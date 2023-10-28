@@ -518,6 +518,33 @@ class TestProxy(IsolatedDbusTestCase):
                     timeout=1,
                 )
 
+    async def test_signal_multiple_readers(self) -> None:
+        test_object, test_object_connection = initialize_object()
+
+        loop = get_running_loop()
+
+        test_tuple = ('sgfsretg', 'asd')
+
+        async def reader_one() -> Tuple[str, str]:
+            async for x in test_object_connection.test_signal.catch():
+                return test_tuple
+
+            raise RuntimeError
+
+        async def reader_two() -> Tuple[str, str]:
+            async for x in test_object_connection.test_signal.catch():
+                return test_tuple
+
+            raise RuntimeError
+
+        t1 = loop.create_task(reader_one())
+        t2 = loop.create_task(reader_two())
+
+        loop.call_at(0, test_object.test_signal.emit, test_tuple)
+
+        self.assertEqual(test_tuple, await wait_for(t1, timeout=1))
+        self.assertEqual(test_tuple, await wait_for(t2, timeout=1))
+
     async def test_exceptions(self) -> None:
         test_object, test_object_connection = initialize_object()
 

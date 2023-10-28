@@ -26,7 +26,7 @@ from typing import List, Optional
 
 from .interface_generator import (
     DbusInterfaceIntrospection,
-    generate_async_py_file,
+    generate_py_file,
     interfaces_from_file,
     interfaces_from_str,
 )
@@ -37,6 +37,7 @@ def run_gen_from_connection(
     object_paths: List[str],
     system: bool,
     imports_header: bool,
+    do_async: bool,
 ) -> None:
     connection_name = connection_name
     object_paths = object_paths
@@ -55,19 +56,31 @@ def run_gen_from_connection(
         interfaces.extend(interfaces_from_str(itrospection))
 
     stdout.write(
-        generate_async_py_file(
-            interfaces, imports_header))
+        generate_py_file(
+            interfaces,
+            imports_header,
+            do_async,
+        )
+    )
 
 
-def run_gen_from_file(filenames: List[str], imports_header: bool) -> None:
+def run_gen_from_file(
+    filenames: List[str],
+    imports_header: bool,
+    do_async: bool,
+) -> None:
     interfaces: List[DbusInterfaceIntrospection] = []
 
     for file in filenames:
         interfaces.extend(interfaces_from_file(file))
 
     stdout.write(
-        generate_async_py_file(
-            interfaces, imports_header))
+        generate_py_file(
+            interfaces,
+            imports_header,
+            do_async,
+        )
+    )
 
 
 def generator_main(args: Optional[List[str]] = None) -> None:
@@ -92,6 +105,17 @@ def generator_main(args: Optional[List[str]] = None) -> None:
             "--imports-header", action="store_true", default=True,
             dest="imports_header",
             help="Include 'import' header (default)",
+        )
+
+        subparser.add_argument(
+            "--async", action="store_true", default=True,
+            dest="do_async",
+            help="Generate async interfaces (default)",
+        )
+        subparser.add_argument(
+            "--block", action="store_false",
+            dest="do_async",
+            help="Generate blocking interfaces",
         )
 
     generate_from_file_parser.add_argument(

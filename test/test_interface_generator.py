@@ -27,7 +27,7 @@ from sdbus.__main__ import generator_main
 from sdbus.interface_generator import (
     DbusSigToTyping,
     camel_case_to_snake_case,
-    generate_async_py_file,
+    generate_py_file,
     interface_name_to_class,
     interfaces_from_str,
 )
@@ -196,7 +196,7 @@ class TestConverter(TestCase):
                         False,
                     )
 
-        generated = generate_async_py_file(interfaces_intro)
+        generated = generate_py_file(interfaces_intro)
         self.assertIn('flags=DbusPropertyEmitsInvalidationFlag', generated)
         self.assertIn('flags=DbusPropertyConstFlag', generated)
 
@@ -226,6 +226,38 @@ class TestGeneratorAgainstDbus(IsolatedDbusTestCase):
         )
         self.assertIn(
             "get_connection_unix_process_id",
+            generated_interface,
+        )
+        self.assertIn(
+            "async",
+            generated_interface,
+        )
+
+    def test_generate_from_connection_blocking(self) -> None:
+        if find_spec('jinja2') is None:
+            raise SkipTest('Jinja2 not installed')
+
+        with patch("sdbus.__main__.stdout") as stdout_mock:
+            generator_main(
+                [
+                    "gen-from-connection",
+                    "--block",
+                    "org.freedesktop.DBus",
+                    "/org/freedesktop/DBus",
+                ]
+            )
+
+        write_mock: MagicMock = stdout_mock.write
+        write_mock.assert_called_once()
+
+        generated_interface = write_mock.call_args.args[0]
+
+        self.assertNotIn(
+            "async",
+            generated_interface,
+        )
+        self.assertIn(
+            "dbus_property",
             generated_interface,
         )
 

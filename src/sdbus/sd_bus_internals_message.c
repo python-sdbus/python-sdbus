@@ -955,7 +955,7 @@ static PyObject* iter_tuple_or_single(_Parse_state* parser) {
 }
 
 static PyObject* SdBusMessage_get_contents2(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
-        const char* message_signature = sd_bus_message_get_signature(self->message_ref, 1);
+        const char* message_signature = sd_bus_message_get_signature(self->message_ref, 0);
 
         if (message_signature == NULL) {
                 PyErr_SetString(PyExc_TypeError, "Failed to get message signature.");
@@ -966,7 +966,7 @@ static PyObject* SdBusMessage_get_contents2(SdBusMessageObject* self, PyObject* 
                 Py_RETURN_NONE;
         }
 
-        CALL_SD_BUS_AND_CHECK(sd_bus_message_rewind(self->message_ref, 1));
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_rewind(self->message_ref, 0));
         _Parse_state read_parser = {
             .message = self->message_ref,
             .container_char_ptr = message_signature,

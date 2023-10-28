@@ -435,7 +435,10 @@ class TestDbusTypes(IsolatedDbusTestCase):
         message.seal()
 
         for _ in range(5):
-            message.get_contents()
+            self.assertEqual(
+                message.get_contents(),
+                "test",
+            )
 
 
 if __name__ == "__main__":

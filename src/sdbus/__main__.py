@@ -19,10 +19,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from pathlib import Path
 from sys import stdout
-from typing import List
+from typing import List, Optional
 
 from .interface_generator import (
     DbusInterfaceIntrospection,
@@ -32,13 +32,18 @@ from .interface_generator import (
 )
 
 
-def run_gen_from_connection(namespace: Namespace) -> None:
-    connection_name = namespace.connection_name
-    object_paths = namespace.object_paths
+def run_gen_from_connection(
+    connection_name: str,
+    object_paths: List[str],
+    system: bool,
+    imports_header: bool,
+) -> None:
+    connection_name = connection_name
+    object_paths = object_paths
 
     from .dbus_proxy_sync_interfaces import DbusInterfaceCommon
 
-    if namespace.system:
+    if system:
         from .dbus_common_funcs import set_default_bus
         from .sd_bus_internals import sd_bus_open_system
         set_default_bus(sd_bus_open_system())
@@ -51,21 +56,21 @@ def run_gen_from_connection(namespace: Namespace) -> None:
 
     stdout.write(
         generate_async_py_file(
-            interfaces, namespace.no_imports_header))
+            interfaces, imports_header))
 
 
-def run_gen_from_file(namespace: Namespace) -> None:
+def run_gen_from_file(filenames: List[str], imports_header: bool) -> None:
     interfaces: List[DbusInterfaceIntrospection] = []
 
-    for file in namespace.filenames:
+    for file in filenames:
         interfaces.extend(interfaces_from_file(file))
 
     stdout.write(
         generate_async_py_file(
-            interfaces, namespace.no_imports_header))
+            interfaces, imports_header))
 
 
-def generator_main() -> None:
+def generator_main(args: Optional[List[str]] = None) -> None:
 
     main_arg_parser = ArgumentParser()
     subparsers = main_arg_parser.add_subparsers()
@@ -73,16 +78,26 @@ def generator_main() -> None:
     generate_from_file_parser = subparsers.add_parser('gen-from-file')
     generate_from_file_parser.set_defaults(func=run_gen_from_file)
 
-    generate_from_file_parser.add_argument(
-        'filenames', type=Path, nargs='+')
-
-    generate_from_file_parser.add_argument(
-        '--no-imports-header', action='store_false', default=True,
-        help="Do NOT include 'import' header",
-    )
-
     generate_from_connection = subparsers.add_parser('gen-from-connection')
     generate_from_connection.set_defaults(func=run_gen_from_connection)
+
+    # Common options
+    for subparser in (generate_from_file_parser, generate_from_connection):
+        subparser.add_argument(
+            "--no-imports-header", action="store_false",
+            dest="imports_header",
+            help="Do NOT include 'import' header",
+        )
+        subparser.add_argument(
+            "--imports-header", action="store_true", default=True,
+            dest="imports_header",
+            help="Include 'import' header (default)",
+        )
+
+    generate_from_file_parser.add_argument(
+        'filenames', type=Path, nargs='+',
+        help="Paths to interface XML introspection files"
+    )
 
     generate_from_connection.add_argument(
         'connection_name',
@@ -100,17 +115,14 @@ def generator_main() -> None:
         )
     )
     generate_from_connection.add_argument(
-        '--no-imports-header', action='store_false', default=True,
-        help="Do NOT include 'import' header",
-    )
-    generate_from_connection.add_argument(
         '--system',
         help='Use system D-Bus instead of session.',
         action='store_true',
     )
 
-    args = main_arg_parser.parse_args()
-    args.func(args)
+    args_dict = vars(main_arg_parser.parse_args(args))
+    func = args_dict.pop("func")
+    func(**args_dict)
 
 
 if __name__ == "__main__":

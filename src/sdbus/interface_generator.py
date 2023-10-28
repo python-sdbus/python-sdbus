@@ -540,89 +540,117 @@ class DbusInterfaceIntrospection:
             else:
                 raise ValueError(f'Unknown D-Bus member {dbus_member}')
 
-    def generate_interface_class(self) -> str:
-        from jinja2 import Environment as JinjaEnv
-
-        env = JinjaEnv(trim_blocks=True)
-        template = env.from_string(async_interface_template_txt)
-
-        return template.render(interface=self)
-
-
-async_import_header_txt = """
-from __future__ import annotations
-
-from typing import Any, Dict, List, Tuple
-
-from sdbus import (DbusDeprecatedFlag, DbusInterfaceCommonAsync,
-                   DbusNoReplyFlag, DbusPropertyConstFlag,
-                   DbusPropertyEmitsChangeFlag,
-                   DbusPropertyEmitsInvalidationFlag, DbusPropertyExplicitFlag,
-                   DbusUnprivilegedFlag, dbus_method_async,
-                   dbus_property_async, dbus_signal_async)
-"""
-
-async_interface_template_txt = """
-
-class {{ interface.python_name }}(
-    DbusInterfaceCommonAsync,
-    interface_name='{{ interface.interface_name }}',
-):
-{% for method in interface.methods %}
-
-    @dbus_method_async(
-{% if method.dbus_input_signature %}
-        input_signature='{{ method.dbus_input_signature }}',
-{% endif %}
-{% if method.dbus_result_signature %}
-        result_signature='{{ method.dbus_result_signature }}',
-{% endif %}
-{% if method.flags_str %}
-        flags={{ method.flags_str }},
-{% endif %}
-    )
-    async def {{ method.python_name }}(
-        self,
-{% for arg_name, arg_type in method.args_names_and_typing %}
-        {{ arg_name }}: {{ arg_type }},
-{% endfor %}
-    ) -> {{ method.result_typing }}:
-        raise NotImplementedError
-{% endfor %}
-{% for a_property in interface.properties %}
-
-    @dbus_property_async(
-{% if a_property.dbus_signature %}
-        property_signature='{{ a_property.dbus_signature }}',
-{% endif %}
-{% if a_property.flags_str %}
-        flags={{ a_property.flags_str }},
-{% endif %}
-    )
-    def {{ a_property.python_name }}(self) -> {{ a_property.typing }}:
-        raise NotImplementedError
-{% endfor %}
-{% for signal in interface.signals %}
-
-    @dbus_signal_async(
-{% if signal.dbus_signature %}
-        signal_signature='{{ signal.dbus_signature }}',
-{% endif %}
-{% if signal.flags_str %}
-        flags={{ signal.flags_str }},
-{% endif %}
-    )
-    def {{ signal.python_name }}(self) -> {{ signal.typing }}:
-        raise NotImplementedError
-{% endfor %}
-
-"""
 
 SKIP_INTERFACES = {
     'org.freedesktop.DBus.Properties',
     'org.freedesktop.DBus.Introspectable',
     'org.freedesktop.DBus.Peer',
     'org.freedesktop.DBus.ObjectManager',
+}
+
+INTERFACE_TEMPLATES: Dict[str, str] = {
+    "generic_header": r"""from __future__ import annotations
+
+from typing import Any, Dict, List, Tuple""",
+    "async_imports_header": r"""from sdbus import (
+    DbusDeprecatedFlag,
+    DbusInterfaceCommonAsync,
+    DbusNoReplyFlag,
+    DbusPropertyConstFlag,
+    DbusPropertyEmitsChangeFlag,
+    DbusPropertyEmitsInvalidationFlag,
+    DbusPropertyExplicitFlag,
+    DbusUnprivilegedFlag,
+    dbus_method_async,
+    dbus_property_async,
+    dbus_signal_async,
+)""",
+    "async_main": (
+        r"""{% if include_import_header -%}
+{% include 'generic_header' %}
+
+{% include 'async_imports_header' %}
+{%- endif %}
+{% for interface in interfaces %}
+
+{% include 'async_interface' %}
+{%- endfor %}
+"""
+    ),
+    "async_interface": (
+        r"""class {{ interface.python_name }}(
+    DbusInterfaceCommonAsync,
+    interface_name="{{ interface.interface_name }}",
+):
+{%- filter indent -%}
+{% for method in interface.methods -%}
+{% include 'async_method' %}
+{% endfor -%}
+{% for a_property in interface.properties -%}
+{% include 'async_property' %}
+{% endfor -%}
+{% for signal in interface.signals -%}
+{% include 'async_signal' %}
+{% endfor -%}
+{%- endfilter -%}
+"""
+    ),
+    "async_method": (
+        r"""
+@dbus_method_async(
+
+{%- if method.dbus_input_signature %}
+    input_signature="{{ method.dbus_input_signature }}",
+{%- endif %}
+
+{%- if method.dbus_result_signature %}
+    result_signature="{{ method.dbus_result_signature }}",
+{%- endif %}
+
+{%- if method.flags_str %}
+    flags={{ method.flags_str }},
+{%- endif %}
+)
+async def {{ method.python_name }}(
+    self,
+
+{%- for arg_name, arg_type in method.args_names_and_typing %}
+    {{ arg_name }}: {{ arg_type }},
+{%- endfor %}
+) -> {{ method.result_typing }}:
+    raise NotImplementedError
+"""
+    ),
+    "async_property": (
+        r"""
+@dbus_property_async(
+
+{%- if a_property.dbus_signature %}
+    property_signature="{{ a_property.dbus_signature }}",
+{%- endif %}
+
+{%- if a_property.flags_str %}
+    flags={{ a_property.flags_str }},
+{%- endif %}
+)
+def {{ a_property.python_name }}(self) -> {{ a_property.typing }}:
+    raise NotImplementedError"""
+    ),
+    "async_signal": (
+        r"""
+@dbus_signal_async(
+
+{%- if signal.dbus_signature %}
+    signal_signature="{{ signal.dbus_signature }}",
+{%- endif %}
+
+{%- if signal.flags_str %}
+    flags={{ signal.flags_str }},
+{%- endif %}
+)
+def {{ signal.python_name }}(self) -> {{ signal.typing }}:
+    raise NotImplementedError"""
+    ),
 }
 
 
@@ -666,10 +694,11 @@ def generate_async_py_file(
         interfaces: List[DbusInterfaceIntrospection],
         include_import_header: bool = True) -> str:
 
-    interfaces_definitions = '\n'.join(
-        (x.generate_interface_class() for x in interfaces))
+    from jinja2 import DictLoader
+    from jinja2 import Environment as JinjaEnv
 
-    if include_import_header:
-        return async_import_header_txt + interfaces_definitions
-    else:
-        return interfaces_definitions
+    env = JinjaEnv(loader=DictLoader(INTERFACE_TEMPLATES))
+    return env.get_template("async_main").render(
+        interfaces=interfaces,
+        include_import_header=include_import_header,
+    )

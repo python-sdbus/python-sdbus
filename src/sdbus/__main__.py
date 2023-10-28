@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
+from sys import stdout
 from typing import List
 
 from .interface_generator import (
@@ -48,7 +49,7 @@ def run_gen_from_connection(namespace: Namespace) -> None:
         itrospection = connection.dbus_introspect()
         interfaces.extend(interfaces_from_str(itrospection))
 
-    print(
+    stdout.write(
         generate_async_py_file(
             interfaces, namespace.no_imports_header))
 
@@ -59,7 +60,7 @@ def run_gen_from_file(namespace: Namespace) -> None:
     for file in namespace.filenames:
         interfaces.extend(interfaces_from_file(file))
 
-    print(
+    stdout.write(
         generate_async_py_file(
             interfaces, namespace.no_imports_header))
 

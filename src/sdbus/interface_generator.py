@@ -540,6 +540,10 @@ class DbusInterfaceIntrospection:
             else:
                 raise ValueError(f'Unknown D-Bus member {dbus_member}')
 
+    @property
+    def has_members(self) -> bool:
+        return any((self.methods, self.properties, self.signals))
+
 
 SKIP_INTERFACES = {
     'org.freedesktop.DBus.Properties',
@@ -549,6 +553,7 @@ SKIP_INTERFACES = {
 }
 
 INTERFACE_TEMPLATES: Dict[str, str] = {
+    "generic_no_members": r"...  # Interface has no members",
     "generic_method_flags": (
         r"""
 {%- if method.dbus_input_signature %}
@@ -609,6 +614,7 @@ from typing import Any, Dict, List, Tuple""",
     interface_name="{{ interface.interface_name }}",
 ):
 {%- filter indent -%}
+{%- if interface.has_members -%}
 {% for method in interface.methods -%}
 {% include 'async_method' %}
 {% endfor -%}
@@ -618,6 +624,9 @@ from typing import Any, Dict, List, Tuple""",
 {% for signal in interface.signals -%}
 {% include 'async_signal' %}
 {% endfor -%}
+{%- else %}
+{% include 'generic_no_members' %}
+{% endif -%}
 {%- endfilter -%}
 """
     ),
@@ -693,12 +702,16 @@ def {{ signal.python_name }}(self) -> {{ signal.typing }}:
     interface_name="{{ interface.interface_name }}",
 ):
 {%- filter indent -%}
+{%- if interface.has_members -%}
 {% for method in interface.methods -%}
 {% include 'blocking_method' %}
 {% endfor -%}
 {% for a_property in interface.properties -%}
 {% include 'blocking_property' %}
 {% endfor -%}
+{%- else %}
+{% include 'generic_no_members' %}
+{% endif -%}
 {%- endfilter -%}
 """
     ),

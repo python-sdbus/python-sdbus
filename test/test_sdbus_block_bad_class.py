@@ -19,10 +19,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from unittest import TestCase
+from unittest import SkipTest, TestCase
 from unittest import main as unittest_main
 
 from sdbus import DbusInterfaceCommon, dbus_method, dbus_property
+from sdbus.sd_bus_internals import is_interface_name_valid
 
 
 class GoodDbusInterface(DbusInterfaceCommon):
@@ -72,6 +73,55 @@ class TestBadDbusClass(TestCase):
             class GoodSubclass(GoodDbusInterface):
                 def new_method(self) -> int:
                     return 1
+
+    def test_bad_class_names(self) -> None:
+        if not __debug__:
+            raise SkipTest("Assertions are not enabled")
+
+        try:
+            is_interface_name_valid("org.test")
+        except NotImplementedError:
+            raise SkipTest("Validation functions not available")
+
+        with self.assertRaisesRegex(AssertionError, "^Invalid interface name"):
+
+            class BadInterfaceName(
+                DbusInterfaceCommon,
+                interface_name="0.test",
+            ):
+                ...
+
+        with self.assertRaisesRegex(
+            AssertionError,
+            "^Invalid method name",
+        ):
+
+            class BadMethodName(
+                DbusInterfaceCommon,
+                interface_name="org.example",
+            ):
+                @dbus_method(
+                    result_signature="s",
+                    method_name="🤫",
+                )
+                def test(self) -> str:
+                    return "test"
+
+        with self.assertRaisesRegex(
+            AssertionError,
+            "^Invalid property name",
+        ):
+
+            class BadPropertyName(
+                DbusInterfaceCommon,
+                interface_name="org.example",
+            ):
+                @dbus_property(
+                    property_signature="s",
+                    property_name="🤫",
+                )
+                def test(self) -> str:
+                    return "test"
 
 
 if __name__ == "__main__":

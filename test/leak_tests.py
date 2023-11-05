@@ -42,7 +42,7 @@ from .test_low_level_errors import (
     InterfaceWithErrors,
 )
 from .test_read_write_dbus_types import TestDbusTypes
-from .test_sd_bus_async import TestPing, TestProxy, initialize_object
+from .test_sdbus_async import TestPing, TestProxy, initialize_object
 
 ENABLE_LEAK_TEST_VAR = 'PYTHON_SDBUS_TEST_LEAKS'
 

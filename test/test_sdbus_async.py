@@ -40,7 +40,6 @@ from sdbus.sd_bus_internals import (
     DbusDeprecatedFlag,
     DbusPropertyConstFlag,
     DbusPropertyEmitsChangeFlag,
-    is_interface_name_valid,
 )
 from sdbus.unittest import IsolatedDbusTestCase
 from sdbus.utils import parse_properties_changed
@@ -753,82 +752,6 @@ class TestProxy(IsolatedDbusTestCase):
 
         test_object = EnumedInterfaceAsync()
         test_object.export_to_dbus(ObjectPathEnum.FOO)
-
-    async def test_name_validations(self) -> None:
-        if not __debug__:
-            raise SkipTest('Assertions are not enabled')
-
-        try:
-            is_interface_name_valid('org.test')
-        except NotImplementedError:
-            raise SkipTest('Validation functions not available')
-
-        def test_bad_interface_name() -> None:
-            class BadInterfaceName(
-                DbusInterfaceCommonAsync,
-                interface_name='0.test',
-            ):
-                ...
-
-        self.assertRaisesRegex(
-            AssertionError,
-            '^Invalid interface name',
-            test_bad_interface_name,
-        )
-
-        def test_bad_method_name() -> None:
-            class BadMethodName(
-                DbusInterfaceCommonAsync,
-                interface_name='org.example',
-            ):
-                @dbus_method_async(
-                    result_signature='s',
-                    method_name='🤫',
-                )
-                async def test(self) -> str:
-                    return 'test'
-
-        self.assertRaisesRegex(
-            AssertionError,
-            '^Invalid method name',
-            test_bad_method_name,
-        )
-
-        def test_bad_property_name() -> None:
-            class BadPropertyName(
-                DbusInterfaceCommonAsync,
-                interface_name='org.example',
-            ):
-                @dbus_property_async(
-                    property_signature='s',
-                    property_name='🤫',
-                )
-                def test(self) -> str:
-                    return 'test'
-
-        self.assertRaisesRegex(
-            AssertionError,
-            '^Invalid property name',
-            test_bad_property_name,
-        )
-
-        def test_bad_signal_name() -> None:
-            class BadSignalName(
-                DbusInterfaceCommonAsync,
-                interface_name='org.example',
-            ):
-                @dbus_signal_async(
-                    signal_signature='s',
-                    signal_name='🤫',
-                )
-                def test(self) -> str:
-                    raise NotImplementedError
-
-        self.assertRaisesRegex(
-            AssertionError,
-            '^Invalid signal name',
-            test_bad_signal_name,
-        )
 
     async def test_properties_get_all_dict(self) -> None:
         test_object, test_object_connection = initialize_object()

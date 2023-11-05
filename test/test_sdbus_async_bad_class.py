@@ -22,66 +22,27 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest import main as unittest_main
 
-from sdbus import DbusInterfaceCommon, dbus_method, dbus_property
+from sdbus import (
+    DbusInterfaceCommonAsync,
+    dbus_method_async,
+    dbus_property_async,
+    dbus_signal_async,
+)
 
 from .common_test_util import skip_if_no_name_validations
 
 
-class GoodDbusInterface(DbusInterfaceCommon):
-    @dbus_method()
-    def test_method(self) -> None:
-        raise NotImplementedError
-
-    @dbus_property("s")
-    def test_property(self) -> str:
-        return "test"
-
-
-class TestBadDbusClass(TestCase):
-    def test_method_name_override(self) -> None:
-        with self.subTest("Method override"), self.assertRaises(TypeError):
-
-            class BadMethodOverrideClass(GoodDbusInterface):
-                def test_method(self) -> None:
-                    return
-
-        with self.subTest("D-Bus method override"), self.assertRaises(
-            TypeError
-        ):
-
-            class BadDbusMethodOverrideClass(GoodDbusInterface):
-                @dbus_method()
-                def test_method(self) -> None:
-                    return
-
-        with self.subTest("Property override"), self.assertRaises(TypeError):
-
-            class BadPropertyOverrideClass(GoodDbusInterface):
-                def test_property(self) -> str:  # type: ignore
-                    return "override"
-
-        with self.subTest("D-Bus property override"), self.assertRaises(
-            TypeError
-        ):
-
-            class BadDbusPropertyOverrideClass(GoodDbusInterface):
-                @dbus_property("s")
-                def test_property(self) -> str:
-                    return "override"
-
-        with self.subTest("Good new method"):
-
-            class GoodSubclass(GoodDbusInterface):
-                def new_method(self) -> int:
-                    return 1
-
-    def test_bad_class_names(self) -> None:
+class TestBadAsyncDbusClass(TestCase):
+    def test_name_validations(self) -> None:
         skip_if_no_name_validations()
 
-        with self.assertRaisesRegex(AssertionError, "^Invalid interface name"):
+        with self.assertRaisesRegex(
+            AssertionError,
+            "^Invalid interface name",
+        ):
 
             class BadInterfaceName(
-                DbusInterfaceCommon,
+                DbusInterfaceCommonAsync,
                 interface_name="0.test",
             ):
                 ...
@@ -92,14 +53,14 @@ class TestBadDbusClass(TestCase):
         ):
 
             class BadMethodName(
-                DbusInterfaceCommon,
+                DbusInterfaceCommonAsync,
                 interface_name="org.example",
             ):
-                @dbus_method(
+                @dbus_method_async(
                     result_signature="s",
                     method_name="🤫",
                 )
-                def test(self) -> str:
+                async def test(self) -> str:
                     return "test"
 
         with self.assertRaisesRegex(
@@ -108,15 +69,31 @@ class TestBadDbusClass(TestCase):
         ):
 
             class BadPropertyName(
-                DbusInterfaceCommon,
+                DbusInterfaceCommonAsync,
                 interface_name="org.example",
             ):
-                @dbus_property(
+                @dbus_property_async(
                     property_signature="s",
                     property_name="🤫",
                 )
                 def test(self) -> str:
                     return "test"
+
+        with self.assertRaisesRegex(
+            AssertionError,
+            "^Invalid signal name",
+        ):
+
+            class BadSignalName(
+                DbusInterfaceCommonAsync,
+                interface_name="org.example",
+            ):
+                @dbus_signal_async(
+                    signal_signature="s",
+                    signal_name="🤫",
+                )
+                def test(self) -> str:
+                    raise NotImplementedError
 
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from unittest import main
+from unittest import SkipTest, main
 
 
 def mem_test() -> None:
@@ -35,3 +35,23 @@ def mem_test_single(test_class: type, test_name: str) -> None:
         t = test_class()
         t.setUp()
         getattr(t, test_name)()
+
+
+def skip_if_no_asserts() -> None:
+    try:
+        assert False
+    except AssertionError:
+        return
+
+    raise SkipTest("Assertions are not enabled")
+
+
+def skip_if_no_name_validations() -> None:
+    skip_if_no_asserts()
+
+    from sdbus.sd_bus_internals import is_interface_name_valid
+
+    try:
+        is_interface_name_valid("org.test")
+    except NotImplementedError:
+        raise SkipTest("Validation functions not available")

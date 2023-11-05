@@ -116,7 +116,6 @@ class LeakTests(IsolatedDbusTestCase):
             await TestProxy.test_method_kwargs(pseudo_test)
             await TestProxy.test_method(pseudo_test)
             await TestProxy.test_subclass(pseudo_test)
-            await TestProxy.test_bad_subclass(pseudo_test)
             await TestProxy.test_properties(pseudo_test)
             await TestProxy.test_signal(pseudo_test)
             await TestProxy.test_exceptions(pseudo_test)

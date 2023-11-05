@@ -22,14 +22,26 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest import main as unittest_main
 
+from sdbus.dbus_common_funcs import PROPERTY_FLAGS_MASK, count_bits
+
 from sdbus import (
+    DbusDeprecatedFlag,
     DbusInterfaceCommonAsync,
+    DbusPropertyConstFlag,
+    DbusPropertyEmitsChangeFlag,
     dbus_method_async,
+    dbus_method_async_override,
     dbus_property_async,
     dbus_signal_async,
 )
 
-from .common_test_util import skip_if_no_name_validations
+from .common_test_util import skip_if_no_asserts, skip_if_no_name_validations
+
+
+class TestInterface(DbusInterfaceCommonAsync):
+    @dbus_method_async(result_signature="i")
+    async def test_int(self) -> int:
+        return 1
 
 
 class TestBadAsyncDbusClass(TestCase):
@@ -94,6 +106,69 @@ class TestBadAsyncDbusClass(TestCase):
                 )
                 def test(self) -> str:
                     raise NotImplementedError
+
+    def test_property_flags(self) -> None:
+        self.assertEqual(0, PROPERTY_FLAGS_MASK & DbusDeprecatedFlag)
+        self.assertEqual(
+            1,
+            count_bits(
+                PROPERTY_FLAGS_MASK
+                & (DbusDeprecatedFlag | DbusPropertyEmitsChangeFlag)
+            ),
+        )
+        self.assertEqual(
+            2,
+            count_bits(
+                PROPERTY_FLAGS_MASK
+                & (
+                    DbusDeprecatedFlag
+                    | DbusPropertyConstFlag
+                    | DbusPropertyEmitsChangeFlag
+                )
+            ),
+        )
+
+        with self.subTest("Test incorrect flags"), self.assertRaisesRegex(
+            AssertionError,
+            "^Incorrect number of Property flags",
+        ):
+            skip_if_no_asserts()
+
+            class InvalidPropertiesFlags(
+                DbusInterfaceCommonAsync, interface_name="org.test.test"
+            ):
+                @dbus_property_async(
+                    "s",
+                    flags=DbusPropertyConstFlag | DbusPropertyEmitsChangeFlag,
+                )
+                def test_constant(self) -> str:
+                    return "a"
+
+        with self.subTest("Valid properties flags"):
+
+            class ValidPropertiesFlags(
+                DbusInterfaceCommonAsync, interface_name="org.test.test"
+            ):
+                @dbus_property_async(
+                    "s",
+                    flags=DbusDeprecatedFlag | DbusPropertyEmitsChangeFlag,
+                )
+                def test_constant(self) -> str:
+                    return "a"
+
+    def test_bad_subclass(self) -> None:
+        with self.assertRaises(TypeError):
+
+            class TestInheritence(TestInterface):
+                async def test_int(self) -> int:
+                    return 2
+
+        with self.assertRaises(TypeError):
+
+            class TestInheritence2(TestInterface):
+                @dbus_method_async_override()
+                async def test_unrelated(self) -> int:
+                    return 2
 
 
 if __name__ == "__main__":

@@ -25,7 +25,6 @@ from asyncio.subprocess import create_subprocess_exec
 from typing import Tuple, cast
 from unittest import SkipTest
 
-from sdbus.dbus_common_funcs import PROPERTY_FLAGS_MASK, count_bits
 from sdbus.dbus_proxy_async_interfaces import DBUS_PROPERTIES_CHANGED_TYPING
 from sdbus.exceptions import (
     DbusFailedError,
@@ -37,8 +36,6 @@ from sdbus.exceptions import (
 )
 from sdbus.sd_bus_internals import (
     DBUS_ERROR_TO_EXCEPTION,
-    DbusDeprecatedFlag,
-    DbusPropertyConstFlag,
     DbusPropertyEmitsChangeFlag,
 )
 from sdbus.unittest import IsolatedDbusTestCase
@@ -384,18 +381,6 @@ class TestProxy(IsolatedDbusTestCase):
             self.assertEqual(
                 await test_subclass_tri_connection.test_property, 'tri')
 
-    async def test_bad_subclass(self) -> None:
-        with self.assertRaises(TypeError):
-            class TestInheritence(TestInterface):
-                async def test_int(self) -> int:
-                    return 2
-
-        with self.assertRaises(TypeError):
-            class TestInheritence2(TestInterface):
-                @dbus_method_async_override()
-                async def test_unrelated(self) -> int:
-                    return 2
-
     async def test_properties(self) -> None:
         test_object, test_object_connection = initialize_object()
 
@@ -660,51 +645,6 @@ class TestProxy(IsolatedDbusTestCase):
 
         self.assertEqual(t1_result, test_str)
         self.assertEqual(t2_result, test_str)
-
-    async def test_property_flags(self) -> None:
-        self.assertEqual(0, PROPERTY_FLAGS_MASK & DbusDeprecatedFlag)
-        self.assertEqual(
-            1,
-            count_bits(PROPERTY_FLAGS_MASK & (DbusDeprecatedFlag
-                                              | DbusPropertyEmitsChangeFlag))
-        )
-        self.assertEqual(
-            2,
-            count_bits(
-                PROPERTY_FLAGS_MASK & (
-                    DbusDeprecatedFlag |
-                    DbusPropertyConstFlag |
-                    DbusPropertyEmitsChangeFlag)))
-
-        def must_raise_value_error() -> None:
-            class InvalidPropertiesFlags(
-                DbusInterfaceCommonAsync,
-                    interface_name='org.test.test'):
-                @dbus_property_async(
-                    "s",
-                    flags=DbusPropertyConstFlag | DbusPropertyEmitsChangeFlag,
-                )
-                def test_constant(self) -> str:
-                    return "a"
-
-        self.assertRaisesRegex(
-            AssertionError,
-            '^Incorrect number of Property flags',
-            must_raise_value_error,
-        )
-
-        def should_be_no_error() -> None:
-            class ValidPropertiesFlags(
-                DbusInterfaceCommonAsync,
-                    interface_name='org.test.test'):
-                @dbus_property_async(
-                    "s",
-                    flags=DbusDeprecatedFlag | DbusPropertyEmitsChangeFlag,
-                )
-                def test_constant(self) -> str:
-                    return "a"
-
-        should_be_no_error()
 
     async def test_bus_close(self) -> None:
         test_object, test_object_connection = initialize_object()

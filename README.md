@@ -3,6 +3,10 @@
 
 # Modern Python library for D-Bus
 
+<a href="https://repology.org/project/python:sdbus/versions">
+    <img src="https://repology.org/badge/vertical-allrepos/python:sdbus.svg" alt="Packaging status" align="right">
+</a>
+
 Features:
 
 * Asyncio and blocking calls.

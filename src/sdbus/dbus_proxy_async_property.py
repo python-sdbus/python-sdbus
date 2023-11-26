@@ -21,17 +21,7 @@ from __future__ import annotations
 
 from inspect import iscoroutinefunction
 from types import FunctionType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Generator,
-    Generic,
-    Optional,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
@@ -40,13 +30,15 @@ from .dbus_common_elements import (
     DbusPropertyCommon,
     DbusSomethingAsync,
 )
-from .sd_bus_internals import SdBusMessage
-
-T = TypeVar('T')
-
 
 if TYPE_CHECKING:
+    from typing import Any, Callable, Generator, Optional, Type
+
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
+    from .sd_bus_internals import SdBusMessage
+
+
+T = TypeVar('T')
 
 
 class DbusPropertyAsync(DbusSomethingAsync, DbusPropertyCommon, Generic[T]):

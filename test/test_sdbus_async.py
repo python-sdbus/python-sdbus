@@ -22,10 +22,9 @@ from __future__ import annotations
 
 from asyncio import Event, get_running_loop, sleep, wait_for
 from asyncio.subprocess import create_subprocess_exec
-from typing import Tuple, cast
+from typing import TYPE_CHECKING, cast
 from unittest import SkipTest
 
-from sdbus.dbus_proxy_async_interfaces import DBUS_PROPERTIES_CHANGED_TYPING
 from sdbus.exceptions import (
     DbusFailedError,
     DbusFileExistsError,
@@ -51,6 +50,15 @@ from sdbus import (
     dbus_signal_async,
     get_current_message,
 )
+
+if TYPE_CHECKING:
+    from typing import Tuple
+
+    from sdbus.dbus_proxy_async_interfaces import (
+        DBUS_PROPERTIES_CHANGED_TYPING,
+    )
+else:
+    DBUS_PROPERTIES_CHANGED_TYPING = None
 
 
 class TestPing(IsolatedDbusTestCase):

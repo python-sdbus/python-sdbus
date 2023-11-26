@@ -21,19 +21,7 @@ from __future__ import annotations
 
 from asyncio import Queue
 from types import FunctionType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    AsyncGenerator,
-    Callable,
-    Generic,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
@@ -42,13 +30,23 @@ from .dbus_common_elements import (
     DbusSomethingAsync,
 )
 from .dbus_common_funcs import get_default_bus
-from .sd_bus_internals import SdBus, SdBusMessage
-
-T = TypeVar('T')
-
 
 if TYPE_CHECKING:
+    from typing import (
+        Any,
+        AsyncGenerator,
+        Callable,
+        Optional,
+        Sequence,
+        Tuple,
+        Type,
+    )
+
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
+    from .sd_bus_internals import SdBus, SdBusMessage
+
+
+T = TypeVar('T')
 
 
 class DbusSignalAsync(DbusSomethingAsync, DbusSingalCommon, Generic[T]):

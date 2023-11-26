@@ -20,26 +20,29 @@
 from __future__ import annotations
 
 from asyncio import Future, Queue
-from typing import (
-    Any,
-    Callable,
-    Coroutine,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING
 
-DbusBasicTypes = Union[str, int, bytes, float, Any]
-DbusStructType = Tuple[DbusBasicTypes, ...]
-DbusDictType = Dict[DbusBasicTypes, DbusBasicTypes]
-DbusVariantType = Tuple[str, DbusStructType]
-DbusListType = List[DbusBasicTypes]
-DbusCompleteTypes = Union[DbusBasicTypes, DbusStructType,
-                          DbusDictType, DbusVariantType, DbusListType]
+if TYPE_CHECKING:
+    from typing import (
+        Any,
+        Callable,
+        Coroutine,
+        Dict,
+        List,
+        Optional,
+        Sequence,
+        Tuple,
+        Type,
+        Union,
+    )
+
+    DbusBasicTypes = Union[str, int, bytes, float, Any]
+    DbusStructType = Tuple[DbusBasicTypes, ...]
+    DbusDictType = Dict[DbusBasicTypes, DbusBasicTypes]
+    DbusVariantType = Tuple[str, DbusStructType]
+    DbusListType = List[DbusBasicTypes]
+    DbusCompleteTypes = Union[DbusBasicTypes, DbusStructType,
+                              DbusDictType, DbusVariantType, DbusListType]
 
 __STUB_ERROR = (
     'Typing stub. You should never see this '

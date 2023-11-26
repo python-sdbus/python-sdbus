@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Set, Tuple, cast
+from typing import TYPE_CHECKING, cast
 
 from .dbus_common_elements import (
     DbusInterfaceMetaCommon,
@@ -29,7 +29,11 @@ from .dbus_common_elements import (
 from .dbus_common_funcs import get_default_bus
 from .dbus_proxy_sync_method import DbusMethodSync
 from .dbus_proxy_sync_property import DbusPropertySync
-from .sd_bus_internals import SdBus
+
+if TYPE_CHECKING:
+    from typing import Any, Dict, Optional, Set, Tuple
+
+    from .sd_bus_internals import SdBus
 
 
 class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):

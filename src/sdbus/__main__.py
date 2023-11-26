@@ -22,14 +22,18 @@ from __future__ import annotations
 from argparse import ArgumentParser
 from pathlib import Path
 from sys import stdout
-from typing import List, Optional
+from typing import TYPE_CHECKING
 
 from .interface_generator import (
-    DbusInterfaceIntrospection,
     generate_py_file,
     interfaces_from_file,
     interfaces_from_str,
 )
+
+if TYPE_CHECKING:
+    from typing import List, Optional
+
+    from .interface_generator import DbusInterfaceIntrospection
 
 
 def run_gen_from_connection(

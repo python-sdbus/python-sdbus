@@ -21,25 +21,18 @@ from __future__ import annotations
 
 from inspect import iscoroutinefunction
 from types import FunctionType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Generic,
-    Optional,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 from .dbus_common_elements import DbusPropertyCommon, DbusSomethingSync
 from .dbus_common_funcs import _check_sync_in_async_env
 
-T = TypeVar('T')
-
-
 if TYPE_CHECKING:
+    from typing import Any, Callable, Optional, Type
+
     from .dbus_proxy_sync_interface_base import DbusInterfaceBase
+
+
+T = TypeVar('T')
 
 
 class DbusPropertySync(DbusPropertyCommon, DbusSomethingSync, Generic[T]):

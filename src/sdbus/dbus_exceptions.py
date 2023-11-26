@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple, cast
+from typing import TYPE_CHECKING
 
 from .sd_bus_internals import (
     SdBusBaseError,
@@ -27,13 +27,18 @@ from .sd_bus_internals import (
     map_exception_to_dbus_error,
 )
 
+if TYPE_CHECKING:
+    from typing import Any, Dict, Tuple
+
 
 class DbusErrorMeta(type):
 
-    def __new__(cls, name: str,
-                bases: Tuple[type, ...],
-                namespace: Dict[str, Any],
-                ) -> DbusErrorMeta:
+    def __new__(
+        cls,
+        name: str,
+        bases: Tuple[type, ...],
+        namespace: Dict[str, Any],
+    ) -> DbusErrorMeta:
 
         dbus_error_name = namespace.get('dbus_error_name')
 
@@ -41,8 +46,11 @@ class DbusErrorMeta(type):
             raise TypeError('D-Bus error name not passed')
 
         new_cls = super().__new__(cls, name, bases, namespace)
+        assert issubclass(new_cls, Exception), (
+            f"New class {new_cls} is not an Exception but {bases}."
+        )
 
-        add_exception_mapping(cast(Exception, new_cls))
+        add_exception_mapping(new_cls)
 
         return new_cls
 

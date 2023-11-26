@@ -22,16 +22,7 @@ from __future__ import annotations
 from contextvars import ContextVar, copy_context
 from inspect import iscoroutinefunction
 from types import FunctionType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Optional,
-    Sequence,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, cast
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
@@ -41,21 +32,23 @@ from .dbus_common_elements import (
     DbusSomethingAsync,
 )
 from .dbus_exceptions import DbusFailedError
-from .sd_bus_internals import DbusNoReplyFlag, SdBusMessage
+from .sd_bus_internals import DbusNoReplyFlag
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Optional, Sequence, Type, TypeVar
+
+    from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
+    from .sd_bus_internals import SdBusMessage
+
+    T = TypeVar('T')
+else:
+    T = None
 
 CURRENT_MESSAGE: ContextVar[SdBusMessage] = ContextVar('CURRENT_MESSAGE')
 
 
 def get_current_message() -> SdBusMessage:
     return CURRENT_MESSAGE.get()
-
-
-T_input = TypeVar('T_input')
-T = TypeVar('T')
-
-
-if TYPE_CHECKING:
-    from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
 
 
 class DbusMethodAsync(DbusMethodCommon, DbusSomethingAsync):
@@ -212,14 +205,14 @@ def dbus_method_async(
     result_args_names: Sequence[str] = (),
     input_args_names: Sequence[str] = (),
     method_name: Optional[str] = None,
-) -> Callable[[T_input], T_input]:
+) -> Callable[[T], T]:
 
     assert not isinstance(input_signature, FunctionType), (
         "Passed function to decorator directly. "
         "Did you forget () round brackets?"
     )
 
-    def dbus_method_decorator(original_method: T_input) -> T_input:
+    def dbus_method_decorator(original_method: T) -> T:
         assert isinstance(original_method, FunctionType)
         assert iscoroutinefunction(original_method), (
             "Expected coroutine function. ",
@@ -235,7 +228,7 @@ def dbus_method_async(
             flags=flags,
         )
 
-        return cast(T_input, new_wrapper)
+        return cast(T, new_wrapper)
 
     return dbus_method_decorator
 

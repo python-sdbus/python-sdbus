@@ -20,19 +20,22 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import (
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Union,
-)
-from xml.etree.ElementTree import Element
+from typing import TYPE_CHECKING
 from xml.etree.ElementTree import fromstring as etree_from_str
 from xml.etree.ElementTree import parse as etree_from_file
+
+if TYPE_CHECKING:
+    from typing import (
+        Dict,
+        Iterable,
+        Iterator,
+        List,
+        Literal,
+        Optional,
+        Tuple,
+        Union,
+    )
+    from xml.etree.ElementTree import Element
 
 
 def _camel_case_to_snake_case_generator(camel: str) -> Iterator[str]:

@@ -25,10 +25,14 @@ from signal import SIGTERM
 from subprocess import DEVNULL
 from subprocess import run as subprocess_run
 from tempfile import TemporaryDirectory
-from typing import ClassVar
+from typing import TYPE_CHECKING
 from unittest import IsolatedAsyncioTestCase
 
 from sdbus import sd_bus_open_user, set_default_bus
+
+if TYPE_CHECKING:
+    from typing import ClassVar
+
 
 dbus_config = '''
 <busconfig>

@@ -19,22 +19,26 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import (
-    Any,
-    Dict,
-    FrozenSet,
-    Iterable,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING
 
 from .dbus_common_funcs import _parse_properties_vardict
 from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
-from .dbus_proxy_async_interfaces import DBUS_PROPERTIES_CHANGED_TYPING
+
+if TYPE_CHECKING:
+    from typing import (
+        Any,
+        Dict,
+        FrozenSet,
+        Iterable,
+        List,
+        Literal,
+        Optional,
+        Tuple,
+        Type,
+        Union,
+    )
+
+    from .dbus_proxy_async_interfaces import DBUS_PROPERTIES_CHANGED_TYPING
 
 
 def parse_properties_changed(

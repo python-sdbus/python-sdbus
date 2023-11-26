@@ -17,12 +17,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
-
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import TYPE_CHECKING
 
-from sphinx.application import Sphinx
 from sphinx.ext.autodoc import AttributeDocumenter, MethodDocumenter
 
 from .dbus_proxy_async_method import DbusMethodAsyncBinded
@@ -31,6 +29,11 @@ from .dbus_proxy_async_property import (
     DbusPropertyAsyncBinded,
 )
 from .dbus_proxy_async_signal import DbusSignalAsync, DbusSignalBinded
+
+if TYPE_CHECKING:
+    from typing import Any, Dict
+
+    from sphinx.application import Sphinx
 
 
 class DbusMethodDocumenter(MethodDocumenter):

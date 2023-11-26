@@ -19,13 +19,25 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import TYPE_CHECKING
 
 from .dbus_common_funcs import _parse_properties_vardict, get_default_bus
 from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
 from .dbus_proxy_async_method import dbus_method_async
 from .dbus_proxy_async_signal import dbus_signal_async
-from .sd_bus_internals import SdBus, SdBusSlot
+
+if TYPE_CHECKING:
+    from typing import Any, Dict, List, Literal, Optional, Tuple
+
+    from .sd_bus_internals import SdBus, SdBusSlot
+
+    DBUS_PROPERTIES_CHANGED_TYPING = (
+        Tuple[
+            str,
+            Dict[str, Tuple[str, Any]],
+            List[str],
+        ]
+    )
 
 
 class DbusPeerInterfaceAsync(
@@ -52,11 +64,6 @@ class DbusIntrospectableAsync(
     @dbus_method_async(method_name='Introspect')
     async def dbus_introspect(self) -> str:
         raise NotImplementedError
-
-
-DBUS_PROPERTIES_CHANGED_TYPING = Tuple[str,
-                                       Dict[str, Tuple[str, Any]],
-                                       List[str]]
 
 
 class DbusPropertiesInterfaceAsync(

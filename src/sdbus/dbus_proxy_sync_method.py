@@ -21,32 +21,20 @@ from __future__ import annotations
 
 from inspect import iscoroutinefunction
 from types import FunctionType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Optional,
-    Sequence,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from .dbus_common_elements import (
     DbusBindedSync,
     DbusMethodCommon,
     DbusSomethingSync,
 )
-from .sd_bus_internals import SdBus
-
-DEFAULT_BUS: Optional[SdBus] = None
-
-
-T_input = TypeVar('T_input')
-
 
 if TYPE_CHECKING:
+    from typing import Any, Callable, Optional, Sequence, Type
+
     from .dbus_proxy_sync_interface_base import DbusInterfaceBase
+
+T = TypeVar('T')
 
 
 class DbusMethodSync(DbusMethodCommon, DbusSomethingSync):
@@ -103,13 +91,13 @@ def dbus_method(
     result_signature: str = "",
     flags: int = 0,
     method_name: Optional[str] = None,
-) -> Callable[[T_input], T_input]:
+) -> Callable[[T], T]:
     assert not isinstance(input_signature, FunctionType), (
         "Passed function to decorator directly. "
         "Did you forget () round brackets?"
     )
 
-    def dbus_method_decorator(original_method: T_input) -> T_input:
+    def dbus_method_decorator(original_method: T) -> T:
         assert isinstance(original_method, FunctionType)
         assert not iscoroutinefunction(original_method), (
             "Expected NON coroutine function. ",
@@ -125,6 +113,6 @@ def dbus_method(
             flags=flags,
         )
 
-        return cast(T_input, new_wrapper)
+        return cast(T, new_wrapper)
 
     return dbus_method_decorator

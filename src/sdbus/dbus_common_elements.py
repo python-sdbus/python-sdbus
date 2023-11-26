@@ -20,23 +20,28 @@
 from __future__ import annotations
 
 from inspect import getfullargspec
-from types import FunctionType
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-)
+from typing import TYPE_CHECKING
 
 from .dbus_common_funcs import (
     _is_property_flags_correct,
     _method_name_converter,
 )
 from .sd_bus_internals import is_interface_name_valid, is_member_name_valid
+
+if TYPE_CHECKING:
+    from types import FunctionType
+    from typing import (
+        Any,
+        Callable,
+        Dict,
+        List,
+        Optional,
+        Sequence,
+        Tuple,
+        TypeVar,
+    )
+
+    T = TypeVar('T')
 
 
 class DbusSomethingCommon:
@@ -267,9 +272,6 @@ class DbusBindedAsync:
 
 class DbusBindedSync:
     ...
-
-
-T = TypeVar('T')
 
 
 class DbusOverload:

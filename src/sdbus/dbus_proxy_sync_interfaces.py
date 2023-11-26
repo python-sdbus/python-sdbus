@@ -19,10 +19,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import Any, Dict, Literal, Tuple
+from typing import TYPE_CHECKING
 
 from .dbus_proxy_sync_interface_base import DbusInterfaceBase
 from .dbus_proxy_sync_method import dbus_method
+
+if TYPE_CHECKING:
+    from typing import Any, Dict, Literal, Tuple
 
 
 class DbusPeerInterface(

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from asyncio import Future, get_running_loop
 from contextvars import ContextVar
-from typing import Any, Dict, Generator, Iterator, Literal, Tuple
+from typing import TYPE_CHECKING
 from warnings import warn
 
 from .sd_bus_internals import (
@@ -33,9 +33,13 @@ from .sd_bus_internals import (
     NameAllowReplacementFlag,
     NameQueueFlag,
     NameReplaceExistingFlag,
-    SdBus,
     sd_bus_open,
 )
+
+if TYPE_CHECKING:
+    from typing import Any, Dict, Generator, Iterator, Literal, Tuple
+
+    from .sd_bus_internals import SdBus
 
 DEFAULT_BUS: ContextVar[SdBus] = ContextVar('DEFAULT_BUS')
 

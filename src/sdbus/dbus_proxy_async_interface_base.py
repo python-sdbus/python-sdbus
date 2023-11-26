@@ -19,27 +19,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from asyncio import Queue
 from copy import deepcopy
 from inspect import getmembers
 from types import MethodType
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, cast
 from warnings import warn
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
-    DbusBindedAsync,
     DbusInterfaceMetaCommon,
     DbusOverload,
     DbusSomethingAsync,
@@ -52,9 +39,16 @@ from .dbus_proxy_async_property import (
     DbusPropertyAsyncBinded,
 )
 from .dbus_proxy_async_signal import DbusSignalAsync, DbusSignalBinded
-from .sd_bus_internals import SdBus, SdBusInterface
+from .sd_bus_internals import SdBusInterface
 
-T_input = TypeVar('T_input')
+if TYPE_CHECKING:
+    from asyncio import Queue
+    from typing import Dict, List, Optional, Set, Tuple, Type, TypeVar
+
+    from .dbus_common_elements import DbusBindedAsync
+    from .sd_bus_internals import SdBus
+
+    Self = TypeVar('Self', bound="DbusInterfaceBaseAsync")
 
 
 class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
@@ -296,32 +290,28 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
 
     @classmethod
     def new_connect(
-        cls: Type[T_input],
+        cls: Type[Self],
         service_name: str,
         object_path: str,
         bus: Optional[SdBus] = None,
-    ) -> T_input:
+    ) -> Self:
         warn(
             ("new_connect is deprecated in favor of equivalent new_proxy."
              "Will be removed in version 1.0.0"),
             DeprecationWarning,
         )
         new_object = cls.__new__(cls)
-        assert isinstance(new_object, DbusInterfaceBaseAsync)
         new_object._proxify(service_name, object_path, bus)
-        assert isinstance(new_object, cls)
         return new_object
 
     @classmethod
     def new_proxy(
-        cls: Type[T_input],
+        cls: Type[Self],
         service_name: str,
         object_path: str,
         bus: Optional[SdBus] = None,
-    ) -> T_input:
+    ) -> Self:
 
         new_object = cls.__new__(cls)
-        assert isinstance(new_object, DbusInterfaceBaseAsync)
         new_object._proxify(service_name, object_path, bus)
-        assert isinstance(new_object, cls)
         return new_object

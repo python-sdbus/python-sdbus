@@ -22,16 +22,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from .dbus_common_elements import (
+    DbusClassMeta,
     DbusInterfaceMetaCommon,
+    DbusRemoteObjectMeta,
     DbusSomethingAsync,
-    DbusSomethingSync,
+    DbusSomethingCommon,
 )
-from .dbus_common_funcs import get_default_bus
 from .dbus_proxy_sync_method import DbusMethodSync
 from .dbus_proxy_sync_property import DbusPropertySync
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Set, Tuple
+    from typing import Any, ClassVar, Dict, Optional, Tuple
 
     from .sd_bus_internals import SdBus
 
@@ -44,46 +45,78 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
                 serving_enabled: bool = True,
                 ) -> DbusInterfaceMetaSync:
 
-        dbus_served_interfaces_names = (
-            {interface_name}
-            if serving_enabled and interface_name is not None
-            else set()
-        )
-        dbus_to_python_name_map: Dict[str, str] = {}
-        declared_interfaces = set()
-        # Set interface name
-        for key, value in namespace.items():
-            assert not isinstance(value, DbusSomethingAsync), (
-                "Can't mix async methods in sync interface."
-            )
+        dbus_class_meta = DbusClassMeta()
+        if interface_name is not None:
+            dbus_class_meta.dbus_interfaces_names.add(interface_name)
 
-            if isinstance(value, DbusSomethingSync):
-                declared_interfaces.add(key)
+        for attr_name, attr in namespace.items():
+            if not isinstance(attr, DbusSomethingCommon):
+                continue
 
-            if isinstance(value, DbusMethodSync):
-                dbus_to_python_name_map[value.method_name] = key
-            elif isinstance(value, DbusPropertySync):
-                dbus_to_python_name_map[value.property_name] = key
-
-        super_declared_interfaces = set()
-        for base in bases:
-            if issubclass(base, DbusInterfaceBase):
-                super_declared_interfaces.update(
-                    base._dbus_declared_interfaces)
-
-                dbus_to_python_name_map.update(
-                    base._dbus_to_python_name_map
+            if isinstance(attr, DbusSomethingAsync):
+                raise TypeError(
+                    f"Can't mix async methods in sync interface: {attr_name!r}"
                 )
 
-        for key in super_declared_interfaces & namespace.keys():
-            raise TypeError("Attempted to overload D-Bus definition"
-                            " blocking interfaces do not support overloading")
+            if isinstance(attr, DbusMethodSync):
+                dbus_class_meta.dbus_member_to_python_attr[
+                    attr.method_name] = attr_name
+                dbus_class_meta.python_attr_to_dbus_member[
+                    attr_name] = attr.method_name
+            elif isinstance(attr, DbusPropertySync):
+                dbus_class_meta.dbus_member_to_python_attr[
+                    attr.property_name] = attr_name
+                dbus_class_meta.python_attr_to_dbus_member[
+                    attr_name] = attr.property_name
+            else:
+                raise TypeError(f"Unknown D-Bus element: {attr!r}")
 
-        namespace['_dbus_served_interfaces_names'] = \
-            dbus_served_interfaces_names
-        namespace['_dbus_declared_interfaces'] = declared_interfaces
-        namespace['_dbus_to_python_name_map'] = dbus_to_python_name_map
+        for base in bases:
+            if not issubclass(base, DbusInterfaceBase):
+                continue
 
+            # Update interfaces names set
+            base_interfaces_names = base._dbus_meta.dbus_interfaces_names
+            if dbus_interface_name_collision := (
+                dbus_class_meta.dbus_interfaces_names
+                & base_interfaces_names
+            ):
+                raise TypeError(
+                    f"Interface {name!r} and {base!r} have interface name "
+                    f"collision: {dbus_interface_name_collision}"
+                )
+            else:
+                dbus_class_meta.dbus_interfaces_names.update(
+                    base_interfaces_names
+                )
+
+            if dbus_member_collision := (
+                dbus_class_meta.dbus_member_to_python_attr.keys()
+                & base._dbus_meta.dbus_member_to_python_attr.keys()
+            ):
+                raise TypeError(
+                    f"Interface {name!r} and {base!r} have D-Bus member "
+                    f"collision: {dbus_member_collision}"
+                )
+            else:
+                dbus_class_meta.dbus_member_to_python_attr.update(
+                    base._dbus_meta.dbus_member_to_python_attr
+                )
+
+            if python_attr_collision := (
+                namespace.keys()
+                & base._dbus_meta.python_attr_to_dbus_member.keys()
+            ):
+                raise TypeError(
+                    f"Interface {name!r} and {base!r} have Python attribute "
+                    f"collision: {python_attr_collision}"
+                )
+            else:
+                dbus_class_meta.python_attr_to_dbus_member.update(
+                    base._dbus_meta.python_attr_to_dbus_member
+                )
+
+        namespace['_dbus_meta'] = dbus_class_meta
         new_cls = super().__new__(
             cls, name, bases, namespace,
             interface_name,
@@ -94,18 +127,12 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
 
 
 class DbusInterfaceBase(metaclass=DbusInterfaceMetaSync):
-    _dbus_declared_interfaces: Set[str]
-    _dbus_serving_enabled: bool
-    _dbus_to_python_name_map: Dict[str, str]
-    _dbus_served_interfaces_names: Set[str]
+    _dbus_meta: ClassVar[DbusClassMeta]
 
     def __init__(
-            self,
-            service_name: str,
-            object_path: str,
-            bus: Optional[SdBus] = None, ) -> None:
-        self._remote_service_name = service_name
-        self._remote_object_path = object_path
-        self._attached_bus: SdBus = (
-            bus if bus is not None
-            else get_default_bus())
+        self,
+        service_name: str,
+        object_path: str,
+        bus: Optional[SdBus] = None,
+    ):
+        self._dbus = DbusRemoteObjectMeta(service_name, object_path, bus)

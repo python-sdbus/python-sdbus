@@ -78,6 +78,22 @@ class TestBadDbusClass(TestCase):
                 def new_method(self) -> int:
                     return 1
 
+    def test_interface_collision(self) -> None:
+        with self.subTest("No collision"):
+            class NonInterface(GoodDbusInterface):
+                def do_work(self) -> None:
+                    ...
+
+        class NewExampleInterface(
+            DbusInterfaceCommon,
+            interface_name="org.example.test",
+        ):
+            ...
+
+        with self.subTest("Collision"), self.assertRaises(TypeError):
+            class Collision(NewExampleInterface, GoodDbusInterface):
+                ...
+
     def test_bad_class_names(self) -> None:
         skip_if_no_name_validations()
 

@@ -22,6 +22,8 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest import main as unittest_main
 
+from sdbus.dbus_common_funcs import PROPERTY_FLAGS_MASK, count_bits
+
 from sdbus import (
     DbusDeprecatedFlag,
     DbusInterfaceCommonAsync,
@@ -32,7 +34,6 @@ from sdbus import (
     dbus_property_async,
     dbus_signal_async,
 )
-from sdbus.dbus_common_funcs import PROPERTY_FLAGS_MASK, count_bits
 
 from .common_test_util import skip_if_no_asserts, skip_if_no_name_validations
 

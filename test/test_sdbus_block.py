@@ -45,17 +45,15 @@ class TestSync(IsolatedDbusTestCase):
         self.assertIsInstance(
             s.get_connection_uid('org.freedesktop.DBus'), int)
 
-        def test_invalid_assignment() -> None:
+        with self.assertRaises(DbusPropertyReadOnlyError):
             s.features = ['test']
-
-        self.assertRaises(DbusPropertyReadOnlyError, test_invalid_assignment)
 
         self.assertTrue(s.get_name_owner('org.example.test'))
 
         with self.subTest('Test dbus to python name map'):
             self.assertEqual(
                 'features',
-                s._dbus_to_python_name_map['Features'],
+                s._dbus_meta.dbus_member_to_python_attr['Features'],
             )
 
         with self.subTest('Test properties_get_all_dict'):

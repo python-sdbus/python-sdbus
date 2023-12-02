@@ -70,12 +70,12 @@ class DbusPropertiesInterface(
     ) -> Dict[str, Any]:
         properties: Dict[str, Any] = {}
 
-        for interface_name in self._dbus_served_interfaces_names:
-            dbus_properties_data = self._properties_get_all(
-                interface_name)
+        for interface_name in self._dbus_meta.dbus_interfaces_names:
+            dbus_properties_data = self._properties_get_all(interface_name)
             for member_name, variant in dbus_properties_data.items():
                 try:
-                    python_name = self._dbus_to_python_name_map[member_name]
+                    python_name = self._dbus_meta.dbus_member_to_python_attr[
+                        member_name]
                 except KeyError:
                     if on_unknown_member == 'error':
                         raise

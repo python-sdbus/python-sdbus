@@ -70,16 +70,16 @@ class DbusPropertySync(DbusPropertyCommon, DbusSomethingSync, Generic[T]):
             "other asyncio methods for considerable time."
         )
 
-        new_call_message = obj._attached_bus. \
-            new_property_get_message(
-                obj._remote_service_name,
-                obj._remote_object_path,
+        new_call_message = (
+            obj._dbus.attached_bus.new_property_get_message(
+                obj._dbus.service_name,
+                obj._dbus.object_path,
                 self.interface_name,
                 self.property_name,
             )
+        )
 
-        reply_message = obj._attached_bus. \
-            call(new_call_message)
+        reply_message = obj._dbus.attached_bus.call(new_call_message)
         return cast(T, reply_message.get_contents()[1])
 
     def __set__(self, obj: DbusInterfaceBase, value: T) -> None:
@@ -92,22 +92,19 @@ class DbusPropertySync(DbusPropertyCommon, DbusSomethingSync, Generic[T]):
         if not self.property_signature:
             raise AttributeError('D-Bus property is read only')
 
-        assert obj._attached_bus is not None
-        assert obj._remote_service_name is not None
-        assert obj._remote_object_path is not None
-        assert self.property_name is not None
-        new_call_message = obj._attached_bus. \
-            new_property_set_message(
-                obj._remote_service_name,
-                obj._remote_object_path,
+        new_call_message = (
+            obj._dbus.attached_bus.new_property_set_message(
+                obj._dbus.service_name,
+                obj._dbus.object_path,
                 self.interface_name,
                 self.property_name,
             )
+        )
 
         new_call_message.append_data(
             'v', (self.property_signature, value))
 
-        obj._attached_bus.call(new_call_message)
+        obj._dbus.attached_bus.call(new_call_message)
 
 
 def dbus_property(

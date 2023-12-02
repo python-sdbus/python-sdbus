@@ -55,18 +55,19 @@ class DbusMethodSyncBinded(DbusBindedSync):
         self.__doc__ = dbus_method.__doc__
 
     def _call_dbus_sync(self, *args: Any) -> Any:
-        new_call_message = self.interface._attached_bus. \
-            new_method_call_message(
-                self.interface._remote_service_name,
-                self.interface._remote_object_path,
+        new_call_message = (
+            self.interface._dbus.attached_bus.new_method_call_message(
+                self.interface._dbus.service_name,
+                self.interface._dbus.object_path,
                 self.dbus_method.interface_name,
                 self.dbus_method.method_name,
             )
+        )
         if args:
             new_call_message.append_data(
                 self.dbus_method.input_signature, *args)
 
-        reply_message = self.interface._attached_bus.call(
+        reply_message = self.interface._dbus.attached_bus.call(
             new_call_message)
         return reply_message.get_contents()
 

@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING
 from .dbus_common_funcs import (
     _is_property_flags_correct,
     _method_name_converter,
+    get_default_bus,
 )
 from .sd_bus_internals import is_interface_name_valid, is_member_name_valid
 
@@ -37,11 +38,14 @@ if TYPE_CHECKING:
         List,
         Optional,
         Sequence,
+        Set,
         Tuple,
         TypeVar,
     )
 
     T = TypeVar('T')
+
+    from .sd_bus_internals import SdBus
 
 
 class DbusSomethingCommon:
@@ -297,3 +301,25 @@ class DbusOverload:
 
     def setter(self, new_setter: Optional[Callable[[Any, T], None]]) -> None:
         self.setter_overload = new_setter
+
+
+class DbusRemoteObjectMeta:
+    def __init__(
+        self,
+        service_name: str,
+        object_path: str,
+        bus: Optional[SdBus] = None,
+    ):
+        self.service_name = service_name
+        self.object_path = object_path
+        self.attached_bus = (
+            bus if bus is not None
+            else get_default_bus()
+        )
+
+
+class DbusClassMeta:
+    def __init__(self) -> None:
+        self.dbus_member_to_python_attr: Dict[str, str] = {}
+        self.dbus_interfaces_names: Set[str] = set()
+        self.python_attr_to_dbus_member: Dict[str, str] = {}

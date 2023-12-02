@@ -80,7 +80,6 @@ class DbusMethodAsyncBinded(DbusBindedAsync):
         assert interface._attached_bus is not None
         assert interface._remote_service_name is not None
         assert interface._remote_object_path is not None
-        assert self.dbus_method.interface_name is not None
         new_call_message = interface._attached_bus. \
             new_method_call_message(
                 interface._remote_service_name,

@@ -45,9 +45,8 @@ if TYPE_CHECKING:
 
 
 class DbusSomethingCommon:
-    def __init__(self) -> None:
-        self.interface_name: Optional[str] = None
-        self.serving_enabled: bool = True
+    interface_name: str
+    serving_enabled: bool
 
 
 class DbusSomethingAsync(DbusSomethingCommon):
@@ -77,6 +76,23 @@ class DbusInterfaceMetaCommon(type):
                 )
             except NotImplementedError:
                 ...
+
+        for attr_name, attr in namespace.items():
+            if not isinstance(attr, DbusSomethingCommon):
+                continue
+
+            # TODO: Fix async metaclass copying all methods
+            if hasattr(attr, "interface_name"):
+                continue
+
+            if interface_name is None:
+                raise TypeError(
+                    f"Defined D-Bus element {attr_name!r} without "
+                    f"interface name in the class {name!r}."
+                )
+
+            attr.interface_name = interface_name
+            attr.serving_enabled = serving_enabled
 
         new_cls = super().__new__(cls, name, bases, namespace)
 

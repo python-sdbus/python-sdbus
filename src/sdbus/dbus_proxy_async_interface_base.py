@@ -87,8 +87,6 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
             )
 
             if isinstance(value, DbusSomethingAsync):
-                value.interface_name = interface_name
-                value.serving_enabled = serving_enabled
                 dbus_declared_members[key] = value
 
             if isinstance(value, DbusMethodAsync):

@@ -27,7 +27,10 @@ from sdbus import DbusInterfaceCommon, dbus_method, dbus_property
 from .common_test_util import skip_if_no_name_validations
 
 
-class GoodDbusInterface(DbusInterfaceCommon):
+class GoodDbusInterface(
+    DbusInterfaceCommon,
+    interface_name="org.example.test",
+):
     @dbus_method()
     def test_method(self) -> None:
         raise NotImplementedError
@@ -117,6 +120,14 @@ class TestBadDbusClass(TestCase):
                 )
                 def test(self) -> str:
                     return "test"
+
+    def test_dbus_elements_without_interface_name(self) -> None:
+        with self.assertRaisesRegex(TypeError, "without interface name"):
+
+            class NoInterfaceName(DbusInterfaceCommon):
+                @dbus_method()
+                def example(self) -> None:
+                    ...
 
 
 if __name__ == "__main__":

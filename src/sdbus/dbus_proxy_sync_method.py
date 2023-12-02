@@ -55,7 +55,6 @@ class DbusMethodSyncBinded(DbusBindedSync):
         self.__doc__ = dbus_method.__doc__
 
     def _call_dbus_sync(self, *args: Any) -> Any:
-        assert self.dbus_method.interface_name is not None
         new_call_message = self.interface._attached_bus. \
             new_method_call_message(
                 self.interface._remote_service_name,

@@ -58,8 +58,6 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
             )
 
             if isinstance(value, DbusSomethingSync):
-                value.interface_name = interface_name
-                value.serving_enabled = serving_enabled
                 declared_interfaces.add(key)
 
             if isinstance(value, DbusMethodSync):

@@ -69,7 +69,6 @@ class DbusPropertySync(DbusPropertyCommon, DbusSomethingSync, Generic[T]):
             "This is probably an error as it will block "
             "other asyncio methods for considerable time."
         )
-        assert self.interface_name is not None
 
         new_call_message = obj._attached_bus. \
             new_property_get_message(
@@ -97,7 +96,6 @@ class DbusPropertySync(DbusPropertyCommon, DbusSomethingSync, Generic[T]):
         assert obj._remote_service_name is not None
         assert obj._remote_object_path is not None
         assert self.property_name is not None
-        assert self.interface_name is not None
         new_call_message = obj._attached_bus. \
             new_property_set_message(
                 obj._remote_service_name,

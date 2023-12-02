@@ -130,7 +130,6 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
         assert interface._remote_service_name is not None
         assert interface._remote_object_path is not None
         assert self.dbus_property.property_name is not None
-        assert self.dbus_property.interface_name is not None
         new_call_message = interface._attached_bus. \
             new_property_get_message(
                 interface._remote_service_name,
@@ -162,7 +161,6 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
 
         self.dbus_property.property_setter(interface, data_to_set_to)
 
-        assert self.dbus_property.interface_name is not None
         try:
             properties_changed = getattr(interface, 'properties_changed')
         except AttributeError:
@@ -217,7 +215,6 @@ class DbusPropertyAsyncBinded(DbusBindedAsync):
         assert interface._remote_service_name is not None
         assert interface._remote_object_path is not None
         assert self.dbus_property.property_name is not None
-        assert self.dbus_property.interface_name is not None
         new_call_message = interface._attached_bus. \
             new_property_set_message(
                 interface._remote_service_name,

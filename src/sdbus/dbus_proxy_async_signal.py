@@ -81,7 +81,6 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
         assert interface._attached_bus is not None
         assert interface._remote_service_name is not None
         assert interface._remote_object_path is not None
-        assert self.dbus_signal.interface_name is not None
         assert self.dbus_signal.signal_name is not None
 
         return await interface._attached_bus.get_signal_queue_async(
@@ -201,7 +200,6 @@ class DbusSignalBinded(Generic[T], DbusBindedAsync):
 
         assert interface._attached_bus is not None
         assert interface._serving_object_path is not None
-        assert self.dbus_signal.interface_name is not None
         assert self.dbus_signal.signal_name is not None
 
         signal_message = interface._attached_bus.new_signal_message(

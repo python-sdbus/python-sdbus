@@ -22,8 +22,6 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest import main as unittest_main
 
-from sdbus.dbus_common_funcs import PROPERTY_FLAGS_MASK, count_bits
-
 from sdbus import (
     DbusDeprecatedFlag,
     DbusInterfaceCommonAsync,
@@ -34,11 +32,15 @@ from sdbus import (
     dbus_property_async,
     dbus_signal_async,
 )
+from sdbus.dbus_common_funcs import PROPERTY_FLAGS_MASK, count_bits
 
 from .common_test_util import skip_if_no_asserts, skip_if_no_name_validations
 
 
-class TestInterface(DbusInterfaceCommonAsync):
+class TestInterface(
+    DbusInterfaceCommonAsync,
+    interface_name="org.example.test",
+):
     @dbus_method_async(result_signature="i")
     async def test_int(self) -> int:
         return 1
@@ -169,6 +171,22 @@ class TestBadAsyncDbusClass(TestCase):
                 @dbus_method_async_override()
                 async def test_unrelated(self) -> int:
                     return 2
+
+    def test_dbus_elements_without_interface_name(self) -> None:
+        with self.assertRaisesRegex(TypeError, "without interface name"):
+
+            class NoInterfaceName(DbusInterfaceCommonAsync):
+                @dbus_method_async()
+                async def example(self) -> None:
+                    ...
+
+    def test_dbus_elements_without_interface_name_subclass(self) -> None:
+        with self.assertRaisesRegex(TypeError, "without interface name"):
+
+            class NoInterfaceName(TestInterface):
+                @dbus_method_async()
+                async def example(self) -> None:
+                    ...
 
 
 if __name__ == "__main__":

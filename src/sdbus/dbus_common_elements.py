@@ -299,9 +299,17 @@ class DbusOverload:
     def __init__(self, original: T):
         self.original = original
         self.setter_overload: Optional[Callable[[Any, T], None]] = None
+        self.is_setter_public = True
 
     def setter(self, new_setter: Optional[Callable[[Any, T], None]]) -> None:
         self.setter_overload = new_setter
+
+    def setter_private(
+        self,
+        new_setter: Optional[Callable[[Any, T], None]],
+    ) -> None:
+        self.setter_overload = new_setter
+        self.is_setter_public = False
 
 
 class DbusRemoteObjectMeta:

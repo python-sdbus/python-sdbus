@@ -172,6 +172,9 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                         dbus_element_override.property_setter = (
                             override.setter_overload
                         )
+                        dbus_element_override.property_setter_is_public = (
+                            override.is_setter_public
+                        )
                 else:
                     raise TypeError(
                         f"Unknown override {collision_name!r} "

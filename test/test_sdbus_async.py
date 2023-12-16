@@ -820,3 +820,62 @@ class TestProxy(IsolatedDbusTestCase):
         )
 
         self.assertIn('TestPropertyPrivate', changed_properties[1])
+
+    async def test_property_override_setter_private(self) -> None:
+
+        test_int = 1
+
+        class TestInterfacePrivateSetter(TestInterface):
+            @dbus_property_async_override()
+            def test_property_private(self) -> int:
+                return test_int
+
+            @test_property_private.setter_private
+            def _private_setter(self, new_value: int) -> None:
+                nonlocal test_int
+                test_int = new_value
+
+        test_object = TestInterfacePrivateSetter()
+        test_object.export_to_dbus('/')
+        test_object_connection = TestInterface.new_proxy(
+            TEST_SERVICE_NAME, '/')
+
+        self.assertEqual(
+            await test_object_connection.test_property_private,
+            test_int,
+        )
+
+        async def catch_properties_changed() -> int:
+            async for x in test_object_connection.properties_changed:
+                changed_attr = parse_properties_changed(
+                    TestInterface, x)["test_property_private"]
+
+                if not isinstance(changed_attr, int):
+                    raise TypeError
+
+                return changed_attr
+
+            raise RuntimeError
+
+        catch_changed_task = get_running_loop(
+        ).create_task(catch_properties_changed())
+
+        with self.assertRaises(DbusPropertyReadOnlyError):
+            await test_object_connection.test_property_private.set_async(10)
+
+        await test_object.test_property_private.set_async(10)
+
+        self.assertEqual(
+            await test_object_connection.test_property_private,
+            10,
+        )
+
+        self.assertEqual(
+            await test_object.test_property_private,
+            test_int,
+        )
+
+        self.assertEqual(
+            await wait_for(catch_changed_task, timeout=1),
+            10,
+        )

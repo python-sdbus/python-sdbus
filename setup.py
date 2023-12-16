@@ -35,11 +35,14 @@ def get_libsystemd_version() -> int:
         stderr=DEVNULL,
         stdout=PIPE,
         check=True,
+        text=True,
     )
 
-    result_str = process.stdout.decode('utf-8')
+    result_str = process.stdout
+    # Version can either be like 250 or 250.10
+    first_component = result_str.split(".")[0]
 
-    return int(result_str)
+    return int(first_component)
 
 
 if not environ.get('PYTHON_SDBUS_USE_IGNORE_SYSTEMD_VERSION'):

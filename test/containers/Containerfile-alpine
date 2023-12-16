@@ -13,7 +13,8 @@ RUN apk update && \
         musl-dev \
         gcc \
         pkgconfig \
-        dbus
+        dbus \
+        py3-jinja2
 
 WORKDIR /root/python-sdbus/
 

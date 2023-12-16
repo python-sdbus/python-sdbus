@@ -70,7 +70,7 @@ jobs:
           podman build --tag alpine-ci -f ./test/containers/Containerfile-alpine .
       - name: Test unlimited API
         run: |
-          podman run --rm -it alpine-ci
+          podman run --rm alpine-ci
       - name: Test limited API
         run: |
-          podman run --env PYTHON_SDBUS_USE_LIMITED_API=1 --rm -it alpine-ci
+          podman run --env PYTHON_SDBUS_USE_LIMITED_API=1 --rm alpine-ci

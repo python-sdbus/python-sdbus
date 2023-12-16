@@ -22,6 +22,7 @@ from __future__ import annotations
 from asyncio import get_running_loop, wait_for
 from typing import Any
 
+from sdbus.dbus_common_elements import DbusLocalObjectMeta
 from sdbus.exceptions import DbusFailedError
 from sdbus.unittest import IsolatedDbusTestCase
 
@@ -164,7 +165,10 @@ class TestLowLevelErrors(IsolatedDbusTestCase):
         await self.test_object_connection.hello_world()
 
     async def test_property_callback_error(self) -> None:
-        interface = self.test_object._activated_interfaces[0]
+        dbus_local_meta = self.test_object._dbus
+        if not isinstance(dbus_local_meta, DbusLocalObjectMeta):
+            raise TypeError
+        interface = dbus_local_meta.activated_interfaces[0]
         interface.property_get_dict.pop(b'DerriveErrSettable')
 
         with self.assertRaises(DbusFailedError):
@@ -175,7 +179,10 @@ class TestLowLevelErrors(IsolatedDbusTestCase):
 
     async def test_method_callback_error(self) -> None:
         TEST_KEY = b'HelloWorld'
-        interface = self.test_object._activated_interfaces[0]
+        dbus_local_meta = self.test_object._dbus
+        if not isinstance(dbus_local_meta, DbusLocalObjectMeta):
+            raise TypeError
+        interface = dbus_local_meta.activated_interfaces[0]
         interface.method_dict.pop(TEST_KEY)
 
         with self.assertRaises(DbusFailedError):

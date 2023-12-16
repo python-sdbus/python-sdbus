@@ -88,13 +88,13 @@ class DbusPropertiesInterfaceAsync(
 
         properties: Dict[str, Any] = {}
 
-        for interface_name in self._dbus_served_interfaces_names:
+        for interface_name in self._dbus_meta.dbus_interfaces_names:
             dbus_properties_data = await self._properties_get_all(
                 interface_name)
 
             properties.update(
                 _parse_properties_vardict(
-                    self._dbus_to_python_name_map,
+                    self._dbus_meta.dbus_member_to_python_attr,
                     dbus_properties_data,
                     on_unknown_member,
                 )
@@ -169,8 +169,8 @@ class DbusObjectManagerInterfaceAsync(
     def remove_managed_object(
             self,
             managed_object: DbusInterfaceBaseAsync) -> None:
-        if self._attached_bus is None:
+        if self._dbus.attached_bus is None:
             raise RuntimeError('Object manager not exported')
 
         removed_path = self._managed_object_to_path.pop(managed_object)
-        self._attached_bus.emit_object_removed(removed_path)
+        self._dbus.attached_bus.emit_object_removed(removed_path)

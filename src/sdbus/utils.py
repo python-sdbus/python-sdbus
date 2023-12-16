@@ -52,7 +52,7 @@ def parse_properties_changed(
         changed_properties_data[invalidated_property] = ('0', None)
 
     return _parse_properties_vardict(
-        interface._dbus_to_python_name_map,
+        interface._dbus_meta.dbus_member_to_python_attr,
         properties_changed_data[1],
         on_unknown_member,
     )
@@ -84,7 +84,7 @@ def _create_interfaces_map(
             isinstance(interface, DbusInterfaceBaseAsync)
         ):
             interfaces_to_class_map[
-                frozenset(interface._dbus_served_interfaces_names)
+                frozenset(interface._dbus_meta.dbus_interfaces_names)
             ] = type(interface)
         elif (
                 isinstance(interface, type)
@@ -92,7 +92,7 @@ def _create_interfaces_map(
                 issubclass(interface, DbusInterfaceBaseAsync)
         ):
             interfaces_to_class_map[
-                frozenset(interface._dbus_served_interfaces_names)
+                frozenset(interface._dbus_meta.dbus_interfaces_names)
             ] = interface
         else:
             raise TypeError('Expected D-Bus interface, got: ', interface)
@@ -131,7 +131,9 @@ def parse_interfaces_added(
     class_set = frozenset(properties_data.keys()) - SKIP_INTERFACES
     try:
         python_class = interfaces_to_class_map[class_set]
-        dbus_to_python_member_map = python_class._dbus_to_python_name_map
+        dbus_to_python_member_map = (
+            python_class._dbus_meta.dbus_member_to_python_attr
+        )
     except KeyError:
         if on_unknown_interface == 'error':
             raise

@@ -23,12 +23,12 @@ from typing import TYPE_CHECKING
 
 from sphinx.ext.autodoc import AttributeDocumenter, MethodDocumenter
 
-from .dbus_proxy_async_method import DbusMethodAsyncBinded
+from .dbus_proxy_async_method import DbusMethodAsyncClassBind
 from .dbus_proxy_async_property import (
     DbusPropertyAsync,
-    DbusPropertyAsyncBinded,
+    DbusPropertyAsyncClassBind,
 )
-from .dbus_proxy_async_signal import DbusSignalAsync, DbusSignalBinded
+from .dbus_proxy_async_signal import DbusSignalAsync, DbusSignalAsyncClassBind
 
 if TYPE_CHECKING:
     from typing import Any, Dict
@@ -38,13 +38,13 @@ if TYPE_CHECKING:
 
 class DbusMethodDocumenter(MethodDocumenter):
 
-    objtype = 'DbusMethodAsyncBinded'
+    objtype = 'DbusMethodAsyncClassBind'
     directivetype = 'method'
     priority = 100 + MethodDocumenter.priority
 
     @classmethod
     def can_document_member(cls, member: Any, *args: Any) -> bool:
-        return isinstance(member, DbusMethodAsyncBinded)
+        return isinstance(member, DbusMethodAsyncClassBind)
 
     def import_object(self, raiseerror: bool = False) -> bool:
         self.objpath.append('dbus_method')
@@ -68,13 +68,13 @@ class DbusMethodDocumenter(MethodDocumenter):
 
 class DbusPropertyDocumenter(AttributeDocumenter):
 
-    objtype = 'DbusPropertyAsyncBinded'
+    objtype = 'DbusPropertyAsyncClassBind'
     directivetype = 'attribute'
     priority = 100 + AttributeDocumenter.priority
 
     @classmethod
     def can_document_member(cls, member: Any, *args: Any) -> bool:
-        return isinstance(member, DbusPropertyAsyncBinded)
+        return isinstance(member, DbusPropertyAsyncClassBind)
 
     def import_object(self, raiseerror: bool = False) -> bool:
 
@@ -109,13 +109,13 @@ class DbusPropertyDocumenter(AttributeDocumenter):
 
 class DbusSignalDocumenter(AttributeDocumenter):
 
-    objtype = 'DbusSignalBinded'
+    objtype = 'DbusSignalAsyncClassBind'
     directivetype = 'attribute'
     priority = 100 + AttributeDocumenter.priority
 
     @classmethod
     def can_document_member(cls, member: Any, *args: Any) -> bool:
-        return isinstance(member, DbusSignalBinded)
+        return isinstance(member, DbusSignalAsyncClassBind)
 
     def import_object(self, raiseerror: bool = False) -> bool:
 

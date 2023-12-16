@@ -17,10 +17,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
-
 from __future__ import annotations
 
-from asyncio import Event, get_running_loop, sleep, wait_for
+from asyncio import Event, get_running_loop, sleep, wait, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import TYPE_CHECKING, cast
 from unittest import SkipTest
@@ -52,7 +51,8 @@ from sdbus import (
 )
 
 if TYPE_CHECKING:
-    from typing import Tuple
+    from asyncio import Task
+    from typing import Any, Tuple
 
     from sdbus.dbus_proxy_async_interfaces import (
         DBUS_PROPERTIES_CHANGED_TYPING,
@@ -350,18 +350,18 @@ class TestProxy(IsolatedDbusTestCase):
 
         with self.subTest('Test dbus to python mapping'):
             self.assertIn(
-                test_object.properties_changed.dbus_signal.signal_name,
-                test_object._dbus_to_python_name_map,
+                "PropertiesChanged",
+                test_object._dbus_meta.dbus_member_to_python_attr,
             )
 
             self.assertIn(
-                test_subclass.properties_changed.dbus_signal.signal_name,
-                test_subclass._dbus_to_python_name_map,
+                "PropertiesChanged",
+                test_subclass._dbus_meta.dbus_member_to_python_attr,
             )
 
             self.assertIn(
-                test_subclass.test_property.dbus_property.property_name,
-                test_subclass._dbus_to_python_name_map,
+                "TestProperty",
+                test_subclass._dbus_meta.dbus_member_to_python_attr,
             )
 
         with self.subTest('Tripple subclass'):
@@ -434,15 +434,17 @@ class TestProxy(IsolatedDbusTestCase):
 
         test_tuple = ('sgfsretg', 'asd')
 
-        ai_dbus = test_object_connection.test_signal.__aiter__()
-        aw_dbus = ai_dbus.__anext__()
-        q = test_object.test_signal._get_local_queue()
+        aiter_dbus: Any = test_object_connection.test_signal.__aiter__()
+        anext_dbus: Task[Any] = loop.create_task(aiter_dbus.__anext__())
+        aiter_local: Any = test_object.test_signal.__aiter__()
+        anext_local: Task[Any] = loop.create_task(aiter_local.__anext__())
 
-        loop.call_at(0, test_object.test_signal.emit, test_tuple)
+        loop.call_later(0.1, test_object.test_signal.emit, test_tuple)
 
-        self.assertEqual(test_tuple, await wait_for(aw_dbus, timeout=1))
+        await wait((anext_dbus, anext_local), timeout=1)
 
-        self.assertEqual(test_tuple, await wait_for(q.get(), timeout=1))
+        self.assertEqual(test_tuple, anext_dbus.result())
+        self.assertEqual(test_tuple, anext_local.result())
 
     async def test_signal_catch_anywhere(self) -> None:
         test_object, test_object_connection = initialize_object()
@@ -675,8 +677,7 @@ class TestProxy(IsolatedDbusTestCase):
         test_object.test_signal.emit(('test', 'signal'))
 
         message = await wait_for(message_queue.get(), timeout=1)
-        self.assertEqual(message.member,
-                         test_object.test_signal.dbus_signal.signal_name)
+        self.assertEqual(message.member, "TestSignal")
 
     async def test_class_with_string_subclass_parameter(self) -> None:
         from enum import Enum
@@ -724,31 +725,40 @@ class TestProxy(IsolatedDbusTestCase):
 
         loop = get_running_loop()
 
-        ai_dbus = test_object_connection.empty_signal.__aiter__()
-        aw_dbus = ai_dbus.__anext__()
-        q = test_object.empty_signal._get_local_queue()
+        aiter_dbus: Any = test_object_connection.empty_signal.__aiter__()
+        anext_dbus: Task[Any] = loop.create_task(aiter_dbus.__anext__())
+        aiter_local: Any = test_object.empty_signal.__aiter__()
+        anext_local: Task[Any] = loop.create_task(aiter_local.__anext__())
 
-        loop.call_at(0, test_object.empty_signal.emit, None)
+        loop.call_later(0.1, test_object.empty_signal.emit, None)
 
-        self.assertIsNone(await wait_for(aw_dbus, timeout=1))
+        await wait((anext_dbus, anext_local), timeout=1)
 
-        self.assertIsNone(await wait_for(q.get(), timeout=1))
+        self.assertIsNone(anext_dbus.result())
+
+        self.assertIsNone(anext_local.result())
 
     async def test_properties_changed(self) -> None:
         test_object, test_object_connection = initialize_object()
 
         test_str = 'should_be_emited'
 
-        q = await test_object_connection.properties_changed._get_dbus_queue()
+        properties_changed_dbus_aiter = (
+            test_object_connection.properties_changed.__aiter__()
+        )
 
         async def set_property() -> None:
+            await sleep(0.1)
             await test_object_connection.test_property.set_async(test_str)
 
-        await set_property()
+        get_running_loop().create_task(set_property())
 
         properties_changed_data = cast(
             DBUS_PROPERTIES_CHANGED_TYPING,
-            (await q.get()).get_contents(),
+            await wait_for(
+                properties_changed_dbus_aiter.__anext__(),
+                timeout=1
+            ),
         )
 
         parsed_dict_from_class = parse_properties_changed(
@@ -786,18 +796,27 @@ class TestProxy(IsolatedDbusTestCase):
             await test_object_connection.test_property_private.set_async(
                 new_value)
 
-        q = await test_object_connection.properties_changed._get_dbus_queue()
+        properties_changed_dbus_aiter = (
+            test_object_connection.properties_changed.__aiter__()
+        )
 
-        await test_object.test_property_private.set_async(new_value)
+        async def set_property() -> None:
+            await sleep(0.1)
+            await test_object.test_property_private.set_async(new_value)
+
+        get_running_loop().create_task(set_property())
+
+        changed_properties = cast(
+            DBUS_PROPERTIES_CHANGED_TYPING,
+            await wait_for(
+                properties_changed_dbus_aiter.__anext__(),
+                timeout=1,
+            ),
+        )
 
         self.assertEqual(
             await test_object_connection.test_property_private,
             new_value
-        )
-
-        changed_properties = cast(
-            DBUS_PROPERTIES_CHANGED_TYPING,
-            (await q.get()).get_contents(),
         )
 
         self.assertIn('TestPropertyPrivate', changed_properties[1])

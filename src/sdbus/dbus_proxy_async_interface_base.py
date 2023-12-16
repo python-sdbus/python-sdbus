@@ -19,31 +19,48 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from copy import deepcopy
+from copy import copy
 from inspect import getmembers
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Callable, cast
 from warnings import warn
-from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
+    DbusClassMeta,
     DbusInterfaceMetaCommon,
+    DbusLocalObjectMeta,
     DbusOverload,
+    DbusRemoteObjectMeta,
     DbusSomethingAsync,
+    DbusSomethingCommon,
     DbusSomethingSync,
 )
 from .dbus_common_funcs import get_default_bus
-from .dbus_proxy_async_method import DbusMethodAsync, DbusMethodAsyncBinded
+from .dbus_proxy_async_method import (
+    DbusMethodAsync,
+    DbusMethodAsyncClassBind,
+    DbusMethodAsyncLocalBind,
+)
 from .dbus_proxy_async_property import (
     DbusPropertyAsync,
-    DbusPropertyAsyncBinded,
+    DbusPropertyAsyncClassBind,
+    DbusPropertyAsyncLocalBind,
 )
-from .dbus_proxy_async_signal import DbusSignalAsync, DbusSignalBinded
+from .dbus_proxy_async_signal import DbusSignalAsync, DbusSignalAsyncLocalBind
 from .sd_bus_internals import SdBusInterface
 
 if TYPE_CHECKING:
-    from asyncio import Queue
-    from typing import Dict, List, Optional, Set, Tuple, Type, TypeVar
+    from typing import (
+        ClassVar,
+        Dict,
+        List,
+        Optional,
+        Set,
+        Tuple,
+        Type,
+        TypeVar,
+        Union,
+    )
 
     from .dbus_common_elements import DbusBindedAsync
     from .sd_bus_internals import SdBus
@@ -59,85 +76,127 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                 serving_enabled: bool = True,
                 ) -> DbusInterfaceMetaAsync:
 
-        dbus_served_interfaces_names = (
-            {interface_name}
-            if serving_enabled and interface_name is not None
-            else set()
-        )
-        dbus_to_python_name_map: Dict[str, str] = {}
-        dbus_declared_members: Dict[str, DbusSomethingAsync] = {}
-        superclass_members: Dict[str, DbusSomethingAsync] = {}
+        dbus_class_meta = DbusClassMeta()
+        if interface_name is not None and serving_enabled:
+            dbus_class_meta.dbus_interfaces_names.add(interface_name)
+
+        overrides: Dict[str, DbusOverload] = {}
+        unresolved_collisions: Set[str] = set()
+
+        for attr_name, attr in namespace.items():
+            if isinstance(attr, DbusOverload):
+                overrides[attr_name] = attr
+                continue
+
+            if not isinstance(attr, DbusSomethingCommon):
+                continue
+
+            if isinstance(attr, DbusSomethingSync):
+                raise TypeError(
+                    "Can't mix blocking methods in "
+                    f"async interface: {attr_name!r}"
+                )
+
+            if isinstance(attr, DbusMethodAsync):
+                dbus_class_meta.dbus_member_to_python_attr[
+                    attr.method_name] = attr_name
+                dbus_class_meta.python_attr_to_dbus_member[
+                    attr_name] = attr.method_name
+            elif isinstance(attr, DbusPropertyAsync):
+                dbus_class_meta.dbus_member_to_python_attr[
+                    attr.property_name] = attr_name
+                dbus_class_meta.python_attr_to_dbus_member[
+                    attr_name] = attr.property_name
+            elif isinstance(attr, DbusSignalAsync):
+                dbus_class_meta.dbus_member_to_python_attr[
+                    attr.signal_name] = attr_name
+                dbus_class_meta.python_attr_to_dbus_member[
+                    attr_name] = attr.signal_name
+            else:
+                raise TypeError(f"Unknown D-Bus element: {attr!r}")
 
         for base in bases:
-            if issubclass(base, DbusInterfaceBaseAsync):
-                dbus_to_python_name_map.update(
-                    base._dbus_to_python_name_map
+            if not issubclass(base, DbusInterfaceBaseAsync):
+                continue
+
+            # Update interfaces names set
+            base_interfaces_names = base._dbus_meta.dbus_interfaces_names
+            if dbus_interface_name_collision := (
+                dbus_class_meta.dbus_interfaces_names
+                & base_interfaces_names
+            ):
+                raise TypeError(
+                    f"Interface {name!r} and {base!r} have interface name "
+                    f"collision: {dbus_interface_name_collision}"
                 )
-                dbus_served_interfaces_names.update(
-                    base._dbus_served_interfaces_names
+            else:
+                dbus_class_meta.dbus_interfaces_names.update(
+                    base_interfaces_names
                 )
 
-                superclass_members.update(
-                    base._dbus_declared_members
+            if dbus_member_collision := (
+                dbus_class_meta.dbus_member_to_python_attr.keys()
+                & base._dbus_meta.dbus_member_to_python_attr.keys()
+            ):
+                raise TypeError(
+                    f"Interface {name!r} and {base!r} have D-Bus member "
+                    f"collision: {dbus_member_collision}"
+                )
+            else:
+                dbus_class_meta.dbus_member_to_python_attr.update(
+                    base._dbus_meta.dbus_member_to_python_attr
                 )
 
-        for key, value in namespace.items():
-            assert not isinstance(value, DbusSomethingSync), (
-                "Can't mix sync methods in async interface."
+            for collision_name in (
+                namespace.keys()
+                & base._dbus_meta.python_attr_to_dbus_member.keys()
+            ):
+                try:
+                    override = overrides.pop(collision_name)
+                except KeyError:
+                    unresolved_collisions.add(collision_name)
+                    continue
+
+                super_element = getattr(base, collision_name)
+                dbus_element_override: DbusSomethingAsync
+                if isinstance(super_element, DbusMethodAsyncClassBind):
+                    dbus_element_override = copy(super_element.dbus_method)
+                    dbus_element_override.original_method = cast(
+                        MethodType, override.original)
+                elif isinstance(super_element, DbusPropertyAsyncClassBind):
+                    dbus_element_override = copy(super_element.dbus_property)
+                    dbus_element_override.property_getter = cast(
+                        Callable[[DbusInterfaceBaseAsync], Any],
+                        override.original)
+                    if override.setter_overload is not None:
+                        dbus_element_override.property_setter = (
+                            override.setter_overload
+                        )
+                else:
+                    raise TypeError(
+                        f"Unknown override {collision_name!r} "
+                        f"with {super_element!r}"
+                    )
+
+                namespace[collision_name] = dbus_element_override
+
+            dbus_class_meta.python_attr_to_dbus_member.update(
+                base._dbus_meta.python_attr_to_dbus_member
             )
 
-            if isinstance(value, DbusSomethingAsync):
-                dbus_declared_members[key] = value
+        if unresolved_collisions:
+            raise TypeError(
+                f"Interface {name!r} and {base!r} have Python attribute "
+                f"collision: {unresolved_collisions}"
+            )
 
-            if isinstance(value, DbusMethodAsync):
-                dbus_to_python_name_map[value.method_name] = key
-            elif isinstance(value, DbusPropertyAsync):
-                dbus_to_python_name_map[value.property_name] = key
-            elif isinstance(value, DbusSignalAsync):
-                dbus_to_python_name_map[value.signal_name] = key
+        if overrides:
+            raise TypeError(
+                f"Interface {name!r} has unresolved overrides:",
+                set(overrides.keys()),
+            )
 
-            try:
-                super_dbus_def = superclass_members[key]
-            except KeyError:
-                if isinstance(value, DbusOverload):
-                    raise TypeError(
-                        f"No D-Bus member '{key}' to overload with."
-                    )
-            else:
-                if not isinstance(value, DbusOverload):
-                    raise TypeError(
-                        "Attempted to overload D-Bus definition"
-                        " without using @dbus_overload decorator"
-                    )
-
-                if isinstance(super_dbus_def, DbusMethodAsync):
-                    new_method_def = deepcopy(super_dbus_def)
-                    new_method_def.original_method = cast(
-                        MethodType, value.original)
-
-                    namespace[key] = new_method_def
-                elif isinstance(super_dbus_def, DbusPropertyAsync):
-                    new_property_def = deepcopy(super_dbus_def)
-                    new_property_def.property_getter = cast(
-                        Callable[[DbusInterfaceBaseAsync], Any],
-                        value.original)
-                    if value.setter_overload is not None:
-                        new_property_def.property_setter = (
-                            value.setter_overload
-                        )
-
-                    namespace[key] = new_property_def
-                else:
-                    raise TypeError('Unknown D-Bus overload')
-
-        dbus_declared_members.update(superclass_members)
-
-        namespace['_dbus_served_interfaces_names'] = \
-            dbus_served_interfaces_names
-        namespace['_dbus_to_python_name_map'] = dbus_to_python_name_map
-        namespace['_dbus_interface_name'] = interface_name
-        namespace['_dbus_serving_enabled'] = serving_enabled
-        namespace['_dbus_declared_members'] = dbus_declared_members
+        namespace['_dbus_meta'] = dbus_class_meta
         new_cls = super().__new__(
             cls, name, bases, namespace,
             interface_name,
@@ -148,21 +207,11 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
 
 
 class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
-    _dbus_interface_name: Optional[str]
-    _dbus_serving_enabled: bool
-    _dbus_to_python_name_map: Dict[str, str]
-    _dbus_served_interfaces_names: Set[str]
-    _dbus_declared_members: Dict[str, DbusSomethingAsync]
+    _dbus_meta: ClassVar[DbusClassMeta]
 
     def __init__(self) -> None:
-        self._activated_interfaces: List[SdBusInterface] = []
-        self._is_binded: bool = False
-        self._remote_service_name: Optional[str] = None
-        self._remote_object_path: Optional[str] = None
-        self._attached_bus: Optional[SdBus] = None
-        self._serving_object_path: Optional[str] = None
-        self._local_signal_queues: \
-            Dict[DbusSignalAsync[Any], List[weak_ref[Queue[Any]]]] = {}
+        self._dbus: Union[
+            DbusRemoteObjectMeta, DbusLocalObjectMeta] = DbusLocalObjectMeta()
 
     async def start_serving(self,
                             object_path: str,
@@ -179,33 +228,42 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         bus: Optional[SdBus] = None,
     ) -> None:
 
+        local_object_meta = self._dbus
+        if isinstance(local_object_meta, DbusRemoteObjectMeta):
+            raise RuntimeError("Cannot export D-Bus proxies.")
+
+        # TODO: Being able to serve multiple buses and object
+        if local_object_meta.attached_bus is not None:
+            raise RuntimeError(
+                "Object already exported. "
+                "This limitation should be fixed in future version."
+            )
+
         if bus is None:
             bus = get_default_bus()
-        # TODO: Being able to serve multiple buses and object
-        self._attached_bus = bus
-        self._serving_object_path = object_path
+
+        local_object_meta.attached_bus = bus
+        local_object_meta.serving_object_path = object_path
         # TODO: can be optimized with a single loop
         interface_map: Dict[str, List[DbusBindedAsync]] = {}
 
         for key, value in getmembers(self):
             assert not isinstance(value, DbusSomethingAsync)
 
-            if isinstance(value, DbusMethodAsyncBinded):
+            if isinstance(value, DbusMethodAsyncLocalBind):
                 interface_name = value.dbus_method.interface_name
                 if not value.dbus_method.serving_enabled:
                     continue
-            elif isinstance(value, DbusPropertyAsyncBinded):
+            elif isinstance(value, DbusPropertyAsyncLocalBind):
                 interface_name = value.dbus_property.interface_name
                 if not value.dbus_property.serving_enabled:
                     continue
-            elif isinstance(value, DbusSignalBinded):
+            elif isinstance(value, DbusSignalAsyncLocalBind):
                 interface_name = value.dbus_signal.interface_name
                 if not value.dbus_signal.serving_enabled:
                     continue
             else:
                 continue
-
-            assert interface_name is not None
 
             try:
                 interface_member_list = interface_map[interface_name]
@@ -218,7 +276,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         for interface_name, member_list in interface_map.items():
             new_interface = SdBusInterface()
             for dbus_something in member_list:
-                if isinstance(dbus_something, DbusMethodAsyncBinded):
+                if isinstance(dbus_something, DbusMethodAsyncLocalBind):
                     new_interface.add_method(
                         dbus_something.dbus_method.method_name,
                         dbus_something.dbus_method.input_signature,
@@ -226,10 +284,10 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                         dbus_something.dbus_method.result_signature,
                         dbus_something.dbus_method.result_args_names,
                         dbus_something.dbus_method.flags,
-                        dbus_something._call_from_dbus,
+                        dbus_something._dbus_reply_call,
                     )
-                elif isinstance(dbus_something, DbusPropertyAsyncBinded):
-                    getter = dbus_something._reply_get_sync
+                elif isinstance(dbus_something, DbusPropertyAsyncLocalBind):
+                    getter = dbus_something._dbus_reply_get
                     dbus_property = dbus_something.dbus_property
 
                     if (
@@ -237,7 +295,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                         and
                         dbus_property.property_setter_is_public
                     ):
-                        setter = dbus_something._reply_set_sync
+                        setter = dbus_something._dbus_reply_set
                     else:
                         setter = None
 
@@ -248,7 +306,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                         setter,
                         dbus_property.flags,
                     )
-                elif isinstance(dbus_something, DbusSignalBinded):
+                elif isinstance(dbus_something, DbusSignalAsyncLocalBind):
                     new_interface.add_signal(
                         dbus_something.dbus_signal.signal_name,
                         dbus_something.dbus_signal.signal_signature,
@@ -260,7 +318,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
 
             bus.add_interface(new_interface, object_path,
                               interface_name)
-            self._activated_interfaces.append(new_interface)
+            local_object_meta.activated_interfaces.append(new_interface)
 
     def _connect(
         self,
@@ -281,10 +339,11 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         bus: Optional[SdBus] = None,
     ) -> None:
 
-        self._is_binded = True
-        self._attached_bus = bus if bus is not None else get_default_bus()
-        self._remote_service_name = service_name
-        self._remote_object_path = object_path
+        self._dbus = DbusRemoteObjectMeta(
+            service_name,
+            object_path,
+            bus,
+        )
 
     @classmethod
     def new_connect(

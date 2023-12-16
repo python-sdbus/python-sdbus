@@ -30,6 +30,7 @@ from .dbus_common_funcs import (
 from .sd_bus_internals import is_interface_name_valid, is_member_name_valid
 
 if TYPE_CHECKING:
+    from asyncio import Queue
     from types import FunctionType
     from typing import (
         Any,
@@ -45,7 +46,7 @@ if TYPE_CHECKING:
 
     T = TypeVar('T')
 
-    from .sd_bus_internals import SdBus
+    from .sd_bus_internals import SdBus, SdBusInterface
 
 
 class DbusSomethingCommon:
@@ -316,6 +317,15 @@ class DbusRemoteObjectMeta:
             bus if bus is not None
             else get_default_bus()
         )
+
+
+class DbusLocalObjectMeta:
+    def __init__(self) -> None:
+        self.activated_interfaces: List[SdBusInterface] = []
+        self.serving_object_path: Optional[str] = None
+        self.attached_bus: Optional[SdBus] = None
+        self.local_signal_queues: Dict[
+            Tuple[str, str], Set[Queue[Any]]] = {}
 
 
 class DbusClassMeta:

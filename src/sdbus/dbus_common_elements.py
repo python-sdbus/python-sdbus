@@ -119,23 +119,15 @@ class DbusMethodCommon(DbusSomethingCommon):
             original_method: FunctionType,
             method_name: Optional[str],
             input_signature: str,
-            input_args_names: Sequence[str],
+            input_args_names: Optional[Sequence[str]],
             result_signature: str,
-            result_args_names: Sequence[str],
+            result_args_names: Optional[Sequence[str]],
             flags: int):
 
         assert not isinstance(input_args_names, str), (
             "Passed a string as input args"
             " names. Did you forget to put"
             " it in to a tuple ('string', ) ?")
-
-        assert not any(' ' in x for x in input_args_names), (
-            "Can't have spaces in argument input names"
-            f"Args: {input_args_names}")
-
-        assert not any(' ' in x for x in result_args_names), (
-            "Can't have spaces in argument result names."
-            f"Args: {result_args_names}")
 
         if method_name is None:
             method_name = ''.join(
@@ -162,13 +154,25 @@ class DbusMethodCommon(DbusSomethingCommon):
 
         self.method_name = method_name
         self.input_signature = input_signature
-        self.input_args_names: Sequence[str] = (
-            self.args_names
-            if result_args_names and not input_args_names
-            else input_args_names)
+        self.input_args_names: Sequence[str] = ()
+        if input_args_names is not None:
+            assert not any(' ' in x for x in input_args_names), (
+                "Can't have spaces in argument input names"
+                f"Args: {input_args_names}")
+
+            self.input_args_names = input_args_names
+        elif result_args_names is not None:
+            self.input_args_names = self.args_names
 
         self.result_signature = result_signature
-        self.result_args_names = result_args_names
+        self.result_args_names: Sequence[str] = ()
+        if result_args_names is not None:
+            assert not any(' ' in x for x in result_args_names), (
+                "Can't have spaces in argument result names."
+                f"Args: {result_args_names}")
+
+            self.result_args_names = result_args_names
+
         self.flags = flags
 
         self.__doc__ = original_method.__doc__

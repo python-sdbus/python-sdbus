@@ -231,8 +231,8 @@ def dbus_method_async(
     input_signature: str = "",
     result_signature: str = "",
     flags: int = 0,
-    result_args_names: Sequence[str] = (),
-    input_args_names: Sequence[str] = (),
+    result_args_names: Optional[Sequence[str]] = None,
+    input_args_names: Optional[Sequence[str]] = None,
     method_name: Optional[str] = None,
 ) -> Callable[[T], T]:
 

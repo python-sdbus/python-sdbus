@@ -280,7 +280,7 @@ the service name must be provided.
 
 Example::
 
-    async for path, x in ExampleInterface.name_changed('org.example.test'):
+    async for path, x in ExampleInterface.name_changed.catch_anywhere('org.example.test'):
         print(f"On {path} caught: {x}")
 
 Subclass Overrides

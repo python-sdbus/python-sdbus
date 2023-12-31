@@ -670,14 +670,22 @@ class TestProxy(IsolatedDbusTestCase):
     async def test_singal_queue_wildcard_match(self) -> None:
         test_object, test_object_connection = initialize_object()
 
-        message_queue = await self.bus.get_signal_queue_async(
+        loop = get_running_loop()
+        future = loop.create_future()
+
+        slot = await self.bus.match_signal_async(
             TEST_SERVICE_NAME,
-            None, None, None)
+            None, None, None,
+            future.set_result)
 
-        test_object.test_signal.emit(('test', 'signal'))
+        try:
+            test_object.test_signal.emit(('test', 'signal'))
 
-        message = await wait_for(message_queue.get(), timeout=1)
-        self.assertEqual(message.member, "TestSignal")
+            await wait_for(future, timeout=1)
+            message = future.result()
+            self.assertEqual(message.member, "TestSignal")
+        finally:
+            slot.close()
 
     async def test_class_with_string_subclass_parameter(self) -> None:
         from enum import Enum

@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from asyncio import Future, Queue
+from asyncio import Future
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -53,7 +53,9 @@ __STUB_ERROR = (
 
 class SdBusSlot:
     """Holds reference to SdBus slot"""
-    ...
+
+    def close(self) -> None:
+        raise NotImplementedError(__STUB_ERROR)
 
 
 class SdBusInterface:
@@ -190,12 +192,12 @@ class SdBus:
                       object_path: str, interface_name: str, /) -> None:
         raise NotImplementedError(__STUB_ERROR)
 
-    def get_signal_queue_async(
+    def match_signal_async(
         self,
         senders_name: Optional[str], object_path: Optional[str],
         interface_name: Optional[str], member_name: Optional[str],
-        /
-    ) -> Future[Queue[SdBusMessage]]:
+        callback: Callable[[SdBusMessage], None], /
+    ) -> Future[SdBusSlot]:
         raise NotImplementedError(__STUB_ERROR)
 
     def request_name_async(self, name: str, flags: int, /) -> Future[None]:

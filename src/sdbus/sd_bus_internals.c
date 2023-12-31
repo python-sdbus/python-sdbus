@@ -22,12 +22,10 @@
 
 // Python functions and objects
 PyObject* asyncio_get_running_loop = NULL;
-PyObject* asyncio_queue_class = NULL;
 PyObject* is_coroutine_function = NULL;
 // Str objects
 PyObject* set_result_str = NULL;
 PyObject* set_exception_str = NULL;
-PyObject* put_no_wait_str = NULL;
 PyObject* add_reader_str = NULL;
 PyObject* remove_reader_str = NULL;
 PyObject* empty_str = NULL;
@@ -56,6 +54,18 @@ static void SdBusSlot_dealloc(SdBusSlotObject* self) {
         SD_BUS_DEALLOC_TAIL;
 }
 
+static PyObject* SdBusSlot_close(SdBusSlotObject* self) {
+        sd_bus_slot_unref(self->slot_ref);
+        self->slot_ref = NULL;
+
+        Py_RETURN_NONE;
+}
+
+static PyMethodDef SdBusSlot_methods[] = {
+    {"close", (PyCFunction)SdBusSlot_close, METH_NOARGS, PyDoc_STR("Dereference sd-bus slot stopping any associated callbacks.")},
+    {NULL, NULL, 0, NULL},
+};
+
 PyType_Spec SdBusSlotType = {
     .name = "sd_bus_internals.SdBusSlot",
     .basicsize = sizeof(SdBusSlotObject),
@@ -65,6 +75,7 @@ PyType_Spec SdBusSlotType = {
         (PyType_Slot[]){
             {Py_tp_new, PyType_GenericNew},
             {Py_tp_dealloc, (destructor)SdBusSlot_dealloc},
+            {Py_tp_methods, SdBusSlot_methods},
             {0, NULL},
         },
 };
@@ -154,11 +165,8 @@ PyMODINIT_FUNC PyInit_sd_bus_internals(void) {
 
         asyncio_get_running_loop = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(asyncio_module, "get_running_loop"));
 
-        asyncio_queue_class = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(asyncio_module, "Queue"));
-
         set_result_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("set_result"));
         set_exception_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("set_exception"));
-        put_no_wait_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("put_nowait"));
         call_soon_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("call_soon"));
         create_task_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("create_task"));
         remove_reader_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("remove_reader"));

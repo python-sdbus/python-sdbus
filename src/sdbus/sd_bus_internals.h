@@ -240,12 +240,10 @@
 
 // Python functions and objects
 extern PyObject* asyncio_get_running_loop;
-extern PyObject* asyncio_queue_class;
 extern PyObject* is_coroutine_function;
 // Str objects
 extern PyObject* set_result_str;
 extern PyObject* set_exception_str;
-extern PyObject* put_no_wait_str;
 extern PyObject* add_reader_str;
 extern PyObject* remove_reader_str;
 extern PyObject* empty_str;

@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 from asyncio import Queue
+from contextlib import closing
 from types import FunctionType
 from typing import (
     TYPE_CHECKING,
@@ -43,7 +44,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Optional, Sequence, Tuple, Type
 
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
-    from .sd_bus_internals import SdBus
+    from .sd_bus_internals import SdBus, SdBusMessage
 
 
 T = TypeVar('T')
@@ -97,16 +98,20 @@ class DbusSignalAsyncProxyBind(DbusSignalAsyncBaseBind[T]):
         self.__doc__ = dbus_signal.__doc__
 
     async def catch(self) -> AsyncIterator[T]:
-        dbus_queue = await self.proxy_meta.attached_bus.get_signal_queue_async(
+        message_queue: Queue[SdBusMessage] = Queue()
+
+        match_slot = await self.proxy_meta.attached_bus.match_signal_async(
             self.proxy_meta.service_name,
             self.proxy_meta.object_path,
             self.dbus_signal.interface_name,
             self.dbus_signal.signal_name,
+            message_queue.put_nowait,
         )
 
-        while True:
-            next_signal_message = await dbus_queue.get()
-            yield cast(T, next_signal_message.get_contents())
+        with closing(match_slot):
+            while True:
+                next_signal_message = await message_queue.get()
+                yield cast(T, next_signal_message.get_contents())
 
     __aiter__ = catch
 
@@ -121,21 +126,25 @@ class DbusSignalAsyncProxyBind(DbusSignalAsyncBaseBind[T]):
         if service_name is None:
             service_name = self.proxy_meta.service_name
 
-        message_queue = await bus.get_signal_queue_async(
+        message_queue: Queue[SdBusMessage] = Queue()
+
+        match_slot = await bus.match_signal_async(
             service_name,
             None,
             self.dbus_signal.interface_name,
             self.dbus_signal.signal_name,
+            message_queue.put_nowait,
         )
 
-        while True:
-            next_signal_message = await message_queue.get()
-            signal_path = next_signal_message.path
-            assert signal_path is not None
-            yield (
-                signal_path,
-                cast(T, next_signal_message.get_contents())
-            )
+        with closing(match_slot):
+            while True:
+                next_signal_message = await message_queue.get()
+                signal_path = next_signal_message.path
+                assert signal_path is not None
+                yield (
+                    signal_path,
+                    cast(T, next_signal_message.get_contents())
+                )
 
     def emit(self, args: T) -> None:
         raise RuntimeError("Cannot emit signal from D-Bus proxy.")
@@ -264,21 +273,25 @@ class DbusSignalAsyncClassBind(DbusSignalAsyncBaseBind[T]):
         if bus is None:
             bus = get_default_bus()
 
-        message_queue = await bus.get_signal_queue_async(
+        message_queue: Queue[SdBusMessage] = Queue()
+
+        match_slot = await bus.match_signal_async(
             service_name,
             None,
             self.dbus_signal.interface_name,
             self.dbus_signal.signal_name,
+            message_queue.put_nowait,
         )
 
-        while True:
-            next_signal_message = await message_queue.get()
-            signal_path = next_signal_message.path
-            assert signal_path is not None
-            yield (
-                signal_path,
-                cast(T, next_signal_message.get_contents())
-            )
+        with closing(match_slot):
+            while True:
+                next_signal_message = await message_queue.get()
+                signal_path = next_signal_message.path
+                assert signal_path is not None
+                yield (
+                    signal_path,
+                    cast(T, next_signal_message.get_contents())
+                )
 
     def emit(self, args: T) -> None:
         raise NotImplementedError(

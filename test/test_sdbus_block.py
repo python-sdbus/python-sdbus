@@ -26,6 +26,8 @@ from sdbus.exceptions import DbusPropertyReadOnlyError
 from sdbus.unittest import IsolatedDbusTestCase
 from sdbus_block.dbus_daemon import FreedesktopDbus
 
+from sdbus import DbusInterfaceCommon, dbus_method
+
 
 class TestSync(IsolatedDbusTestCase):
 
@@ -69,6 +71,26 @@ class TestSync(IsolatedDbusTestCase):
 
         with self.subTest('Property doc (through class dict)'):
             self.assertTrue(getdoc(s.__class__.__dict__['features']))
+
+    def test_interface_composition(self) -> None:
+        class OneInterface(
+            DbusInterfaceCommon,
+            interface_name="org.example.one",
+        ):
+            @dbus_method(result_signature="x")
+            def one(self) -> int:
+                raise NotImplementedError
+
+        class TwoInterface(
+            DbusInterfaceCommon,
+            interface_name="org.example.two",
+        ):
+            @dbus_method(result_signature="t")
+            def two(self) -> int:
+                raise NotImplementedError
+
+        class CombinedInterface(OneInterface, TwoInterface):
+            ...
 
 
 if __name__ == '__main__':

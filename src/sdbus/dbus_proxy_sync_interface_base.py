@@ -46,7 +46,7 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
                 ) -> DbusInterfaceMetaSync:
 
         dbus_class_meta = DbusClassMeta()
-        if interface_name is not None:
+        if interface_name is not None and serving_enabled:
             dbus_class_meta.dbus_interfaces_names.add(interface_name)
 
         for attr_name, attr in namespace.items():
@@ -57,6 +57,9 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
                 raise TypeError(
                     f"Can't mix async methods in sync interface: {attr_name!r}"
                 )
+
+            if not serving_enabled:
+                continue
 
             if isinstance(attr, DbusMethodSync):
                 dbus_class_meta.dbus_member_to_python_attr[

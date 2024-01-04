@@ -97,6 +97,9 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                     f"async interface: {attr_name!r}"
                 )
 
+            if not serving_enabled:
+                continue
+
             if isinstance(attr, DbusMethodAsync):
                 dbus_class_meta.dbus_member_to_python_attr[
                     attr.method_name] = attr_name

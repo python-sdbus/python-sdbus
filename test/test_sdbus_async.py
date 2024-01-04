@@ -350,12 +350,12 @@ class TestProxy(IsolatedDbusTestCase):
 
         with self.subTest('Test dbus to python mapping'):
             self.assertIn(
-                "PropertiesChanged",
+                "TestInt",
                 test_object._dbus_meta.dbus_member_to_python_attr,
             )
 
             self.assertIn(
-                "PropertiesChanged",
+                "TestInt",
                 test_subclass._dbus_meta.dbus_member_to_python_attr,
             )
 
@@ -887,3 +887,23 @@ class TestProxy(IsolatedDbusTestCase):
             await wait_for(catch_changed_task, timeout=1),
             10,
         )
+
+    async def test_interface_composition(self) -> None:
+        class OneInterface(
+            DbusInterfaceCommonAsync,
+            interface_name="org.example.one",
+        ):
+            @dbus_method_async(result_signature="x")
+            async def one(self) -> int:
+                raise NotImplementedError
+
+        class TwoInterface(
+            DbusInterfaceCommonAsync,
+            interface_name="org.example.two",
+        ):
+            @dbus_method_async(result_signature="t")
+            async def two(self) -> int:
+                return 2
+
+        class CombinedInterface(OneInterface, TwoInterface):
+            ...

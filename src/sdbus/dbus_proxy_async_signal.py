@@ -30,6 +30,7 @@ from typing import (
     TypeVar,
     cast,
 )
+from weakref import WeakSet
 
 from .dbus_common_elements import (
     DbusBindedAsync,
@@ -51,6 +52,24 @@ T = TypeVar('T')
 
 
 class DbusSignalAsync(DbusSomethingAsync, DbusSingalCommon, Generic[T]):
+
+    def __init__(
+        self,
+        signal_name: Optional[str],
+        signal_signature: str,
+        args_names: Sequence[str],
+        flags: int,
+        original_method: FunctionType
+    ):
+        super().__init__(
+            signal_name,
+            signal_signature,
+            args_names,
+            flags,
+            original_method,
+        )
+
+        self.local_callbacks: WeakSet[Callable[[T], Any]] = WeakSet()
 
     def __get__(
         self,
@@ -162,29 +181,17 @@ class DbusSignalAsyncLocalBind(DbusSignalAsyncBaseBind[T]):
         self.__doc__ = dbus_signal.__doc__
 
     async def catch(self) -> AsyncIterator[T]:
-        signal_key = (
-            self.dbus_signal.interface_name,
-            self.dbus_signal.signal_name,
-        )
-
-        try:
-            list_of_queues = self.local_meta.local_signal_queues[
-                signal_key
-            ]
-        except KeyError:
-            list_of_queues = set()
-            self.local_meta.local_signal_queues[
-                signal_key] = list_of_queues
-
         new_queue: Queue[T] = Queue()
 
-        list_of_queues.add(new_queue)
+        signal_callbacks = self.dbus_signal.local_callbacks
         try:
+            put_method = new_queue.put_nowait
+            signal_callbacks.add(put_method)
             while True:
                 next_data = await new_queue.get()
                 yield next_data
         finally:
-            list_of_queues.remove(new_queue)
+            signal_callbacks.remove(put_method)
 
     __aiter__ = catch
 
@@ -227,19 +234,8 @@ class DbusSignalAsyncLocalBind(DbusSignalAsyncBaseBind[T]):
     def emit(self, args: T) -> None:
         self._emit_dbus_signal(args)
 
-        signal_key = (
-            self.dbus_signal.interface_name,
-            self.dbus_signal.signal_name,
-        )
-
-        try:
-            list_of_queues = self.local_meta.local_signal_queues[
-                signal_key]
-        except KeyError:
-            return
-
-        for local_queue in list_of_queues:
-            local_queue.put_nowait(args)
+        for callback in self.dbus_signal.local_callbacks:
+            callback(args)
 
 
 class DbusSignalAsyncClassBind(DbusSignalAsyncBaseBind[T]):

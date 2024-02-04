@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Optional, Sequence, Tuple, Type
 
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
-    from .sd_bus_internals import SdBus, SdBusMessage
+    from .sd_bus_internals import SdBus, SdBusMessage, SdBusSlot
 
 
 T = TypeVar('T')
@@ -116,14 +116,24 @@ class DbusSignalAsyncProxyBind(DbusSignalAsyncBaseBind[T]):
 
         self.__doc__ = dbus_signal.__doc__
 
-    async def catch(self) -> AsyncIterator[T]:
-        message_queue: Queue[SdBusMessage] = Queue()
-
-        match_slot = await self.proxy_meta.attached_bus.match_signal_async(
+    async def _register_match_slot(
+        self,
+        bus: SdBus,
+        callback: Callable[[SdBusMessage], Any],
+    ) -> SdBusSlot:
+        return await bus.match_signal_async(
             self.proxy_meta.service_name,
             self.proxy_meta.object_path,
             self.dbus_signal.interface_name,
             self.dbus_signal.signal_name,
+            callback,
+        )
+
+    async def catch(self) -> AsyncIterator[T]:
+        message_queue: Queue[SdBusMessage] = Queue()
+
+        match_slot = await self._register_match_slot(
+            self.proxy_meta.attached_bus,
             message_queue.put_nowait,
         )
 

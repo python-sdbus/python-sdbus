@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from asyncio import Event, get_running_loop, sleep, wait, wait_for
+from asyncio import Event, get_running_loop, sleep, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import TYPE_CHECKING, cast
 from unittest import SkipTest
@@ -51,8 +51,7 @@ from sdbus import (
 )
 
 if TYPE_CHECKING:
-    from asyncio import Task
-    from typing import Any, Tuple
+    from typing import Tuple
 
     from sdbus.dbus_proxy_async_interfaces import (
         DBUS_PROPERTIES_CHANGED_TYPING,
@@ -430,21 +429,30 @@ class TestProxy(IsolatedDbusTestCase):
     async def test_signal(self) -> None:
         test_object, test_object_connection = initialize_object()
 
-        loop = get_running_loop()
-
         test_tuple = ('sgfsretg', 'asd')
 
-        aiter_dbus: Any = test_object_connection.test_signal.__aiter__()
-        anext_dbus: Task[Any] = loop.create_task(aiter_dbus.__anext__())
-        aiter_local: Any = test_object.test_signal.__aiter__()
-        anext_local: Task[Any] = loop.create_task(aiter_local.__anext__())
+        async with (
+            self.assertDbusSignalEmits(
+                test_object.test_signal
+            ) as local_signals_record,
+            self.assertDbusSignalEmits(
+                test_object_connection.test_signal
+            ) as remote_signals_record
+        ):
+            test_object.test_signal.emit(test_tuple)
 
-        loop.call_later(0.1, test_object.test_signal.emit, test_tuple)
+        async with (
+            self.assertDbusSignalEmits(
+                test_object.test_signal
+            ) as local_signals_record,
+            self.assertDbusSignalEmits(
+                test_object_connection.test_signal
+            ) as remote_signals_record
+        ):
+            test_object.test_signal.emit(test_tuple)
 
-        await wait((anext_dbus, anext_local), timeout=1)
-
-        self.assertEqual(test_tuple, anext_dbus.result())
-        self.assertEqual(test_tuple, anext_local.result())
+        local_signals_record.assert_emitted_once_with(test_tuple)
+        remote_signals_record.assert_emitted_once_with(test_tuple)
 
     async def test_signal_catch_anywhere(self) -> None:
         test_object, test_object_connection = initialize_object()
@@ -731,20 +739,18 @@ class TestProxy(IsolatedDbusTestCase):
     async def test_empty_signal(self) -> None:
         test_object, test_object_connection = initialize_object()
 
-        loop = get_running_loop()
+        async with (
+            self.assertDbusSignalEmits(
+                test_object.empty_signal
+            ) as local_signals_record,
+            self.assertDbusSignalEmits(
+                test_object_connection.empty_signal
+            ) as remote_signals_record
+        ):
+            test_object.empty_signal.emit(None)
 
-        aiter_dbus: Any = test_object_connection.empty_signal.__aiter__()
-        anext_dbus: Task[Any] = loop.create_task(aiter_dbus.__anext__())
-        aiter_local: Any = test_object.empty_signal.__aiter__()
-        anext_local: Task[Any] = loop.create_task(aiter_local.__anext__())
-
-        loop.call_later(0.1, test_object.empty_signal.emit, None)
-
-        await wait((anext_dbus, anext_local), timeout=1)
-
-        self.assertIsNone(anext_dbus.result())
-
-        self.assertIsNone(anext_local.result())
+        local_signals_record.assert_emitted_once_with(None)
+        remote_signals_record.assert_emitted_once_with(None)
 
     async def test_properties_changed(self) -> None:
         test_object, test_object_connection = initialize_object()

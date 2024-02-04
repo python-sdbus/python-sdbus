@@ -431,24 +431,18 @@ class TestProxy(IsolatedDbusTestCase):
 
         test_tuple = ('sgfsretg', 'asd')
 
-        async with (
-            self.assertDbusSignalEmits(
+        async with self.assertDbusSignalEmits(
                 test_object.test_signal
-            ) as local_signals_record,
-            self.assertDbusSignalEmits(
+            ) as local_signals_record, self.assertDbusSignalEmits(
                 test_object_connection.test_signal
-            ) as remote_signals_record
-        ):
+        ) as remote_signals_record:
             test_object.test_signal.emit(test_tuple)
 
-        async with (
-            self.assertDbusSignalEmits(
+        async with self.assertDbusSignalEmits(
                 test_object.test_signal
-            ) as local_signals_record,
-            self.assertDbusSignalEmits(
+            ) as local_signals_record, self.assertDbusSignalEmits(
                 test_object_connection.test_signal
-            ) as remote_signals_record
-        ):
+        ) as remote_signals_record:
             test_object.test_signal.emit(test_tuple)
 
         local_signals_record.assert_emitted_once_with(test_tuple)
@@ -739,14 +733,11 @@ class TestProxy(IsolatedDbusTestCase):
     async def test_empty_signal(self) -> None:
         test_object, test_object_connection = initialize_object()
 
-        async with (
-            self.assertDbusSignalEmits(
+        async with self.assertDbusSignalEmits(
                 test_object.empty_signal
-            ) as local_signals_record,
-            self.assertDbusSignalEmits(
+            ) as local_signals_record, self.assertDbusSignalEmits(
                 test_object_connection.empty_signal
-            ) as remote_signals_record
-        ):
+        ) as remote_signals_record:
             test_object.empty_signal.emit(None)
 
         local_signals_record.assert_emitted_once_with(None)

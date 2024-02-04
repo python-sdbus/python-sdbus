@@ -207,3 +207,9 @@ task_hello_world = loop.create_task(get_hello_world())
 
 loop.run_forever()
 ```
+
+## License
+
+Python-sdbus is licensed under [LGPL-2.1-or-later](https://spdx.org/licenses/LGPL-2.1-or-later.html).
+
+The LGPL license is an extension of GPL license therefore both licenses' texts are required.

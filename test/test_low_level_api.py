@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from unittest import SkipTest, main
+from unittest import SkipTest, TestCase, main
 
 from sdbus.sd_bus_internals import (
     SdBus,
@@ -31,13 +31,15 @@ from sdbus.sd_bus_internals import (
 from sdbus.unittest import IsolatedDbusTestCase
 
 
-class TestDbusTypes(IsolatedDbusTestCase):
+class TestInitDbus(IsolatedDbusTestCase):
     def test_init_bus(self) -> None:
         not_connected_bus = SdBus()
         self.assertIsNone(not_connected_bus.address)
 
         self.assertIsNotNone(self.bus.address)
 
+
+class TestLowLeveApi(TestCase):
     def test_validation_funcs(self) -> None:
         try:
             self.assertTrue(
@@ -78,6 +80,21 @@ class TestDbusTypes(IsolatedDbusTestCase):
                     "Probably too old libsystemd. (< 246)"
                 )
             )
+
+    def test_bus_method_call_timeout(self) -> None:
+        bus = SdBus()
+
+        self.assertIsNotNone(bus.method_call_timeout_usec)
+
+        test_timeout_usec = 10 * 10**6  # 10 seconds
+        bus.method_call_timeout_usec = test_timeout_usec
+        self.assertEqual(test_timeout_usec, bus.method_call_timeout_usec)
+
+        with self.assertRaises(TypeError):
+            bus.method_call_timeout_usec = "test"  # type: ignore
+
+        with self.assertRaises(ValueError):
+            del bus.method_call_timeout_usec
 
 
 if __name__ == "__main__":

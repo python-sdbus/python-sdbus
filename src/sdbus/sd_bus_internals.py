@@ -222,6 +222,7 @@ class SdBus:
         raise NotImplementedError(__STUB_ERROR)
 
     address: Optional[str] = None
+    method_call_timeout_usec: int = 0
 
 
 def sd_bus_open() -> SdBus:

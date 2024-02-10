@@ -669,8 +669,31 @@ static PyObject* SdBus_address_getter(SdBusObject* self, void* Py_UNUSED(closure
         return PyUnicode_FromString(bus_address);
 }
 
+static PyObject* SdBus_method_call_timeout_usec_getter(SdBusObject* self, void* Py_UNUSED(closure)) {
+        uint64_t timeout_usec = 0;
+        CALL_SD_BUS_AND_CHECK(sd_bus_get_method_call_timeout(self->sd_bus_ref, &timeout_usec));
+
+        return PyLong_FromUnsignedLongLong((unsigned long long)timeout_usec);
+}
+
+static int SdBus_method_call_timeout_usec_setter(SdBusObject* self, PyObject* new_value, void* Py_UNUSED(closure)) {
+        if (NULL == new_value) {
+                PyErr_SetString(PyExc_ValueError, "Cannot delete method call timeout value");
+                return -1;
+        }
+
+        unsigned long long new_timeout_usec = PyLong_AsUnsignedLongLong(new_value);
+        if ((((unsigned long long)-1) == new_timeout_usec) && (PyErr_Occurred() != NULL)) {
+                return -1;
+        }
+        CALL_SD_BUS_CHECK_RETURN_NEG1(sd_bus_set_method_call_timeout(self->sd_bus_ref, (uint64_t)new_timeout_usec));
+        return 0;
+}
+
 static PyGetSetDef SdBus_properies[] = {
     {"address", (getter)SdBus_address_getter, NULL, PyDoc_STR("Bus address."), NULL},
+    {"method_call_timeout_usec", (getter)SdBus_method_call_timeout_usec_getter, (setter)SdBus_method_call_timeout_usec_setter,
+     PyDoc_STR("D-Bus call timeout in microseconds."), NULL},
     {0},
 };
 

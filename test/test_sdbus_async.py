@@ -219,6 +219,10 @@ class TestInterface(DbusInterfaceCommonAsync,
     def empty_signal(self) -> None:
         raise NotImplementedError
 
+    @dbus_method_async()
+    async def returns_none_method(self) -> None:
+        return
+
 
 class DbusErrorTest(DbusFailedError):
     dbus_error_name = 'org.example.Error'
@@ -309,6 +313,17 @@ class TestProxy(IsolatedDbusTestCase):
         )
 
         self.assertTrue(await test_object_connection.get_sender())
+
+        with self.subTest("Test method that returns None"):
+            self.assertIsNone(
+
+                await test_object
+                .returns_none_method()  # type: ignore[func-returns-value]
+            )
+            self.assertIsNone(
+                await test_object_connection
+                .returns_none_method()   # type: ignore[func-returns-value]
+            )
 
     async def test_subclass(self) -> None:
         test_object, test_object_connection = initialize_object()

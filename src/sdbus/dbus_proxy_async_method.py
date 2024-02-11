@@ -87,7 +87,13 @@ class DbusMethodAsyncProxyBind(DbusMethodAsyncBaseBind):
     async def _dbus_async_call(self, call_message: SdBusMessage) -> Any:
         bus = self.proxy_meta.attached_bus
         reply_message = await bus.call_async(call_message)
-        return reply_message.get_contents()
+        reply_data: Any = reply_message.parse_contents()
+        if len(reply_data) == 1:
+            reply_data = reply_data[0]
+        elif len(reply_data) == 0:
+            reply_data = None
+
+        return reply_data
 
     @staticmethod
     async def _no_reply() -> None:
@@ -150,19 +156,19 @@ class DbusMethodAsyncLocalBind(DbusMethodAsyncBaseBind):
         request_message: SdBusMessage,
         local_object: DbusInterfaceBaseAsync,
     ) -> Any:
-        request_data = request_message.get_contents()
+        request_data = request_message.parse_contents()
 
         local_method = self.dbus_method.original_method.__get__(
             local_object, None)
 
         CURRENT_MESSAGE.set(request_message)
 
-        if isinstance(request_data, tuple):
-            return await local_method(*request_data)
-        elif request_data is None:
+        if len(request_data) == 1:
+            return await local_method(request_data[0])
+        elif len(request_data) == 0:
             return await local_method()
         else:
-            return await local_method(request_data)
+            return await local_method(*request_data)
 
     async def _dbus_reply_call(
         self,

@@ -69,7 +69,12 @@ class DbusMethodSyncBinded(DbusBindedSync):
 
         reply_message = self.interface._dbus.attached_bus.call(
             new_call_message)
-        return reply_message.get_contents()
+
+        message_contents = reply_message.parse_contents()
+        if len(message_contents) == 1:
+            return message_contents[0]
+        else:
+            return message_contents
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         if len(args) == self.dbus_method.num_of_args:

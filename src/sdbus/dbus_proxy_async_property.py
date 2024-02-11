@@ -143,7 +143,7 @@ class DbusPropertyAsyncProxyBind(DbusPropertyAsyncBaseBind[T]):
         )
         reply_message = await bus.call_async(new_get_message)
         # Get method returns variant but we only need contents of variant
-        return cast(T, reply_message.get_contents()[1])
+        return cast(T, reply_message.parse_contents()[0][1])
 
     async def set_async(self, complete_object: T) -> None:
         bus = self.proxy_meta.attached_bus
@@ -228,7 +228,7 @@ class DbusPropertyAsyncLocalBind(DbusPropertyAsyncBaseBind[T]):
             raise RuntimeError("Local object no longer exists!")
 
         assert self.dbus_property.property_setter is not None
-        data_to_set_to: Any = message.get_contents()
+        data_to_set_to: Any = message.parse_contents()[0]
 
         self.dbus_property.property_setter(local_object, data_to_set_to)
 

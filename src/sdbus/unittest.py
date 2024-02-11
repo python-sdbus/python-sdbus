@@ -109,7 +109,11 @@ class DbusSignalRecorderBase:
 
     def _callback(self, data: Any) -> None:
         if isinstance(data, SdBusMessage):
-            data = data.get_contents()
+            data = data.parse_contents()
+            if len(data) == 1:
+                data = data[0]
+            elif len(data) == 0:
+                data = None
 
         self._captured_data.append(data)
         self._ready_event.set()

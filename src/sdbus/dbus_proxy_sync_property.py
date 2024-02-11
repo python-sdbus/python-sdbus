@@ -80,7 +80,7 @@ class DbusPropertySync(DbusPropertyCommon, DbusSomethingSync, Generic[T]):
         )
 
         reply_message = obj._dbus.attached_bus.call(new_call_message)
-        return cast(T, reply_message.get_contents()[1])
+        return cast(T, reply_message.parse_contents()[0][1])
 
     def __set__(self, obj: DbusInterfaceBase, value: T) -> None:
         assert _check_sync_in_async_env(), (

@@ -876,6 +876,7 @@ static PyObject* _iter_struct(_Parse_state* parser) {
         size_t tuple_size = _container_size(container_sig);
 
         if (tuple_size == 0) {
+                // D-Bus specification does not allow empty structs
                 return NULL;
         }
 
@@ -940,21 +941,7 @@ static PyObject* _iter_complete(_Parse_state* parser) {
         }
 }
 
-static PyObject* iter_tuple_or_single(_Parse_state* parser) {
-        // Calculate the length of message data
-        size_t container_size = _container_size(parser->container_char_ptr);
-        if (container_size == 0) {
-                return NULL;
-        }
-
-        if (container_size == 1) {
-                return _iter_complete(parser);
-        } else {
-                return _iter_struct(parser);
-        }
-}
-
-static PyObject* SdBusMessage_get_contents2(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
+static PyObject* SdBusMessage_parse_contents(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
         const char* message_signature = sd_bus_message_get_signature(self->message_ref, 0);
 
         if (message_signature == NULL) {
@@ -962,8 +949,8 @@ static PyObject* SdBusMessage_get_contents2(SdBusMessageObject* self, PyObject* 
                 return NULL;
         }
         if (message_signature[0] == '\0') {
-                // Empty message
-                Py_RETURN_NONE;
+                // Empty message, return zero size tuple
+                return PyTuple_New(0);
         }
 
         CALL_SD_BUS_AND_CHECK(sd_bus_message_rewind(self->message_ref, 0));
@@ -974,10 +961,11 @@ static PyObject* SdBusMessage_get_contents2(SdBusMessageObject* self, PyObject* 
             .max_index = strlen(message_signature),
         };
         /* Parsing strategy
-       Either return a single object (single string, single int, single array)
-       or a tuple of single objects. This mirrors the python function returns.
-      */
-        return iter_tuple_or_single(&read_parser);
+           Always return a tuple because otherwise it will be impossible to
+           tell if a single struct was returned or a multiple top level
+           base types.
+        */
+        return _iter_struct(&read_parser);
 }
 
 #ifndef Py_LIMITED_API
@@ -1011,7 +999,7 @@ static PyMethodDef SdBusMessage_methods[] = {
     {"exit_container", (PyCFunction)SdBusMessage_exit_container, METH_NOARGS, PyDoc_STR("Exit container.")},
     {"dump", (PyCFunction)SdBusMessage_dump, METH_NOARGS, PyDoc_STR("Dump message to stdout.")},
     {"seal", (PyCFunction)SdBusMessage_seal, METH_NOARGS, PyDoc_STR("Seal message contents.")},
-    {"get_contents", (PyCFunction)SdBusMessage_get_contents2, METH_NOARGS, PyDoc_STR("Iterate over message contents.")},
+    {"parse_contents", (PyCFunction)SdBusMessage_parse_contents, METH_NOARGS, PyDoc_STR("Parse message contents to Python objects.")},
     {"create_reply", (PyCFunction)SdBusMessage_create_reply, METH_NOARGS, PyDoc_STR("Create reply message.")},
     {"create_error_reply", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_create_error_reply, SD_BUS_PY_METH,
      PyDoc_STR("Create error reply with error name and error message.")},

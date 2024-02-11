@@ -120,8 +120,9 @@ class SdBusMessage:
     def seal(self) -> None:
         raise NotImplementedError(__STUB_ERROR)
 
-    def get_contents(self
-                     ) -> Tuple[DbusCompleteTypes, ...]:
+    def parse_contents(
+        self,
+    ) -> Tuple[Any, ...]:
         raise NotImplementedError(__STUB_ERROR)
 
     def create_reply(self) -> SdBusMessage:

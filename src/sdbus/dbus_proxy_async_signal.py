@@ -140,7 +140,11 @@ class DbusSignalAsyncProxyBind(DbusSignalAsyncBaseBind[T]):
         with closing(match_slot):
             while True:
                 next_signal_message = await message_queue.get()
-                yield cast(T, next_signal_message.get_contents())
+                next_signal_data = next_signal_message.parse_contents()
+                if len(next_signal_data) == 1:
+                    next_signal_data = next_signal_data[0]
+
+                yield cast(T, next_signal_data)
 
     __aiter__ = catch
 
@@ -170,10 +174,11 @@ class DbusSignalAsyncProxyBind(DbusSignalAsyncBaseBind[T]):
                 next_signal_message = await message_queue.get()
                 signal_path = next_signal_message.path
                 assert signal_path is not None
-                yield (
-                    signal_path,
-                    cast(T, next_signal_message.get_contents())
-                )
+                next_signal_data = next_signal_message.parse_contents()
+                if len(next_signal_data) == 1:
+                    next_signal_data = next_signal_data[0]
+
+                yield (signal_path, cast(T, next_signal_data))
 
     def emit(self, args: T) -> None:
         raise RuntimeError("Cannot emit signal from D-Bus proxy.")
@@ -294,10 +299,11 @@ class DbusSignalAsyncClassBind(DbusSignalAsyncBaseBind[T]):
                 next_signal_message = await message_queue.get()
                 signal_path = next_signal_message.path
                 assert signal_path is not None
-                yield (
-                    signal_path,
-                    cast(T, next_signal_message.get_contents())
-                )
+                next_signal_data = next_signal_message.parse_contents()
+                if len(next_signal_data) == 1:
+                    next_signal_data = next_signal_data[0]
+
+                yield (signal_path, cast(T, next_signal_data))
 
     def emit(self, args: T) -> None:
         raise NotImplementedError(

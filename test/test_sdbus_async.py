@@ -83,7 +83,10 @@ class TestPing(IsolatedDbusTestCase):
             'org.freedesktop.DBus.Peer', 'Ping',
         )
         r = await self.bus.call_async(m)
-        self.assertIsNone(r.get_contents())
+        self.assertEqual(
+            r.parse_contents(),
+            (),
+        )
 
 
 class TestRequestName(IsolatedDbusTestCase):
@@ -219,6 +222,17 @@ class TestInterface(DbusInterfaceCommonAsync,
     def empty_signal(self) -> None:
         raise NotImplementedError
 
+    @dbus_method_async(
+        input_signature="(iiii)",
+        result_signature="i",
+    )
+    async def takes_struct_method(
+        self,
+        int_struct: Tuple[int, int, int, int],
+    ) -> int:
+        a, b, c, d = int_struct
+        return a*b*c*d
+
 
 class DbusErrorTest(DbusFailedError):
     dbus_error_name = 'org.example.Error'
@@ -309,6 +323,16 @@ class TestProxy(IsolatedDbusTestCase):
         )
 
         self.assertTrue(await test_object_connection.get_sender())
+
+        with self.subTest("Test method that takes a single struct"):
+            self.assertEqual(
+                await test_object.takes_struct_method((2, 3, 4, 5)),
+                120,
+            )
+            self.assertEqual(
+                await test_object_connection.takes_struct_method((9, 8, 7, 6)),
+                3024,
+            )
 
     async def test_subclass(self) -> None:
         test_object, test_object_connection = initialize_object()

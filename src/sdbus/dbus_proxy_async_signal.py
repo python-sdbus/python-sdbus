@@ -36,7 +36,7 @@ from .dbus_common_elements import (
     DbusBindedAsync,
     DbusLocalObjectMeta,
     DbusRemoteObjectMeta,
-    DbusSingalCommon,
+    DbusSignalCommon,
     DbusSomethingAsync,
 )
 from .dbus_common_funcs import get_default_bus
@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class DbusSignalAsync(DbusSomethingAsync, DbusSingalCommon, Generic[T]):
+class DbusSignalAsync(DbusSomethingAsync, DbusSignalCommon, Generic[T]):
 
     def __init__(
         self,

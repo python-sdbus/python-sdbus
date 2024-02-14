@@ -261,7 +261,7 @@ class DbusPropertyCommon(DbusSomethingCommon):
         self.flags = flags
 
 
-class DbusSingalCommon(DbusSomethingCommon):
+class DbusSignalCommon(DbusSomethingCommon):
     def __init__(self,
                  signal_name: Optional[str],
                  signal_signature: str,

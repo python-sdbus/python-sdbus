@@ -684,7 +684,7 @@ class TestProxy(IsolatedDbusTestCase):
         with self.assertRaises(SdBusLibraryError):
             await wait_for(too_long_wait(), timeout=1)
 
-    async def test_singal_queue_wildcard_match(self) -> None:
+    async def test_signal_queue_wildcard_match(self) -> None:
         test_object, test_object_connection = initialize_object()
 
         loop = get_running_loop()

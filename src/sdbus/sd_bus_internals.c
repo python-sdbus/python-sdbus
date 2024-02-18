@@ -54,7 +54,7 @@ static void SdBusSlot_dealloc(SdBusSlotObject* self) {
         SD_BUS_DEALLOC_TAIL;
 }
 
-static PyObject* SdBusSlot_close(SdBusSlotObject* self) {
+static PyObject* SdBusSlot_close(SdBusSlotObject* self, PyObject* Py_UNUSED(args)) {
         sd_bus_slot_unref(self->slot_ref);
         self->slot_ref = NULL;
 

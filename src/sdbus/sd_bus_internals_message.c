@@ -980,6 +980,29 @@ static PyObject* SdBusMessage_get_contents2(SdBusMessageObject* self, PyObject* 
         return iter_tuple_or_single(&read_parser);
 }
 
+static PyObject* SdBusMessage_parse_to_tuple(SdBusMessageObject* self, PyObject* Py_UNUSED(args)) {
+        const char* message_signature = sd_bus_message_get_signature(self->message_ref, 0);
+
+        if (message_signature == NULL) {
+                PyErr_SetString(PyExc_ValueError, "Failed to get message signature.");
+                return NULL;
+        }
+        if (message_signature[0] == '\0') {
+                // Empty message. Return zero size tuple.
+                return PyTuple_New(0);
+        }
+
+        CALL_SD_BUS_AND_CHECK(sd_bus_message_rewind(self->message_ref, 0));
+        _Parse_state read_parser = {
+            .message = self->message_ref,
+            .container_char_ptr = message_signature,
+            .index = 0,
+            .max_index = strlen(message_signature),
+        };
+
+        return _iter_struct(&read_parser);
+}
+
 #ifndef Py_LIMITED_API
 static SdBusMessageObject* SdBusMessage_create_error_reply(SdBusMessageObject* self, PyObject* const* args, Py_ssize_t nargs) {
         SD_BUS_PY_CHECK_ARGS_NUMBER(2);
@@ -1012,6 +1035,7 @@ static PyMethodDef SdBusMessage_methods[] = {
     {"dump", (PyCFunction)SdBusMessage_dump, METH_NOARGS, PyDoc_STR("Dump message to stdout.")},
     {"seal", (PyCFunction)SdBusMessage_seal, METH_NOARGS, PyDoc_STR("Seal message contents.")},
     {"get_contents", (PyCFunction)SdBusMessage_get_contents2, METH_NOARGS, PyDoc_STR("Iterate over message contents.")},
+    {"parse_to_tuple", (PyCFunction)SdBusMessage_parse_to_tuple, METH_NOARGS, PyDoc_STR("Parse message data to a tuple.")},
     {"create_reply", (PyCFunction)SdBusMessage_create_reply, METH_NOARGS, PyDoc_STR("Create reply message.")},
     {"create_error_reply", (SD_BUS_PY_FUNC_TYPE)SdBusMessage_create_error_reply, SD_BUS_PY_METH,
      PyDoc_STR("Create error reply with error name and error message.")},

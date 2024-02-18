@@ -136,6 +136,9 @@ class SdBusMessage:
     def send(self) -> None:
         raise NotImplementedError(__STUB_ERROR)
 
+    def parse_to_tuple(self) -> Tuple[Any, ...]:
+        raise NotImplementedError(__STUB_ERROR)
+
     expect_reply: bool = False
     destination: Optional[str] = None
     path: Optional[str] = None

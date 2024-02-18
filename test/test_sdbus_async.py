@@ -223,6 +223,17 @@ class TestInterface(DbusInterfaceCommonAsync,
     async def returns_none_method(self) -> None:
         return
 
+    @dbus_method_async(
+        input_signature="(iiii)",
+        result_signature="i",
+    )
+    async def takes_struct_method(
+        self,
+        int_struct: Tuple[int, int, int, int],
+    ) -> int:
+        a, b, c, d = int_struct
+        return a*b*c*d
+
 
 class DbusErrorTest(DbusFailedError):
     dbus_error_name = 'org.example.Error'
@@ -316,13 +327,22 @@ class TestProxy(IsolatedDbusTestCase):
 
         with self.subTest("Test method that returns None"):
             self.assertIsNone(
-
                 await test_object
                 .returns_none_method()  # type: ignore[func-returns-value]
             )
             self.assertIsNone(
                 await test_object_connection
                 .returns_none_method()   # type: ignore[func-returns-value]
+            )
+
+        with self.subTest("Test method that takes a single struct"):
+            self.assertEqual(
+                await test_object.takes_struct_method((2, 3, 4, 5)),
+                120,
+            )
+            self.assertEqual(
+                await test_object_connection.takes_struct_method((9, 8, 7, 6)),
+                3024,
             )
 
     async def test_subclass(self) -> None:

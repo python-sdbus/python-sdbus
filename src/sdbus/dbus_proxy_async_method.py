@@ -150,19 +150,13 @@ class DbusMethodAsyncLocalBind(DbusMethodAsyncBaseBind):
         request_message: SdBusMessage,
         local_object: DbusInterfaceBaseAsync,
     ) -> Any:
-        request_data = request_message.get_contents()
 
         local_method = self.dbus_method.original_method.__get__(
             local_object, None)
 
         CURRENT_MESSAGE.set(request_message)
 
-        if isinstance(request_data, tuple):
-            return await local_method(*request_data)
-        elif request_data is None:
-            return await local_method()
-        else:
-            return await local_method(request_data)
+        return await local_method(*request_message.parse_to_tuple())
 
     async def _dbus_reply_call(
         self,

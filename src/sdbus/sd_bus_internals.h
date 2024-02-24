@@ -246,6 +246,8 @@ extern PyObject* set_result_str;
 extern PyObject* set_exception_str;
 extern PyObject* add_reader_str;
 extern PyObject* remove_reader_str;
+extern PyObject* add_writer_str;
+extern PyObject* remove_writer_str;
 extern PyObject* empty_str;
 extern PyObject* null_str;
 extern PyObject* extend_str;
@@ -330,7 +332,8 @@ extern PyObject* SdBusMessage_class;
 typedef struct {
         PyObject_HEAD;
         sd_bus* sd_bus_ref;
-        PyObject* reader_fd;
+        PyObject* bus_fd;
+        int asyncio_watchers_last_state;
 } SdBusObject;
 
 extern PyType_Spec SdBusType;

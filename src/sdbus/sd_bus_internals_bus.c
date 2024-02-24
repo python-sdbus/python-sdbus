@@ -19,11 +19,12 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 */
 #include <errno.h>
+#include <poll.h>
 #include "sd_bus_internals.h"
 
 static void SdBus_dealloc(SdBusObject* self) {
         sd_bus_unref(self->sd_bus_ref);
-        Py_XDECREF(self->reader_fd);
+        Py_XDECREF(self->bus_fd);
 
         SD_BUS_DEALLOC_TAIL;
 }
@@ -229,46 +230,24 @@ int future_set_exception_from_message(PyObject* future, sd_bus_message* message)
         return 0;
 }
 
-static PyObject* SdBus_drive(SdBusObject* self, PyObject* Py_UNUSED(args));
-
 static PyObject* SdBus_get_fd(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         int file_descriptor = CALL_SD_BUS_AND_CHECK(sd_bus_get_fd(self->sd_bus_ref));
 
         return PyLong_FromLong((long)file_descriptor);
 }
 
-#define CHECK_SD_BUS_READER                                             \
-        ({                                                              \
-                if (self->reader_fd == NULL) {                          \
-                        CALL_PYTHON_EXPECT_NONE(register_reader(self)); \
-                }                                                       \
-        })
+static PyObject* SdBus_asyncio_update_fd_watchers(SdBusObject* self);
 
-PyObject* register_reader(SdBusObject* self) {
-        PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
-        PyObject* new_reader_fd CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(SdBus_get_fd(self, NULL));
-        PyObject* drive_method CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString((PyObject*)self, "drive"));
-        Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, add_reader_str, new_reader_fd, drive_method, NULL)));
-        Py_INCREF(new_reader_fd);
-        self->reader_fd = new_reader_fd;
-        Py_RETURN_NONE;
-}
+#define CHECK_ASYNCIO_WATCHERS ({ CALL_PYTHON_EXPECT_NONE(SdBus_asyncio_update_fd_watchers(self)); })
 
-PyObject* unregister_reader(SdBusObject* self) {
-        PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
-        Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, remove_reader_str, self->reader_fd, NULL)));
-        Py_RETURN_NONE;
-}
-
-static PyObject* SdBus_drive(SdBusObject* self, PyObject* Py_UNUSED(args)) {
+static PyObject* SdBus_process(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         int return_value = 1;
         while (return_value > 0) {
                 return_value = sd_bus_process(self->sd_bus_ref, NULL);
                 if (return_value < 0) {
-                        CALL_PYTHON_AND_CHECK(unregister_reader(self));
                         if (-ECONNRESET == return_value) {
                                 // Connection gracefully terminated
-                                Py_RETURN_NONE;
+                                break;
                         } else {
                                 // Error occurred processing sdbus
                                 CALL_SD_BUS_AND_CHECK(return_value);
@@ -280,6 +259,7 @@ static PyObject* SdBus_drive(SdBusObject* self, PyObject* Py_UNUSED(args)) {
                         return NULL;
                 }
         }
+        CHECK_ASYNCIO_WATCHERS;
 
         Py_RETURN_NONE;
 }
@@ -291,7 +271,7 @@ int SdBus_async_callback(sd_bus_message* m,
         PyObject* py_future = userdata;
         PyObject* is_cancelled CLEANUP_PY_OBJECT = PyObject_CallMethod(py_future, "cancelled", "");
         if (Py_True == is_cancelled) {
-                // A bit unpythonic but SdBus_drive does not error out
+                // A bit unpythonic but SdBus_process does not error out
                 return 0;
         }
 
@@ -340,7 +320,7 @@ static PyObject* SdBus_call_async(SdBusObject* self, PyObject* args) {
         if (PyObject_SetAttrString(new_future, "_sd_bus_py_slot", (PyObject*)new_slot_object) < 0) {
                 return NULL;
         }
-        CHECK_SD_BUS_READER;
+        CHECK_ASYNCIO_WATCHERS;
         return new_future;
 }
 
@@ -454,7 +434,7 @@ static PyObject* SdBus_match_signal_async(SdBusObject* self, PyObject* args) {
                                                         interface_name_char_ptr, member_name_char_ptr, _SdBus_signal_callback,
                                                         _SdBus_match_signal_instant_callback, new_future));
 
-        CHECK_SD_BUS_READER;
+        CHECK_ASYNCIO_WATCHERS;
         Py_INCREF(new_future);
         return new_future;
 }
@@ -465,7 +445,7 @@ int SdBus_request_name_callback(sd_bus_message* m,
         PyObject* py_future = userdata;
         PyObject* is_cancelled CLEANUP_PY_OBJECT = PyObject_CallMethod(py_future, "cancelled", "");
         if (Py_True == is_cancelled) {
-                // A bit unpythonic but SdBus_drive does not error out
+                // A bit unpythonic but SdBus_process does not error out
                 return 0;
         }
 
@@ -531,7 +511,7 @@ static PyObject* SdBus_request_name_async(SdBusObject* self, PyObject* args) {
             sd_bus_request_name_async(self->sd_bus_ref, &new_slot_object->slot_ref, service_name_char_ptr, flags, SdBus_request_name_callback, new_future));
 
         CALL_PYTHON_INT_CHECK(PyObject_SetAttrString(new_future, "_sd_bus_py_slot", (PyObject*)new_slot_object));
-        CHECK_SD_BUS_READER;
+        CHECK_ASYNCIO_WATCHERS;
         return new_future;
 }
 
@@ -635,10 +615,49 @@ static PyObject* SdBus_start(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         Py_RETURN_NONE;
 }
 
+static inline int sd_bus_get_events_zero_on_closed(SdBusObject* self) {
+        int events = sd_bus_get_events(self->sd_bus_ref);
+        if (-ENOTCONN == events) {
+                return 0;
+        }
+        return events;
+};
+
+static PyObject* SdBus_asyncio_update_fd_watchers(SdBusObject* self) {
+        int events_to_watch = CALL_SD_BUS_AND_CHECK(sd_bus_get_events_zero_on_closed(self));
+        if (events_to_watch == self->asyncio_watchers_last_state) {
+                // Do not update the watchers because state is the same
+                Py_RETURN_NONE;
+        } else {
+                self->asyncio_watchers_last_state = events_to_watch;
+        }
+
+        PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
+        PyObject* drive_method CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString((PyObject*)self, "process"));
+
+        if (NULL == self->bus_fd) {
+                self->bus_fd = CALL_PYTHON_AND_CHECK(SdBus_get_fd(self, NULL));
+        }
+
+        if (events_to_watch & POLLIN) {
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, add_reader_str, self->bus_fd, drive_method, NULL)));
+        } else {
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, remove_reader_str, self->bus_fd, NULL)));
+        }
+
+        if (events_to_watch & POLLOUT) {
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, add_writer_str, self->bus_fd, drive_method, NULL)));
+        } else {
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, remove_writer_str, self->bus_fd, NULL)));
+        }
+
+        Py_RETURN_NONE;
+}
+
 static PyMethodDef SdBus_methods[] = {
     {"call", (SD_BUS_PY_FUNC_TYPE)SdBus_call, SD_BUS_PY_METH, PyDoc_STR("Send message and block until the reply.")},
     {"call_async", (SD_BUS_PY_FUNC_TYPE)SdBus_call_async, SD_BUS_PY_METH, PyDoc_STR("Async send message, returns awaitable future.")},
-    {"drive", (PyCFunction)SdBus_drive, METH_NOARGS, PyDoc_STR("Drive connection.")},
+    {"process", (PyCFunction)SdBus_process, METH_NOARGS, PyDoc_STR("Process pending IO work.")},
     {"get_fd", (SD_BUS_PY_FUNC_TYPE)SdBus_get_fd, SD_BUS_PY_METH, PyDoc_STR("Get file descriptor to poll on.")},
     {"new_method_call_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_method_call_message, SD_BUS_PY_METH, PyDoc_STR("Create new empty method call message.")},
     {"new_property_get_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_property_get_message, SD_BUS_PY_METH, PyDoc_STR("Create new empty property get message.")},

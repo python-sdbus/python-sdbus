@@ -28,6 +28,8 @@ PyObject* set_result_str = NULL;
 PyObject* set_exception_str = NULL;
 PyObject* add_reader_str = NULL;
 PyObject* remove_reader_str = NULL;
+PyObject* add_writer_str = NULL;
+PyObject* remove_writer_str = NULL;
 PyObject* empty_str = NULL;
 PyObject* null_str = NULL;
 PyObject* extend_str = NULL;
@@ -171,6 +173,8 @@ PyMODINIT_FUNC PyInit_sd_bus_internals(void) {
         create_task_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("create_task"));
         remove_reader_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("remove_reader"));
         add_reader_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("add_reader"));
+        add_writer_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("add_writer"));
+        remove_writer_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("remove_writer"));
         empty_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString(""));
         null_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromStringAndSize("\0", 1));
         extend_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("extend"));

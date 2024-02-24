@@ -234,6 +234,10 @@ class TestInterface(DbusInterfaceCommonAsync,
         a, b, c, d = int_struct
         return a*b*c*d
 
+    @dbus_method_async("s", "x")
+    async def return_length(self, input_str: str) -> int:
+        return len(input_str)
+
 
 class DbusErrorTest(DbusFailedError):
     dbus_error_name = 'org.example.Error'
@@ -939,3 +943,24 @@ class TestProxy(IsolatedDbusTestCase):
 
         class CombinedInterface(OneInterface, TwoInterface):
             ...
+
+    async def test_extremely_large_string(self) -> None:
+        test_object, test_object_connection = initialize_object()
+
+        extremely_large_string = "a" * 8423681
+
+        remote_len = await wait_for(
+            test_object_connection.return_length(
+                extremely_large_string
+            ),
+            timeout=10,
+        )
+
+        self.assertEqual(
+            remote_len,
+            len(extremely_large_string),
+        )
+
+        # Check that calling regular methods still works.
+        for _ in range(5):
+            await test_object_connection.returns_none_method()

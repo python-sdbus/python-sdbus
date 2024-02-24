@@ -156,7 +156,7 @@ class SdBus:
             /) -> Future[SdBusMessage]:
         raise NotImplementedError(__STUB_ERROR)
 
-    def drive(self) -> None:
+    def process(self) -> None:
         raise NotImplementedError(__STUB_ERROR)
 
     def get_fd(self) -> int:

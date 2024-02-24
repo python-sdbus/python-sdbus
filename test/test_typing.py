@@ -138,10 +138,35 @@ async def check_async_interface_signal_typing(
         for x2 in ls2:
             x2.capitalize()
 
-    async for p, ls3 in test_interface.str_list_signal.catch_anywhere():
-        p.capitalize()
+    async for p1, ls3 in test_interface.str_list_signal.catch_anywhere():
+        p1.capitalize()
         ls3.append("test")
         for x3 in ls3:
             x3.capitalize()
 
+    async for p2, ls4 in (
+        TestTypingAsync.str_list_signal
+        .catch_anywhere("org.example")
+    ):
+        p2.capitalize()
+        ls4.append("test")
+        for x4 in ls4:
+            x4.capitalize()
+
     test_interface.str_list_signal.emit(["test", "foobar"])
+
+
+async def check_async_element_class_access_typing() -> None:
+
+    test_list: List[str] = []
+
+    # TODO: Fix dbus async method typing
+    # test_list.append(
+    #     TestTypingAsync.get_str_list_method.method_name
+    # )
+    test_list.append(
+        TestTypingAsync.str_list_property.property_name
+    )
+    test_list.append(
+        TestTypingAsync.str_list_signal.signal_name
+    )

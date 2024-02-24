@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from inspect import iscoroutinefunction
 from types import FunctionType
-from typing import TYPE_CHECKING, Awaitable, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Awaitable, Generic, TypeVar, cast, overload
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
@@ -33,7 +33,7 @@ from .dbus_common_elements import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Generator, Optional, Type
+    from typing import Any, Callable, Generator, Optional, Type, Union
 
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
     from .sd_bus_internals import SdBusMessage
@@ -71,10 +71,27 @@ class DbusPropertyAsync(DbusSomethingAsync, DbusPropertyCommon, Generic[T]):
 
         self.__doc__ = property_getter.__doc__
 
-    def __get__(self,
-                obj: Optional[DbusInterfaceBaseAsync],
-                obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
-                ) -> DbusPropertyAsyncBaseBind[T]:
+    @overload
+    def __get__(
+        self,
+        obj: None,
+        obj_class: Type[DbusInterfaceBaseAsync],
+    ) -> DbusPropertyAsync[T]:
+        ...
+
+    @overload
+    def __get__(
+        self,
+        obj: DbusInterfaceBaseAsync,
+        obj_class: Type[DbusInterfaceBaseAsync],
+    ) -> DbusPropertyAsyncBaseBind[T]:
+        ...
+
+    def __get__(
+        self,
+        obj: Optional[DbusInterfaceBaseAsync],
+        obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
+    ) -> Union[DbusPropertyAsyncBaseBind[T], DbusPropertyAsync[T]]:
         if obj is not None:
             dbus_meta = obj._dbus
             if isinstance(dbus_meta, DbusRemoteObjectMeta):
@@ -82,7 +99,7 @@ class DbusPropertyAsync(DbusSomethingAsync, DbusPropertyCommon, Generic[T]):
             else:
                 return DbusPropertyAsyncLocalBind(self, obj)
         else:
-            return DbusPropertyAsyncClassBind(self)
+            return self
 
     def setter(self,
                new_set_function: Callable[
@@ -252,13 +269,6 @@ class DbusPropertyAsyncLocalBind(DbusPropertyAsyncBaseBind[T]):
                     []
                 )
             )
-
-
-class DbusPropertyAsyncClassBind(DbusPropertyAsyncBaseBind[T]):
-    def __init__(self, dbus_property: DbusPropertyAsync[T]):
-        self.dbus_property = dbus_property
-
-        self.__doc__ = dbus_property.__doc__
 
 
 def dbus_property_async(

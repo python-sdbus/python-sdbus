@@ -22,7 +22,7 @@ from __future__ import annotations
 from contextvars import ContextVar, copy_context
 from inspect import iscoroutinefunction
 from types import FunctionType
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, overload
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
@@ -36,7 +36,7 @@ from .dbus_exceptions import DbusFailedError
 from .sd_bus_internals import DbusNoReplyFlag
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Sequence, Type, TypeVar
+    from typing import Any, Callable, Optional, Sequence, Type, TypeVar, Union
 
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
     from .sd_bus_internals import SdBusMessage
@@ -53,10 +53,28 @@ def get_current_message() -> SdBusMessage:
 
 
 class DbusMethodAsync(DbusMethodCommon, DbusSomethingAsync):
-    def __get__(self,
-                obj: Optional[DbusInterfaceBaseAsync],
-                obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
-                ) -> Callable[..., Any]:
+
+    @overload
+    def __get__(
+        self,
+        obj: None,
+        obj_class: Type[DbusInterfaceBaseAsync],
+    ) -> DbusMethodAsync:
+        ...
+
+    @overload
+    def __get__(
+        self,
+        obj: DbusInterfaceBaseAsync,
+        obj_class: Type[DbusInterfaceBaseAsync],
+    ) -> Callable[..., Any]:
+        ...
+
+    def __get__(
+        self,
+        obj: Optional[DbusInterfaceBaseAsync],
+        obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
+    ) -> Union[Callable[..., Any], DbusMethodAsync]:
         if obj is not None:
             dbus_meta = obj._dbus
             if isinstance(dbus_meta, DbusRemoteObjectMeta):
@@ -64,7 +82,7 @@ class DbusMethodAsync(DbusMethodCommon, DbusSomethingAsync):
             else:
                 return DbusMethodAsyncLocalBind(self, obj)
         else:
-            return DbusMethodAsyncClassBind(self)
+            return self
 
 
 class DbusMethodAsyncBaseBind(DbusBindedAsync):
@@ -212,13 +230,6 @@ class DbusMethodAsyncLocalBind(DbusMethodAsyncBaseBind):
                 self.dbus_method.result_signature, reply_data)
 
         reply_message.send()
-
-
-class DbusMethodAsyncClassBind(DbusMethodAsyncBaseBind):
-    def __init__(self, dbus_method: DbusMethodAsync):
-        self.dbus_method = dbus_method
-
-        self.__doc__ = dbus_method.__doc__
 
 
 def dbus_method_async(

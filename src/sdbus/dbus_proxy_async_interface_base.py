@@ -36,14 +36,9 @@ from .dbus_common_elements import (
     DbusSomethingSync,
 )
 from .dbus_common_funcs import get_default_bus
-from .dbus_proxy_async_method import (
-    DbusMethodAsync,
-    DbusMethodAsyncClassBind,
-    DbusMethodAsyncLocalBind,
-)
+from .dbus_proxy_async_method import DbusMethodAsync, DbusMethodAsyncLocalBind
 from .dbus_proxy_async_property import (
     DbusPropertyAsync,
-    DbusPropertyAsyncClassBind,
     DbusPropertyAsyncLocalBind,
 )
 from .dbus_proxy_async_signal import DbusSignalAsync, DbusSignalAsyncLocalBind
@@ -162,12 +157,12 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
 
                 super_element = getattr(base, collision_name)
                 dbus_element_override: DbusSomethingAsync
-                if isinstance(super_element, DbusMethodAsyncClassBind):
-                    dbus_element_override = copy(super_element.dbus_method)
+                if isinstance(super_element, DbusMethodAsync):
+                    dbus_element_override = copy(super_element)
                     dbus_element_override.original_method = cast(
                         MethodType, override.original)
-                elif isinstance(super_element, DbusPropertyAsyncClassBind):
-                    dbus_element_override = copy(super_element.dbus_property)
+                elif isinstance(super_element, DbusPropertyAsync):
+                    dbus_element_override = copy(super_element)
                     dbus_element_override.property_getter = cast(
                         Callable[[DbusInterfaceBaseAsync], Any],
                         override.original)

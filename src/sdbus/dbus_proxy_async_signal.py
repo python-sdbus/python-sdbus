@@ -29,6 +29,7 @@ from typing import (
     Generic,
     TypeVar,
     cast,
+    overload,
 )
 from weakref import WeakSet
 
@@ -42,7 +43,7 @@ from .dbus_common_elements import (
 from .dbus_common_funcs import get_default_bus
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Sequence, Tuple, Type
+    from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
 
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
     from .sd_bus_internals import SdBus, SdBusMessage, SdBusSlot
@@ -71,11 +72,27 @@ class DbusSignalAsync(DbusSomethingAsync, DbusSignalCommon, Generic[T]):
 
         self.local_callbacks: WeakSet[Callable[[T], Any]] = WeakSet()
 
+    @overload
+    def __get__(
+        self,
+        obj: None,
+        obj_class: Type[DbusInterfaceBaseAsync],
+    ) -> DbusSignalAsync[T]:
+        ...
+
+    @overload
+    def __get__(
+        self,
+        obj: DbusInterfaceBaseAsync,
+        obj_class: Type[DbusInterfaceBaseAsync],
+    ) -> DbusSignalAsyncBaseBind[T]:
+        ...
+
     def __get__(
         self,
         obj: Optional[DbusInterfaceBaseAsync],
         obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
-    ) -> DbusSignalAsyncBaseBind[T]:
+    ) -> Union[DbusSignalAsyncBaseBind[T], DbusSignalAsync[T]]:
         if obj is not None:
             dbus_meta = obj._dbus
             if isinstance(dbus_meta, DbusRemoteObjectMeta):
@@ -83,7 +100,35 @@ class DbusSignalAsync(DbusSomethingAsync, DbusSignalCommon, Generic[T]):
             else:
                 return DbusSignalAsyncLocalBind(self, dbus_meta)
         else:
-            return DbusSignalAsyncClassBind(self)
+            return self
+
+    async def catch_anywhere(
+        self,
+        service_name: str,
+        bus: Optional[SdBus] = None,
+    ) -> AsyncIterable[Tuple[str, T]]:
+        if bus is None:
+            bus = get_default_bus()
+
+        message_queue: Queue[SdBusMessage] = Queue()
+
+        match_slot = await bus.match_signal_async(
+            service_name,
+            None,
+            self.interface_name,
+            self.signal_name,
+            message_queue.put_nowait,
+        )
+
+        with closing(match_slot):
+            while True:
+                next_signal_message = await message_queue.get()
+                signal_path = next_signal_message.path
+                assert signal_path is not None
+                yield (
+                    signal_path,
+                    cast(T, next_signal_message.get_contents())
+                )
 
 
 class DbusSignalAsyncBaseBind(DbusBindedAsync, AsyncIterable[T], Generic[T]):
@@ -246,63 +291,6 @@ class DbusSignalAsyncLocalBind(DbusSignalAsyncBaseBind[T]):
 
         for callback in self.dbus_signal.local_callbacks:
             callback(args)
-
-
-class DbusSignalAsyncClassBind(DbusSignalAsyncBaseBind[T]):
-    def __init__(
-        self,
-        dbus_signal: DbusSignalAsync[T],
-    ):
-        self.dbus_signal = dbus_signal
-
-        self.__doc__ = dbus_signal.__doc__
-
-    async def catch(self) -> AsyncIterator[T]:
-        raise NotImplementedError(
-            "Cannot catch D-Bus signal from class."
-        )
-        yield
-
-    __aiter__ = catch
-
-    async def catch_anywhere(
-            self,
-            service_name: Optional[str] = None,
-            bus: Optional[SdBus] = None,
-    ) -> AsyncIterable[Tuple[str, T]]:
-        if service_name is None:
-            raise ValueError(
-                'Called catch_anywhere from class '
-                'but service name was not provided.'
-            )
-
-        if bus is None:
-            bus = get_default_bus()
-
-        message_queue: Queue[SdBusMessage] = Queue()
-
-        match_slot = await bus.match_signal_async(
-            service_name,
-            None,
-            self.dbus_signal.interface_name,
-            self.dbus_signal.signal_name,
-            message_queue.put_nowait,
-        )
-
-        with closing(match_slot):
-            while True:
-                next_signal_message = await message_queue.get()
-                signal_path = next_signal_message.path
-                assert signal_path is not None
-                yield (
-                    signal_path,
-                    cast(T, next_signal_message.get_contents())
-                )
-
-    def emit(self, args: T) -> None:
-        raise NotImplementedError(
-            "Cannot emit D-Bus signal from class."
-        )
 
 
 def dbus_signal_async(

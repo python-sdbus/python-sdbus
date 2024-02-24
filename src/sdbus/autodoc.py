@@ -23,12 +23,9 @@ from typing import TYPE_CHECKING
 
 from sphinx.ext.autodoc import AttributeDocumenter, MethodDocumenter
 
-from .dbus_proxy_async_method import DbusMethodAsyncClassBind
-from .dbus_proxy_async_property import (
-    DbusPropertyAsync,
-    DbusPropertyAsyncClassBind,
-)
-from .dbus_proxy_async_signal import DbusSignalAsync, DbusSignalAsyncClassBind
+from .dbus_proxy_async_method import DbusMethodAsync
+from .dbus_proxy_async_property import DbusPropertyAsync
+from .dbus_proxy_async_signal import DbusSignalAsync
 
 if TYPE_CHECKING:
     from typing import Any, Dict
@@ -44,13 +41,11 @@ class DbusMethodDocumenter(MethodDocumenter):
 
     @classmethod
     def can_document_member(cls, member: Any, *args: Any) -> bool:
-        return isinstance(member, DbusMethodAsyncClassBind)
+        return isinstance(member, DbusMethodAsync)
 
     def import_object(self, raiseerror: bool = False) -> bool:
-        self.objpath.append('dbus_method')
         self.objpath.append('original_method')
         ret = super().import_object(raiseerror)
-        self.objpath.pop()
         self.objpath.pop()
         return ret
 
@@ -68,20 +63,13 @@ class DbusMethodDocumenter(MethodDocumenter):
 
 class DbusPropertyDocumenter(AttributeDocumenter):
 
-    objtype = 'DbusPropertyAsyncClassBind'
+    objtype = 'DbusPropertyAsync'
     directivetype = 'attribute'
     priority = 100 + AttributeDocumenter.priority
 
     @classmethod
     def can_document_member(cls, member: Any, *args: Any) -> bool:
-        return isinstance(member, DbusPropertyAsyncClassBind)
-
-    def import_object(self, raiseerror: bool = False) -> bool:
-
-        self.objpath.append('dbus_property')
-        ret = super().import_object(raiseerror)
-        self.objpath.pop()
-        return ret
+        return isinstance(member, DbusPropertyAsync)
 
     def add_content(self,
                     *args: Any, **kwargs: Any,
@@ -109,20 +97,13 @@ class DbusPropertyDocumenter(AttributeDocumenter):
 
 class DbusSignalDocumenter(AttributeDocumenter):
 
-    objtype = 'DbusSignalAsyncClassBind'
+    objtype = 'DbusSignalAsync'
     directivetype = 'attribute'
     priority = 100 + AttributeDocumenter.priority
 
     @classmethod
     def can_document_member(cls, member: Any, *args: Any) -> bool:
-        return isinstance(member, DbusSignalAsyncClassBind)
-
-    def import_object(self, raiseerror: bool = False) -> bool:
-
-        self.objpath.append('dbus_signal')
-        ret = super().import_object(raiseerror)
-        self.objpath.pop()
-        return ret
+        return isinstance(member, DbusSignalAsync)
 
     def add_content(self,
                     *args: Any, **kwargs: Any,

@@ -22,7 +22,7 @@ from __future__ import annotations
 from contextvars import ContextVar, copy_context
 from inspect import iscoroutinefunction
 from types import FunctionType
-from typing import TYPE_CHECKING, cast, overload
+from typing import TYPE_CHECKING, Generic, TypeVar, cast, overload
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
@@ -36,14 +36,27 @@ from .dbus_exceptions import DbusFailedError
 from .sd_bus_internals import DbusNoReplyFlag
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Sequence, Type, TypeVar, Union
+    from typing import (
+        Any,
+        Callable,
+        Coroutine,
+        Optional,
+        Sequence,
+        Type,
+        Union,
+    )
+
+    from typing_extensions import Concatenate, ParamSpec
 
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
     from .sd_bus_internals import SdBusMessage
 
-    T = TypeVar('T')
+    TDBI = TypeVar("TDBI", bound=DbusInterfaceBaseAsync)
+    P = ParamSpec("P")
 else:
-    T = None
+    P = TypeVar("P")
+
+TR = TypeVar("TR")
 
 CURRENT_MESSAGE: ContextVar[SdBusMessage] = ContextVar('CURRENT_MESSAGE')
 
@@ -52,14 +65,18 @@ def get_current_message() -> SdBusMessage:
     return CURRENT_MESSAGE.get()
 
 
-class DbusMethodAsync(DbusMethodCommon, DbusSomethingAsync):
+class DbusMethodAsync(
+    DbusMethodCommon,
+    DbusSomethingAsync,
+    Generic[P, TR],
+):
 
     @overload
     def __get__(
         self,
         obj: None,
         obj_class: Type[DbusInterfaceBaseAsync],
-    ) -> DbusMethodAsync:
+    ) -> DbusMethodAsync[P, TR]:
         ...
 
     @overload
@@ -67,14 +84,14 @@ class DbusMethodAsync(DbusMethodCommon, DbusSomethingAsync):
         self,
         obj: DbusInterfaceBaseAsync,
         obj_class: Type[DbusInterfaceBaseAsync],
-    ) -> Callable[..., Any]:
+    ) -> DbusMethodAsyncBaseBind[P, TR]:
         ...
 
     def __get__(
         self,
         obj: Optional[DbusInterfaceBaseAsync],
         obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
-    ) -> Union[Callable[..., Any], DbusMethodAsync]:
+    ) -> Union[DbusMethodAsyncBaseBind[P, TR], DbusMethodAsync[P, TR]]:
         if obj is not None:
             dbus_meta = obj._dbus
             if isinstance(dbus_meta, DbusRemoteObjectMeta):
@@ -85,16 +102,22 @@ class DbusMethodAsync(DbusMethodCommon, DbusSomethingAsync):
             return self
 
 
-class DbusMethodAsyncBaseBind(DbusBindedAsync):
+class DbusMethodAsyncBaseBind(
+    DbusBindedAsync,
+    Generic[P, TR],
+):
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+    def __call__(
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Coroutine[Any, Any, TR]:
         raise NotImplementedError
 
 
-class DbusMethodAsyncProxyBind(DbusMethodAsyncBaseBind):
+class DbusMethodAsyncProxyBind(DbusMethodAsyncBaseBind[P, TR]):
     def __init__(
         self,
-        dbus_method: DbusMethodAsync,
+        dbus_method: DbusMethodAsync[P, TR],
         proxy_meta: DbusRemoteObjectMeta,
     ):
         self.dbus_method = dbus_method
@@ -111,7 +134,7 @@ class DbusMethodAsyncProxyBind(DbusMethodAsyncBaseBind):
     async def _no_reply() -> None:
         return None
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Any:
         bus = self.proxy_meta.attached_bus
         dbus_method = self.dbus_method
 
@@ -145,10 +168,10 @@ class DbusMethodAsyncProxyBind(DbusMethodAsyncBaseBind):
         return self._dbus_async_call(new_call_message)
 
 
-class DbusMethodAsyncLocalBind(DbusMethodAsyncBaseBind):
+class DbusMethodAsyncLocalBind(DbusMethodAsyncBaseBind[P, TR]):
     def __init__(
         self,
-        dbus_method: DbusMethodAsync,
+        dbus_method: DbusMethodAsync[P, TR],
         local_object: DbusInterfaceBaseAsync,
     ):
         self.dbus_method = dbus_method
@@ -156,7 +179,7 @@ class DbusMethodAsyncLocalBind(DbusMethodAsyncBaseBind):
 
         self.__doc__ = dbus_method.__doc__
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Any:
         local_object = self.local_object_ref()
         if local_object is None:
             raise RuntimeError("Local object no longer exists!")
@@ -239,14 +262,24 @@ def dbus_method_async(
     result_args_names: Optional[Sequence[str]] = None,
     input_args_names: Optional[Sequence[str]] = None,
     method_name: Optional[str] = None,
-) -> Callable[[T], T]:
+) -> Callable[
+    [Callable[
+        Concatenate[TDBI, P],
+        Coroutine[Any, Any, TR]]],
+    DbusMethodAsync[P, TR],
+]:
 
     assert not isinstance(input_signature, FunctionType), (
         "Passed function to decorator directly. "
         "Did you forget () round brackets?"
     )
 
-    def dbus_method_decorator(original_method: T) -> T:
+    def dbus_method_decorator(
+        original_method: Callable[
+            Concatenate[TDBI, P],
+            Coroutine[Any, Any, TR]
+        ],
+    ) -> DbusMethodAsync[P, TR]:
         assert isinstance(original_method, FunctionType)
         assert iscoroutinefunction(original_method), (
             "Expected coroutine function. ",
@@ -262,15 +295,25 @@ def dbus_method_async(
             flags=flags,
         )
 
-        return cast(T, new_wrapper)
+        return new_wrapper
 
     return dbus_method_decorator
 
 
-def dbus_method_async_override() -> Callable[[T], T]:
+def dbus_method_async_override(
+) -> Callable[
+    [Callable[
+        Concatenate[TDBI, P],
+        Coroutine[Any, Any, TR]]],
+    DbusMethodAsync[P, TR],
+]:
 
     def new_decorator(
-            new_function: T) -> T:
-        return cast(T, DbusOverload(new_function))
+        new_function: Callable[
+            Concatenate[TDBI, P],
+            Coroutine[Any, Any, TR]
+        ],
+    ) -> DbusMethodAsync[P, TR]:
+        return cast(DbusMethodAsync[P, TR], DbusOverload(new_function))
 
     return new_decorator

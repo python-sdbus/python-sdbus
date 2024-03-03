@@ -37,6 +37,7 @@ If you are unfamiliar with D-Bus you might want to read following pages:
     sync_api
     asyncio_quick
     asyncio_api
+    asyncio_deep
     exceptions
     utils
     examples

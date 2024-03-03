@@ -9,7 +9,7 @@ Signals without data
 D-Bus allows signals to not carry any data. Such signals have the
 type signature of ``""``. (empty string)
 
-To emit such signals the :py:meth:`emit <sdbus.emit>` must
+To emit such signals the :py:meth:`emit <DbusSignalAsync.emit>` must
 be explicitly called with ``None``.
 
 Example of an empty signal::

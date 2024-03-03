@@ -265,18 +265,18 @@ To catch a signal use ``async for`` loop: ::
    make sure to bind it to a variable and keep it referenced otherwise
    garbage collector will destroy your task.
 
-A signal can be emitted with :py:meth:`emit` method.
+A signal can be emitted with :py:meth:`emit <DbusSignalAsync.emit>` method.
 
-Example: ::
+Example::
 
     example_object.name_changed.emit('test')
 
 Signals can also be caught from multiple D-Bus objects using
-:py:meth:`catch_anywhere` method. The async iterator will yield
-the path of the object that emitted the signal and the signal data.
+:py:meth:`catch_anywhere <DbusSignalAsync.catch_anywhere>` method. The async
+iterator will yield the path of the object that emitted the signal and the signal data.
 
-:py:meth:`catch_anywhere` can be called from class but in such case
-the service name must be provided.
+:py:meth:`catch_anywhere <DbusSignalAsync.catch_anywhere>` can be called from
+class but in such case the service name must be provided.
 
 Example::
 

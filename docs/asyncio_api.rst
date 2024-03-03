@@ -343,39 +343,6 @@ Decorators
     :param str property_name: Force specific property name
         instead of constructing it based on Python function name.
 
-    Properties have following methods:
-
-    .. py:decoratormethod:: setter(set_function)
-
-        Defines the setter function.
-        This makes the property read/write instead of read-only.
-
-        See example on how to use.
-
-    .. py:decoratormethod:: setter_private(set_function)
-
-        Defines the private setter function.
-        The setter can be called locally but property
-        will be read-only from D-Bus.
-
-        Calling the setter locally will emit
-        :py:attr:`properties_changed <DbusInterfaceCommonAsync.properties_changed>`
-        signal to D-Bus.
-
-    .. py:method:: get_async()
-        :async:
-
-        Get the property value.
-
-        The property can also be directly ``await`` ed 
-        instead of calling this method.
-
-    .. py:method:: set_async(new_value)
-        :async:
-
-        Set property value.
-
-
     Example: ::
 
         from sdbus import DbusInterfaceCommonAsync, dbus_property_async
@@ -404,6 +371,43 @@ Decorators
             @read_write_str.setter  # Use the property setter method as decorator
             def read_write_str_setter(self, new_str: str) -> None:
                 self.s = new_str
+
+    .. py:class:: DbusPropertyAsync
+
+        Properties have following methods:
+
+        .. py:decoratormethod:: setter(set_function)
+
+            Defines the setter function.
+            This makes the property read/write instead of read-only.
+
+            See example on how to use.
+
+        .. py:decoratormethod:: setter_private(set_function)
+
+            Defines the private setter function.
+            The setter can be called locally but property
+            will be read-only from D-Bus.
+
+            Calling the setter locally will emit
+            :py:attr:`properties_changed <DbusInterfaceCommonAsync.properties_changed>`
+            signal to D-Bus.
+
+        .. py:method:: get_async()
+            :async:
+
+            Get the property value.
+
+            The property can also be directly ``await`` ed
+            instead of calling this method.
+
+        .. py:method:: set_async(new_value)
+            :async:
+
+            Set property value.
+
+
+
 
 .. py:decorator:: dbus_signal_async([signal_signature, [signal_args_names, [flags, [signal_name]]]])
 
@@ -435,47 +439,7 @@ Decorators
     :param str signal_name: Forces specific signal name instead
         of being based on Python function name.
 
-    Signals have following methods:
-
-    .. py:method:: catch()
-
-        Catch D-Bus signals using the async generator for loop:
-        ``async for x in something.some_signal.catch():``
-
-        This is main way to await for new events.
-
-        Both remote and local objects operate the same way.
-
-        Signal objects can also be async iterated directly:
-        ``async for x in something.some_signal``
-
-    .. py:method:: catch_anywhere(service_name, bus)
-
-        Catch signal independent of path.
-        Yields tuple of path of the object that emitted signal and signal data.
-
-        ``async for path, data in something.some_signal.catch_anywhere():``
-
-        This method can be called from both an proxy object and class.
-        However, it cannot be called on local objects and will raise
-        ``NotImplementedError``.
-
-        :param str service_name:
-            Service name of which signals belong to.
-            Required if called from class. When called from proxy object
-            the service name of the proxy will be used.
-
-        :param str bus:
-            Optional D-Bus connection object.
-            If not passed when called from proxy the bus connected
-            to proxy will be used or when called from class default
-            bus will be used.
-
-    .. py:method:: emit(args)
-
-        Emit a new signal with *args* data.
-
-    Example: ::
+    Example::
 
         from sdbus import DbusInterfaceCommonAsync, dbus_signal_async
 
@@ -487,6 +451,50 @@ Decorators
             @dbus_signal_async('s')
             def name_changed(self) -> str:
                 raise NotImplementedError
+
+    .. py:class:: DbusSignalAsync
+
+        Signals have following methods:
+
+        .. py:method:: catch()
+
+            Catch D-Bus signals using the async generator for loop:
+            ``async for x in something.some_signal.catch():``
+
+            This is main way to await for new events.
+
+            Both remote and local objects operate the same way.
+
+            Signal objects can also be async iterated directly:
+            ``async for x in something.some_signal``
+
+        .. py:method:: catch_anywhere(service_name, bus)
+
+            Catch signal independent of path.
+            Yields tuple of path of the object that emitted signal and signal data.
+
+            ``async for path, data in something.some_signal.catch_anywhere():``
+
+            This method can be called from both an proxy object and class.
+            However, it cannot be called on local objects and will raise
+            ``NotImplementedError``.
+
+            :param str service_name:
+                Service name of which signals belong to.
+                Required if called from class. When called from proxy object
+                the service name of the proxy will be used.
+
+            :param str bus:
+                Optional D-Bus connection object.
+                If not passed when called from proxy the bus connected
+                to proxy will be used or when called from class default
+                bus will be used.
+
+        .. py:method:: emit(args)
+
+            Emit a new signal with *args* data.
+
+
 
 .. py:decorator:: dbus_method_async_override()
 

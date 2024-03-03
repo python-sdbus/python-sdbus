@@ -484,8 +484,8 @@ class TestProxy(IsolatedDbusTestCase):
         ) as remote_signals_record:
             test_object.test_signal.emit(test_tuple)
 
-        local_signals_record.assert_emitted_once_with(test_tuple)
-        remote_signals_record.assert_emitted_once_with(test_tuple)
+        self.assertEqual([test_tuple], local_signals_record.output)
+        self.assertEqual([test_tuple], remote_signals_record.output)
 
     async def test_signal_catch_anywhere(self) -> None:
         test_object, test_object_connection = initialize_object()
@@ -779,8 +779,8 @@ class TestProxy(IsolatedDbusTestCase):
         ) as remote_signals_record:
             test_object.empty_signal.emit(None)
 
-        local_signals_record.assert_emitted_once_with(None)
-        remote_signals_record.assert_emitted_once_with(None)
+        self.assertEqual([None], local_signals_record.output)
+        self.assertEqual([None], remote_signals_record.output)
 
     async def test_properties_changed(self) -> None:
         test_object, test_object_connection = initialize_object()

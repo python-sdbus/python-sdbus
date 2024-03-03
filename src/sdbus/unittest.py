@@ -75,10 +75,8 @@ dbus_config = '''
 class DbusSignalRecorderBase:
     def __init__(
         self,
-        testcase: IsolatedDbusTestCase,
         timeout: Union[int, float],
     ):
-        self._testcase = testcase
         self._timeout = timeout
         self._captured_data: List[Any] = []
         self._ready_event = Event()
@@ -114,25 +112,19 @@ class DbusSignalRecorderBase:
         self._captured_data.append(data)
         self._ready_event.set()
 
-    def assert_emitted_once_with(self, data: Any) -> None:
-        captured_signals_num = len(self._captured_data)
-        if captured_signals_num != 1:
-            raise AssertionError(
-                f"Expected one captured signal got {captured_signals_num}"
-            )
-
-        self._testcase.assertEqual(self._captured_data[0], data)
+    @property
+    def output(self) -> List[Any]:
+        return self._captured_data.copy()
 
 
 class DbusSignalRecorderRemote(DbusSignalRecorderBase):
     def __init__(
         self,
-        testcase: IsolatedDbusTestCase,
         timeout: Union[int, float],
         bus: SdBus,
         remote_signal: DbusSignalAsyncProxyBind[Any],
     ):
-        super().__init__(testcase, timeout)
+        super().__init__(timeout)
         self._bus = bus
         self._match_slot: Optional[SdBusSlot] = None
         self._remote_signal = remote_signal
@@ -161,11 +153,10 @@ class DbusSignalRecorderRemote(DbusSignalRecorderBase):
 class DbusSignalRecorderLocal(DbusSignalRecorderBase):
     def __init__(
         self,
-        testcase: IsolatedDbusTestCase,
         timeout: Union[int, float],
         local_signal: DbusSignalAsyncLocalBind[Any],
     ):
-        super().__init__(testcase, timeout)
+        super().__init__(timeout)
         self._local_signal_ref: weak_ref[DbusSignalAsync[Any]] = (
             weak_ref(local_signal.dbus_signal)
         )
@@ -234,8 +225,8 @@ class IsolatedDbusTestCase(IsolatedAsyncioTestCase):
     ) -> AsyncContextManager[DbusSignalRecorderBase]:
 
         if isinstance(signal, DbusSignalAsyncLocalBind):
-            return DbusSignalRecorderLocal(self, timeout, signal)
+            return DbusSignalRecorderLocal(timeout, signal)
         elif isinstance(signal, DbusSignalAsyncProxyBind):
-            return DbusSignalRecorderRemote(self, timeout, self.bus, signal)
+            return DbusSignalRecorderRemote(timeout, self.bus, signal)
         else:
             raise TypeError("Unknown or unsupported signal class.")

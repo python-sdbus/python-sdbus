@@ -157,7 +157,7 @@ Example: ::
             result_signature='s',
             result_args_names=('uppercased', )  # This is optional but
                                                 # makes arguments have names in 
-                                                # instrospection data.
+                                                # introspection data.
         )
         async def upper(self, str_to_up: str) -> str:
             return str_to_up.upper()

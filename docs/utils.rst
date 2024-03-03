@@ -48,7 +48,7 @@ Parsing utilities
     Parse data from :py:meth:`interfaces_added <sdbus.DbusObjectManagerInterfaceAsync.interfaces_removed>` signal.
 
     Takes an iterable of D-Bus interface classes (or a single class) and the signal data.
-    Returns the path of removed object andthe class of the added object.
+    Returns the path of removed object and the class of the added object.
     (if it matched one of passed interface classes)
 
     :param Iterable[DbusInterfaceBaseAsync] interfaces: Possible interfaces that were removed.

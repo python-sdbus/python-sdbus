@@ -49,7 +49,7 @@ def run_mypy() -> None:
     print('Running mypy on all modules')
     run(
         args=(
-            'mypy', '--strict',
+            'mypy', '--strict', '--pretty',
             '--cache-dir', mypy_cache_dir,
             '--python-version', '3.8',
             '--namespace-packages',

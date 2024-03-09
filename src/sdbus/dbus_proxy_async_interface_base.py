@@ -71,7 +71,8 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                 serving_enabled: bool = True,
                 ) -> DbusInterfaceMetaAsync:
 
-        dbus_class_meta = DbusClassMeta()
+        dbus_class_meta = DbusClassMeta(interface_name or "")
+
         if interface_name is not None and serving_enabled:
             dbus_class_meta.dbus_interfaces_names.add(interface_name)
 
@@ -204,7 +205,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
             serving_enabled,
         )
 
-        return cast(DbusInterfaceMetaAsync, new_cls)
+        return new_cls
 
 
 class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):

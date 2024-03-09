@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from gc import collect
 from unittest import TestCase
 from unittest import main as unittest_main
 
@@ -42,14 +43,14 @@ class GoodDbusInterface(
 
 class TestBadDbusClass(TestCase):
     def test_method_name_override(self) -> None:
-        with self.subTest("Method override"), self.assertRaises(TypeError):
+        with self.subTest("Method override"), self.assertRaises(ValueError):
 
             class BadMethodOverrideClass(GoodDbusInterface):
                 def test_method(self) -> None:
                     return
 
         with self.subTest("D-Bus method override"), self.assertRaises(
-            TypeError
+            ValueError
         ):
 
             class BadDbusMethodOverrideClass(GoodDbusInterface):
@@ -57,14 +58,14 @@ class TestBadDbusClass(TestCase):
                 def test_method(self) -> None:
                     return
 
-        with self.subTest("Property override"), self.assertRaises(TypeError):
+        with self.subTest("Property override"), self.assertRaises(ValueError):
 
             class BadPropertyOverrideClass(GoodDbusInterface):
                 def test_property(self) -> str:  # type: ignore
                     return "override"
 
         with self.subTest("D-Bus property override"), self.assertRaises(
-            TypeError
+            ValueError
         ):
 
             class BadDbusPropertyOverrideClass(GoodDbusInterface):
@@ -84,14 +85,11 @@ class TestBadDbusClass(TestCase):
                 def do_work(self) -> None:
                     ...
 
-        class NewExampleInterface(
-            DbusInterfaceCommon,
-            interface_name="org.example.test",
-        ):
-            ...
-
-        with self.subTest("Collision"), self.assertRaises(TypeError):
-            class Collision(NewExampleInterface, GoodDbusInterface):
+        with self.subTest("Collision"), self.assertRaises(ValueError):
+            class NewExampleInterface(
+                DbusInterfaceCommon,
+                interface_name="org.example.test",
+            ):
                 ...
 
     def test_bad_class_names(self) -> None:
@@ -144,6 +142,61 @@ class TestBadDbusClass(TestCase):
                 @dbus_method()
                 def example(self) -> None:
                     ...
+
+    def test_shared_parent_class(self) -> None:
+        class One(GoodDbusInterface):
+            ...
+
+        class Two(GoodDbusInterface):
+            ...
+
+        class Shared(One, Two):
+            ...
+
+    def test_combined_collision(self) -> None:
+
+        class One(
+            DbusInterfaceCommon,
+            interface_name="org.example.foo",
+        ):
+            @dbus_method()
+            def example(self) -> None:
+                ...
+
+        class Two(
+            DbusInterfaceCommon,
+            interface_name="org.example.bar",
+        ):
+            @dbus_method()
+            def example(self) -> None:
+                ...
+
+        with self.assertRaisesRegex(ValueError, "collision"):
+            class Combined(One, Two):
+                ...
+
+    def test_class_cleanup(self) -> None:
+        class One(
+            DbusInterfaceCommon,
+            interface_name="org.example.foo1",
+        ):
+            ...
+
+        with self.assertRaises(ValueError):
+            class Two(
+                DbusInterfaceCommon,
+                interface_name="org.example.foo1",
+            ):
+                ...
+
+        del One
+        collect()  # Let weak refs be processed
+
+        class After(
+            DbusInterfaceCommon,
+            interface_name="org.example.foo1",
+        ):
+            ...
 
 
 if __name__ == "__main__":

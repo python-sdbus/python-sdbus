@@ -53,9 +53,13 @@ class TestSync(IsolatedDbusTestCase):
         self.assertTrue(s.get_name_owner('org.example.test'))
 
         with self.subTest('Test dbus to python name map'):
-            self.assertEqual(
-                'features',
-                s._dbus_meta.dbus_member_to_python_attr['Features'],
+            self.assertTrue(
+                any(
+                    "Features" in meta.dbus_member_to_python_attr
+                    for meta in (
+                        meta for _, meta in s._dbus_iter_interfaces_meta()
+                    )
+                )
             )
 
         with self.subTest('Test properties_get_all_dict'):

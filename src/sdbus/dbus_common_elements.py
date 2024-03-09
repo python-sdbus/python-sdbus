@@ -40,10 +40,12 @@ if TYPE_CHECKING:
         Sequence,
         Set,
         Tuple,
+        Type,
         TypeVar,
     )
 
     T = TypeVar('T')
+    SelfMeta = TypeVar('SelfMeta', bound="DbusInterfaceMetaCommon")
 
     from .sd_bus_internals import SdBus, SdBusInterface
 
@@ -62,12 +64,12 @@ class DbusSomethingSync(DbusSomethingCommon):
 
 
 class DbusInterfaceMetaCommon(type):
-    def __new__(cls, name: str,
+    def __new__(cls: Type[SelfMeta], name: str,
                 bases: Tuple[type, ...],
                 namespace: Dict[str, Any],
                 interface_name: Optional[str] = None,
                 serving_enabled: bool = True,
-                ) -> DbusInterfaceMetaCommon:
+                ) -> SelfMeta:
         if interface_name is not None:
             try:
                 assert is_interface_name_valid(interface_name), (
@@ -338,7 +340,8 @@ class DbusLocalObjectMeta:
 
 
 class DbusClassMeta:
-    def __init__(self) -> None:
+    def __init__(self, interface_name: str) -> None:
+        self.interface_name = interface_name
         self.dbus_member_to_python_attr: Dict[str, str] = {}
         self.dbus_interfaces_names: Set[str] = set()
         self.python_attr_to_dbus_member: Dict[str, str] = {}

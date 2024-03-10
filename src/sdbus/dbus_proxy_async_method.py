@@ -28,7 +28,7 @@ from weakref import ref as weak_ref
 from .dbus_common_elements import (
     DbusBindedAsync,
     DbusMethodCommon,
-    DbusOverload,
+    DbusMethodOverride,
     DbusRemoteObjectMeta,
     DbusSomethingAsync,
 )
@@ -271,6 +271,6 @@ def dbus_method_async_override() -> Callable[[T], T]:
 
     def new_decorator(
             new_function: T) -> T:
-        return cast(T, DbusOverload(new_function))
+        return cast(T, DbusMethodOverride(new_function))
 
     return new_decorator

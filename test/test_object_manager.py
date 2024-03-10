@@ -39,7 +39,7 @@ TEST_NUMBER = 1000
 
 class ObjectManagerTestInterface(
     DbusObjectManagerInterfaceAsync,
-    interface_name='org.test.test',
+    interface_name='org.test.objectmanager',
 ):
     @dbus_method_async(
         result_signature='s',

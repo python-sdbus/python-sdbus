@@ -91,9 +91,13 @@ class TestRequestName(IsolatedDbusTestCase):
         await self.bus.request_name_async("org.example.test", 0)
 
 
-class TestInterface(DbusInterfaceCommonAsync,
-                    interface_name='org.test.test',
-                    ):
+TEST_INTERFACE_NAME = "org.test.test"
+
+
+class TestInterface(
+    DbusInterfaceCommonAsync,
+    interface_name=TEST_INTERFACE_NAME,
+):
 
     def __init__(self) -> None:
         super().__init__()
@@ -387,19 +391,26 @@ class TestProxy(IsolatedDbusTestCase):
         self.assertEqual('12345', await test_subclass.test_property)
 
         with self.subTest('Test dbus to python mapping'):
+            dbus_elements_map = (
+                {
+                    interface_name: meta.dbus_member_to_python_attr
+                    for interface_name, meta in
+                    TestInterface._dbus_iter_interfaces_meta()
+                }
+            )
             self.assertIn(
                 "TestInt",
-                test_object._dbus_meta.dbus_member_to_python_attr,
+                dbus_elements_map[TEST_INTERFACE_NAME],
             )
 
             self.assertIn(
                 "TestInt",
-                test_subclass._dbus_meta.dbus_member_to_python_attr,
+                dbus_elements_map[TEST_INTERFACE_NAME],
             )
 
             self.assertIn(
                 "TestProperty",
-                test_subclass._dbus_meta.dbus_member_to_python_attr,
+                dbus_elements_map[TEST_INTERFACE_NAME],
             )
 
         with self.subTest('Tripple subclass'):
@@ -755,7 +766,7 @@ class TestProxy(IsolatedDbusTestCase):
         test_object, test_object_connection = initialize_object()
 
         dbus_dict = await test_object_connection._properties_get_all(
-            'org.test.test')
+            TEST_INTERFACE_NAME)
 
         self.assertEqual(
             await test_object.test_property,

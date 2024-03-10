@@ -38,7 +38,6 @@ if TYPE_CHECKING:
         List,
         Optional,
         Sequence,
-        Set,
         Tuple,
         Type,
         TypeVar,
@@ -300,20 +299,25 @@ class DbusBindedSync:
     ...
 
 
-class DbusOverload:
-    def __init__(self, original: T):
-        self.original = original
-        self.setter_overload: Optional[Callable[[Any, T], None]] = None
+class DbusMethodOverride:
+    def __init__(self, override_method: T):
+        self.override_method = override_method
+
+
+class DbusPropertyOverride:
+    def __init__(self, getter_override: T):
+        self.getter_override = getter_override
+        self.setter_override: Optional[Callable[[Any, T], None]] = None
         self.is_setter_public = True
 
     def setter(self, new_setter: Optional[Callable[[Any, T], None]]) -> None:
-        self.setter_overload = new_setter
+        self.setter_override = new_setter
 
     def setter_private(
         self,
         new_setter: Optional[Callable[[Any, T], None]],
     ) -> None:
-        self.setter_overload = new_setter
+        self.setter_override = new_setter
         self.is_setter_public = False
 
 
@@ -343,5 +347,4 @@ class DbusClassMeta:
     def __init__(self, interface_name: str) -> None:
         self.interface_name = interface_name
         self.dbus_member_to_python_attr: Dict[str, str] = {}
-        self.dbus_interfaces_names: Set[str] = set()
         self.python_attr_to_dbus_member: Dict[str, str] = {}

@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from gc import collect
 from unittest import TestCase
 from unittest import main as unittest_main
 
@@ -40,7 +41,7 @@ from .common_test_util import skip_if_no_asserts, skip_if_no_name_validations
 
 class TestInterface(
     DbusInterfaceCommonAsync,
-    interface_name="org.example.test",
+    interface_name="org.example.good",
 ):
     @dbus_method_async(result_signature="i")
     async def test_int(self) -> int:
@@ -138,7 +139,7 @@ class TestBadAsyncDbusClass(TestCase):
             skip_if_no_asserts()
 
             class InvalidPropertiesFlags(
-                DbusInterfaceCommonAsync, interface_name="org.test.test"
+                DbusInterfaceCommonAsync, interface_name="org.test.invalidprop"
             ):
                 @dbus_property_async(
                     "s",
@@ -150,7 +151,7 @@ class TestBadAsyncDbusClass(TestCase):
         with self.subTest("Valid properties flags"):
 
             class ValidPropertiesFlags(
-                DbusInterfaceCommonAsync, interface_name="org.test.test"
+                DbusInterfaceCommonAsync, interface_name="org.test.validprop"
             ):
                 @dbus_property_async(
                     "s",
@@ -160,13 +161,13 @@ class TestBadAsyncDbusClass(TestCase):
                     return "a"
 
     def test_bad_subclass(self) -> None:
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
 
             class TestInheritence(TestInterface):
                 async def test_int(self) -> int:
                     return 2
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
 
             class TestInheritence2(TestInterface):
                 @dbus_method_async_override()
@@ -188,6 +189,61 @@ class TestBadAsyncDbusClass(TestCase):
                 @dbus_method_async()
                 async def example(self) -> None:
                     ...
+
+    def test_shared_parent_class(self) -> None:
+        class One(TestInterface):
+            ...
+
+        class Two(TestInterface):
+            ...
+
+        class Shared(One, Two):
+            ...
+
+    def test_combined_collision(self) -> None:
+
+        class One(
+            DbusInterfaceCommonAsync,
+            interface_name="org.example.foo",
+        ):
+            @dbus_method_async()
+            async def example(self) -> None:
+                ...
+
+        class Two(
+            DbusInterfaceCommonAsync,
+            interface_name="org.example.bar",
+        ):
+            @dbus_method_async()
+            async def example(self) -> None:
+                ...
+
+        with self.assertRaisesRegex(ValueError, "collision"):
+            class Combined(One, Two):
+                ...
+
+    def test_class_cleanup(self) -> None:
+        class One(
+            DbusInterfaceCommonAsync,
+            interface_name="org.example.foo1",
+        ):
+            ...
+
+        with self.assertRaises(ValueError):
+            class Two(
+                DbusInterfaceCommonAsync,
+                interface_name="org.example.foo1",
+            ):
+                ...
+
+        del One
+        collect()  # Let weak refs be processed
+
+        class After(
+            DbusInterfaceCommonAsync,
+            interface_name="org.example.foo1",
+        ):
+            ...
 
 
 if __name__ == "__main__":

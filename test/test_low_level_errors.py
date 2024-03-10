@@ -49,7 +49,7 @@ GOOD_STR = 'Good'
 
 class InterfaceWithErrors(
     DbusInterfaceCommonAsync,
-    interface_name='org.example.test',
+    interface_name='org.example.errors',
 ):
     @dbus_property_async('s')
     def indep_err_getter(self) -> str:

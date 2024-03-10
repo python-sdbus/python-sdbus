@@ -52,7 +52,7 @@ class TestIntrospection(IsolatedDbusTestCase):
     async def test_method_arg_names_none(self) -> None:
         class TestInterface(
             DbusInterfaceCommonAsync,
-            interface_name="org.test.test",
+            interface_name="org.test.intro1",
         ):
             @dbus_method_async(
                 input_signature="ss",
@@ -75,7 +75,7 @@ class TestIntrospection(IsolatedDbusTestCase):
     async def test_method_arg_names_result_names_only(self) -> None:
         class TestInterface(
             DbusInterfaceCommonAsync,
-            interface_name="org.test.test",
+            interface_name="org.test.intro2",
         ):
             @dbus_method_async(
                 input_signature="ss",
@@ -99,7 +99,7 @@ class TestIntrospection(IsolatedDbusTestCase):
     async def test_method_arg_names_full(self) -> None:
         class TestInterface(
             DbusInterfaceCommonAsync,
-            interface_name="org.test.test",
+            interface_name="org.test.intro3",
         ):
             @dbus_method_async(
                 input_signature="ss",
@@ -124,7 +124,7 @@ class TestIntrospection(IsolatedDbusTestCase):
     async def test_method_arg_names_no_return_args(self) -> None:
         class TestInterface(
             DbusInterfaceCommonAsync,
-            interface_name="org.test.test",
+            interface_name="org.test.intro4",
         ):
             @dbus_method_async(
                 input_signature="ss",

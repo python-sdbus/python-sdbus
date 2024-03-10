@@ -88,13 +88,13 @@ class DbusPropertiesInterfaceAsync(
 
         properties: Dict[str, Any] = {}
 
-        for interface_name in self._dbus_meta.dbus_interfaces_names:
+        for interface_name, meta in self._dbus_iter_interfaces_meta():
             dbus_properties_data = await self._properties_get_all(
                 interface_name)
 
             properties.update(
                 _parse_properties_vardict(
-                    self._dbus_meta.dbus_member_to_python_attr,
+                    meta.dbus_member_to_python_attr,
                     dbus_properties_data,
                     on_unknown_member,
                 )

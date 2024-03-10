@@ -26,8 +26,8 @@ from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
     DbusBindedAsync,
-    DbusOverload,
     DbusPropertyCommon,
+    DbusPropertyOverride,
     DbusRemoteObjectMeta,
     DbusSomethingAsync,
 )
@@ -311,6 +311,6 @@ def dbus_property_async_override() -> Callable[
 
     def new_decorator(
             new_property: Callable[[Any], T]) -> DbusPropertyAsync[T]:
-        return cast(DbusPropertyAsync[T], DbusOverload(new_property))
+        return cast(DbusPropertyAsync[T], DbusPropertyOverride(new_property))
 
     return new_decorator

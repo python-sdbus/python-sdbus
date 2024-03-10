@@ -344,7 +344,12 @@ class DbusLocalObjectMeta:
 
 
 class DbusClassMeta:
-    def __init__(self, interface_name: str) -> None:
+    def __init__(
+        self,
+        interface_name: str,
+        serving_enabled: bool,
+    ) -> None:
         self.interface_name = interface_name
+        self.serving_enabled = serving_enabled
         self.dbus_member_to_python_attr: Dict[str, str] = {}
         self.python_attr_to_dbus_member: Dict[str, str] = {}

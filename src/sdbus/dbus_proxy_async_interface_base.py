@@ -278,7 +278,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         )
 
         if interface_name is not None:
-            dbus_class_meta = DbusClassMeta(interface_name)
+            dbus_class_meta = DbusClassMeta(interface_name, serving_enabled)
             DBUS_CLASS_TO_META[new_cls] = dbus_class_meta
             DBUS_INTERFACE_NAME_TO_CLASS[interface_name] = new_cls
 

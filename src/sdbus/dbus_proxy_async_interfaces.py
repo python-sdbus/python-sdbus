@@ -89,6 +89,9 @@ class DbusPropertiesInterfaceAsync(
         properties: Dict[str, Any] = {}
 
         for interface_name, meta in self._dbus_iter_interfaces_meta():
+            if not meta.serving_enabled:
+                continue
+
             dbus_properties_data = await self._properties_get_all(
                 interface_name)
 

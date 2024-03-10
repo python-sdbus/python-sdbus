@@ -71,6 +71,9 @@ class DbusPropertiesInterface(
         properties: Dict[str, Any] = {}
 
         for interface_name, meta in self._dbus_iter_interfaces_meta():
+            if not meta.serving_enabled:
+                continue
+
             dbus_properties_data = self._properties_get_all(interface_name)
             for member_name, variant in dbus_properties_data.items():
                 try:

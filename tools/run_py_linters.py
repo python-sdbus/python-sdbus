@@ -22,7 +22,7 @@ from __future__ import annotations
 from argparse import ArgumentParser
 from os import environ
 from pathlib import Path
-from subprocess import run
+from subprocess import SubprocessError, run
 from typing import List
 
 source_root = Path(environ['MESON_SOURCE_ROOT'])
@@ -61,7 +61,7 @@ def run_mypy() -> None:
     )
 
 
-def linter_main() -> None:
+def run_flake8() -> None:
     run(
         args=(
             'flake8',
@@ -70,7 +70,22 @@ def linter_main() -> None:
         check=True,
     )
 
-    run_mypy()
+
+def linter_main() -> None:
+    is_success = True
+
+    try:
+        run_flake8()
+    except SubprocessError:
+        is_success = False
+
+    try:
+        run_mypy()
+    except SubprocessError:
+        is_success = False
+
+    if not is_success:
+        raise SystemExit(1)
 
 
 def get_all_python_files() -> List[Path]:

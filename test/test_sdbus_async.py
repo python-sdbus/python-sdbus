@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from asyncio import Event, get_running_loop, sleep, wait_for
 from asyncio.subprocess import create_subprocess_exec
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 from unittest import SkipTest
 
 from sdbus.exceptions import (
@@ -798,23 +798,12 @@ class TestProxy(IsolatedDbusTestCase):
 
         test_str = 'should_be_emited'
 
-        properties_changed_dbus_aiter = (
-            test_object_connection.properties_changed.__aiter__()
-        )
-
-        async def set_property() -> None:
-            await sleep(0.1)
+        async with self.assertDbusSignalEmits(
+            test_object_connection.properties_changed
+        ) as properties_changed_catch:
             await test_object_connection.test_property.set_async(test_str)
 
-        get_running_loop().create_task(set_property())
-
-        properties_changed_data = cast(
-            DBUS_PROPERTIES_CHANGED_TYPING,
-            await wait_for(
-                properties_changed_dbus_aiter.__anext__(),
-                timeout=1
-            ),
-        )
+        properties_changed_data = properties_changed_catch.output[0]
 
         parsed_dict_from_class = parse_properties_changed(
             TestInterface, properties_changed_data)
@@ -851,23 +840,12 @@ class TestProxy(IsolatedDbusTestCase):
             await test_object_connection.test_property_private.set_async(
                 new_value)
 
-        properties_changed_dbus_aiter = (
-            test_object_connection.properties_changed.__aiter__()
-        )
-
-        async def set_property() -> None:
-            await sleep(0.1)
+        async with self.assertDbusSignalEmits(
+            test_object_connection.properties_changed
+        ) as properties_changed_catch:
             await test_object.test_property_private.set_async(new_value)
 
-        get_running_loop().create_task(set_property())
-
-        changed_properties = cast(
-            DBUS_PROPERTIES_CHANGED_TYPING,
-            await wait_for(
-                properties_changed_dbus_aiter.__anext__(),
-                timeout=1,
-            ),
-        )
+        changed_properties = properties_changed_catch.output[0]
 
         self.assertEqual(
             await test_object_connection.test_property_private,

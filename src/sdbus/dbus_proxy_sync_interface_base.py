@@ -57,7 +57,7 @@ DBUS_INTERFACE_NAME_TO_CLASS: WeakValueDictionary[
 class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
 
     @staticmethod
-    def check_collisions(
+    def _check_collisions(
         new_class_name: str,
         attr_names: Set[str],
         reserved_attr_names: Set[str],
@@ -71,7 +71,7 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
             )
 
     @staticmethod
-    def collect_dbus_to_python_attr_names(
+    def _collect_dbus_to_python_attr_names(
         new_class_name: str,
         base_classes: Iterable[type],
     ) -> Set[str]:
@@ -104,7 +104,7 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
         return all_python_dbus_attrs
 
     @staticmethod
-    def map_dbus_elements(
+    def _map_dbus_elements(
         attr_name: str,
         attr: Any,
         meta: DbusClassMeta,
@@ -142,10 +142,10 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
         all_mro_bases: Set[Type[Any]] = set(
             chain.from_iterable((c.__mro__ for c in bases))
         )
-        reserved_attr_names = cls.collect_dbus_to_python_attr_names(
+        reserved_attr_names = cls._collect_dbus_to_python_attr_names(
             name, all_mro_bases,
         )
-        cls.check_collisions(name, set(namespace.keys()), reserved_attr_names)
+        cls._check_collisions(name, set(namespace.keys()), reserved_attr_names)
 
         new_cls = super().__new__(
             cls, name, bases, namespace,
@@ -159,7 +159,7 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
             DBUS_INTERFACE_NAME_TO_CLASS[interface_name] = new_cls
 
             for attr_name, attr in namespace.items():
-                cls.map_dbus_elements(attr_name, attr, dbus_class_meta)
+                cls._map_dbus_elements(attr_name, attr, dbus_class_meta)
 
         return new_cls
 

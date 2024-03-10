@@ -77,7 +77,7 @@ DBUS_INTERFACE_NAME_TO_CLASS: WeakValueDictionary[
 class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
 
     @staticmethod
-    def process_dbus_method_override(
+    def _process_dbus_method_override(
         override_attr_name: str,
         override: DbusMethodOverride,
         mro_dbus_elements: Dict[str, DbusSomethingAsync],
@@ -101,7 +101,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         return new_method
 
     @staticmethod
-    def process_dbus_property_override(
+    def _process_dbus_property_override(
         override_attr_name: str,
         override: DbusPropertyOverride,
         mro_dbus_elements: Dict[str, DbusSomethingAsync],
@@ -132,7 +132,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         return new_property
 
     @classmethod
-    def check_collisions(
+    def _check_collisions(
         cls,
         new_class_name: str,
         namespace: Dict[str, Any],
@@ -144,14 +144,14 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
 
         for attr_name, attr in namespace.items():
             if isinstance(attr, DbusMethodOverride):
-                new_overrides[attr_name] = cls.process_dbus_method_override(
+                new_overrides[attr_name] = cls._process_dbus_method_override(
                     attr_name,
                     attr,
                     mro_dbus_elements,
                 )
                 possible_collisions.remove(attr_name)
             elif isinstance(attr, DbusPropertyOverride):
-                new_overrides[attr_name] = cls.process_dbus_property_override(
+                new_overrides[attr_name] = cls._process_dbus_property_override(
                     attr_name,
                     attr,
                     mro_dbus_elements,
@@ -169,7 +169,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         namespace.update(new_overrides)
 
     @staticmethod
-    def extract_dbus_elements(
+    def _extract_dbus_elements(
         dbus_class: type,
         dbus_meta: DbusClassMeta,
     ) -> Dict[str, DbusSomethingAsync]:
@@ -188,7 +188,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         return dbus_elements_map
 
     @classmethod
-    def map_mro_dbus_elements(
+    def _map_mro_dbus_elements(
         cls,
         new_class_name: str,
         base_classes: Iterable[type],
@@ -201,7 +201,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
             if dbus_meta is None:
                 continue
 
-            base_dbus_elements = cls.extract_dbus_elements(c, dbus_meta)
+            base_dbus_elements = cls._extract_dbus_elements(c, dbus_meta)
 
             possible_collisions.update(
                 base_dbus_elements.keys() & all_python_dbus_map.keys()
@@ -220,7 +220,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         return all_python_dbus_map
 
     @staticmethod
-    def map_dbus_elements(
+    def _map_dbus_elements(
         attr_name: str,
         attr: Any,
         meta: DbusClassMeta,
@@ -266,10 +266,10 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         all_mro_bases: Set[Type[Any]] = set(
             chain.from_iterable((c.__mro__ for c in bases))
         )
-        reserved_dbus_map = cls.map_mro_dbus_elements(
+        reserved_dbus_map = cls._map_mro_dbus_elements(
             name, all_mro_bases,
         )
-        cls.check_collisions(name, namespace, reserved_dbus_map)
+        cls._check_collisions(name, namespace, reserved_dbus_map)
 
         new_cls = super().__new__(
             cls, name, bases, namespace,
@@ -283,7 +283,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
             DBUS_INTERFACE_NAME_TO_CLASS[interface_name] = new_cls
 
             for attr_name, attr in namespace.items():
-                cls.map_dbus_elements(
+                cls._map_dbus_elements(
                     attr_name,
                     attr,
                     dbus_class_meta,

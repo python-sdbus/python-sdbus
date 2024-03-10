@@ -59,3 +59,22 @@ Parsing utilities
             of interface class.
     :rtype: Tuple[str, Optional[Type[DbusInterfaceBaseAsync]]]
     :returns: Path of removed object and object's class (or ``None``).
+
+.. py:function:: parse_get_managed_objects(interfaces, managed_objects_data, on_unknown_interface='error', on_unknown_member='error')
+
+    Parse data from :py:meth:`get_managed_objects <sdbus.DbusObjectManagerInterfaceAsync.get_managed_objects>` call.
+
+    Takes an iterable of D-Bus interface classes (or a single class) and the method returned data.
+    Returns a dictionary where keys a paths of the managed objects and value is a tuple of class of the object
+    and dictionary of its python named properties and their values.
+
+    :param Iterable[DbusInterfaceBaseAsync] interfaces: Possible interfaces of the managed objects.
+        Can accept classes with multiple interfaces defined.
+    :param Dict interfaces_added_data: Data returned by ``get_managed_objects`` call.
+    :param str on_unknown_member: If an unknown D-Bus interface was encountered
+            either raise an ``"error"`` (default) or return ``"none"`` instead
+            of interface class.
+    :rtype: Dict[str, Tuple[Optional[Type[DbusInterfaceBaseAsync], Dict[str, Any]]]]
+    :returns: Dictionary where keys are paths and values are tuples of managed objects classes and their properties data.
+
+    *New in version 0.12.0.*

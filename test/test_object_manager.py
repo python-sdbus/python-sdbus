@@ -24,7 +24,11 @@ from asyncio import get_running_loop, sleep, wait_for
 from typing import Any, Dict, List, Tuple
 
 from sdbus.unittest import IsolatedDbusTestCase
-from sdbus.utils import parse_interfaces_added, parse_interfaces_removed
+from sdbus.utils import (
+    parse_get_managed_objects,
+    parse_interfaces_added,
+    parse_interfaces_removed,
+)
 
 from sdbus import (
     DbusInterfaceCommonAsync,
@@ -252,6 +256,100 @@ class TestObjectManager(IsolatedDbusTestCase):
             self.assertIsNone(python_class)
             self.assertIn('TestStr', python_properties)
             self.assertIn('TestInt', python_properties)
+
+        get_managed_data = (
+            await object_manager_connection.get_managed_objects()
+        )
+        with self.subTest('Parse get managed objects class'):
+            managed_dict = (
+                parse_get_managed_objects(
+                    ManagedTwoInterface,
+                    get_managed_data,
+                )
+            )
+
+            self.assertIn(MANAGED_PATH, managed_dict)
+            managed_class, managed_properties = (
+                managed_dict[MANAGED_PATH]
+            )
+            self.assertEqual(managed_class, ManagedTwoInterface)
+            self.assertIn('test_str', managed_properties)
+            self.assertIn('test_int', managed_properties)
+
+        with self.subTest('Parse get managed objects object'):
+            managed_dict = (
+                parse_get_managed_objects(
+                    managed_object,
+                    get_managed_data,
+                )
+            )
+
+            self.assertIn(MANAGED_PATH, managed_dict)
+            managed_class, managed_properties = (
+                managed_dict[MANAGED_PATH]
+            )
+            self.assertEqual(managed_class, ManagedTwoInterface)
+            self.assertIn('test_str', managed_properties)
+            self.assertIn('test_int', managed_properties)
+
+        with self.subTest('Parse get managed objects iterable'):
+            managed_dict = (
+                parse_get_managed_objects(
+                    (ManagedInterface, ManagedTwoInterface),
+                    get_managed_data,
+                )
+            )
+
+            self.assertIn(MANAGED_PATH, managed_dict)
+            managed_class, managed_properties = (
+                managed_dict[MANAGED_PATH]
+            )
+            self.assertEqual(managed_class, ManagedTwoInterface)
+            self.assertIn('test_str', managed_properties)
+            self.assertIn('test_int', managed_properties)
+
+        with self.subTest('Parse get managed objects unknown'):
+            with self.assertRaises(KeyError):
+                managed_dict = (
+                    parse_get_managed_objects(
+                        ManagedInterface,
+                        get_managed_data,
+                    )
+                )
+
+            with self.assertRaises(KeyError):
+                managed_dict = (
+                    parse_get_managed_objects(
+                        ManagedInterface,
+                        get_managed_data,
+                        on_unknown_interface='none',
+                    )
+                )
+
+            managed_dict = (
+                parse_get_managed_objects(
+                    ManagedInterface,
+                    get_managed_data,
+                    on_unknown_interface='none',
+                    on_unknown_member='reuse',
+                )
+            )
+            path, python_class, python_properties = (
+                parse_interfaces_added(
+                    ManagedInterface,
+                    caught_added,
+                    on_unknown_interface='none',
+                    on_unknown_member='reuse',
+                )
+            )
+
+            self.assertIn(MANAGED_PATH, managed_dict)
+            managed_class, managed_properties = (
+                managed_dict[MANAGED_PATH]
+            )
+            self.assertIsNone(managed_class)
+            self.assertIn('TestStr', managed_properties)
+            self.assertIn('TestInt', managed_properties)
 
         object_manager.remove_managed_object(managed_object)
 

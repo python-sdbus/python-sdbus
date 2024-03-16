@@ -17,11 +17,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
-
 from __future__ import annotations
-
-from asyncio import get_running_loop, sleep, wait_for
-from typing import Any, Dict, List, Tuple
 
 from sdbus.unittest import IsolatedDbusTestCase
 from sdbus.utils import (
@@ -73,7 +69,6 @@ MANAGED_PATH = '/object_manager/test'
 
 class TestObjectManager(IsolatedDbusTestCase):
     async def test_object_manager(self) -> None:
-        loop = get_running_loop()
         await self.bus.request_name_async(CONNECTION_NAME, 0)
 
         object_manager = ObjectManagerTestInterface()
@@ -86,31 +81,14 @@ class TestObjectManager(IsolatedDbusTestCase):
             await object_manager_connection.get_hello_world(),
             HELLO_WORLD)
 
-        async def catch_interfaces_added() -> Tuple[str,
-                                                    Dict[str,
-                                                         Dict[str, Any]]]:
-            async for x in object_manager_connection.interfaces_added:
-                return x
-
-            raise RuntimeError
-
-        catch_added_task = loop.create_task(catch_interfaces_added())
-
-        async def catch_interfaces_removed() -> Tuple[str, List[str]]:
-            async for x in object_manager_connection.interfaces_removed:
-                return x
-
-            raise RuntimeError
-
-        catch_removed_task = loop.create_task(catch_interfaces_removed())
-
-        await sleep(0)
-
         managed_object = ManagedInterface()
 
-        object_manager.export_with_manager(MANAGED_PATH, managed_object)
+        async with self.assertDbusSignalEmits(
+            object_manager_connection.interfaces_added
+        ) as added_interfaces_catch:
+            object_manager.export_with_manager(MANAGED_PATH, managed_object)
 
-        caught_added = await wait_for(catch_added_task, timeout=0.5)
+        caught_added = added_interfaces_catch.output[0]
 
         added_path, added_attributes = caught_added
 
@@ -126,10 +104,12 @@ class TestObjectManager(IsolatedDbusTestCase):
         with self.subTest("Test interfaces added parser"):
             parse_interfaces_added(ManagedInterface, caught_added)
 
-        object_manager.remove_managed_object(managed_object)
+        async with self.assertDbusSignalEmits(
+            object_manager_connection.interfaces_removed
+        ) as removed_interfaces_catch:
+            object_manager.remove_managed_object(managed_object)
 
-        path_removed, interfaces_removed = await wait_for(
-            catch_removed_task, timeout=1)
+        path_removed, interfaces_removed = removed_interfaces_catch.output[0]
 
         self.assertEqual(path_removed, MANAGED_PATH)
 
@@ -159,7 +139,6 @@ class TestObjectManager(IsolatedDbusTestCase):
             def test_str(self) -> str:
                 return 'test'
 
-        loop = get_running_loop()
         await self.bus.request_name_async(CONNECTION_NAME, 0)
 
         object_manager = DbusObjectManagerInterfaceAsync()
@@ -168,31 +147,14 @@ class TestObjectManager(IsolatedDbusTestCase):
         object_manager_connection = DbusObjectManagerInterfaceAsync.new_proxy(
             CONNECTION_NAME, OBJECT_MANAGER_PATH)
 
-        async def catch_interfaces_added() -> Tuple[str,
-                                                    Dict[str,
-                                                         Dict[str, Any]]]:
-            async for x in object_manager_connection.interfaces_added:
-                return x
-
-            raise RuntimeError
-
-        catch_added_task = loop.create_task(catch_interfaces_added())
-
-        async def catch_interfaces_removed() -> Tuple[str, List[str]]:
-            async for x in object_manager_connection.interfaces_removed:
-                return x
-
-            raise RuntimeError
-
-        catch_removed_task = loop.create_task(catch_interfaces_removed())
-
-        await sleep(0)
-
         managed_object = ManagedTwoInterface()
 
-        object_manager.export_with_manager(MANAGED_PATH, managed_object)
+        async with self.assertDbusSignalEmits(
+            object_manager_connection.interfaces_added
+        ) as added_interfaces_catch:
+            object_manager.export_with_manager(MANAGED_PATH, managed_object)
 
-        caught_added = await wait_for(catch_added_task, timeout=0.5)
+        caught_added = added_interfaces_catch.output[0]
 
         with self.subTest('Parse added class'):
             path, python_class, python_properties = (
@@ -351,10 +313,12 @@ class TestObjectManager(IsolatedDbusTestCase):
             self.assertIn('TestStr', managed_properties)
             self.assertIn('TestInt', managed_properties)
 
-        object_manager.remove_managed_object(managed_object)
+        async with self.assertDbusSignalEmits(
+            object_manager_connection.interfaces_removed
+        ) as removed_interfaces_catch:
+            object_manager.remove_managed_object(managed_object)
 
-        interfaces_removed_data = await wait_for(
-            catch_removed_task, timeout=1)
+        interfaces_removed_data = removed_interfaces_catch.output[0]
 
         with self.subTest('Parse removed class'):
             path, python_class = (

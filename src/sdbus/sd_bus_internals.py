@@ -59,6 +59,7 @@ class SdBusSlot:
 
 
 class SdBusInterface:
+    slot: Optional[SdBusSlot]
     method_list: List[object]
     method_dict: Dict[bytes, object]
     property_list: List[object]

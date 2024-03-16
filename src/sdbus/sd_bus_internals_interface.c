@@ -328,7 +328,8 @@ static PyMethodDef SdBusInterface_methods[] = {
     {NULL, NULL, 0, NULL},
 };
 
-static PyMemberDef SdBusInterface_members[] = {{"method_list", T_OBJECT, offsetof(SdBusInterfaceObject, method_list), READONLY, NULL},
+static PyMemberDef SdBusInterface_members[] = {{"slot", T_OBJECT, offsetof(SdBusInterfaceObject, interface_slot), READONLY, NULL},
+                                               {"method_list", T_OBJECT, offsetof(SdBusInterfaceObject, method_list), READONLY, NULL},
                                                {"method_dict", T_OBJECT, offsetof(SdBusInterfaceObject, method_dict), READONLY, NULL},
                                                {"property_list", T_OBJECT, offsetof(SdBusInterfaceObject, property_list), READONLY, NULL},
                                                {"property_get_dict", T_OBJECT, offsetof(SdBusInterfaceObject, property_get_dict), READONLY, NULL},

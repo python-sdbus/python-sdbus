@@ -130,12 +130,43 @@ Classes
 
         Object will appear and become callable on D-Bus.
 
+        Returns a handle that can either be used as a context manager
+        to remove the object from D-Bus or ``.stop()`` method of the
+        handle can be called to remove object from D-Bus.
+
+        .. code-block:: python
+
+            with dbus_object.export_to_dbus("/"):
+                # dbus_object can be called from D-Bus inside this
+                # with block.
+                ...
+
+            ...
+
+            handle = dbus_object2.export_to_dbus("/")
+            # dbus_object2 can be called from D-Bus between these statements
+            handle.stop()
+
+            ...
+
+            dbus_object3.export_to_dbus("/")
+            # dbus_object3 can be called from D-Bus until all references are
+            # dropped.
+            del dbus_object3
+
+        If the handle is discarded the object will remain exported until
+        it gets deallocated.
+
+        *Changed in version 0.12.0:* Added a handle return.
+
         :param str object_path:
             Object path that it will be available at.
 
         :param SdBus bus:
             Optional D-Bus connection object.
             If not passed the default D-Bus will be used.
+
+        :return: Handle to control the export.
 
 
 .. py:class:: DbusObjectManagerInterfaceAsync(interface_name)
@@ -211,6 +242,36 @@ Classes
 
         ObjectManager will keep the reference to the object.
 
+        Returns a handle that can either be used as a context manager
+        to remove the object or ``.stop()`` method of the handle can be
+        called to remove object from D-Bus and drop reference to the object.
+        Signal will be emitted when the object is stopped via handle.
+
+        .. code-block:: python
+
+            manager = DbusObjectManagerInterfaceAsync()
+            manager.export_to_dbus('/object/manager')
+
+            with manager.export_with_manager("/object/manager/example", dbus_object):
+                # dbus_object can be called from D-Bus inside this
+                # with block.
+                ...
+
+            # Removed signal will be emitted once the with block exits
+
+            ...
+
+            handle = manager.export_with_manager("/object/manager/example", dbus_object2)
+            # dbus_object2 can be called from D-Bus between these statements
+            handle.stop()
+            # Removed signal will be emitted once the .stop() method is called
+
+        If the handle is discarded the object will remain exported until
+        it gets removed from manager with :py:meth:`remove_managed_object` and
+        the object gets deallocated.
+
+        *Changed in version 0.12.0:* Added a handle return.
+
         :param str object_path:
             Object path that it will be available at.
 
@@ -222,6 +283,7 @@ Classes
             If not passed the default D-Bus will be used.
 
         :raises RuntimeError: ObjectManager was not exported.
+        :return: Handle to control the export.
 
     .. py:method:: remove_managed_object(managed_object)
 

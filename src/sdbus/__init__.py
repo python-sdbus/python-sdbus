@@ -57,15 +57,13 @@ from .dbus_exceptions import (
     DbusUnknownObjectError,
     DbusUnknownPropertyError,
 )
-from .dbus_proxy_async_interfaces import (
-    DbusInterfaceCommonAsync,
-    DbusObjectManagerInterfaceAsync,
-)
+from .dbus_proxy_async_interfaces import DbusInterfaceCommonAsync
 from .dbus_proxy_async_method import (
     dbus_method_async,
     dbus_method_async_override,
     get_current_message,
 )
+from .dbus_proxy_async_object_manager import DbusObjectManagerInterfaceAsync
 from .dbus_proxy_async_property import (
     dbus_property_async,
     dbus_property_async_override,

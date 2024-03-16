@@ -62,7 +62,7 @@ if TYPE_CHECKING:
     )
 
     from .dbus_common_elements import DbusBindedAsync
-    from .sd_bus_internals import SdBus
+    from .sd_bus_internals import SdBus, SdBusSlot
 
     Self = TypeVar('Self', bound="DbusInterfaceBaseAsync")
     DbusOverride = Union[DbusMethodOverride, DbusPropertyOverride]
@@ -324,7 +324,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         self,
         object_path: str,
         bus: Optional[SdBus] = None,
-    ) -> None:
+    ) -> DbusExportHandle:
 
         local_object_meta = self._dbus
         if isinstance(local_object_meta, DbusRemoteObjectMeta):
@@ -418,6 +418,8 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                               interface_name)
             local_object_meta.activated_interfaces.append(new_interface)
 
+        return DbusExportHandle(local_object_meta)
+
     def _connect(
         self,
         service_name: str,
@@ -470,3 +472,38 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         new_object = cls.__new__(cls)
         new_object._proxify(service_name, object_path, bus)
         return new_object
+
+
+class DbusExportHandle:
+    def __init__(self, local_meta: DbusLocalObjectMeta):
+        self._dbus_slots: List[SdBusSlot] = [
+            i.slot
+            for i in local_meta.activated_interfaces
+            if i.slot is not None
+        ]
+
+    async def __aenter__(self) -> DbusExportHandle:
+        return self
+
+    def __enter__(self) -> DbusExportHandle:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Any,
+        exc_value: Any,
+        traceback: Any,
+    ) -> None:
+        self.stop()
+
+    async def __aexit__(
+        self,
+        exc_type: Any,
+        exc_value: Any,
+        traceback: Any,
+    ) -> None:
+        self.stop()
+
+    def stop(self) -> None:
+        for slot in self._dbus_slots:
+            slot.close()

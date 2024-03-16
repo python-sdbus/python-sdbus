@@ -953,3 +953,25 @@ class TestProxy(IsolatedDbusTestCase):
         # Check that calling regular methods still works.
         for _ in range(5):
             await test_object_connection.returns_none_method()
+
+    async def test_export_handle(self) -> None:
+        test_object = TestInterface()
+        test_object_connection = TestInterface.new_proxy(
+            TEST_SERVICE_NAME, '/',
+        )
+        with self.assertRaises(DbusUnknownObjectError):
+            await test_object_connection.returns_none_method()
+
+        with test_object.export_to_dbus("/"):
+            await test_object_connection.returns_none_method()
+
+        with self.assertRaises(DbusUnknownObjectError):
+            await test_object_connection.returns_none_method()
+
+        test_object2 = TestInterface()
+        handle = test_object2.export_to_dbus("/")
+        await test_object_connection.returns_none_method()
+        handle.stop()
+
+        with self.assertRaises(DbusUnknownObjectError):
+            await test_object_connection.returns_none_method()

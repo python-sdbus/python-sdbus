@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from sdbus.exceptions import DbusUnknownObjectError
 from sdbus.unittest import IsolatedDbusTestCase
 from sdbus.utils import (
     parse_get_managed_objects,
@@ -350,3 +351,55 @@ class TestObjectManager(IsolatedDbusTestCase):
 
             self.assertEqual(path, MANAGED_PATH)
             self.assertIsNone(python_class)
+
+    async def test_main_export_handle(self) -> None:
+        await self.bus.request_name_async(CONNECTION_NAME, 0)
+
+        object_manager = ObjectManagerTestInterface()
+
+        object_manager_connection = ObjectManagerTestInterface.new_proxy(
+            CONNECTION_NAME, OBJECT_MANAGER_PATH)
+
+        with object_manager.export_to_dbus(OBJECT_MANAGER_PATH):
+            self.assertIsInstance(
+                await object_manager_connection.get_managed_objects(),
+                dict,
+            )
+
+        with self.assertRaises(DbusUnknownObjectError):
+            self.assertIsInstance(
+                await object_manager_connection.get_managed_objects(),
+                dict,
+            )
+
+    async def test_secondary_export_handle(self) -> None:
+        await self.bus.request_name_async(CONNECTION_NAME, 0)
+
+        object_manager = ObjectManagerTestInterface()
+
+        object_manager_connection = ObjectManagerTestInterface.new_proxy(
+            CONNECTION_NAME, OBJECT_MANAGER_PATH)
+        object_manager.export_to_dbus(OBJECT_MANAGER_PATH)
+
+        managed_object = ManagedInterface()
+        managed_proxy = ManagedInterface.new_proxy(
+            CONNECTION_NAME, MANAGED_PATH,
+        )
+
+        async with self.assertDbusSignalEmits(
+            object_manager_connection.interfaces_added
+        ) as added, self.assertDbusSignalEmits(
+            object_manager_connection.interfaces_removed
+        ) as removed, object_manager.export_with_manager(
+            MANAGED_PATH, managed_object,
+        ):
+            self.assertEqual(
+                await managed_proxy.test_int,
+                TEST_NUMBER,
+            )
+
+        self.assertEqual(added.output[0][0], MANAGED_PATH)
+        self.assertEqual(removed.output[0][0], MANAGED_PATH)
+
+        with self.assertRaises(DbusUnknownObjectError):
+            await managed_proxy.test_int

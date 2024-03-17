@@ -134,6 +134,10 @@ Classes
         to remove the object from D-Bus or ``.stop()`` method of the
         handle can be called to remove object from D-Bus.
 
+        Returns a handle that can be used to remove object from D-Bus
+        by either using it as a context manager or by calling ``.stop()``
+        method of the handle.
+
         .. code-block:: python
 
             with dbus_object.export_to_dbus("/"):
@@ -242,10 +246,10 @@ Classes
 
         ObjectManager will keep the reference to the object.
 
-        Returns a handle that can either be used as a context manager
-        to remove the object or ``.stop()`` method of the handle can be
-        called to remove object from D-Bus and drop reference to the object.
-        Signal will be emitted when the object is stopped via handle.
+        Returns a handle that can be used to remove object from D-Bus and
+        drop reference to it by either using it as a context manager or
+        by calling ``.stop()`` method of the handle. Signal will be emitted
+        once the object is stopped being exported.
 
         .. code-block:: python
 

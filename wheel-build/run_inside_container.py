@@ -60,6 +60,37 @@ BASIC_C_FLAGS: List[str] = [
     '-fstack-clash-protection',
 ]
 
+NINJA_ARCHIVE = ROOT_DIR / "ninja.tar.gz"
+NINJA_SRC_PATH = ROOT_DIR / 'src_ninja'
+
+UTIL_LINUX_ARCHIVE = ROOT_DIR / "util_linux.tar.xz"
+UTIL_LINUX_SRC_PATH = ROOT_DIR / 'src_util_linux'
+
+LIBCAP_ARCHIVE = ROOT_DIR / "libcap.tar.xz"
+LIBCAP_SRC_PATH = ROOT_DIR / 'src_libcap'
+
+SYSTEMD_ARCHIVE = ROOT_DIR / "systemd.tar.gz"
+SYSTEMD_SRC_PATH = ROOT_DIR / 'src_systemd'
+
+
+def unpack_archives() -> None:
+    for archive, to in (
+        (NINJA_ARCHIVE, NINJA_SRC_PATH),
+        (UTIL_LINUX_ARCHIVE, UTIL_LINUX_SRC_PATH),
+        (LIBCAP_ARCHIVE, LIBCAP_SRC_PATH),
+        (SYSTEMD_ARCHIVE, SYSTEMD_SRC_PATH),
+    ):
+        to.mkdir(exist_ok=True)
+        run(
+            [
+                "tar", "--verbose",
+                "--directory", str(to),
+                "--strip-components=1",
+                "--extract", "--file", str(archive)
+            ],
+            check=True,
+        )
+
 
 def setup_env() -> None:
     python_bin_paths = (f"/opt/python/{x}/bin" for x in PYTHON_VERSIONS)
@@ -104,70 +135,65 @@ def install_packages() -> None:
 
 
 def install_ninja() -> None:
-    ninja_src_path = ROOT_DIR / 'src_ninja'
-    ninja_boot_strap_path = ninja_src_path / 'configure.py'
+
+    ninja_boot_strap_path = NINJA_SRC_PATH / 'configure.py'
 
     run(
         [ninja_boot_strap_path, '--bootstrap'],
-        cwd=ninja_src_path,
+        cwd=NINJA_SRC_PATH,
         check=True,
     )
 
-    copy(ninja_src_path / 'ninja', '/usr/local/bin')
+    copy(NINJA_SRC_PATH / 'ninja', '/usr/local/bin')
 
 
 def install_meson() -> None:
     run(
-        ['pip3', 'install', 'meson==0.62', 'Jinja2==3.1.1'],
+        ['pip3', 'install', 'meson==1.4.0', 'Jinja2==3.1.1'],
         check=True,
     )
 
 
 def install_util_linux() -> None:
-    util_linux_src_path = ROOT_DIR / 'src_util_linux'
-
     run(
-        [util_linux_src_path / 'autogen.sh'],
-        cwd=util_linux_src_path,
+        [UTIL_LINUX_SRC_PATH / 'autogen.sh'],
+        cwd=UTIL_LINUX_SRC_PATH,
         env={'AL_OPTS': '-I/usr/share/aclocal/', **environ},
         check=True,
     )
 
     run(
         [
-            util_linux_src_path / 'configure',
+            UTIL_LINUX_SRC_PATH / 'configure',
             '--prefix', '/usr/local',
             '--libdir', '/usr/local/lib64',
             '--enable-symvers',
         ],
-        cwd=util_linux_src_path,
+        cwd=UTIL_LINUX_SRC_PATH,
         check=True,
     )
 
     run(
         ['make', '--jobs', NPROC, 'install'],
-        cwd=util_linux_src_path,
+        cwd=UTIL_LINUX_SRC_PATH,
         check=True,
     )
 
 
 def install_libcap() -> None:
-    libcap_src_path = ROOT_DIR / 'src_libcap'
-
     run(
         ['make', '--jobs', NPROC, 'install'],
-        cwd=libcap_src_path,
+        cwd=LIBCAP_SRC_PATH,
         check=True,
     )
 
 
 def install_systemd() -> None:
-    systemd_src_path = ROOT_DIR / 'src_systemd'
     systemd_build_path = ROOT_DIR / 'build_systemd'
 
     run(
         ['meson', 'setup',
-         systemd_build_path, systemd_src_path,
+         systemd_build_path, SYSTEMD_SRC_PATH,
          '-Dstatic-libsystemd=pic',
          '-Dtests=false',
          '--buildtype', 'plain',
@@ -227,6 +253,7 @@ def drop_to_shell() -> None:
 
 
 def main() -> None:
+    unpack_archives()
     setup_env()
     install_packages()
 

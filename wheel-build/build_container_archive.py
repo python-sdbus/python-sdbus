@@ -25,42 +25,33 @@ from argparse import ArgumentParser
 from pathlib import Path
 from shutil import copy
 from subprocess import PIPE, run
-from tempfile import TemporaryDirectory
 
-SYSTEMD_VERSION = '249.14'
+SYSTEMD_VERSION = '249.17'
 UTIL_LINUX_VERSION = '2.37'
 NINJA_VERSION = '1.10.2'
-LIBCAP_VERSION = '2.64'
+LIBCAP_VERSION = '2.69'
 
 
 def create_archive(build_root: Path, output_file: Path) -> None:
     run(
-        ['tar', '--create', '--file', str(output_file.absolute()), '.'],
+        [
+            'tar', '--create',
+            '--file', str(output_file.absolute()),
+            '.',
+        ],
         cwd=build_root.resolve(),
         check=True,
     )
 
 
-def download_and_unpack_source(target_dir: Path, url: str) -> None:
-    target_dir.mkdir(exist_ok=True)  # TODO: maybe delete folder
-
-    with TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
-        dowload_tar_path = tmpdir_path / 'donwload.tar.gz'
-
-        run(
-            ['curl', '--fail', '--location',
-             url, '--output', str(dowload_tar_path)],
-            check=True,
-        )
-
-        run(
-            ['tar',
-             '--directory', str(target_dir),
-             '--strip-components=1',
-             '--extract', '--file', str(dowload_tar_path)],
-            check=True,
-        )
+def download_source(target: Path, url: str) -> None:
+    run(
+        [
+            'curl', '--fail', '--location',
+            url, '--output', str(target)
+        ],
+        check=True,
+    )
 
 
 def download_systemd_source(build_dir: Path) -> None:
@@ -68,31 +59,30 @@ def download_systemd_source(build_dir: Path) -> None:
         "https://github.com/systemd/systemd-stable/"
         f"archive/refs/tags/v{SYSTEMD_VERSION}.tar.gz"
     )
-    systemd_src_dir = build_dir / "src_systemd"
-    systemd_src_dir.mkdir(exist_ok=True)
+    systemd_download_file = build_dir / "systemd.tar.gz"
 
-    util_linux_url = (
+    util_linux_src_url = (
         "https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/"
         f"v{UTIL_LINUX_VERSION}/util-linux-{UTIL_LINUX_VERSION}.tar.xz"
     )
-    util_linux_src_dir = build_dir / "src_util_linux"
+    util_linux_download_file = build_dir / "util_linux.tar.xz"
 
     ninja_src_url = (
         "https://github.com/ninja-build/ninja/"
         f"archive/refs/tags/v{NINJA_VERSION}.tar.gz"
     )
-    ninja_src_dir = build_dir / "src_ninja"
+    ninja_download_file = build_dir / "ninja.tar.gz"
 
     libcap_src_url = (
         "https://kernel.org/pub/linux/libs/security/"
         f"linux-privs/libcap2/libcap-{LIBCAP_VERSION}.tar.xz"
     )
-    libcap_src_dir = build_dir / 'src_libcap'
+    libcap_download_file = build_dir / 'libcap.tar.xz'
 
-    download_and_unpack_source(systemd_src_dir, systemd_download_url)
-    download_and_unpack_source(util_linux_src_dir, util_linux_url)
-    download_and_unpack_source(ninja_src_dir, ninja_src_url)
-    download_and_unpack_source(libcap_src_dir, libcap_src_url)
+    download_source(systemd_download_file, systemd_download_url)
+    download_source(util_linux_download_file, util_linux_src_url)
+    download_source(ninja_download_file, ninja_src_url)
+    download_source(libcap_download_file, libcap_src_url)
 
 
 def copy_git_ls_files(source_root: Path, build_root: Path) -> None:

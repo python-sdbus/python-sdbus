@@ -70,10 +70,13 @@ Parsing utilities
 
     :param Iterable[DbusInterfaceBaseAsync] interfaces: Possible interfaces of the managed objects.
         Can accept classes with multiple interfaces defined.
-    :param Dict interfaces_added_data: Data returned by ``get_managed_objects`` call.
-    :param str on_unknown_member: If an unknown D-Bus interface was encountered
+    :param Dict managed_objects_data: Data returned by ``get_managed_objects`` call.
+    :param str on_unknown_interface: If an unknown D-Bus interface was encountered
             either raise an ``"error"`` (default) or return ``"none"`` instead
             of interface class.
+    :param str on_unknown_member: If an unknown D-Bus property was encountered
+            either raise an ``"error"`` (default), ``"ignore"`` the property
+            or ``"reuse"`` the D-Bus name for the member.
     :rtype: Dict[str, Tuple[Optional[Type[DbusInterfaceBaseAsync], Dict[str, Any]]]]
     :returns: Dictionary where keys are paths and values are tuples of managed objects classes and their properties data.
 

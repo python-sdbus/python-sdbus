@@ -192,6 +192,9 @@ Classes
 
         Get the objects this object manager in managing.
 
+        :py:func:`sdbus.utils.parse_get_managed_objects` can be used
+        to make returned data easier to work with.
+
         :return:
             Triple nested dictionary that contains all the objects
             paths with their properties values.

@@ -1,3 +1,31 @@
+## 0.12.RC1
+
+This version significantly reworked the internal undocumented classes
+and functions. If you used the undocumented API you would probably need
+to adjust your code. Type checker like `mypy` can be very useful for this.
+
+### Features:
+
+* `@setter_private` can now be used in overrides.
+* Added `assertDbusSignalEmits` method to `IsolatedDbusTestCase`.
+  Can be used to assert that a D-Bus signal was emitted
+  inside the `async with` block.
+* Added `sdbus.utils.parse_get_managed_objects` function. Can be
+  used to parse the ObjectManager's `get_managed_objects` method
+  data to classes and Python attribute names.
+* Added a handle that is returned by `export_to_dbus` and `export_with_manager`
+  methods. This handle can be used to explicitly control when object is accessible
+  from D-Bus. (requested by @dragomirecky)
+
+### Fixes:
+
+* Fixed async D-Bus properties not having a proper generic typing. (reported by @ValdezFOmar)
+* Fixed build not working when systemd has a minor version suffix.
+* Fixed being unable to name arguments in D-Bus introspection when
+  method has no return arguments. (reported by @colazzo)
+* Fixed serving D-Bus methods that return a single struct. (reported by @colazzo)
+* Fixed sending extremely large D-Bus messages getting stuck. (reported by @colazzo)
+
 ## 0.11.1
 
 ### Features:

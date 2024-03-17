@@ -2,6 +2,9 @@
 name: Install package from PyPI and run unit tests on Ubuntu 20.04
 on:
   workflow_dispatch:
+    inputs:
+      pypi_version:
+        description: "Version specifier to install from PyPI"
 
 jobs:
   run:
@@ -17,7 +20,9 @@ jobs:
             systemd dbus python3 python3-pip python3-jinja2
       - name: Install package
         run: |
-          sudo pip3 install sdbus>=0.8rc2
+          sudo pip3 install "sdbus ${SDBUS_VERSION}"
+        env:
+          SDBUS_VERSION: ${{ inputs.pypi_version }}
       - name: List package
         run: |
           pip3 list | grep sdbus

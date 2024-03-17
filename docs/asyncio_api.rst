@@ -462,6 +462,8 @@ Decorators
             :py:attr:`properties_changed <DbusInterfaceCommonAsync.properties_changed>`
             signal to D-Bus.
 
+            *Changed in version 0.12.0:* can now be used in overrides.
+
         .. py:method:: get_async()
             :async:
 

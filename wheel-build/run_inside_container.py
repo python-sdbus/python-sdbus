@@ -60,6 +60,36 @@ BASIC_C_FLAGS: List[str] = [
     '-fstack-clash-protection',
 ]
 
+SYSTEMD_OPTIONS: List[str] = [
+    "static-libsystemd=pic",
+    "tests=false",
+    "coredump=false",
+    "dbus=false",
+    "efi=false",
+    "elfutils=false",
+    "hostnamed=false",
+    "homed=false",
+    "importd=false",
+    "initrd=false",
+    "kernel-install=false",
+    "logind=false",
+    "machined=false",
+    "man=false",
+    "networkd=false",
+    "portabled=false",
+    "repart=false",
+    "sysext=false",
+    "sysusers=false",
+    "timedated=false",
+    "timesyncd=false",
+    "tmpfiles=false",
+    "oomd=false",
+    "hibernate=false",
+    "nss-systemd=false",
+    "nss-resolve=false",
+]
+
+
 NINJA_ARCHIVE = ROOT_DIR / "ninja.tar.gz"
 NINJA_SRC_PATH = ROOT_DIR / 'src_ninja'
 
@@ -194,10 +224,9 @@ def install_systemd() -> None:
     run(
         ['meson', 'setup',
          systemd_build_path, SYSTEMD_SRC_PATH,
-         '-Dstatic-libsystemd=pic',
-         '-Dtests=false',
          '--buildtype', 'plain',
          '-Db_lto=true', '-Db_pie=true',
+         *(f"-D{o}" for o in SYSTEMD_OPTIONS)
          ],
         env={**environ, 'PKG_CONFIG_PATH': '/usr/local/lib64/pkgconfig'},
         check=True,

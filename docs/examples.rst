@@ -10,7 +10,7 @@ There are 3 files:
 
 * ``example_interface.py`` File that contains the interface definition.
 * ``example_server.py`` Server.
-* ``example_interface.py`` Client.
+* ``example_client.py`` Client.
 
 
 ``example_interface.py`` file: ::

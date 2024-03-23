@@ -81,7 +81,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         override_attr_name: str,
         override: DbusMethodOverride,
         mro_dbus_elements: Dict[str, DbusSomethingAsync],
-    ) -> DbusMethodAsync:
+    ) -> DbusMethodAsync[Any, Any]:
         try:
             original_method = mro_dbus_elements[override_attr_name]
         except KeyError:

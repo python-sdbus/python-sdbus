@@ -175,7 +175,7 @@ class IsolatedDbusTestCase(IsolatedAsyncioTestCase):
     dbus_executable_name: ClassVar[str] = 'dbus-daemon'
 
     def setUp(self) -> None:
-        self.temp_dir = TemporaryDirectory()
+        self.temp_dir = TemporaryDirectory(prefix="python-sdbus-")
         self.temp_dir_path = Path(self.temp_dir.name)
 
         self.dbus_socket_path = self.temp_dir_path / 'test_dbus.socket'

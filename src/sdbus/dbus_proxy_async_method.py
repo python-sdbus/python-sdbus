@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar, cast, overload
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
+    DbusAsyncToBlockingAdaptor,
     DbusBindedAsync,
     DbusMethodCommon,
     DbusMethodOverride,
@@ -82,6 +83,14 @@ class DbusMethodAsync(
     @overload
     def __get__(
         self,
+        obj: DbusAsyncToBlockingAdaptor,
+        obj_class: Type[DbusInterfaceBaseAsync],
+    ) -> DbusMethodAsyncBlockingAdapter[P, TR]:
+        ...
+
+    @overload
+    def __get__(
+        self,
         obj: DbusInterfaceBaseAsync,
         obj_class: Type[DbusInterfaceBaseAsync],
     ) -> DbusMethodAsyncBaseBind[P, TR]:
@@ -89,17 +98,27 @@ class DbusMethodAsync(
 
     def __get__(
         self,
-        obj: Optional[DbusInterfaceBaseAsync],
+        obj: Union[DbusInterfaceBaseAsync, None, DbusAsyncToBlockingAdaptor],
         obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
-    ) -> Union[DbusMethodAsyncBaseBind[P, TR], DbusMethodAsync[P, TR]]:
-        if obj is not None:
-            dbus_meta = obj._dbus
-            if isinstance(dbus_meta, DbusRemoteObjectMeta):
-                return DbusMethodAsyncProxyBind(self, dbus_meta)
-            else:
-                return DbusMethodAsyncLocalBind(self, obj)
-        else:
+    ) -> Union[
+        DbusMethodAsyncBaseBind[P, TR],
+        DbusMethodAsync[P, TR],
+        DbusMethodAsyncBlockingAdapter[P, TR]
+    ]:
+        if obj is None:
             return self
+
+        dbus_meta = obj._dbus
+        if isinstance(dbus_meta, DbusRemoteObjectMeta):
+            if isinstance(obj, DbusAsyncToBlockingAdaptor):
+                return DbusMethodAsyncBlockingAdapter(self, dbus_meta)
+            else:
+                return DbusMethodAsyncProxyBind(self, dbus_meta)
+        else:
+            if isinstance(obj, DbusAsyncToBlockingAdaptor):
+                raise TypeError("Can't use adapter for local objects!")
+
+            return DbusMethodAsyncLocalBind(self, obj)
 
 
 class DbusMethodAsyncBaseBind(
@@ -317,3 +336,47 @@ def dbus_method_async_override(
         return cast(DbusMethodAsync[P, TR], DbusMethodOverride(new_function))
 
     return new_decorator
+
+
+class DbusMethodAsyncBlockingAdapter(Generic[P, TR]):
+
+    def __init__(
+        self,
+        dbus_method: DbusMethodAsync[P, TR],
+        proxy_meta: DbusRemoteObjectMeta,
+    ):
+        self.dbus_method = dbus_method
+        self.proxy_meta = proxy_meta
+
+    def _call_dbus_sync(self, *args: Any) -> Any:
+        bus = self.proxy_meta.attached_bus
+        dbus_method = self.dbus_method
+
+        new_call_message = (
+            bus.new_method_call_message(
+                self.proxy_meta.service_name,
+                self.proxy_meta.object_path,
+                dbus_method.interface_name,
+                dbus_method.method_name,
+            )
+        )
+        if args:
+            new_call_message.append_data(
+                dbus_method.input_signature, *args)
+
+        reply_message = bus.call(new_call_message)
+        return reply_message.get_contents()
+
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> TR:
+        if len(args) == self.dbus_method.num_of_args:
+            assert not kwargs, (
+                "Passed more arguments than method supports"
+                f"Extra args: {kwargs}")
+            rebuilt_args: Sequence[Any] = args
+        else:
+            rebuilt_args = self.dbus_method._rebuild_args(
+                self.dbus_method.original_method,
+                *args,
+                **kwargs)
+
+        return cast(TR, self._call_dbus_sync(*rebuilt_args))

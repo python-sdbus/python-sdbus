@@ -41,6 +41,7 @@ if TYPE_CHECKING:
         Tuple,
         Type,
         TypeVar,
+        Union,
     )
 
     T = TypeVar('T')
@@ -353,3 +354,7 @@ class DbusClassMeta:
         self.serving_enabled = serving_enabled
         self.dbus_member_to_python_attr: Dict[str, str] = {}
         self.python_attr_to_dbus_member: Dict[str, str] = {}
+
+
+class DbusAsyncToBlockingAdaptor:
+    _dbus: Union[DbusRemoteObjectMeta, DbusLocalObjectMeta]

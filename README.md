@@ -200,7 +200,7 @@ async def get_hello_world() -> None:
 
 loop = new_event_loop()
 
-# Always binds your tasks to a variable
+# Always bind your tasks to a variable
 task_upper = loop.create_task(call_upper())
 task_clock = loop.create_task(print_clock())
 task_hello_world = loop.create_task(get_hello_world())

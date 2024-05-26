@@ -24,7 +24,7 @@ If you are unfamiliar with D-Bus you might want to read following pages:
 
 `D-Bus specification by freedesktop.org <https://dbus.freedesktop.org/doc/dbus-specification.html>`_
 
-`Install D-Feet D-Bus debugger and observe services and objects on your D-Bus <https://wiki.gnome.org/Apps/DFeet>`_
+`Install D-Spy D-Bus debugger and observe services and objects on your D-Bus <https://apps.gnome.org/Dspy/>`_
 
 
 .. toctree::

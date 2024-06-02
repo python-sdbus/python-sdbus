@@ -4,7 +4,10 @@ Utilities
 Parsing utilities
 +++++++++++++++++
 
-.. py:currentmodule:: sdbus.utils
+Parse unweildy D-Bus structures in to Python native objects and names.
+Available under ``sdbus.utils.parse`` subpackage.
+
+.. py:currentmodule:: sdbus.utils.parse
 
 .. py:function:: parse_properties_changed(interface, properties_changed_data, on_unknown_member='error')
 

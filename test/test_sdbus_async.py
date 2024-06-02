@@ -40,7 +40,7 @@ from sdbus.sd_bus_internals import (
     DbusPropertyEmitsChangeFlag,
 )
 from sdbus.unittest import IsolatedDbusTestCase
-from sdbus.utils import parse_properties_changed
+from sdbus.utils.parse import parse_properties_changed
 
 from sdbus import (
     DbusInterfaceCommonAsync,

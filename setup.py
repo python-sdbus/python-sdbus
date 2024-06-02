@@ -118,10 +118,12 @@ if __name__ == '__main__':
             'Programming Language :: Python :: 3 :: Only',
             'Topic :: Software Development :: Libraries :: Python Modules',
         ],
-        packages=['sdbus',
-                  # 'sdbus_async', 'sdbus_block',
-                  'sdbus_async.dbus_daemon', 'sdbus_block.dbus_daemon',
-                  ],
+        packages=[
+            'sdbus',
+            'sdbus.utils',
+            'sdbus_async.dbus_daemon',
+            'sdbus_block.dbus_daemon',
+        ],
         package_dir={
             'sdbus': 'src/sdbus',
             'sdbus_async.dbus_daemon': 'src/sdbus_async/dbus_daemon',

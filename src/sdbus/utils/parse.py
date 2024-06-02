@@ -21,8 +21,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .dbus_common_funcs import _parse_properties_vardict
-from .dbus_proxy_async_interface_base import (
+from ..dbus_common_funcs import _parse_properties_vardict
+from ..dbus_proxy_async_interface_base import (
     DBUS_CLASS_TO_META,
     DBUS_INTERFACE_NAME_TO_CLASS,
     DbusInterfaceBaseAsync,
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
         Union,
     )
 
-    from .dbus_proxy_async_interfaces import DBUS_PROPERTIES_CHANGED_TYPING
+    from ..dbus_proxy_async_interfaces import DBUS_PROPERTIES_CHANGED_TYPING
 
     InterfacesInputElements = Union[
         DbusInterfaceBaseAsync,

@@ -25,6 +25,7 @@
 static void SdBus_dealloc(SdBusObject* self) {
         sd_bus_unref(self->sd_bus_ref);
         Py_XDECREF(self->bus_fd);
+        Py_XDECREF(self->asyncio_timeout_handle);
 
         SD_BUS_DEALLOC_TAIL;
 }
@@ -237,8 +238,9 @@ static PyObject* SdBus_get_fd(SdBusObject* self, PyObject* Py_UNUSED(args)) {
 }
 
 static PyObject* SdBus_asyncio_update_fd_watchers(SdBusObject* self);
+static PyObject* SdBus_asyncio_update_timeout(SdBusObject* self);
 
-#define CHECK_ASYNCIO_WATCHERS ({ CALL_PYTHON_EXPECT_NONE(SdBus_asyncio_update_fd_watchers(self)); })
+#define CHECK_ASYNCIO_WATCHERS ({ CALL_PYTHON_EXPECT_NONE(SdBus_asyncio_update_fd_watchers(self)); CALL_PYTHON_EXPECT_NONE(SdBus_asyncio_update_timeout(self)); })
 
 static PyObject* SdBus_process(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         int return_value = 1;
@@ -649,6 +651,51 @@ static PyObject* SdBus_asyncio_update_fd_watchers(SdBusObject* self) {
                 Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, add_writer_str, self->bus_fd, drive_method, NULL)));
         } else {
                 Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, remove_writer_str, self->bus_fd, NULL)));
+        }
+
+        Py_RETURN_NONE;
+}
+
+static inline uint64_t kernel_time_monotonic_us() {
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        return (ts.tv_sec * 1000000 + ts.tv_nsec / 1000);
+}
+
+static PyObject* SdBus_asyncio_update_timeout(SdBusObject* self) {
+        if (NULL != self->asyncio_timeout_handle) {
+                // Cancel current timeout
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(self->asyncio_timeout_handle, cancel_str, NULL)));
+                self->asyncio_timeout_handle = NULL;
+        }
+
+        uint64_t timeout_absolute_us = UINT64_MAX;
+        int result = sd_bus_get_timeout(self->sd_bus_ref, &timeout_absolute_us);
+
+        if (result < 0 || timeout_absolute_us == UINT64_MAX) {
+                // Error case or no timeout requested => no timeout installed
+                Py_RETURN_NONE;
+        }
+
+        PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
+        PyObject* drive_method CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString((PyObject*)self, "process"));
+
+        // Convert to relative time
+        uint64_t now = kernel_time_monotonic_us();
+        uint64_t timeout_relative_us;
+        if (now < timeout_absolute_us) {
+                timeout_relative_us = timeout_absolute_us - now;
+        } else {
+                timeout_relative_us = 0;
+        }
+
+        if (timeout_relative_us == 0) {
+                // Call immediately
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, call_soon_str, drive_method, NULL)));
+        } else {
+                // Call with delay
+                PyObject* delay_s CLEANUP_PY_OBJECT = PyFloat_FromDouble(timeout_relative_us / 1000000.0);
+                self->asyncio_timeout_handle = CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, call_later_str, delay_s, drive_method, NULL));
         }
 
         Py_RETURN_NONE;

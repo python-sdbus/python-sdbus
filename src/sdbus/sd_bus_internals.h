@@ -253,7 +253,9 @@ extern PyObject* null_str;
 extern PyObject* extend_str;
 extern PyObject* append_str;
 extern PyObject* call_soon_str;
+extern PyObject* call_later_str;
 extern PyObject* create_task_str;
+extern PyObject* cancel_str;
 // Exceptions
 extern PyObject* exception_base;
 extern PyObject* unmapped_error_exception;
@@ -334,6 +336,7 @@ typedef struct {
         sd_bus* sd_bus_ref;
         PyObject* bus_fd;
         int asyncio_watchers_last_state;
+        PyObject* asyncio_timeout_handle;
 } SdBusObject;
 
 extern PyType_Spec SdBusType;

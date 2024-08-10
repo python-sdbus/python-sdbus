@@ -20,6 +20,8 @@
 from __future__ import annotations
 
 from asyncio import Event, TimeoutError, wait_for
+from contextlib import ExitStack, contextmanager
+from operator import setitem
 from os import environ, kill
 from pathlib import Path
 from signal import SIGTERM
@@ -42,6 +44,7 @@ if TYPE_CHECKING:
         Any,
         AsyncContextManager,
         ClassVar,
+        Iterator,
         List,
         Optional,
         TypeVar,
@@ -171,52 +174,72 @@ class DbusSignalRecorderLocal(DbusSignalRecorderBase):
         return self
 
 
-class IsolatedDbusTestCase(IsolatedAsyncioTestCase):
-    dbus_executable_name: ClassVar[str] = 'dbus-daemon'
+@contextmanager
+def _isolated_dbus(
+    dbus_executable_name: str = "dbus-daemon",
+) -> Iterator[SdBus]:
+    with ExitStack() as exit_stack:
+        temp_dir_path = Path(
+            exit_stack.enter_context(
+                TemporaryDirectory(prefix="python-sdbus-")
+            )
+        )
 
-    def setUp(self) -> None:
-        self.temp_dir = TemporaryDirectory(prefix="python-sdbus-")
-        self.temp_dir_path = Path(self.temp_dir.name)
-
-        self.dbus_socket_path = self.temp_dir_path / 'test_dbus.socket'
-        self.pid_path = self.temp_dir_path / 'dbus.pid'
-
-        self.dbus_config_file = self.temp_dir_path / 'dbus.config'
-
-        with open(self.dbus_config_file, mode='x') as conf_file:
-            conf_file.write(dbus_config.format(
-                socket_path=self.dbus_socket_path,
-                pidfile_path=self.pid_path))
+        dbus_socket_path = temp_dir_path / "test_dbus.socket"
+        pid_path = temp_dir_path / "dbus.pid"
+        dbus_config_file = temp_dir_path / "dbus.config"
+        dbus_config_file.write_text(
+            dbus_config.format(
+                socket_path=dbus_socket_path,
+                pidfile_path=pid_path
+            )
+        )
 
         subprocess_run(
             args=(
-                self.dbus_executable_name,
-                '--config-file', self.dbus_config_file,
+                dbus_executable_name,
+                '--config-file', dbus_config_file,
                 '--fork',
             ),
             stdin=DEVNULL,
             check=True,
         )
+        # D-Bus daemon exits once it forks and is initialized.
 
-        self.old_session_bus_address = environ.get('DBUS_SESSION_BUS_ADDRESS')
-        environ[
-            'DBUS_SESSION_BUS_ADDRESS'] = f"unix:path={self.dbus_socket_path}"
+        dbus_pid = int(pid_path.read_text())
+        exit_stack.callback(kill, dbus_pid, SIGTERM)
 
-        self.bus = sd_bus_open_user()
-        set_default_bus(self.bus)
+        old_session_bus_address = environ.get("DBUS_SESSION_BUS_ADDRESS")
+        if old_session_bus_address is not None:
+            exit_stack.callback(
+                setitem,
+                environ,
+                "DBUS_SESSION_BUS_ADDRESS",
+                old_session_bus_address,
+            )
+        else:
+            exit_stack.callback(
+                environ.pop,
+                "DBUS_SESSION_BUS_ADDRESS",
+            )
+        environ["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={dbus_socket_path}"
+
+        bus = sd_bus_open_user()
+        set_default_bus(bus)
+        yield bus
+
+
+class IsolatedDbusTestCase(IsolatedAsyncioTestCase):
+    dbus_executable_name: ClassVar[str] = 'dbus-daemon'
+
+    def setUp(self) -> None:
+        # TODO: Use enterContext from Python 3.11
+        _isolated_dbus_cm = _isolated_dbus()
+        self.bus = _isolated_dbus_cm.__enter__()
+        self.addCleanup(_isolated_dbus_cm.__exit__, None, None, None)
 
     async def asyncSetUp(self) -> None:
         set_default_bus(self.bus)
-
-    def tearDown(self) -> None:
-        with open(self.pid_path) as pid_file:
-            dbus_pid = int(pid_file.read())
-
-        kill(dbus_pid, SIGTERM)
-        self.temp_dir.cleanup()
-        environ.pop('DBUS_SESSION_BUS_ADDRESS')
-        if self.old_session_bus_address is not None:
-            environ['DBUS_SESSION_BUS_ADDRESS'] = self.old_session_bus_address
 
     def assertDbusSignalEmits(
         self,

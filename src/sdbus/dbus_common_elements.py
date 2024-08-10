@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from inspect import getfullargspec
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from .dbus_common_funcs import (
     _is_property_flags_correct,
@@ -40,13 +40,13 @@ if TYPE_CHECKING:
         Sequence,
         Tuple,
         Type,
-        TypeVar,
     )
 
-    T = TypeVar('T')
     SelfMeta = TypeVar('SelfMeta', bound="DbusInterfaceMetaCommon")
 
     from .sd_bus_internals import SdBus, SdBusInterface
+
+T = TypeVar('T')
 
 
 class DbusSomethingCommon:
@@ -299,13 +299,13 @@ class DbusBindedSync:
     ...
 
 
-class DbusMethodOverride:
+class DbusMethodOverride(Generic[T]):
     def __init__(self, override_method: T):
         self.override_method = override_method
 
 
-class DbusPropertyOverride:
-    def __init__(self, getter_override: T):
+class DbusPropertyOverride(Generic[T]):
+    def __init__(self, getter_override: Callable[[Any], T]):
         self.getter_override = getter_override
         self.setter_override: Optional[Callable[[Any, T], None]] = None
         self.is_setter_public = True

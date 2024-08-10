@@ -64,8 +64,9 @@ if TYPE_CHECKING:
     from .dbus_common_elements import DbusBindedAsync
     from .sd_bus_internals import SdBus, SdBusSlot
 
+    T = TypeVar('T')
     Self = TypeVar('Self', bound="DbusInterfaceBaseAsync")
-    DbusOverride = Union[DbusMethodOverride, DbusPropertyOverride]
+    DbusOverride = Union[DbusMethodOverride[T], DbusPropertyOverride[T]]
 
 
 DBUS_CLASS_TO_META: WeakKeyDictionary[
@@ -79,7 +80,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
     @staticmethod
     def _process_dbus_method_override(
         override_attr_name: str,
-        override: DbusMethodOverride,
+        override: DbusMethodOverride[T],
         mro_dbus_elements: Dict[str, DbusSomethingAsync],
     ) -> DbusMethodAsync:
         try:
@@ -103,7 +104,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
     @staticmethod
     def _process_dbus_property_override(
         override_attr_name: str,
-        override: DbusPropertyOverride,
+        override: DbusPropertyOverride[T],
         mro_dbus_elements: Dict[str, DbusSomethingAsync],
     ) -> DbusPropertyAsync[Any]:
         try:

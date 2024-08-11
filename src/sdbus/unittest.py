@@ -43,7 +43,6 @@ if TYPE_CHECKING:
     from typing import (
         Any,
         AsyncContextManager,
-        ClassVar,
         Iterator,
         List,
         Optional,
@@ -230,8 +229,6 @@ def _isolated_dbus(
 
 
 class IsolatedDbusTestCase(IsolatedAsyncioTestCase):
-    dbus_executable_name: ClassVar[str] = 'dbus-daemon'
-
     def setUp(self) -> None:
         # TODO: Use enterContext from Python 3.11
         _isolated_dbus_cm = _isolated_dbus()

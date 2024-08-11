@@ -103,10 +103,9 @@ def get_all_python_files() -> List[Path]:
 
 
 def formater_main() -> None:
-    all_python_files = get_all_python_files()
 
     run(
-        args=('autopep8', '--in-place', *all_python_files),
+        args=('autopep8', '--recursive', '--in-place', *all_python_modules),
         check=True,
     )
 
@@ -115,7 +114,7 @@ def formater_main() -> None:
             'isort',
             '-m', 'VERTICAL_HANGING_INDENT',
             '--trailing-comma',
-            *all_python_files,
+            *all_python_modules,
         ),
         check=True,
     )

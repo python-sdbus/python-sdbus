@@ -29,6 +29,7 @@ from unittest import SkipTest
 from sdbus.exceptions import (
     DbusFailedError,
     DbusFileExistsError,
+    DbusNoReplyError,
     DbusPropertyReadOnlyError,
     DbusUnknownObjectError,
     SdBusLibraryError,
@@ -720,6 +721,20 @@ class TestProxy(IsolatedDbusTestCase):
 
         with self.assertRaises(SdBusLibraryError):
             await wait_for(too_long_wait(), timeout=1)
+
+    async def test_bus_timerfd(self) -> None:
+        test_object, test_object_connection = initialize_object()
+
+        self.bus.method_call_timeout_usec = 10_000  # 0.01 seconds
+
+        loop = get_running_loop()
+
+        start = loop.time()
+
+        with self.assertRaises(DbusNoReplyError):
+            await wait_for(test_object_connection.looong_method(), timeout=1)
+
+        self.assertAlmostEqual(loop.time() - start, 0.01, delta=0.01)
 
     async def test_signal_queue_wildcard_match(self) -> None:
         test_object, test_object_connection = initialize_object()

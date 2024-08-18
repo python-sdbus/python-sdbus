@@ -334,7 +334,9 @@ typedef struct {
         sd_bus* sd_bus_ref;
         PyObject* bus_fd;
         PyObject* loop;
+        PyObject* timer_fd;
         int asyncio_watchers_last_state;
+        int timer_fd_int;
 } SdBusObject;
 
 extern PyType_Spec SdBusType;

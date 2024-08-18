@@ -20,12 +20,19 @@
 */
 #include <errno.h>
 #include <poll.h>
+#include <sys/timerfd.h>
+#include <time.h>
 #include "sd_bus_internals.h"
 
 static void SdBus_dealloc(SdBusObject* self) {
         if (NULL != self->loop && NULL != self->bus_fd) {
                 Py_XDECREF(PyObject_CallMethodObjArgs(self->loop, remove_reader_str, self->bus_fd, NULL));
                 Py_XDECREF(PyObject_CallMethodObjArgs(self->loop, remove_writer_str, self->bus_fd, NULL));
+        }
+        if (NULL != self->timer_fd) {
+                Py_XDECREF(PyObject_CallMethodObjArgs(self->loop, remove_reader_str, self->bus_fd, NULL));
+                Py_DECREF(self->timer_fd);
+                close(self->timer_fd_int);
         }
         sd_bus_unref(self->sd_bus_ref);
         Py_XDECREF(self->bus_fd);
@@ -623,6 +630,10 @@ static PyObject* SdBus_close(SdBusObject* self, PyObject* Py_UNUSED(args)) {
                 Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(self->loop, remove_reader_str, self->bus_fd, NULL)));
                 Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(self->loop, remove_writer_str, self->bus_fd, NULL)));
         }
+        if (NULL != self->timer_fd) {
+                Py_XDECREF(PyObject_CallMethodObjArgs(self->loop, remove_reader_str, self->bus_fd, NULL));
+                // TODO: Close timerfd
+        }
         Py_RETURN_NONE;
 }
 
@@ -639,7 +650,45 @@ static inline int sd_bus_get_events_zero_on_closed(SdBusObject* self) {
         return events;
 };
 
+static inline int sd_bus_get_timeout_uint_max_on_closed(SdBusObject* self, uint64_t* timeout_usec) {
+        int r = sd_bus_get_timeout(self->sd_bus_ref, timeout_usec);
+        if (-ENOTCONN == r) {
+                *timeout_usec = UINT64_MAX;
+                return 0;
+        }
+        return r;
+}
+
 static PyObject* SdBus_asyncio_update_fd_watchers(SdBusObject* self) {
+        PyObject* running_loop = CALL_PYTHON_AND_CHECK(_get_or_bind_loop(self));
+        PyObject* drive_method CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString((PyObject*)self, "process"));
+
+        if (NULL == self->timer_fd) {
+                self->timer_fd_int = CALL_SD_BUS_AND_CHECK(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC));
+                if (self->timer_fd_int < 0) {
+                        PyErr_SetFromErrno(PyExc_OSError);
+                }
+                PyObject* timer_fd CLEANUP_PY_OBJECT = PyLong_FromLong((int)self->timer_fd_int);
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, add_reader_str, timer_fd, drive_method, NULL)));
+                Py_INCREF(timer_fd);
+                self->timer_fd = timer_fd;
+        }
+
+        uint64_t timeout_usec = UINT64_MAX;
+        CALL_SD_BUS_AND_CHECK(sd_bus_get_timeout_uint_max_on_closed(self, &timeout_usec));
+
+        struct itimerspec bus_timer = {0};
+        if (timeout_usec == UINT64_MAX) {
+                // Setting bus_timer to zero disarms timer.
+        } else if (timeout_usec != 0) {
+                bus_timer.it_value.tv_sec = timeout_usec / 1000000;
+                bus_timer.it_value.tv_nsec = (timeout_usec % 1000000) * 1000;
+        } else if (timeout_usec == 0) {
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(running_loop, call_soon_str, drive_method, NULL)));
+        }
+
+        CALL_SD_BUS_AND_CHECK(timerfd_settime(self->timer_fd_int, TFD_TIMER_ABSTIME, &bus_timer, NULL));
+
         int events_to_watch = CALL_SD_BUS_AND_CHECK(sd_bus_get_events_zero_on_closed(self));
         if (events_to_watch == self->asyncio_watchers_last_state) {
                 // Do not update the watchers because state is the same
@@ -647,9 +696,6 @@ static PyObject* SdBus_asyncio_update_fd_watchers(SdBusObject* self) {
         } else {
                 self->asyncio_watchers_last_state = events_to_watch;
         }
-
-        PyObject* running_loop = CALL_PYTHON_AND_CHECK(_get_or_bind_loop(self));
-        PyObject* drive_method CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString((PyObject*)self, "process"));
 
         if (NULL == self->bus_fd) {
                 self->bus_fd = CALL_PYTHON_AND_CHECK(SdBus_get_fd(self, NULL));

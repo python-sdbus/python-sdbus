@@ -224,10 +224,11 @@ static PyObject* SdBusInterface_create_vtable(SdBusInterfaceObject* self, PyObje
         self->vtable[0] = start_vtable;
         Py_ssize_t current_index = 1;
         // Iter method definitions
-        for (Py_ssize_t i = 0; i < num_of_methods; ({
-                     ++i;
-                     ++current_index;
-             })) {
+        for (Py_ssize_t i = 0; i < num_of_methods; (
+                 {
+                         ++i;
+                         ++current_index;
+                 })) {
                 PyObject* method_tuple = CALL_PYTHON_AND_CHECK(PyList_GetItem(self->method_list, i));
 
                 PyObject* method_name_object = CALL_PYTHON_AND_CHECK(PyTuple_GetItem(method_tuple, 0));
@@ -251,10 +252,11 @@ static PyObject* SdBusInterface_create_vtable(SdBusInterfaceObject* self, PyObje
                 self->vtable[current_index] = temp_vtable;
         }
 
-        for (Py_ssize_t i = 0; i < num_of_properties; ({
-                     ++i;
-                     ++current_index;
-             })) {
+        for (Py_ssize_t i = 0; i < num_of_properties; (
+                 {
+                         ++i;
+                         ++current_index;
+                 })) {
                 PyObject* property_tuple = SD_BUS_PY_LIST_GET_ITEM(self->property_list, i);
 
                 PyObject* property_name_str = SD_BUS_PY_TUPLE_GET_ITEM(property_tuple, 0);
@@ -290,10 +292,11 @@ static PyObject* SdBusInterface_create_vtable(SdBusInterfaceObject* self, PyObje
                 }
         }
 
-        for (Py_ssize_t i = 0; i < num_of_signals; ({
-                     ++i;
-                     ++current_index;
-             })) {
+        for (Py_ssize_t i = 0; i < num_of_signals; (
+                 {
+                         ++i;
+                         ++current_index;
+                 })) {
                 PyObject* signal_tuple = SD_BUS_PY_LIST_GET_ITEM(self->signal_list, i);
 
                 PyObject* signal_name_str = SD_BUS_PY_TUPLE_GET_ITEM(signal_tuple, 0);

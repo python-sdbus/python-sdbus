@@ -25,6 +25,7 @@
 static void SdBus_dealloc(SdBusObject* self) {
         sd_bus_unref(self->sd_bus_ref);
         Py_XDECREF(self->bus_fd);
+        Py_XDECREF(self->loop);
 
         SD_BUS_DEALLOC_TAIL;
 }
@@ -240,6 +241,13 @@ static PyObject* SdBus_asyncio_update_fd_watchers(SdBusObject* self);
 
 #define CHECK_ASYNCIO_WATCHERS ({ CALL_PYTHON_EXPECT_NONE(SdBus_asyncio_update_fd_watchers(self)); })
 
+static PyObject* _get_or_bind_loop(SdBusObject* self) {
+        if (NULL == self->loop) {
+                self->loop = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
+        }
+        return self->loop;
+}
+
 static PyObject* SdBus_process(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         int return_value = 1;
         while (return_value > 0) {
@@ -308,7 +316,7 @@ static PyObject* SdBus_call_async(SdBusObject* self, PyObject* args) {
         SdBusMessageObject* call_message = NULL;
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "O", &call_message, NULL));
 #endif
-        PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
+        PyObject* running_loop = CALL_PYTHON_AND_CHECK(_get_or_bind_loop(self));
 
         PyObject* new_future = CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "create_future", ""));
 
@@ -421,7 +429,7 @@ static PyObject* SdBus_match_signal_async(SdBusObject* self, PyObject* args) {
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "zzzzO", &sender_service_char_ptr, &path_name_char_ptr, &interface_name_char_ptr, &member_name_char_ptr,
                                                 &signal_callback, NULL));
 #endif
-        PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
+        PyObject* running_loop = CALL_PYTHON_AND_CHECK(_get_or_bind_loop(self));
         PyObject* new_future CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "create_future", ""));
 
         SdBusSlotObject* new_slot CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusSlot_class));
@@ -503,7 +511,7 @@ static PyObject* SdBus_request_name_async(SdBusObject* self, PyObject* args) {
         CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "sK", &service_name_char_ptr, &flags_long_long, NULL));
         uint64_t flags = (uint64_t)flags_long_long;
 #endif
-        PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
+        PyObject* running_loop = CALL_PYTHON_AND_CHECK(_get_or_bind_loop(self));
         PyObject* new_future = CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "create_future", ""));
         SdBusSlotObject* new_slot_object CLEANUP_SD_BUS_SLOT = (SdBusSlotObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusSlot_class));
 
@@ -632,7 +640,7 @@ static PyObject* SdBus_asyncio_update_fd_watchers(SdBusObject* self) {
                 self->asyncio_watchers_last_state = events_to_watch;
         }
 
-        PyObject* running_loop CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_CallFunctionObjArgs(asyncio_get_running_loop, NULL));
+        PyObject* running_loop = CALL_PYTHON_AND_CHECK(_get_or_bind_loop(self));
         PyObject* drive_method CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString((PyObject*)self, "process"));
 
         if (NULL == self->bus_fd) {

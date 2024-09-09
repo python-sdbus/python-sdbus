@@ -333,6 +333,7 @@ typedef struct {
         PyObject_HEAD;
         sd_bus* sd_bus_ref;
         PyObject* bus_fd;
+        PyObject* loop;
         int asyncio_watchers_last_state;
 } SdBusObject;
 

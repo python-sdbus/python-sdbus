@@ -19,7 +19,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from asyncio import Event, get_running_loop, sleep, wait_for
+from asyncio import Event, get_running_loop
+from asyncio import run as asyncio_run
+from asyncio import sleep, wait_for
 from asyncio.subprocess import create_subprocess_exec
 from typing import TYPE_CHECKING
 from unittest import SkipTest
@@ -975,3 +977,17 @@ class TestProxy(IsolatedDbusTestCase):
 
         with self.assertRaises(DbusUnknownObjectError):
             await test_object_connection.returns_none_method()
+
+    def test_asyncio_run_different_loops(self) -> None:
+        bus = self.bus
+
+        async def test() -> None:
+            dbus_object = DbusInterfaceCommonAsync.new_proxy(
+                "org.freedesktop.DBus",
+                "/org/freedesktop/DBus",
+                bus,
+            )
+            await wait_for(dbus_object.dbus_ping(), timeout=1)
+
+        with self.assertRaisesRegex(RuntimeError, "different loop"):
+            asyncio_run(test())

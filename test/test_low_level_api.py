@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from asyncio import get_running_loop
 from unittest import SkipTest, TestCase, main
 
 from sdbus.sd_bus_internals import (
@@ -31,12 +32,22 @@ from sdbus.sd_bus_internals import (
 from sdbus.unittest import IsolatedDbusTestCase
 
 
-class TestInitDbus(IsolatedDbusTestCase):
+class TestAsyncLowLevel(IsolatedDbusTestCase):
     def test_init_bus(self) -> None:
         not_connected_bus = SdBus()
         self.assertIsNone(not_connected_bus.address)
 
         self.assertIsNotNone(self.bus.address)
+
+    async def test_bus_fd_unregister_close(self) -> None:
+        await self.bus.request_name_async("org.example", 0)
+        bus_fd = self.bus.get_fd()
+
+        self.bus.close()
+
+        loop = get_running_loop()
+        self.assertFalse(loop.remove_reader(bus_fd))
+        self.assertFalse(loop.remove_writer(bus_fd))
 
 
 class TestLowLeveApi(TestCase):

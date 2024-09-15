@@ -23,6 +23,10 @@
 #include "sd_bus_internals.h"
 
 static void SdBus_dealloc(SdBusObject* self) {
+        if (NULL != self->loop && NULL != self->bus_fd) {
+                Py_XDECREF(PyObject_CallMethodObjArgs(self->loop, remove_reader_str, self->bus_fd, NULL));
+                Py_XDECREF(PyObject_CallMethodObjArgs(self->loop, remove_writer_str, self->bus_fd, NULL));
+        }
         sd_bus_unref(self->sd_bus_ref);
         Py_XDECREF(self->bus_fd);
         Py_XDECREF(self->loop);
@@ -615,6 +619,10 @@ static PyObject* SdBus_emit_object_removed(SdBusObject* self, PyObject* args) {
 
 static PyObject* SdBus_close(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         sd_bus_close(self->sd_bus_ref);
+        if (NULL != self->loop && NULL != self->bus_fd) {
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(self->loop, remove_reader_str, self->bus_fd, NULL)));
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(self->loop, remove_writer_str, self->bus_fd, NULL)));
+        }
         Py_RETURN_NONE;
 }
 

@@ -89,8 +89,13 @@ def run_gen_from_file(
 
 def generator_main(args: Optional[List[str]] = None) -> None:
 
-    main_arg_parser = ArgumentParser()
-    subparsers = main_arg_parser.add_subparsers()
+    main_arg_parser = ArgumentParser(
+        prog="sdbus",
+    )
+    subparsers = main_arg_parser.add_subparsers(
+        required=True,
+        title="subcommands",
+    )
 
     generate_from_file_parser = subparsers.add_parser('gen-from-file')
     generate_from_file_parser.set_defaults(func=run_gen_from_file)

@@ -273,7 +273,7 @@ class DbusMemberAbstract:
         self.python_name = camel_case_to_snake_case(self.method_name)
 
         self.is_deprecated = False
-        self.is_unpriveledged = False
+        self.is_priveledged = False
 
         self.iter_sub_elements(element)
 
@@ -281,7 +281,7 @@ class DbusMemberAbstract:
         if self.is_deprecated:
             yield 'DbusDeprecatedFlag'
 
-        if self.is_unpriveledged:
+        if not self.is_priveledged:
             yield 'DbusUnprivilegedFlag'
 
     @property
@@ -298,7 +298,7 @@ class DbusMemberAbstract:
         if annotation_name == 'org.freedesktop.DBus.Deprecated':
             self.is_deprecated = parse_str_bool(annotation_value)
         elif annotation_name == 'org.freedesktop.systemd1.Privileged':
-            self.is_unpriveledged = parse_str_bool(annotation_value)
+            self.is_priveledged = parse_str_bool(annotation_value)
         else:
             ...
 

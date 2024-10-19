@@ -29,7 +29,7 @@ static void SdBus_dealloc(SdBusObject* self) {
                 Py_XDECREF(PyObject_CallMethodObjArgs(self->loop, remove_reader_str, self->bus_fd, NULL));
                 Py_XDECREF(PyObject_CallMethodObjArgs(self->loop, remove_writer_str, self->bus_fd, NULL));
         }
-        if (NULL != self->timer_fd) {
+        if (NULL != self->loop && NULL != self->timer_fd) {
                 Py_XDECREF(PyObject_CallMethodObjArgs(self->loop, remove_reader_str, self->timer_fd, NULL));
                 Py_DECREF(self->timer_fd);
                 close(self->timer_fd_int);
@@ -630,9 +630,12 @@ static PyObject* SdBus_close(SdBusObject* self, PyObject* Py_UNUSED(args)) {
                 Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(self->loop, remove_reader_str, self->bus_fd, NULL)));
                 Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(self->loop, remove_writer_str, self->bus_fd, NULL)));
         }
-        if (NULL != self->timer_fd) {
-                Py_XDECREF(PyObject_CallMethodObjArgs(self->loop, remove_reader_str, self->timer_fd, NULL));
-                // TODO: Close timerfd
+        if (NULL != self->loop && NULL != self->timer_fd) {
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethodObjArgs(self->loop, remove_reader_str, self->timer_fd, NULL)));
+                Py_DECREF(self->timer_fd);
+                close(self->timer_fd_int);
+                self->timer_fd = NULL;
+                self->timer_fd_int = -1;
         }
         Py_RETURN_NONE;
 }

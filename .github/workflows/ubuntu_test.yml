@@ -55,7 +55,7 @@ jobs:
           python -m venv --system-site-packages venv
           ./venv/bin/pip install --upgrade \
               mypy isort flake8 pyflakes pycodestyle \
-              jinja2 Sphinx types-setuptools meson
+              jinja2 'Sphinx<8.0' types-setuptools meson
       - name: Run linters
         run: |
           export PATH="$(readlink -f ./venv/bin):${PATH}"

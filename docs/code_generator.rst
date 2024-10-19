@@ -13,6 +13,9 @@ to be installed.
 .. warning:: Do NOT send the generator result to ``exec()`` function.
     Interface code MUST be inspected before running.
 
+The generated interfaces code will be syntactically correct but NOT stylistically.
+It is recommended running a code formatter on the generated code. (for example ``black``)
+
 Generating from XML files
 -------------------------
 

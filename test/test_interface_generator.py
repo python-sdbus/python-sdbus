@@ -262,5 +262,76 @@ class TestGeneratorAgainstDbus(IsolatedDbusTestCase):
         )
 
 
+INTERFACE_NO_MEMBERS_XML = """
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+  "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/com/example/sample_object0">
+    <interface name="com.example.SampleInterface1">
+    </interface>
+    <node name="child_of_sample_object"/>
+    <node name="another_child_of_sample_object"/>
+</node>
+"""
+
+
+class TestGeneratorSyntaxCompile(TestCase):
+    def test_syntax_compile_async(self) -> None:
+        source_code = generate_py_file(
+            interfaces_from_str(test_xml),
+            do_async=True,
+        )
+        compile(source_code, filename="<string>", mode="exec")
+
+    def test_syntax_compile_block(self) -> None:
+        source_code = generate_py_file(
+            interfaces_from_str(test_xml),
+            do_async=False,
+        )
+        compile(source_code, filename="<string>", mode="exec")
+
+    def test_syntax_no_members_interface(self) -> None:
+
+        regular_interface = interfaces_from_str(test_xml)
+        no_members_interface = interfaces_from_str(INTERFACE_NO_MEMBERS_XML)
+
+        self.assertFalse(no_members_interface[0].methods)
+        self.assertFalse(no_members_interface[0].properties)
+        self.assertFalse(no_members_interface[0].signals)
+
+        compile(
+            generate_py_file(
+                regular_interface + no_members_interface,
+                do_async=True,
+            ),
+            filename="<string>",
+            mode="exec",
+        )
+        compile(
+            generate_py_file(
+                no_members_interface + regular_interface,
+                do_async=True,
+            ),
+            filename="<string>",
+            mode="exec",
+        )
+
+        compile(
+            generate_py_file(
+                regular_interface + no_members_interface,
+                do_async=False,
+            ),
+            filename="<string>",
+            mode="exec",
+        )
+        compile(
+            generate_py_file(
+                no_members_interface + regular_interface,
+                do_async=False,
+            ),
+            filename="<string>",
+            mode="exec",
+        )
+
+
 if __name__ == "__main__":
     main()

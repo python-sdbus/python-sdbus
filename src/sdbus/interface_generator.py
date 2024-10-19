@@ -555,38 +555,41 @@ SKIP_INTERFACES = {
     'org.freedesktop.DBus.ObjectManager',
 }
 
+
 INTERFACE_TEMPLATES: Dict[str, str] = {
-    "generic_no_members": r"...  # Interface has no members",
+    "generic_no_members": """\
+...  # Interface has no members
+""",
     "generic_method_flags": (
-        r"""
-{%- if method.dbus_input_signature %}
+        """\
+{% if method.dbus_input_signature %}
 input_signature="{{ method.dbus_input_signature }}",
-{%- endif %}
-
-{%- if method.dbus_result_signature %}
+{% endif %}
+{% if method.dbus_result_signature %}
 result_signature="{{ method.dbus_result_signature }}",
-{%- endif %}
-
-{%- if method.flags_str %}
+{% endif %}
+{% if method.flags_str %}
 flags={{ method.flags_str }},
-{%- endif %}
+{% endif %}
 """
     ),
     "generic_property_flags": (
-        r"""
-{%- if a_property.dbus_signature %}
+        """\
+{% if a_property.dbus_signature %}
 property_signature="{{ a_property.dbus_signature }}",
-{%- endif %}
-
-{%- if a_property.flags_str %}
+{% endif %}
+{% if a_property.flags_str %}
 flags={{ a_property.flags_str }},
-{%- endif %}
+{% endif %}
 """
     ),
-    "generic_header": r"""from __future__ import annotations
+    "generic_header": """\
+from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple""",
-    "async_imports_header": r"""from sdbus import (
+from typing import Any, Dict, List, Tuple
+
+""",
+    "async_imports_header": """from sdbus import (
     DbusDeprecatedFlag,
     DbusInterfaceCommonAsync,
     DbusNoReplyFlag,
@@ -598,84 +601,96 @@ from typing import Any, Dict, List, Tuple""",
     dbus_method_async,
     dbus_property_async,
     dbus_signal_async,
-)""",
-    "async_main": (
-        r"""{% if include_import_header -%}
-{% include 'generic_header' %}
+)
 
-{% include 'async_imports_header' %}
-{%- endif %}
+""",
+    "async_main": (
+        """\
+{% if include_import_header %}
+    {% include 'generic_header' %}
+
+    {% include 'async_imports_header' %}
+{% endif %}
+
 {% for interface in interfaces %}
 
-{% include 'async_interface' %}
-{%- endfor %}
+    {% include 'async_interface' %}
+{% endfor %}
 """
     ),
     "async_interface": (
-        r"""class {{ interface.python_name }}(
+        """\
+class {{ interface.python_name }}(
     DbusInterfaceCommonAsync,
     interface_name="{{ interface.interface_name }}",
 ):
-{%- filter indent -%}
-{%- if interface.has_members -%}
-{% for method in interface.methods -%}
-{% include 'async_method' %}
-{% endfor -%}
-{% for a_property in interface.properties -%}
-{% include 'async_property' %}
-{% endfor -%}
-{% for signal in interface.signals -%}
-{% include 'async_signal' %}
-{% endfor -%}
-{%- else %}
-{% include 'generic_no_members' %}
-{% endif -%}
-{%- endfilter -%}
+{% filter indent(first=True) %}
+    {% if interface.has_members %}
+        {% for method in interface.methods %}
+            {% include 'async_method' %}
+
+        {% endfor %}
+        {% for a_property in interface.properties %}
+            {% include 'async_property' %}
+
+        {% endfor %}
+        {% for signal in interface.signals %}
+            {% include 'async_signal' %}
+
+        {% endfor %}
+    {% else %}
+        {% include 'generic_no_members' %}
+
+    {% endif %}
+{% endfilter %}
 """
     ),
     "async_method": (
-        r"""
+        """\
 @dbus_method_async(
-{%- filter indent -%}
-{%- include 'generic_method_flags' -%}
-{%- endfilter %}
+{% filter indent(first=True) %}
+    {% include 'generic_method_flags' %}
+{% endfilter %}
 )
 async def {{ method.python_name }}(
     self,
-
-{%- for arg_name, arg_type in method.args_names_and_typing %}
+{% for arg_name, arg_type in method.args_names_and_typing %}
     {{ arg_name }}: {{ arg_type }},
-{%- endfor %}
+{% endfor %}
 ) -> {{ method.result_typing }}:
     raise NotImplementedError
+
 """
     ),
     "async_property": (
-        r"""
+        """\
 @dbus_property_async(
-{%- filter indent -%}
-{%- include 'generic_property_flags' -%}
-{%- endfilter %}
+{% filter indent(first=True) %}
+    {% include 'generic_property_flags' %}
+{% endfilter %}
 )
 def {{ a_property.python_name }}(self) -> {{ a_property.typing }}:
-    raise NotImplementedError"""
+    raise NotImplementedError
+
+"""
     ),
     "async_signal": (
-        r"""
+        """\
 @dbus_signal_async(
-
-{%- if signal.dbus_signature %}
+{% if signal.dbus_signature %}
     signal_signature="{{ signal.dbus_signature }}",
-{%- endif %}
-
-{%- if signal.flags_str %}
+{% endif %}
+{% if signal.flags_str %}
     flags={{ signal.flags_str }},
-{%- endif %}
+{% endif %}
 )
 def {{ signal.python_name }}(self) -> {{ signal.typing }}:
-    raise NotImplementedError"""
+    raise NotImplementedError
+
+"""
     ),
-    "blocking_imports_header": r"""from sdbus import (
+    "blocking_imports_header": """\
+from sdbus import (
     DbusDeprecatedFlag,
     DbusInterfaceCommon,
     DbusNoReplyFlag,
@@ -686,64 +701,75 @@ def {{ signal.python_name }}(self) -> {{ signal.typing }}:
     DbusUnprivilegedFlag,
     dbus_method,
     dbus_property,
-)""",
-    "blocking_main": (
-        r"""{% if include_import_header -%}
-{% include 'generic_header' %}
+)
 
-{% include 'blocking_imports_header' %}
-{%- endif %}
+""",
+    "blocking_main": (
+        """\
+{% if include_import_header %}
+    {% include 'generic_header' %}
+
+    {% include 'blocking_imports_header' %}
+{% endif %}
+
 {% for interface in interfaces %}
 
-{% include 'blocking_interface' %}
-{%- endfor %}
+    {% include 'blocking_interface' %}
+{% endfor %}
+
 """
     ),
     "blocking_interface": (
-        r"""class {{ interface.python_name }}(
+        """\
+class {{ interface.python_name }}(
     DbusInterfaceCommon,
     interface_name="{{ interface.interface_name }}",
 ):
-{%- filter indent -%}
-{%- if interface.has_members -%}
-{% for method in interface.methods -%}
-{% include 'blocking_method' %}
-{% endfor -%}
-{% for a_property in interface.properties -%}
-{% include 'blocking_property' %}
-{% endfor -%}
-{%- else %}
-{% include 'generic_no_members' %}
-{% endif -%}
-{%- endfilter -%}
+{% filter indent(first=True) %}
+    {% if interface.has_members %}
+        {% for method in interface.methods %}
+            {% include 'blocking_method' %}
+
+        {% endfor %}
+        {% for a_property in interface.properties %}
+            {% include 'blocking_property' %}
+
+        {% endfor %}
+    {% else %}
+        {% include 'generic_no_members' %}
+
+    {% endif %}
+{% endfilter %}
 """
     ),
     "blocking_method": (
-        r"""
+        """\
 @dbus_method(
-{%- filter indent -%}
-{%- include 'generic_method_flags' -%}
-{%- endfilter %}
+{% filter indent(first=True) %}
+    {% include 'generic_method_flags' %}
+{% endfilter %}
 )
 def {{ method.python_name }}(
     self,
-
-{%- for arg_name, arg_type in method.args_names_and_typing %}
+{% for arg_name, arg_type in method.args_names_and_typing %}
     {{ arg_name }}: {{ arg_type }},
-{%- endfor %}
+{% endfor %}
 ) -> {{ method.result_typing }}:
     raise NotImplementedError
+
 """
     ),
     "blocking_property": (
-        r"""
+        """\
 @dbus_property(
-{%- filter indent -%}
-{%- include 'generic_property_flags' -%}
-{%- endfilter %}
+{% filter indent(first=True) %}
+    {% include 'generic_property_flags' %}
+{% endfilter %}
 )
 def {{ a_property.python_name }}(self) -> {{ a_property.typing }}:
-    raise NotImplementedError"""
+    raise NotImplementedError
+
+"""
     ),
 }
 
@@ -795,7 +821,12 @@ def generate_py_file(
 
     template_name = "async_main" if do_async else "blocking_main"
 
-    env = JinjaEnv(loader=DictLoader(INTERFACE_TEMPLATES))
+    env = JinjaEnv(
+        loader=DictLoader(INTERFACE_TEMPLATES),
+        trim_blocks=True,
+        lstrip_blocks=True,
+        autoescape=False,
+    )
     return env.get_template(template_name).render(
         interfaces=interfaces,
         include_import_header=include_import_header,

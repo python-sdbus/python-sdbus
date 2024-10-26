@@ -460,7 +460,10 @@ class DbusPropertyIntrospection(DbusMemberAbstract):
         super().__init__(element)
 
     def _can_use_unpivileged(self) -> bool:
-        return not self.is_read_only
+        # Only properties that have setters defined can use the
+        # unprivileged flags. The code generator does NOT generate
+        # setters.
+        return False
 
     def _flags_iter(self) -> Iterator[str]:
         emits_changed_str = self._EMITS_CHANGED_MAP.get(self.emits_changed)

@@ -432,12 +432,13 @@ class DbusMethodInrospection(DbusMemberAbstract):
 
 
 class DbusPropertyIntrospection(DbusMemberAbstract):
-    _EMITS_CHANGED_MAP: \
-        Dict[Union[bool, None, Literal['const', 'invalidates']], str] = {
-            True: 'DbusPropertyEmitsChangeFlag',
-            'invalidates': 'DbusPropertyEmitsInvalidationFlag',
-            'const': 'DbusPropertyConstFlag',
-        }
+    _EMITS_CHANGED_MAP: Dict[
+        Union[bool, Literal['const', 'invalidates']], str
+    ] = {
+        True: 'DbusPropertyEmitsChangeFlag',
+        'invalidates': 'DbusPropertyEmitsInvalidationFlag',
+        'const': 'DbusPropertyConstFlag',
+    }
 
     def __init__(self, element: Element):
         if element.tag != 'property':
@@ -445,8 +446,7 @@ class DbusPropertyIntrospection(DbusMemberAbstract):
 
         self.dbus_signature = element.attrib['type']
 
-        self.emits_changed: \
-            Union[bool, Literal['const', 'invalidates'], None] = None
+        self.emits_changed: Union[bool, Literal['const', 'invalidates']] = True
         self.is_explicit = False
 
         access_type = element.attrib['access']

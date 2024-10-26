@@ -183,7 +183,7 @@ class TestConverter(TestCase):
                 elif test_property.method_name == 'Bar':
                     self.assertEqual(
                         test_property.emits_changed,
-                        None,
+                        True,
                     )
                 elif test_property.method_name == 'FooInvalidates':
                     self.assertEqual(

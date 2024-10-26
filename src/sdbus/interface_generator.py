@@ -414,6 +414,14 @@ class DbusMethodInrospection(DbusMemberAbstract):
         return DbusSigToTyping.result_typing(
             [x.dbus_type for x in self.result_args])
 
+    @property
+    def is_results_args_valid_names(self) -> bool:
+        return all((r.name is not None for r in self.result_args))
+
+    @property
+    def result_args_names_repr(self) -> str:
+        return repr(tuple(r.name for r in self.result_args))
+
     def __repr__(self) -> str:
         return (f"D-Bus Method: {self.method_name}, "
                 f"args: {self.args_names_and_typing}, "
@@ -507,6 +515,14 @@ class DbusSignalIntrospection(DbusMemberAbstract):
         return DbusSigToTyping.result_typing(
             [x.dbus_type for x in self.args])
 
+    @property
+    def is_args_valid_names(self) -> bool:
+        return all((a.name is not None for a in self.args))
+
+    @property
+    def args_names_repr(self) -> str:
+        return repr(tuple(a.name for a in self.args))
+
 
 class DbusInterfaceIntrospection:
     def __init__(self, element: Element):
@@ -567,6 +583,9 @@ input_signature="{{ method.dbus_input_signature }}",
 {% endif %}
 {% if method.dbus_result_signature %}
 result_signature="{{ method.dbus_result_signature }}",
+{% endif %}
+{% if method.is_results_args_valid_names %}
+result_args_names={{method.result_args_names_repr}},
 {% endif %}
 {% if method.flags_str %}
 flags={{ method.flags_str }},
@@ -679,6 +698,9 @@ def {{ a_property.python_name }}(self) -> {{ a_property.typing }}:
 @dbus_signal_async(
 {% if signal.dbus_signature %}
     signal_signature="{{ signal.dbus_signature }}",
+{% endif %}
+{% if signal.is_args_valid_names %}
+    signal_args_names={{signal.args_names_repr}},
 {% endif %}
 {% if signal.flags_str %}
     flags={{ signal.flags_str }},

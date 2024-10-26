@@ -277,11 +277,14 @@ class DbusMemberAbstract:
 
         self.iter_sub_elements(element)
 
+    def _can_use_unpivileged(self) -> bool:
+        return True
+
     def _flags_iter(self) -> Iterator[str]:
         if self.is_deprecated:
             yield 'DbusDeprecatedFlag'
 
-        if not self.is_priveledged:
+        if not self.is_priveledged and self._can_use_unpivileged():
             yield 'DbusUnprivilegedFlag'
 
     @property
@@ -456,6 +459,9 @@ class DbusPropertyIntrospection(DbusMemberAbstract):
 
         super().__init__(element)
 
+    def _can_use_unpivileged(self) -> bool:
+        return not self.is_read_only
+
     def _flags_iter(self) -> Iterator[str]:
         emits_changed_str = self._EMITS_CHANGED_MAP.get(self.emits_changed)
         if emits_changed_str is not None:
@@ -497,6 +503,9 @@ class DbusSignalIntrospection(DbusMemberAbstract):
 
         self.args: List[DbusArgsIntrospection] = []
         super().__init__(element)
+
+    def _can_use_unpivileged(self) -> bool:
+        return False
 
     def _parse_arg(self, arg: Element) -> None:
         new_arg = DbusArgsIntrospection(arg)

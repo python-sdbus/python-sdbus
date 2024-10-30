@@ -19,7 +19,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from argparse import ArgumentParser
+from argparse import SUPPRESS, Action, ArgumentParser
+from dataclasses import dataclass, field
 from pathlib import Path
 from sys import stdout
 from typing import TYPE_CHECKING
@@ -31,9 +32,82 @@ from .interface_generator import (
 )
 
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import Dict, List, Optional
 
     from .interface_generator import DbusInterfaceIntrospection
+
+
+@dataclass
+class RenameMember:
+    new_name: Optional[str] = None
+    current_arg: Optional[str] = None
+    arg_renames: Dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
+class RenameInterface:
+    new_name: Optional[str] = None
+    current_member: Optional[RenameMember] = None
+    methods: Dict[str, RenameMember] = field(default_factory=dict)
+    properties: Dict[str, RenameMember] = field(default_factory=dict)
+    signals: Dict[str, RenameMember] = field(default_factory=dict)
+
+
+@dataclass
+class RenameRoot:
+    current_interface: Optional[RenameInterface] = None
+    interfaces: Dict[str, RenameInterface] = field(default_factory=dict)
+
+
+rename_root = RenameRoot()
+
+
+# def rename_args(member_rename):
+#     ...
+
+
+def rename_members(
+    interface: DbusInterfaceIntrospection,
+    interface_rename: RenameInterface,
+) -> None:
+    for m_member in interface.methods:
+        m_rename = interface_rename.methods.get(m_member.method_name)
+        if m_rename is None:
+            continue
+
+        if m_rename.new_name is not None:
+            m_member.python_name = m_rename.new_name
+
+    for p_member in interface.properties:
+        p_rename = interface_rename.properties.get(p_member.method_name)
+        if p_rename is None:
+            continue
+
+        if p_rename.new_name is not None:
+            p_member.python_name = p_rename.new_name
+
+    for s_member in interface.signals:
+        s_rename = interface_rename.signals.get(s_member.method_name)
+        if s_rename is None:
+            continue
+
+        if s_rename.new_name is not None:
+            s_member.python_name = s_rename.new_name
+
+
+def rename_interfaces(
+    interfaces: List[DbusInterfaceIntrospection]
+) -> None:
+    for interface in interfaces:
+        dbus_interface_name = interface.interface_name
+        this_interface_rename = rename_root.interfaces.get(dbus_interface_name)
+        if this_interface_rename is None:
+            continue
+
+        if this_interface_rename.new_name is not None:
+            interface.python_name = this_interface_rename.new_name
+
+        rename_members(interface, this_interface_rename)
 
 
 def run_gen_from_connection(
@@ -59,6 +133,8 @@ def run_gen_from_connection(
         itrospection = connection.dbus_introspect()
         interfaces.extend(interfaces_from_str(itrospection))
 
+    rename_interfaces(interfaces)
+
     stdout.write(
         generate_py_file(
             interfaces,
@@ -78,6 +154,8 @@ def run_gen_from_file(
     for file in filenames:
         interfaces.extend(interfaces_from_file(file))
 
+    rename_interfaces(interfaces)
+
     stdout.write(
         generate_py_file(
             interfaces,
@@ -85,6 +163,149 @@ def run_gen_from_file(
             do_async,
         )
     )
+
+
+class ActionSelectInterface(Action):
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: object,
+        values: object,
+        option_string: Optional[str] = None,
+    ) -> None:
+        if not isinstance(values, str):
+            raise TypeError(
+                f"Expected --select-interface to be string, got {values!r}"
+            )
+
+        interface_rename = rename_root.interfaces.get(values)
+
+        if interface_rename is None:
+            interface_rename = RenameInterface()
+            rename_root.interfaces[values] = interface_rename
+
+        rename_root.current_interface = interface_rename
+
+
+class ActionSelectMethod(Action):
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: object,
+        values: object,
+        option_string: Optional[str] = None,
+    ) -> None:
+        if not isinstance(values, str):
+            raise TypeError(
+                f"Expected --select-method to be string, got {values!r}"
+            )
+
+        current_interface = rename_root.current_interface
+        if current_interface is None:
+            raise ValueError(
+                "No D-Bus interface selected. "
+                "Use --select-interface option."
+            )
+
+        method_rename = current_interface.methods.get(values)
+
+        if method_rename is None:
+            method_rename = RenameMember()
+            current_interface.methods[values] = method_rename
+
+        current_interface.current_member = method_rename
+
+
+class ActionSelectProperty(Action):
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: object,
+        values: object,
+        option_string: Optional[str] = None,
+    ) -> None:
+        if not isinstance(values, str):
+            raise TypeError(
+                f"Expected --select-property to be string, got {values!r}"
+            )
+
+        current_interface = rename_root.current_interface
+        if current_interface is None:
+            raise ValueError(
+                "No D-Bus interface selected. "
+                "Use --select-interface option."
+            )
+
+        property_rename = current_interface.properties.get(values)
+
+        if property_rename is None:
+            property_rename = RenameMember()
+            current_interface.properties[values] = property_rename
+
+        current_interface.current_member = property_rename
+
+
+class ActionSelectSignal(Action):
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: object,
+        values: object,
+        option_string: Optional[str] = None,
+    ) -> None:
+        if not isinstance(values, str):
+            raise TypeError(
+                f"Expected --select-signal to be string, got {values!r}"
+            )
+
+        current_interface = rename_root.current_interface
+        if current_interface is None:
+            raise ValueError(
+                "No D-Bus interface selected. "
+                "Use --select-interface option."
+            )
+
+        signal_rename = current_interface.signals.get(values)
+
+        if signal_rename is None:
+            signal_rename = RenameMember()
+            current_interface.signals[values] = signal_rename
+
+        current_interface.current_member = signal_rename
+
+
+class ActionSetName(Action):
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: object,
+        values: object,
+        option_string: Optional[str] = None,
+    ) -> None:
+        if not isinstance(values, str):
+            raise TypeError(
+                f"Expected --set-name to be string, got {values!r}"
+            )
+
+        current_interface = rename_root.current_interface
+        current_member = (
+            current_interface.current_member
+            if current_interface is not None
+            else None
+        )
+
+        if current_member is not None:
+            current_member.new_name = values
+            return
+
+        if current_interface is not None:
+            current_interface.new_name = values
+            return
+
+        raise ValueError(
+            "No D-Bus element to rename. "
+            "Use --select-* options to select element."
+        )
 
 
 def generator_main(args: Optional[List[str]] = None) -> None:
@@ -125,6 +346,36 @@ def generator_main(args: Optional[List[str]] = None) -> None:
             "--block", action="store_false",
             dest="do_async",
             help="Generate blocking interfaces",
+        )
+        subparser.add_argument(
+            "--select-interface",
+            action=ActionSelectInterface,
+            default=SUPPRESS,
+            help="Select D-Bus interface to adjust"
+        )
+        subparser.add_argument(
+            "--select-method",
+            action=ActionSelectMethod,
+            default=SUPPRESS,
+            help="Select D-Bus method to adjust"
+        )
+        subparser.add_argument(
+            "--select-property",
+            action=ActionSelectProperty,
+            default=SUPPRESS,
+            help="Select D-Bus property to adjust"
+        )
+        subparser.add_argument(
+            "--select-signal",
+            action=ActionSelectSignal,
+            default=SUPPRESS,
+            help="Select D-Bus signal to adjust"
+        )
+        subparser.add_argument(
+            "--set-name",
+            action=ActionSetName,
+            default=SUPPRESS,
+            help="Select D-Bus interface to adjust"
         )
 
     generate_from_file_parser.add_argument(

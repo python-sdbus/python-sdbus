@@ -51,3 +51,61 @@ Multiple object paths can be passed which generates a file
 containing all interfaces encountered in the objects.
 
 Pass ``--system`` option to use system bus instead of session bus.
+
+Renaming interfaces and members
+-------------------------------
+
+*New in version 0.13.0.*
+
+Some interface and member names might conflict with Python keywords when
+converted from D-Bus introspection to Python code by gerator. The CLI interface
+allow to override the particular interface and member names using the ``--select-*``
+and ``--set-name`` options. The selector options move the cursor to a particular
+interface and member
+
+Available override options:
+
+* ``--set-name``
+    Sets the name of currently selected element as it would
+    be in generated Python code. Can be used if either interface or
+    member is selected.
+
+* ``--select-interface``
+    Selects the interface using its D-Bus name.
+
+* ``--select-method``
+    Selects the method using its D-Bus name.
+    An interface must be selected first.
+
+* ``--select-property``
+    Selects the property using its D-Bus name.
+    An interface must be selected first.
+
+* ``--select-signal``
+    Selects the signal using its D-Bus name.
+    An interface must be selected first.
+
+For example, an ``org.example.Interface`` interface has a property called ``Class``.
+When automatically converted the name will become ``class`` which is a reserved Python keyword.
+
+Using these CLI options it is possible to override the name of the property and class:
+
+.. code-block:: shell
+
+    python -m sdbus gen-from-file \
+        org.example.interface.xml \
+            --select-interface org.example.Interface \
+                --set-name Example \
+                --select-property Class \
+                    --set-name example_class
+
+This will generate following Python code:
+
+.. code-block:: python
+
+    class Example:
+        @dbus_property_async(
+            property_signature="s",
+        )
+        def example_class(self) -> str:
+            raise NotImplementedError

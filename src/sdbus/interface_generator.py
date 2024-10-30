@@ -865,3 +865,54 @@ def generate_py_file(
         interfaces=interfaces,
         include_import_header=include_import_header,
     )
+
+
+def _rename_interface_members(
+    interface: DbusInterfaceIntrospection,
+    old_member_name: str,
+    new_member_name: str,
+) -> None:
+    for m_member in interface.methods:
+        if m_member.method_name == old_member_name:
+            m_member.python_name = new_member_name
+            return
+
+    for p_member in interface.properties:
+        if p_member.method_name == old_member_name:
+            p_member.python_name = new_member_name
+            return
+
+    for s_member in interface.signals:
+        if s_member.method_name == old_member_name:
+            s_member.python_name = new_member_name
+            return
+
+    raise ValueError(
+        f"Failed to rename member of interface {interface.interface_name!r} "
+        f"from {old_member_name!r} to {new_member_name!r}"
+    )
+
+
+def rename_interfaces(
+    interfaces: List[DbusInterfaceIntrospection],
+    interfaces_names_map: Dict[str, str],
+    interfaces_members_names_map: Dict[str, Dict[str, str]],
+) -> None:
+    for interface in interfaces:
+        dbus_interface_name = interface.interface_name
+        new_interface_name = interfaces_names_map.get(dbus_interface_name)
+        if new_interface_name is None:
+            continue
+
+        interface.python_name = new_interface_name
+
+        member_map = interfaces_members_names_map.get(dbus_interface_name)
+        if member_map is None:
+            continue
+
+        for old_member_name, new_member_name in member_map.items():
+            _rename_interface_members(
+                interface,
+                old_member_name,
+                new_member_name,
+            )

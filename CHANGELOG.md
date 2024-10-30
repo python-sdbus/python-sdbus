@@ -1,3 +1,7 @@
+## 0.12.0
+
+No changes since 0.12.RC1.
+
 ## 0.12.RC1
 
 This version significantly reworked the internal undocumented classes

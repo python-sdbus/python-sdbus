@@ -84,3 +84,8 @@ def inspect_dbus_path(
             return _inspect_dbus_path_local(obj, dbus_meta, bus)
     else:
         raise TypeError(f"Expected D-Bus object got {obj!r}")
+
+
+__all__ = (
+    "inspect_dbus_path",
+)

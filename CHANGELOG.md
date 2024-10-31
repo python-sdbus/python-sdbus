@@ -1,3 +1,34 @@
+## 0.13.0
+
+### Code generator improvements
+
+* Added interface and member renaming CLI options. `--select-interface`, `--select-method`,
+  `--select-property` and `--select-signal` will select a particular interface or member and
+  `--set-name` will set the selected interface or member Python name.
+* Fix generated D-Bus properties not using emits changed flag by default.
+* Fix generated D-Bus methods not using unprivileged flag by default. (reported by @damienklotz77)
+* Generated methods and signals will now have result argument names set which will be shown
+  in the introspection. (requested by @colazzo)
+
+### New `sdbus.utils.inspect` submodule
+
+Contains inspection utilities.
+
+Current only provides the `inspect_dbus_path` function which will return
+the D-Bus path of either proxy or exported object. (requested by )
+
+### New `sdbus.utils.parse` submodule
+
+The existing `parse_properties_changed`, `parse_interfaces_added`, `parse_interfaces_removed` and
+`parse_get_managed_objects` have been moved from from `sdbus.utils` to `sdbus.utils.parse`.
+
+For backwards compatibility `sdbus.utils` re-exports those functions but no new exports will be
+added to it.
+
+### Fixes
+
+* Fix bus timeouts not being processed on time. (requested by @ofacklam)
+
 ## 0.12.0
 
 No changes since 0.12.RC1.

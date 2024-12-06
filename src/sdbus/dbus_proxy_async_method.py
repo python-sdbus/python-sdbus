@@ -26,19 +26,21 @@ from typing import TYPE_CHECKING, cast, overload
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
-    DbusBoundAsync,
+    DbusBoundAttribute,
     DbusMethodCommon,
     DbusMethodOverride,
+    DbusProxyAttributeAsync,
     DbusRemoteObjectMeta,
     DbusAttributeAsync,
+    DbusLocalAttributeAsync,
 )
 from .dbus_exceptions import DbusFailedError
-from .sd_bus_internals import DbusNoReplyFlag
+from .sd_bus_internals import DbusNoReplyFlag, SdBusInterface
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Optional, Sequence, Type, TypeVar, Union
 
-    from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
+    from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync, DbusExportHandle
     from .sd_bus_internals import SdBusMessage
 
     T = TypeVar('T')
@@ -85,19 +87,25 @@ class DbusMethodAsync(DbusMethodCommon, DbusAttributeAsync):
             return self
 
 
-class DbusBoundMethodAsyncBase(DbusBoundAsync):
+class DbusBoundMethodAsyncBase(DbusBoundAttribute):
+    def __init__(self, dbus_method: DbusMethodAsync) -> None:
+        self.dbus_method = dbus_method
+
+    @property
+    def attribute(self):
+        return self.dbus_method
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError
 
 
-class DbusProxyMethodAsync(DbusBoundMethodAsyncBase):
+class DbusProxyMethodAsync(DbusBoundMethodAsyncBase, DbusProxyAttributeAsync):
     def __init__(
         self,
         dbus_method: DbusMethodAsync,
         proxy_meta: DbusRemoteObjectMeta,
     ):
-        self.dbus_method = dbus_method
+        super().__init__(dbus_method)
         self.proxy_meta = proxy_meta
 
         self.__doc__ = dbus_method.__doc__
@@ -145,16 +153,27 @@ class DbusProxyMethodAsync(DbusBoundMethodAsyncBase):
         return self._dbus_async_call(new_call_message)
 
 
-class DbusLocalMethodAsync(DbusBoundMethodAsyncBase):
+class DbusLocalMethodAsync(DbusBoundMethodAsyncBase, DbusLocalAttributeAsync):
     def __init__(
         self,
         dbus_method: DbusMethodAsync,
         local_object: DbusInterfaceBaseAsync,
     ):
-        self.dbus_method = dbus_method
+        super().__init__(dbus_method)
         self.local_object_ref = weak_ref(local_object)
 
         self.__doc__ = dbus_method.__doc__
+
+    def append_to_interface(self, interface: SdBusInterface, handle: DbusExportHandle):
+        interface.add_method(
+            self.dbus_method.method_name,
+            self.dbus_method.input_signature,
+            self.dbus_method.input_args_names,
+            self.dbus_method.result_signature,
+            self.dbus_method.result_args_names,
+            self.dbus_method.flags,
+            self._dbus_reply_call,
+        )
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         local_object = self.local_object_ref()
@@ -231,6 +250,10 @@ class DbusLocalMethodAsync(DbusBoundMethodAsyncBase):
 
         reply_message.send()
 
+# aliases for backwards compatibility
+DbusMethodAsyncBaseBind = DbusBoundMethodAsyncBase
+DbusMethodAsyncLocalBind = DbusLocalMethodAsync
+DbusMethodAsyncProxyBind = DbusProxyMethodAsync
 
 def dbus_method_async(
     input_signature: str = "",

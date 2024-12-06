@@ -23,7 +23,7 @@ from copy import copy
 from inspect import getmembers
 from itertools import chain
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable, cast, Protocol
 from warnings import warn
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
@@ -37,14 +37,11 @@ from .dbus_common_elements import (
     DbusAttributeAsync,
     DbusAttributeCommon,
     DbusAttributeSync,
+    DbusLocalAttributeAsync,
 )
 from .dbus_common_funcs import get_default_bus
-from .dbus_proxy_async_method import DbusMethodAsync, DbusLocalMethodAsync
-from .dbus_proxy_async_property import (
-    DbusPropertyAsync,
-    DbusLocalPropertyAsync,
-)
-from .dbus_proxy_async_signal import DbusSignalAsync, DbusLocalSignalAsync
+from .dbus_proxy_async_method import DbusMethodAsync
+from .dbus_proxy_async_property import DbusPropertyAsync
 from .sd_bus_internals import SdBusInterface
 
 if TYPE_CHECKING:
@@ -61,8 +58,7 @@ if TYPE_CHECKING:
         Union,
     )
 
-    from .dbus_common_elements import DbusBoundAsync
-    from .sd_bus_internals import SdBus, SdBusSlot
+    from .sd_bus_internals import SdBus
 
     T = TypeVar('T')
     Self = TypeVar('Self', bound="DbusInterfaceBaseAsync")
@@ -335,26 +331,17 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         if bus is None:
             bus = get_default_bus()
 
+
         local_object_meta.attached_bus = bus
         local_object_meta.serving_object_path = object_path
         # TODO: can be optimized with a single loop
-        interface_map: Dict[str, List[DbusBoundAsync]] = {}
+        interface_map: Dict[str, List[DbusLocalAttributeAsync]] = {}
 
         for key, value in getmembers(self):
             assert not isinstance(value, DbusAttributeAsync)
 
-            if isinstance(value, DbusLocalMethodAsync):
-                interface_name = value.dbus_method.interface_name
-                if not value.dbus_method.serving_enabled:
-                    continue
-            elif isinstance(value, DbusLocalPropertyAsync):
-                interface_name = value.dbus_property.interface_name
-                if not value.dbus_property.serving_enabled:
-                    continue
-            elif isinstance(value, DbusLocalSignalAsync):
-                interface_name = value.dbus_signal.interface_name
-                if not value.dbus_signal.serving_enabled:
-                    continue
+            if isinstance(value, DbusLocalAttributeAsync) and value.attribute.serving_enabled:
+                interface_name = value.attribute.interface_name
             else:
                 continue
 
@@ -366,54 +353,20 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
 
             interface_member_list.append(value)
 
+        export_handle = DbusExportHandle()
+
         for interface_name, member_list in interface_map.items():
             new_interface = SdBusInterface()
             for dbus_something in member_list:
-                if isinstance(dbus_something, DbusLocalMethodAsync):
-                    new_interface.add_method(
-                        dbus_something.dbus_method.method_name,
-                        dbus_something.dbus_method.input_signature,
-                        dbus_something.dbus_method.input_args_names,
-                        dbus_something.dbus_method.result_signature,
-                        dbus_something.dbus_method.result_args_names,
-                        dbus_something.dbus_method.flags,
-                        dbus_something._dbus_reply_call,
-                    )
-                elif isinstance(dbus_something, DbusLocalPropertyAsync):
-                    getter = dbus_something._dbus_reply_get
-                    dbus_property = dbus_something.dbus_property
-
-                    if (
-                        dbus_property.property_setter is not None
-                        and
-                        dbus_property.property_setter_is_public
-                    ):
-                        setter = dbus_something._dbus_reply_set
-                    else:
-                        setter = None
-
-                    new_interface.add_property(
-                        dbus_property.property_name,
-                        dbus_property.property_signature,
-                        getter,
-                        setter,
-                        dbus_property.flags,
-                    )
-                elif isinstance(dbus_something, DbusLocalSignalAsync):
-                    new_interface.add_signal(
-                        dbus_something.dbus_signal.signal_name,
-                        dbus_something.dbus_signal.signal_signature,
-                        dbus_something.dbus_signal.args_names,
-                        dbus_something.dbus_signal.flags,
-                    )
-                else:
-                    raise TypeError
-
+                dbus_something.append_to_interface(new_interface, export_handle)
             bus.add_interface(new_interface, object_path,
                               interface_name)
             local_object_meta.activated_interfaces.append(new_interface)
 
-        return DbusExportHandle(local_object_meta)
+            assert new_interface.slot is not None
+            export_handle.append(new_interface.slot)
+
+        return export_handle
 
     def _connect(
         self,
@@ -469,13 +422,23 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         return new_object
 
 
+class Closeable(Protocol):
+    def close(self) -> None:
+        ...
+
+
 class DbusExportHandle:
-    def __init__(self, local_meta: DbusLocalObjectMeta):
-        self._dbus_slots: List[SdBusSlot] = [
-            i.slot
-            for i in local_meta.activated_interfaces
-            if i.slot is not None
-        ]
+    def __init__(self, *items: Closeable) -> None:
+        self._items = list(items)
+
+    def append(self, item: Closeable) -> None:
+        self._items.append(item)
+
+    def close(self) -> None:
+        while self._items:
+            self._items.pop().close()
+
+    stop = close # for backwards compatibility
 
     async def __aenter__(self) -> DbusExportHandle:
         return self
@@ -489,7 +452,7 @@ class DbusExportHandle:
         exc_value: Any,
         traceback: Any,
     ) -> None:
-        self.stop()
+        self.close()
 
     async def __aexit__(
         self,
@@ -497,8 +460,4 @@ class DbusExportHandle:
         exc_value: Any,
         traceback: Any,
     ) -> None:
-        self.stop()
-
-    def stop(self) -> None:
-        for slot in self._dbus_slots:
-            slot.close()
+        self.close()

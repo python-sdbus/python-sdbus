@@ -45,6 +45,7 @@ if TYPE_CHECKING:
 
     SelfMeta = TypeVar('SelfMeta', bound="DbusInterfaceMetaCommon")
 
+    from .dbus_proxy_async_interface_base import DbusExportHandle
     from .sd_bus_internals import SdBus, SdBusInterface
 
 T = TypeVar('T')
@@ -310,11 +311,20 @@ class DbusSignalCommon(DbusAttributeCommon):
         return self.signal_name
 
 
-class DbusBoundAsync:
-    ...
+class DbusBoundAttribute(ABC):
+    @property
+    @abstractmethod
+    def attribute(self) -> DbusAttributeCommon:
+        ...
 
 
-class DbusBoundSync:
+class DbusLocalAttributeAsync(DbusBoundAttribute):
+    @abstractmethod
+    def append_to_interface(self, interface: SdBusInterface, handle: DbusExportHandle) -> None:
+        ...
+
+
+class DbusProxyAttributeAsync(DbusBoundAttribute):
     ...
 
 

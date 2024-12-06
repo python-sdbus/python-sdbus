@@ -27,8 +27,8 @@ from .dbus_common_elements import (
     DbusClassMeta,
     DbusInterfaceMetaCommon,
     DbusRemoteObjectMeta,
-    DbusSomethingAsync,
-    DbusSomethingCommon,
+    DbusAttributeAsync,
+    DbusAttributeCommon,
 )
 from .dbus_proxy_sync_method import DbusMethodSync
 from .dbus_proxy_sync_property import DbusPropertySync
@@ -109,10 +109,10 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
         attr: Any,
         meta: DbusClassMeta,
     ) -> None:
-        if not isinstance(attr, DbusSomethingCommon):
+        if not isinstance(attr, DbusAttributeCommon):
             return
 
-        if isinstance(attr, DbusSomethingAsync):
+        if isinstance(attr, DbusAttributeAsync):
             raise TypeError(
                 f"Can't mix async methods in sync interface: {attr_name!r}"
             )

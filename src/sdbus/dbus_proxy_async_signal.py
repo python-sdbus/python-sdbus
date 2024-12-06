@@ -34,25 +34,27 @@ from typing import (
 from weakref import WeakSet
 
 from .dbus_common_elements import (
-    DbusBindedAsync,
+    DbusBoundAttribute,
+    DbusLocalAttributeAsync,
     DbusLocalObjectMeta,
+    DbusProxyAttributeAsync,
     DbusRemoteObjectMeta,
     DbusSignalCommon,
-    DbusSomethingAsync,
+    DbusAttributeAsync,
 )
 from .dbus_common_funcs import get_default_bus
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
 
-    from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
-    from .sd_bus_internals import SdBus, SdBusMessage, SdBusSlot
+    from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync, DbusExportHandle
+    from .sd_bus_internals import SdBus, SdBusMessage, SdBusSlot, SdBusInterface
 
 
 T = TypeVar('T')
 
 
-class DbusSignalAsync(DbusSomethingAsync, DbusSignalCommon, Generic[T]):
+class DbusSignalAsync(DbusAttributeAsync, DbusSignalCommon, Generic[T]):
 
     def __init__(
         self,
@@ -85,20 +87,20 @@ class DbusSignalAsync(DbusSomethingAsync, DbusSignalCommon, Generic[T]):
         self,
         obj: DbusInterfaceBaseAsync,
         obj_class: Type[DbusInterfaceBaseAsync],
-    ) -> DbusSignalAsyncBaseBind[T]:
+    ) -> DbusBoundSignalAsyncBase[T]:
         ...
 
     def __get__(
         self,
         obj: Optional[DbusInterfaceBaseAsync],
         obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
-    ) -> Union[DbusSignalAsyncBaseBind[T], DbusSignalAsync[T]]:
+    ) -> Union[DbusBoundSignalAsyncBase[T], DbusSignalAsync[T]]:
         if obj is not None:
             dbus_meta = obj._dbus
             if isinstance(dbus_meta, DbusRemoteObjectMeta):
-                return DbusSignalAsyncProxyBind(self, dbus_meta)
+                return DbusProxySignalAsync(self, dbus_meta)
             else:
-                return DbusSignalAsyncLocalBind(self, dbus_meta)
+                return DbusLocalSignalAsync(self, dbus_meta)
         else:
             return self
 
@@ -131,7 +133,14 @@ class DbusSignalAsync(DbusSomethingAsync, DbusSignalCommon, Generic[T]):
                 )
 
 
-class DbusSignalAsyncBaseBind(DbusBindedAsync, AsyncIterable[T], Generic[T]):
+class DbusBoundSignalAsyncBase(DbusBoundAttribute, AsyncIterable[T], Generic[T]):
+    def __init__(self, dbus_signal: DbusSignalAsync[T]) -> None:
+        self.dbus_signal = dbus_signal
+
+    @property
+    def attribute(self):
+        return self.dbus_signal
+
     async def catch(self) -> AsyncIterator[T]:
         raise NotImplementedError
         yield cast(T, None)
@@ -150,13 +159,13 @@ class DbusSignalAsyncBaseBind(DbusBindedAsync, AsyncIterable[T], Generic[T]):
         raise NotImplementedError
 
 
-class DbusSignalAsyncProxyBind(DbusSignalAsyncBaseBind[T]):
+class DbusProxySignalAsync(DbusBoundSignalAsyncBase[T], DbusProxyAttributeAsync):
     def __init__(
         self,
         dbus_signal: DbusSignalAsync[T],
         proxy_meta: DbusRemoteObjectMeta,
     ):
-        self.dbus_signal = dbus_signal
+        super().__init__(dbus_signal)
         self.proxy_meta = proxy_meta
 
         self.__doc__ = dbus_signal.__doc__
@@ -224,16 +233,24 @@ class DbusSignalAsyncProxyBind(DbusSignalAsyncBaseBind[T]):
         raise RuntimeError("Cannot emit signal from D-Bus proxy.")
 
 
-class DbusSignalAsyncLocalBind(DbusSignalAsyncBaseBind[T]):
+class DbusLocalSignalAsync(DbusBoundSignalAsyncBase[T], DbusLocalAttributeAsync):
     def __init__(
         self,
         dbus_signal: DbusSignalAsync[T],
         local_meta: DbusLocalObjectMeta,
     ):
-        self.dbus_signal = dbus_signal
+        super().__init__(dbus_signal)
         self.local_meta = local_meta
 
         self.__doc__ = dbus_signal.__doc__
+
+    def append_to_interface(self, interface: SdBusInterface, handle: DbusExportHandle):
+        interface.add_signal(
+            self.dbus_signal.signal_name,
+            self.dbus_signal.signal_signature,
+            self.dbus_signal.args_names,
+            self.dbus_signal.flags,
+        )
 
     async def catch(self) -> AsyncIterator[T]:
         new_queue: Queue[T] = Queue()

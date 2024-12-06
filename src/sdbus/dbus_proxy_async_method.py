@@ -27,10 +27,10 @@ from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
     DbusBindedAsync,
+    DbusMemberAsync,
     DbusMethodCommon,
     DbusMethodOverride,
     DbusRemoteObjectMeta,
-    DbusSomethingAsync,
 )
 from .dbus_exceptions import DbusFailedError
 from .sd_bus_internals import DbusNoReplyFlag
@@ -52,7 +52,7 @@ def get_current_message() -> SdBusMessage:
     return CURRENT_MESSAGE.get()
 
 
-class DbusMethodAsync(DbusMethodCommon, DbusSomethingAsync):
+class DbusMethodAsync(DbusMethodCommon, DbusMemberAsync):
 
     @overload
     def __get__(

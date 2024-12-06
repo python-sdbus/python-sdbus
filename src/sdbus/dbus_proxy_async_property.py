@@ -26,10 +26,10 @@ from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
     DbusBindedAsync,
+    DbusMemberAsync,
     DbusPropertyCommon,
     DbusPropertyOverride,
     DbusRemoteObjectMeta,
-    DbusSomethingAsync,
 )
 
 if TYPE_CHECKING:
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class DbusPropertyAsync(DbusSomethingAsync, DbusPropertyCommon, Generic[T]):
+class DbusPropertyAsync(DbusMemberAsync, DbusPropertyCommon, Generic[T]):
     def __init__(
             self,
             property_name: Optional[str],

@@ -23,7 +23,7 @@ from inspect import iscoroutinefunction
 from types import FunctionType
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
-from .dbus_common_elements import DbusPropertyCommon, DbusSomethingSync
+from .dbus_common_elements import DbusMemberSync, DbusPropertyCommon
 from .dbus_common_funcs import _check_sync_in_async_env
 
 if TYPE_CHECKING:
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class DbusPropertySync(DbusPropertyCommon, DbusSomethingSync, Generic[T]):
+class DbusPropertySync(DbusPropertyCommon, DbusMemberSync, Generic[T]):
     def __init__(
             self,
             property_name: Optional[str],

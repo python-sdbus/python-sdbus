@@ -36,9 +36,9 @@ from weakref import WeakSet
 from .dbus_common_elements import (
     DbusBindedAsync,
     DbusLocalObjectMeta,
+    DbusMemberAsync,
     DbusRemoteObjectMeta,
     DbusSignalCommon,
-    DbusSomethingAsync,
 )
 from .dbus_common_funcs import get_default_bus
 
@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class DbusSignalAsync(DbusSomethingAsync, DbusSignalCommon, Generic[T]):
+class DbusSignalAsync(DbusMemberAsync, DbusSignalCommon, Generic[T]):
 
     def __init__(
         self,

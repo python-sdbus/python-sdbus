@@ -31,12 +31,12 @@ from .dbus_common_elements import (
     DbusClassMeta,
     DbusInterfaceMetaCommon,
     DbusLocalObjectMeta,
+    DbusMemberAsync,
+    DbusMemberCommon,
+    DbusMemberSync,
     DbusMethodOverride,
     DbusPropertyOverride,
     DbusRemoteObjectMeta,
-    DbusSomethingAsync,
-    DbusSomethingCommon,
-    DbusSomethingSync,
 )
 from .dbus_common_funcs import get_default_bus
 from .dbus_proxy_async_method import DbusMethodAsync, DbusMethodAsyncLocalBind
@@ -81,7 +81,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
     def _process_dbus_method_override(
         override_attr_name: str,
         override: DbusMethodOverride[T],
-        mro_dbus_elements: Dict[str, DbusSomethingAsync],
+        mro_dbus_elements: Dict[str, DbusMemberAsync],
     ) -> DbusMethodAsync:
         try:
             original_method = mro_dbus_elements[override_attr_name]
@@ -105,7 +105,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
     def _process_dbus_property_override(
         override_attr_name: str,
         override: DbusPropertyOverride[T],
-        mro_dbus_elements: Dict[str, DbusSomethingAsync],
+        mro_dbus_elements: Dict[str, DbusMemberAsync],
     ) -> DbusPropertyAsync[Any]:
         try:
             original_property = mro_dbus_elements[override_attr_name]
@@ -137,11 +137,11 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         cls,
         new_class_name: str,
         namespace: Dict[str, Any],
-        mro_dbus_elements: Dict[str, DbusSomethingAsync],
+        mro_dbus_elements: Dict[str, DbusMemberAsync],
     ) -> None:
 
         possible_collisions = namespace.keys() & mro_dbus_elements.keys()
-        new_overrides: Dict[str, DbusSomethingAsync] = {}
+        new_overrides: Dict[str, DbusMemberAsync] = {}
 
         for attr_name, attr in namespace.items():
             if isinstance(attr, DbusMethodOverride):
@@ -173,12 +173,12 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
     def _extract_dbus_elements(
         dbus_class: type,
         dbus_meta: DbusClassMeta,
-    ) -> Dict[str, DbusSomethingAsync]:
-        dbus_elements_map: Dict[str, DbusSomethingAsync] = {}
+    ) -> Dict[str, DbusMemberAsync]:
+        dbus_elements_map: Dict[str, DbusMemberAsync] = {}
 
         for attr_name in dbus_meta.python_attr_to_dbus_member.keys():
             dbus_element = dbus_class.__dict__.get(attr_name)
-            if not isinstance(dbus_element, DbusSomethingAsync):
+            if not isinstance(dbus_element, DbusMemberAsync):
                 raise TypeError(
                     f"Expected async D-Bus element, got {dbus_element!r} "
                     f"in class {dbus_class!r}"
@@ -193,8 +193,8 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         cls,
         new_class_name: str,
         base_classes: Iterable[type],
-    ) -> Dict[str, DbusSomethingAsync]:
-        all_python_dbus_map: Dict[str, DbusSomethingAsync] = {}
+    ) -> Dict[str, DbusMemberAsync]:
+        all_python_dbus_map: Dict[str, DbusMemberAsync] = {}
         possible_collisions: Set[str] = set()
 
         for c in base_classes:
@@ -227,10 +227,10 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         meta: DbusClassMeta,
         interface_name: str,
     ) -> None:
-        if not isinstance(attr, DbusSomethingCommon):
+        if not isinstance(attr, DbusMemberCommon):
             return
 
-        if isinstance(attr, DbusSomethingSync):
+        if isinstance(attr, DbusMemberSync):
             raise TypeError(
                 "Can't mix blocking methods in "
                 f"async interface: {attr_name!r}"
@@ -347,7 +347,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         interface_map: Dict[str, List[DbusBindedAsync]] = {}
 
         for key, value in getmembers(self):
-            assert not isinstance(value, DbusSomethingAsync)
+            assert not isinstance(value, DbusMemberAsync)
 
             if isinstance(value, DbusMethodAsyncLocalBind):
                 interface_name = value.dbus_method.interface_name

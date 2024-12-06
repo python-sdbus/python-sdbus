@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from inspect import getfullargspec
 from typing import TYPE_CHECKING, Generic, TypeVar
 
@@ -44,14 +45,20 @@ if TYPE_CHECKING:
 
     SelfMeta = TypeVar('SelfMeta', bound="DbusInterfaceMetaCommon")
 
+    from .dbus_proxy_async_interface_base import DbusExportHandle
     from .sd_bus_internals import SdBus, SdBusInterface
 
 T = TypeVar('T')
 
 
-class DbusMemberCommon:
+class DbusMemberCommon(ABC):
     interface_name: str
     serving_enabled: bool
+
+    @property
+    @abstractmethod
+    def member_name(self) -> str:
+        ...
 
 
 class DbusMemberAsync(DbusMemberCommon):
@@ -230,6 +237,10 @@ class DbusMethodCommon(DbusMemberCommon):
 
         return new_args_list
 
+    @property
+    def member_name(self) -> str:
+        return self.method_name
+
 
 class DbusPropertyCommon(DbusMemberCommon):
     def __init__(self,
@@ -261,6 +272,10 @@ class DbusPropertyCommon(DbusMemberCommon):
         self.property_signature = property_signature
         self.flags = flags
 
+    @property
+    def member_name(self) -> str:
+        return self.property_name
+
 
 class DbusSignalCommon(DbusMemberCommon):
     def __init__(self,
@@ -290,12 +305,29 @@ class DbusSignalCommon(DbusMemberCommon):
         self.__doc__ = original_method.__doc__
         self.__annotations__ = original_method.__annotations__
 
+    @property
+    def member_name(self) -> str:
+        return self.signal_name
 
-class DbusBoundAsync:
-    ...
+
+class DbusBoundMember(ABC):
+    @property
+    @abstractmethod
+    def member(self) -> DbusMemberCommon:
+        ...
 
 
-class DbusBoundSync:
+class DbusLocalMemberAsync(DbusBoundMember):
+    @abstractmethod
+    def _append_to_interface(
+        self,
+        interface: SdBusInterface,
+        handle: DbusExportHandle,
+    ) -> None:
+        ...
+
+
+class DbusProxyMemberAsync(DbusBoundMember):
     ...
 
 

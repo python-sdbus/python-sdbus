@@ -34,9 +34,11 @@ from typing import (
 from weakref import WeakSet
 
 from .dbus_common_elements import (
-    DbusBoundAsync,
+    DbusBoundMember,
+    DbusLocalMemberAsync,
     DbusLocalObjectMeta,
     DbusMemberAsync,
+    DbusProxyMemberAsync,
     DbusRemoteObjectMeta,
     DbusSignalCommon,
 )
@@ -45,8 +47,16 @@ from .dbus_common_funcs import get_default_bus
 if TYPE_CHECKING:
     from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
 
-    from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
-    from .sd_bus_internals import SdBus, SdBusMessage, SdBusSlot
+    from .dbus_proxy_async_interface_base import (
+        DbusExportHandle,
+        DbusInterfaceBaseAsync,
+    )
+    from .sd_bus_internals import (
+        SdBus,
+        SdBusInterface,
+        SdBusMessage,
+        SdBusSlot,
+    )
 
 
 T = TypeVar('T')
@@ -131,7 +141,14 @@ class DbusSignalAsync(DbusMemberAsync, DbusSignalCommon, Generic[T]):
                 )
 
 
-class DbusBoundSignalAsyncBase(DbusBoundAsync, AsyncIterable[T], Generic[T]):
+class DbusBoundSignalAsyncBase(DbusBoundMember, AsyncIterable[T], Generic[T]):
+    def __init__(self, dbus_signal: DbusSignalAsync[T]) -> None:
+        self.dbus_signal = dbus_signal
+
+    @property
+    def member(self) -> DbusMemberAsync:
+        return self.dbus_signal
+
     async def catch(self) -> AsyncIterator[T]:
         raise NotImplementedError
         yield cast(T, None)
@@ -150,13 +167,13 @@ class DbusBoundSignalAsyncBase(DbusBoundAsync, AsyncIterable[T], Generic[T]):
         raise NotImplementedError
 
 
-class DbusProxySignalAsync(DbusBoundSignalAsyncBase[T]):
+class DbusProxySignalAsync(DbusBoundSignalAsyncBase[T], DbusProxyMemberAsync):
     def __init__(
         self,
         dbus_signal: DbusSignalAsync[T],
         proxy_meta: DbusRemoteObjectMeta,
     ):
-        self.dbus_signal = dbus_signal
+        super().__init__(dbus_signal)
         self.proxy_meta = proxy_meta
 
         self.__doc__ = dbus_signal.__doc__
@@ -224,16 +241,28 @@ class DbusProxySignalAsync(DbusBoundSignalAsyncBase[T]):
         raise RuntimeError("Cannot emit signal from D-Bus proxy.")
 
 
-class DbusLocalSignalAsync(DbusBoundSignalAsyncBase[T]):
+class DbusLocalSignalAsync(DbusBoundSignalAsyncBase[T], DbusLocalMemberAsync):
     def __init__(
         self,
         dbus_signal: DbusSignalAsync[T],
         local_meta: DbusLocalObjectMeta,
     ):
-        self.dbus_signal = dbus_signal
+        super().__init__(dbus_signal)
         self.local_meta = local_meta
 
         self.__doc__ = dbus_signal.__doc__
+
+    def _append_to_interface(
+        self,
+        interface: SdBusInterface,
+        handle: DbusExportHandle,
+    ) -> None:
+        interface.add_signal(
+            self.dbus_signal.signal_name,
+            self.dbus_signal.signal_signature,
+            self.dbus_signal.args_names,
+            self.dbus_signal.flags,
+        )
 
     async def catch(self) -> AsyncIterator[T]:
         new_queue: Queue[T] = Queue()

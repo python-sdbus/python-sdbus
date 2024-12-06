@@ -310,11 +310,11 @@ class DbusSignalCommon(DbusAttributeCommon):
         return self.signal_name
 
 
-class DbusBindedAsync:
+class DbusBoundAsync:
     ...
 
 
-class DbusBindedSync:
+class DbusBoundSync:
     ...
 
 

@@ -29,7 +29,7 @@ from .dbus_common_elements import (
     DbusPropertyCommon,
     DbusPropertyOverride,
     DbusRemoteObjectMeta,
-    DbusSomethingAsync,
+    DbusAttributeAsync,
 )
 
 if TYPE_CHECKING:
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class DbusPropertyAsync(DbusSomethingAsync, DbusPropertyCommon, Generic[T]):
+class DbusPropertyAsync(DbusAttributeAsync, DbusPropertyCommon, Generic[T]):
     def __init__(
             self,
             property_name: Optional[str],

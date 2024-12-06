@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, TypeVar, cast
 from .dbus_common_elements import (
     DbusBindedSync,
     DbusMethodCommon,
-    DbusSomethingSync,
+    DbusAttributeSync,
 )
 
 if TYPE_CHECKING:
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class DbusMethodSync(DbusMethodCommon, DbusSomethingSync):
+class DbusMethodSync(DbusMethodCommon, DbusAttributeSync):
     def __get__(self,
                 obj: DbusInterfaceBase,
                 obj_class: Optional[Type[DbusInterfaceBase]] = None,

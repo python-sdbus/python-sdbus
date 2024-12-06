@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from inspect import getfullargspec
 from typing import TYPE_CHECKING, Generic, TypeVar
 
@@ -49,16 +50,21 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class DbusSomethingCommon:
+class DbusAttributeCommon(ABC):
     interface_name: str
     serving_enabled: bool
 
+    @property
+    @abstractmethod
+    def attribute_name(self) -> str:
+        ...
 
-class DbusSomethingAsync(DbusSomethingCommon):
+
+class DbusAttributeAsync(DbusAttributeCommon):
     ...
 
 
-class DbusSomethingSync(DbusSomethingCommon):
+class DbusAttributeSync(DbusAttributeCommon):
     ...
 
 
@@ -83,7 +89,7 @@ class DbusInterfaceMetaCommon(type):
                 ...
 
         for attr_name, attr in namespace.items():
-            if not isinstance(attr, DbusSomethingCommon):
+            if not isinstance(attr, DbusAttributeCommon):
                 continue
 
             # TODO: Fix async metaclass copying all methods
@@ -112,7 +118,8 @@ MEMBER_NAME_REQUIREMENTS = (
 )
 
 
-class DbusMethodCommon(DbusSomethingCommon):
+class DbusMethodCommon(DbusAttributeCommon):
+
 
     def __init__(
             self,
@@ -230,8 +237,12 @@ class DbusMethodCommon(DbusSomethingCommon):
 
         return new_args_list
 
+    @property
+    def attribute_name(self) -> str:
+        return self.method_name
 
-class DbusPropertyCommon(DbusSomethingCommon):
+
+class DbusPropertyCommon(DbusAttributeCommon):
     def __init__(self,
                  property_name: Optional[str],
                  property_signature: str,
@@ -261,8 +272,12 @@ class DbusPropertyCommon(DbusSomethingCommon):
         self.property_signature = property_signature
         self.flags = flags
 
+    @property
+    def attribute_name(self) -> str:
+        return self.property_name
 
-class DbusSignalCommon(DbusSomethingCommon):
+
+class DbusSignalCommon(DbusAttributeCommon):
     def __init__(self,
                  signal_name: Optional[str],
                  signal_signature: str,
@@ -289,6 +304,10 @@ class DbusSignalCommon(DbusSomethingCommon):
 
         self.__doc__ = original_method.__doc__
         self.__annotations__ = original_method.__annotations__
+
+    @property
+    def attribute_name(self) -> str:
+        return self.signal_name
 
 
 class DbusBindedAsync:

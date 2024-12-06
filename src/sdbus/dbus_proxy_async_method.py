@@ -30,7 +30,7 @@ from .dbus_common_elements import (
     DbusMethodCommon,
     DbusMethodOverride,
     DbusRemoteObjectMeta,
-    DbusSomethingAsync,
+    DbusAttributeAsync,
 )
 from .dbus_exceptions import DbusFailedError
 from .sd_bus_internals import DbusNoReplyFlag
@@ -52,7 +52,7 @@ def get_current_message() -> SdBusMessage:
     return CURRENT_MESSAGE.get()
 
 
-class DbusMethodAsync(DbusMethodCommon, DbusSomethingAsync):
+class DbusMethodAsync(DbusMethodCommon, DbusAttributeAsync):
 
     @overload
     def __get__(

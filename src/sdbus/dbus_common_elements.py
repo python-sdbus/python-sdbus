@@ -291,11 +291,11 @@ class DbusSignalCommon(DbusMemberCommon):
         self.__annotations__ = original_method.__annotations__
 
 
-class DbusBindedAsync:
+class DbusBoundAsync:
     ...
 
 
-class DbusBindedSync:
+class DbusBoundSync:
     ...
 
 

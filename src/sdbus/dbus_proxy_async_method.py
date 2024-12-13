@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, cast, overload
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
-    DbusBindedAsync,
+    DbusBoundAsync,
     DbusMemberAsync,
     DbusMethodCommon,
     DbusMethodOverride,
@@ -78,20 +78,20 @@ class DbusMethodAsync(DbusMethodCommon, DbusMemberAsync):
         if obj is not None:
             dbus_meta = obj._dbus
             if isinstance(dbus_meta, DbusRemoteObjectMeta):
-                return DbusMethodAsyncProxyBind(self, dbus_meta)
+                return DbusProxyMethodAsync(self, dbus_meta)
             else:
-                return DbusMethodAsyncLocalBind(self, obj)
+                return DbusLocalMethodAsync(self, obj)
         else:
             return self
 
 
-class DbusMethodAsyncBaseBind(DbusBindedAsync):
+class DbusBoundMethodAsyncBase(DbusBoundAsync):
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError
 
 
-class DbusMethodAsyncProxyBind(DbusMethodAsyncBaseBind):
+class DbusProxyMethodAsync(DbusBoundMethodAsyncBase):
     def __init__(
         self,
         dbus_method: DbusMethodAsync,
@@ -145,7 +145,7 @@ class DbusMethodAsyncProxyBind(DbusMethodAsyncBaseBind):
         return self._dbus_async_call(new_call_message)
 
 
-class DbusMethodAsyncLocalBind(DbusMethodAsyncBaseBind):
+class DbusLocalMethodAsync(DbusBoundMethodAsyncBase):
     def __init__(
         self,
         dbus_method: DbusMethodAsync,

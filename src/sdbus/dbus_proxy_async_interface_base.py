@@ -39,12 +39,12 @@ from .dbus_common_elements import (
     DbusRemoteObjectMeta,
 )
 from .dbus_common_funcs import get_default_bus
-from .dbus_proxy_async_method import DbusMethodAsync, DbusMethodAsyncLocalBind
+from .dbus_proxy_async_method import DbusLocalMethodAsync, DbusMethodAsync
 from .dbus_proxy_async_property import (
+    DbusLocalPropertyAsync,
     DbusPropertyAsync,
-    DbusPropertyAsyncLocalBind,
 )
-from .dbus_proxy_async_signal import DbusSignalAsync, DbusSignalAsyncLocalBind
+from .dbus_proxy_async_signal import DbusLocalSignalAsync, DbusSignalAsync
 from .sd_bus_internals import SdBusInterface
 
 if TYPE_CHECKING:
@@ -61,7 +61,7 @@ if TYPE_CHECKING:
         Union,
     )
 
-    from .dbus_common_elements import DbusBindedAsync
+    from .dbus_common_elements import DbusBoundAsync
     from .sd_bus_internals import SdBus, SdBusSlot
 
     T = TypeVar('T')
@@ -344,20 +344,20 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         local_object_meta.attached_bus = bus
         local_object_meta.serving_object_path = object_path
         # TODO: can be optimized with a single loop
-        interface_map: Dict[str, List[DbusBindedAsync]] = {}
+        interface_map: Dict[str, List[DbusBoundAsync]] = {}
 
         for key, value in getmembers(self):
             assert not isinstance(value, DbusMemberAsync)
 
-            if isinstance(value, DbusMethodAsyncLocalBind):
+            if isinstance(value, DbusLocalMethodAsync):
                 interface_name = value.dbus_method.interface_name
                 if not value.dbus_method.serving_enabled:
                     continue
-            elif isinstance(value, DbusPropertyAsyncLocalBind):
+            elif isinstance(value, DbusLocalPropertyAsync):
                 interface_name = value.dbus_property.interface_name
                 if not value.dbus_property.serving_enabled:
                     continue
-            elif isinstance(value, DbusSignalAsyncLocalBind):
+            elif isinstance(value, DbusLocalSignalAsync):
                 interface_name = value.dbus_signal.interface_name
                 if not value.dbus_signal.serving_enabled:
                     continue
@@ -375,7 +375,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         for interface_name, member_list in interface_map.items():
             new_interface = SdBusInterface()
             for dbus_something in member_list:
-                if isinstance(dbus_something, DbusMethodAsyncLocalBind):
+                if isinstance(dbus_something, DbusLocalMethodAsync):
                     new_interface.add_method(
                         dbus_something.dbus_method.method_name,
                         dbus_something.dbus_method.input_signature,
@@ -385,7 +385,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                         dbus_something.dbus_method.flags,
                         dbus_something._dbus_reply_call,
                     )
-                elif isinstance(dbus_something, DbusPropertyAsyncLocalBind):
+                elif isinstance(dbus_something, DbusLocalPropertyAsync):
                     getter = dbus_something._dbus_reply_get
                     dbus_property = dbus_something.dbus_property
 
@@ -405,7 +405,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                         setter,
                         dbus_property.flags,
                     )
-                elif isinstance(dbus_something, DbusSignalAsyncLocalBind):
+                elif isinstance(dbus_something, DbusLocalSignalAsync):
                     new_interface.add_signal(
                         dbus_something.dbus_signal.signal_name,
                         dbus_something.dbus_signal.signal_signature,

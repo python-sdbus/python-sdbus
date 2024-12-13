@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Awaitable, Generic, TypeVar, cast, overload
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
-    DbusBindedAsync,
+    DbusBoundAsync,
     DbusMemberAsync,
     DbusPropertyCommon,
     DbusPropertyOverride,
@@ -84,20 +84,20 @@ class DbusPropertyAsync(DbusMemberAsync, DbusPropertyCommon, Generic[T]):
         self,
         obj: DbusInterfaceBaseAsync,
         obj_class: Type[DbusInterfaceBaseAsync],
-    ) -> DbusPropertyAsyncBaseBind[T]:
+    ) -> DbusBoundPropertyAsyncBase[T]:
         ...
 
     def __get__(
         self,
         obj: Optional[DbusInterfaceBaseAsync],
         obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
-    ) -> Union[DbusPropertyAsyncBaseBind[T], DbusPropertyAsync[T]]:
+    ) -> Union[DbusBoundPropertyAsyncBase[T], DbusPropertyAsync[T]]:
         if obj is not None:
             dbus_meta = obj._dbus
             if isinstance(dbus_meta, DbusRemoteObjectMeta):
-                return DbusPropertyAsyncProxyBind(self, dbus_meta)
+                return DbusProxyPropertyAsync(self, dbus_meta)
             else:
-                return DbusPropertyAsyncLocalBind(self, obj)
+                return DbusLocalPropertyAsync(self, obj)
         else:
             return self
 
@@ -126,7 +126,7 @@ class DbusPropertyAsync(DbusMemberAsync, DbusPropertyCommon, Generic[T]):
         self.property_setter_is_public = False
 
 
-class DbusPropertyAsyncBaseBind(DbusBindedAsync, Awaitable[T]):
+class DbusBoundPropertyAsyncBase(DbusBoundAsync, Awaitable[T]):
     def __await__(self) -> Generator[Any, None, T]:
         return self.get_async().__await__()
 
@@ -137,7 +137,7 @@ class DbusPropertyAsyncBaseBind(DbusBindedAsync, Awaitable[T]):
         raise NotImplementedError
 
 
-class DbusPropertyAsyncProxyBind(DbusPropertyAsyncBaseBind[T]):
+class DbusProxyPropertyAsync(DbusBoundPropertyAsyncBase[T]):
     def __init__(
         self,
         dbus_property: DbusPropertyAsync[T],
@@ -179,7 +179,7 @@ class DbusPropertyAsyncProxyBind(DbusPropertyAsyncBaseBind[T]):
         await bus.call_async(new_set_message)
 
 
-class DbusPropertyAsyncLocalBind(DbusPropertyAsyncBaseBind[T]):
+class DbusLocalPropertyAsync(DbusBoundPropertyAsyncBase[T]):
     def __init__(
         self,
         dbus_property: DbusPropertyAsync[T],

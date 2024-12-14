@@ -49,16 +49,16 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class DbusSomethingCommon:
+class DbusMemberCommon:
     interface_name: str
     serving_enabled: bool
 
 
-class DbusSomethingAsync(DbusSomethingCommon):
+class DbusMemberAsync(DbusMemberCommon):
     ...
 
 
-class DbusSomethingSync(DbusSomethingCommon):
+class DbusMemberSync(DbusMemberCommon):
     ...
 
 
@@ -83,7 +83,7 @@ class DbusInterfaceMetaCommon(type):
                 ...
 
         for attr_name, attr in namespace.items():
-            if not isinstance(attr, DbusSomethingCommon):
+            if not isinstance(attr, DbusMemberCommon):
                 continue
 
             # TODO: Fix async metaclass copying all methods
@@ -112,7 +112,7 @@ MEMBER_NAME_REQUIREMENTS = (
 )
 
 
-class DbusMethodCommon(DbusSomethingCommon):
+class DbusMethodCommon(DbusMemberCommon):
 
     def __init__(
             self,
@@ -231,7 +231,7 @@ class DbusMethodCommon(DbusSomethingCommon):
         return new_args_list
 
 
-class DbusPropertyCommon(DbusSomethingCommon):
+class DbusPropertyCommon(DbusMemberCommon):
     def __init__(self,
                  property_name: Optional[str],
                  property_signature: str,
@@ -262,7 +262,7 @@ class DbusPropertyCommon(DbusSomethingCommon):
         self.flags = flags
 
 
-class DbusSignalCommon(DbusSomethingCommon):
+class DbusSignalCommon(DbusMemberCommon):
     def __init__(self,
                  signal_name: Optional[str],
                  signal_signature: str,
@@ -291,11 +291,11 @@ class DbusSignalCommon(DbusSomethingCommon):
         self.__annotations__ = original_method.__annotations__
 
 
-class DbusBindedAsync:
+class DbusBoundAsync:
     ...
 
 
-class DbusBindedSync:
+class DbusBoundSync:
     ...
 
 

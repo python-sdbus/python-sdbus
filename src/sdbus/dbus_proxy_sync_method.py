@@ -24,7 +24,7 @@ from types import FunctionType
 from typing import TYPE_CHECKING, TypeVar, cast
 
 from .dbus_common_elements import (
-    DbusBoundSync,
+    DbusBoundMember,
     DbusMemberSync,
     DbusMethodCommon,
 )
@@ -45,7 +45,7 @@ class DbusMethodSync(DbusMethodCommon, DbusMemberSync):
         return DbusLocalMethodSync(self, obj)
 
 
-class DbusLocalMethodSync(DbusBoundSync):
+class DbusLocalMethodSync(DbusBoundMember):
     def __init__(self,
                  dbus_method: DbusMethodSync,
                  interface: DbusInterfaceBase):
@@ -53,6 +53,10 @@ class DbusLocalMethodSync(DbusBoundSync):
         self.interface = interface
 
         self.__doc__ = dbus_method.__doc__
+
+    @property
+    def member(self) -> DbusMemberSync:
+        return self.dbus_method
 
     def _call_dbus_sync(self, *args: Any) -> Any:
         new_call_message = (

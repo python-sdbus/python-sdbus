@@ -25,18 +25,23 @@ from typing import TYPE_CHECKING, Awaitable, Generic, TypeVar, cast, overload
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
-    DbusBoundAsync,
+    DbusBoundMember,
+    DbusLocalMemberAsync,
     DbusMemberAsync,
     DbusPropertyCommon,
     DbusPropertyOverride,
+    DbusProxyMemberAsync,
     DbusRemoteObjectMeta,
 )
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Generator, Optional, Type, Union
 
-    from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
-    from .sd_bus_internals import SdBusMessage
+    from .dbus_proxy_async_interface_base import (
+        DbusExportHandle,
+        DbusInterfaceBaseAsync,
+    )
+    from .sd_bus_internals import SdBusInterface, SdBusMessage
 
 
 T = TypeVar('T')
@@ -126,7 +131,14 @@ class DbusPropertyAsync(DbusMemberAsync, DbusPropertyCommon, Generic[T]):
         self.property_setter_is_public = False
 
 
-class DbusBoundPropertyAsyncBase(DbusBoundAsync, Awaitable[T]):
+class DbusBoundPropertyAsyncBase(DbusBoundMember, Awaitable[T]):
+    def __init__(self, dbus_property: DbusPropertyAsync[T]) -> None:
+        self.dbus_property = dbus_property
+
+    @property
+    def member(self) -> DbusMemberAsync:
+        return self.dbus_property
+
     def __await__(self) -> Generator[Any, None, T]:
         return self.get_async().__await__()
 
@@ -137,13 +149,16 @@ class DbusBoundPropertyAsyncBase(DbusBoundAsync, Awaitable[T]):
         raise NotImplementedError
 
 
-class DbusProxyPropertyAsync(DbusBoundPropertyAsyncBase[T]):
+class DbusProxyPropertyAsync(
+    DbusBoundPropertyAsyncBase[T],
+    DbusProxyMemberAsync,
+):
     def __init__(
         self,
         dbus_property: DbusPropertyAsync[T],
         proxy_meta: DbusRemoteObjectMeta,
     ):
-        self.dbus_property = dbus_property
+        super().__init__(dbus_property)
         self.proxy_meta = proxy_meta
 
         self.__doc__ = dbus_property.__doc__
@@ -179,16 +194,45 @@ class DbusProxyPropertyAsync(DbusBoundPropertyAsyncBase[T]):
         await bus.call_async(new_set_message)
 
 
-class DbusLocalPropertyAsync(DbusBoundPropertyAsyncBase[T]):
+class DbusLocalPropertyAsync(
+    DbusBoundPropertyAsyncBase[T],
+    DbusLocalMemberAsync,
+):
     def __init__(
         self,
         dbus_property: DbusPropertyAsync[T],
         local_object: DbusInterfaceBaseAsync,
     ):
-        self.dbus_property = dbus_property
+        super().__init__(dbus_property)
         self.local_object_ref = weak_ref(local_object)
 
         self.__doc__ = dbus_property.__doc__
+
+    def _append_to_interface(
+        self,
+        interface: SdBusInterface,
+        handle: DbusExportHandle,
+    ) -> None:
+        getter = self._dbus_reply_get
+        dbus_property = self.dbus_property
+
+        if (
+            dbus_property.property_setter is not None
+            and
+            dbus_property.property_setter_is_public
+        ):
+
+            setter = self._dbus_reply_set
+        else:
+            setter = None
+
+        interface.add_property(
+            dbus_property.property_name,
+            dbus_property.property_signature,
+            getter,
+            setter,
+            dbus_property.flags,
+        )
 
     async def get_async(self) -> T:
         local_object = self.local_object_ref()
@@ -269,6 +313,12 @@ class DbusLocalPropertyAsync(DbusBoundPropertyAsyncBase[T]):
                     []
                 )
             )
+
+
+# aliases for backwards compatibility
+DbusPropertyAsyncBaseBind = DbusBoundPropertyAsyncBase
+DbusPropertyAsyncLocalBind = DbusLocalPropertyAsync
+DbusPropertyAsyncProxyBind = DbusProxyPropertyAsync
 
 
 def dbus_property_async(

@@ -142,7 +142,7 @@ if __name__ == '__main__':
                 'py.typed',
             ],
         },
-        python_requires='>=3.7',
+        python_requires='>=3.9',
         ext_modules=[
             Extension(
                 'sdbus.sd_bus_internals',

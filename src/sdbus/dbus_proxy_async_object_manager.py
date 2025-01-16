@@ -22,7 +22,6 @@ from __future__ import annotations
 from functools import partial
 from typing import TYPE_CHECKING
 
-from .dbus_common_elements import DbusLocalObjectMeta
 from .dbus_common_funcs import get_default_bus
 from .dbus_proxy_async_interface_base import (
     DbusExportHandle,
@@ -38,18 +37,9 @@ if TYPE_CHECKING:
     from .sd_bus_internals import SdBus, SdBusSlot
 
 
-class DbusObjectManagerExportHandle(DbusExportHandle):
-    def __init__(
-        self,
-        local_meta: DbusLocalObjectMeta,
-        remove_object_call: Callable[[], None],
-    ):
-        super().__init__(local_meta)
-        self.remove_object_call = remove_object_call
-
-    def stop(self) -> None:
-        super().stop()
-        self.remove_object_call()
+class CloseableFromCallback:
+    def __init__(self, callback: Callable[[], None]) -> None:
+        self.close = callback
 
 
 class DbusObjectManagerInterfaceAsync(
@@ -89,7 +79,7 @@ class DbusObjectManagerInterfaceAsync(
         )
         slot = bus.add_object_manager(object_path)
         self._object_manager_slot = slot
-        export_handle._dbus_slots.append(slot)
+        export_handle.append(slot)
         return export_handle
 
     def export_with_manager(
@@ -97,28 +87,25 @@ class DbusObjectManagerInterfaceAsync(
         object_path: str,
         object_to_export: DbusInterfaceBaseAsync,
         bus: Optional[SdBus] = None,
-    ) -> DbusObjectManagerExportHandle:
+    ) -> DbusExportHandle:
         if self._object_manager_slot is None:
             raise RuntimeError('ObjectManager not intitialized')
 
         if bus is None:
             bus = get_default_bus()
 
-        object_to_export.export_to_dbus(
+        export_handle = object_to_export.export_to_dbus(
             object_path,
             bus,
         )
-        meta = object_to_export._dbus
-        if not isinstance(meta, DbusLocalObjectMeta):
-            raise TypeError
-        handle = DbusObjectManagerExportHandle(
-            meta,
-            partial(self.remove_managed_object, object_to_export),
+        export_handle.append(
+            CloseableFromCallback(
+                partial(self.remove_managed_object, object_to_export),
+            )
         )
         bus.emit_object_added(object_path)
         self._managed_object_to_path[object_to_export] = object_path
-
-        return handle
+        return export_handle
 
     def remove_managed_object(
             self,

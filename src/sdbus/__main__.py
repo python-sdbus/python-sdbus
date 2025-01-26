@@ -32,7 +32,7 @@ from .interface_generator import (
 )
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Optional
+    from typing import Optional
 
     from .interface_generator import DbusInterfaceIntrospection
 
@@ -41,22 +41,22 @@ if TYPE_CHECKING:
 class RenameMember:
     new_name: Optional[str] = None
     current_arg: Optional[str] = None
-    arg_renames: Dict[str, str] = field(default_factory=dict)
+    arg_renames: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
 class RenameInterface:
     new_name: Optional[str] = None
     current_member: Optional[RenameMember] = None
-    methods: Dict[str, RenameMember] = field(default_factory=dict)
-    properties: Dict[str, RenameMember] = field(default_factory=dict)
-    signals: Dict[str, RenameMember] = field(default_factory=dict)
+    methods: dict[str, RenameMember] = field(default_factory=dict)
+    properties: dict[str, RenameMember] = field(default_factory=dict)
+    signals: dict[str, RenameMember] = field(default_factory=dict)
 
 
 @dataclass
 class RenameRoot:
     current_interface: Optional[RenameInterface] = None
-    interfaces: Dict[str, RenameInterface] = field(default_factory=dict)
+    interfaces: dict[str, RenameInterface] = field(default_factory=dict)
 
 
 rename_root = RenameRoot()
@@ -96,7 +96,7 @@ def rename_members(
 
 
 def rename_interfaces(
-    interfaces: List[DbusInterfaceIntrospection]
+    interfaces: list[DbusInterfaceIntrospection]
 ) -> None:
     for interface in interfaces:
         dbus_interface_name = interface.interface_name
@@ -112,7 +112,7 @@ def rename_interfaces(
 
 def run_gen_from_connection(
     connection_name: str,
-    object_paths: List[str],
+    object_paths: list[str],
     system: bool,
     imports_header: bool,
     do_async: bool,
@@ -127,7 +127,7 @@ def run_gen_from_connection(
         from .sd_bus_internals import sd_bus_open_system
         set_default_bus(sd_bus_open_system())
 
-    interfaces: List[DbusInterfaceIntrospection] = []
+    interfaces: list[DbusInterfaceIntrospection] = []
     for object_path in object_paths:
         connection = DbusInterfaceCommon(connection_name, object_path)
         itrospection = connection.dbus_introspect()
@@ -145,11 +145,11 @@ def run_gen_from_connection(
 
 
 def run_gen_from_file(
-    filenames: List[str],
+    filenames: list[str],
     imports_header: bool,
     do_async: bool,
 ) -> None:
-    interfaces: List[DbusInterfaceIntrospection] = []
+    interfaces: list[DbusInterfaceIntrospection] = []
 
     for file in filenames:
         interfaces.extend(interfaces_from_file(file))
@@ -308,7 +308,7 @@ class ActionSetName(Action):
         )
 
 
-def generator_main(args: Optional[List[str]] = None) -> None:
+def generator_main(args: Optional[list[str]] = None) -> None:
 
     main_arg_parser = ArgumentParser(
         prog="sdbus",

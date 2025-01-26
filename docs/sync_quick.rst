@@ -157,7 +157,7 @@ Example: ::
                         ):
 
         @dbus_method('as')
-        def test_method(self, str_array: List[str]) -> None:
+        def test_method(self, str_array: list[str]) -> None:
             raise NotImplementedError
 
     

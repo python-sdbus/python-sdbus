@@ -20,17 +20,10 @@
 from __future__ import annotations
 
 from asyncio import Queue
+from collections.abc import AsyncIterable, AsyncIterator
 from contextlib import closing
 from types import FunctionType
-from typing import (
-    TYPE_CHECKING,
-    AsyncIterable,
-    AsyncIterator,
-    Generic,
-    TypeVar,
-    cast,
-    overload,
-)
+from typing import TYPE_CHECKING, Generic, TypeVar, cast, overload
 from weakref import WeakSet
 
 from .dbus_common_elements import (
@@ -43,7 +36,8 @@ from .dbus_common_elements import (
 from .dbus_common_funcs import get_default_bus
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
+    from collections.abc import Callable, Sequence
+    from typing import Any, Optional, Union
 
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
     from .sd_bus_internals import SdBus, SdBusMessage, SdBusSlot
@@ -76,7 +70,7 @@ class DbusSignalAsync(DbusMemberAsync, DbusSignalCommon, Generic[T]):
     def __get__(
         self,
         obj: None,
-        obj_class: Type[DbusInterfaceBaseAsync],
+        obj_class: type[DbusInterfaceBaseAsync],
     ) -> DbusSignalAsync[T]:
         ...
 
@@ -84,14 +78,14 @@ class DbusSignalAsync(DbusMemberAsync, DbusSignalCommon, Generic[T]):
     def __get__(
         self,
         obj: DbusInterfaceBaseAsync,
-        obj_class: Type[DbusInterfaceBaseAsync],
+        obj_class: type[DbusInterfaceBaseAsync],
     ) -> DbusBoundSignalAsyncBase[T]:
         ...
 
     def __get__(
         self,
         obj: Optional[DbusInterfaceBaseAsync],
-        obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
+        obj_class: Optional[type[DbusInterfaceBaseAsync]] = None,
     ) -> Union[DbusBoundSignalAsyncBase[T], DbusSignalAsync[T]]:
         if obj is not None:
             dbus_meta = obj._dbus
@@ -106,7 +100,7 @@ class DbusSignalAsync(DbusMemberAsync, DbusSignalCommon, Generic[T]):
         self,
         service_name: str,
         bus: Optional[SdBus] = None,
-    ) -> AsyncIterable[Tuple[str, T]]:
+    ) -> AsyncIterable[tuple[str, T]]:
         if bus is None:
             bus = get_default_bus()
 
@@ -142,7 +136,7 @@ class DbusBoundSignalAsyncBase(DbusBoundAsync, AsyncIterable[T], Generic[T]):
             self,
             service_name: Optional[str] = None,
             bus: Optional[SdBus] = None,
-    ) -> AsyncIterable[Tuple[str, T]]:
+    ) -> AsyncIterable[tuple[str, T]]:
         raise NotImplementedError
         yield "", cast(T, None)
 
@@ -193,7 +187,7 @@ class DbusProxySignalAsync(DbusBoundSignalAsyncBase[T]):
             self,
             service_name: Optional[str] = None,
             bus: Optional[SdBus] = None,
-    ) -> AsyncIterable[Tuple[str, T]]:
+    ) -> AsyncIterable[tuple[str, T]]:
         if bus is None:
             bus = self.proxy_meta.attached_bus
 
@@ -254,7 +248,7 @@ class DbusLocalSignalAsync(DbusBoundSignalAsyncBase[T]):
         self,
         service_name: Optional[str] = None,
         bus: Optional[SdBus] = None,
-    ) -> AsyncIterable[Tuple[str, T]]:
+    ) -> AsyncIterable[tuple[str, T]]:
         raise NotImplementedError("TODO")
         yield
 

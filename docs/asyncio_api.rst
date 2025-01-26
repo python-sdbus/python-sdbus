@@ -68,10 +68,10 @@ Classes
             either raise an ``"error"`` (default), ``"ignore"`` the property
             or ``"reuse"`` the D-Bus name for the member.
         :return: dictionary of properties
-        :rtype: Dict[str, Any]
+        :rtype: dict[str, Any]
 
     .. py:attribute:: properties_changed
-        :type: Tuple[str, Dict[str, Tuple[str, Any]], List[str]]
+        :type: tuple[str, dict[str, tuple[str, Any]], list[str]]
 
         Signal when one of the objects properties changes.
 
@@ -83,11 +83,11 @@ Classes
         Interface name : str
             Name of the interface where property changed
 
-        Changed properties : Dict[str, Tuple[str, Any]]
+        Changed properties : dict[str, tuple[str, Any]]
             Dictionary there keys are names of properties changed and
             values are variants of new value.
 
-        Invalidated properties : List[str]
+        Invalidated properties : list[str]
             List of property names changed but no new value had been provided
 
     .. py:method:: _proxify(bus, service_name, object_path)
@@ -199,12 +199,12 @@ Classes
             Triple nested dictionary that contains all the objects
             paths with their properties values.
 
-            Dict[ObjectPath, Dict[InterfaceName, Dict[PropertyName, PropertyValue]]]
+            dict[ObjectPath, dict[InterfaceName, dict[PropertyName, PropertyValue]]]
 
-        :rtype: Dict[str, Dict[str, Dict[str, Any]]]
+        :rtype: dict[str, dict[str, dict[str, Any]]]
 
     .. py:attribute:: interfaces_added
-        :type: Tuple[str, Dict[str, Dict[str, Any]]]
+        :type: tuple[str, dict[str, dict[str, Any]]]
 
         Signal when a new object is added or and existing object
         gains a new interface.
@@ -217,11 +217,11 @@ Classes
         Object path : str
             Path to object that was added or modified.
 
-        Object interfaces and properties : Dict[str, Dict[str, Any]]]
-            Dict[InterfaceName, Dict[PropertyName, PropertyValue]]
+        Object interfaces and properties : dict[str, dict[str, Any]]]
+            dict[InterfaceName, dict[PropertyName, PropertyValue]]
 
     .. py:attribute:: interfaces_removed
-        :type: Tuple[str, List[str]]
+        :type: tuple[str, list[str]]
 
         Signal when existing object or and interface of
         existing object is removed.
@@ -234,7 +234,7 @@ Classes
         Object path : str
             Path to object that was removed or modified.
 
-        Interfaces list : List[str]
+        Interfaces list : list[str]
             Interfaces names that were removed.
 
     .. py:method:: export_with_manager(object_path, object_to_export, bus)

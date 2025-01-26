@@ -54,8 +54,6 @@ from sdbus import (
 )
 
 if TYPE_CHECKING:
-    from typing import Tuple
-
     from sdbus.dbus_proxy_async_interfaces import (
         DBUS_PROPERTIES_CHANGED_TYPING,
     )
@@ -173,7 +171,7 @@ class TestInterface(
             return input.lower()
 
     @dbus_signal_async('ss')
-    def test_signal(self) -> Tuple[str, str]:
+    def test_signal(self) -> tuple[str, str]:
         """Test signal"""
         raise NotImplementedError
 
@@ -209,13 +207,13 @@ class TestInterface(
     @dbus_method_async(
         result_signature='(ss)'
     )
-    async def test_struct_return(self) -> Tuple[str, str]:
+    async def test_struct_return(self) -> tuple[str, str]:
         return ('hello', 'world')
 
     @dbus_method_async(
         result_signature='(ss)'
     )
-    async def test_struct_return_workaround(self) -> Tuple[Tuple[str, str]]:
+    async def test_struct_return_workaround(self) -> tuple[tuple[str, str]]:
         return (('hello', 'world'), )
 
     @dbus_method_async()
@@ -236,7 +234,7 @@ class TestInterface(
     )
     async def takes_struct_method(
         self,
-        int_struct: Tuple[int, int, int, int],
+        int_struct: tuple[int, int, int, int],
     ) -> int:
         a, b, c, d = int_struct
         return a*b*c*d
@@ -257,7 +255,7 @@ class DbusErrorUnmappedLater(DbusFailedError):
 TEST_SERVICE_NAME = 'org.example.test'
 
 
-def initialize_object() -> Tuple[TestInterface, TestInterface]:
+def initialize_object() -> tuple[TestInterface, TestInterface]:
     test_object = TestInterface()
     test_object.export_to_dbus('/')
 
@@ -510,7 +508,7 @@ class TestProxy(IsolatedDbusTestCase):
 
         with self.subTest('Catch anywhere over D-Bus object'):
             async def catch_anywhere_oneshot_dbus(
-            ) -> Tuple[str, Tuple[str, str]]:
+            ) -> tuple[str, tuple[str, str]]:
                 async for x in test_object_connection.test_signal\
                         .catch_anywhere():
                     return x
@@ -531,7 +529,7 @@ class TestProxy(IsolatedDbusTestCase):
 
         with self.subTest('Catch anywhere over D-Bus class'):
             async def catch_anywhere_oneshot_from_class(
-            ) -> Tuple[str, Tuple[str, str]]:
+            ) -> tuple[str, tuple[str, str]]:
                 async for x in TestInterface.test_signal.catch_anywhere(
                         TEST_SERVICE_NAME, self.bus):
                     return x
@@ -552,7 +550,7 @@ class TestProxy(IsolatedDbusTestCase):
 
         with self.subTest('Catch anywhere over local object'):
             async def catch_anywhere_oneshot_local(
-            ) -> Tuple[str, Tuple[str, str]]:
+            ) -> tuple[str, tuple[str, str]]:
                 async for x in test_object.test_signal.catch_anywhere():
                     return x
 
@@ -574,13 +572,13 @@ class TestProxy(IsolatedDbusTestCase):
 
         test_tuple = ('sgfsretg', 'asd')
 
-        async def reader_one() -> Tuple[str, str]:
+        async def reader_one() -> tuple[str, str]:
             async for x in test_object_connection.test_signal.catch():
                 return test_tuple
 
             raise RuntimeError
 
-        async def reader_two() -> Tuple[str, str]:
+        async def reader_two() -> tuple[str, str]:
             async for x in test_object_connection.test_signal.catch():
                 return test_tuple
 

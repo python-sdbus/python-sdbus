@@ -21,7 +21,7 @@ Available under ``sdbus.utils.parse`` subpackage.
     :param str on_unknown_member: If an unknown D-Bus property was encountered
             either raise an ``"error"`` (default), ``"ignore"`` the property
             or ``"reuse"`` the D-Bus name for the member.
-    :rtype: Dict[str, Any]
+    :rtype: dict[str, Any]
     :returns: Dictionary of changed properties with keys translated to python
             names. Invalidated properties will have value of None.
 
@@ -42,7 +42,7 @@ Available under ``sdbus.utils.parse`` subpackage.
     :param str on_unknown_member: If an unknown D-Bus property was encountered
             either raise an ``"error"`` (default), ``"ignore"`` the property
             or ``"reuse"`` the D-Bus name for the member.
-    :rtype: Tuple[str, Optional[Type[DbusInterfaceBaseAsync]], Dict[str, Any]]
+    :rtype: tuple[str, Optional[type[DbusInterfaceBaseAsync]], dict[str, Any]]
     :returns: Path of new added object, object's class (or ``None``) and dictionary
             of python translated members and their values.
 
@@ -60,7 +60,7 @@ Available under ``sdbus.utils.parse`` subpackage.
     :param str on_unknown_member: If an unknown D-Bus interface was encountered
             either raise an ``"error"`` (default) or return ``"none"`` instead
             of interface class.
-    :rtype: Tuple[str, Optional[Type[DbusInterfaceBaseAsync]]]
+    :rtype: tuple[str, Optional[type[DbusInterfaceBaseAsync]]]
     :returns: Path of removed object and object's class (or ``None``).
 
 .. py:function:: parse_get_managed_objects(interfaces, managed_objects_data, on_unknown_interface='error', on_unknown_member='error')
@@ -80,7 +80,7 @@ Available under ``sdbus.utils.parse`` subpackage.
     :param str on_unknown_member: If an unknown D-Bus property was encountered
             either raise an ``"error"`` (default), ``"ignore"`` the property
             or ``"reuse"`` the D-Bus name for the member.
-    :rtype: Dict[str, Tuple[Optional[Type[DbusInterfaceBaseAsync], Dict[str, Any]]]]
+    :rtype: dict[str, tuple[Optional[type[DbusInterfaceBaseAsync], dict[str, Any]]]]
     :returns: Dictionary where keys are paths and values are tuples of managed objects classes and their properties data.
 
     *New in version 0.12.0.*

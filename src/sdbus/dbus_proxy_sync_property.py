@@ -27,7 +27,8 @@ from .dbus_common_elements import DbusMemberSync, DbusPropertyCommon
 from .dbus_common_funcs import _check_sync_in_async_env
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Type
+    from collections.abc import Callable
+    from typing import Any, Optional
 
     from .dbus_proxy_sync_interface_base import DbusInterfaceBase
 
@@ -62,7 +63,7 @@ class DbusPropertySync(DbusPropertyCommon, DbusMemberSync, Generic[T]):
 
     def __get__(self,
                 obj: DbusInterfaceBase,
-                obj_class: Optional[Type[DbusInterfaceBase]] = None,
+                obj_class: Optional[type[DbusInterfaceBase]] = None,
                 ) -> T:
         assert _check_sync_in_async_env(), (
             "Used sync __get__ method in async environment. "

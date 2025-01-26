@@ -34,16 +34,8 @@ from .dbus_proxy_sync_method import DbusMethodSync
 from .dbus_proxy_sync_property import DbusPropertySync
 
 if TYPE_CHECKING:
-    from typing import (
-        Any,
-        Dict,
-        Iterable,
-        Iterator,
-        Optional,
-        Set,
-        Tuple,
-        Type,
-    )
+    from collections.abc import Iterable, Iterator
+    from typing import Any, Optional
 
     from .sd_bus_internals import SdBus
 
@@ -59,8 +51,8 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
     @staticmethod
     def _check_collisions(
         new_class_name: str,
-        attr_names: Set[str],
-        reserved_attr_names: Set[str],
+        attr_names: set[str],
+        reserved_attr_names: set[str],
     ) -> None:
 
         possible_collisions = attr_names & reserved_attr_names
@@ -74,9 +66,9 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
     def _collect_dbus_to_python_attr_names(
         new_class_name: str,
         base_classes: Iterable[type],
-    ) -> Set[str]:
-        all_python_dbus_attrs: Set[str] = set()
-        possible_collisions: Set[str] = set()
+    ) -> set[str]:
+        all_python_dbus_attrs: set[str] = set()
+        possible_collisions: set[str] = set()
 
         for c in base_classes:
             dbus_meta = DBUS_CLASS_TO_META.get(c)
@@ -127,8 +119,8 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
             raise TypeError(f"Unknown D-Bus element: {attr!r}")
 
     def __new__(cls, name: str,
-                bases: Tuple[type, ...],
-                namespace: Dict[str, Any],
+                bases: tuple[type, ...],
+                namespace: dict[str, Any],
                 interface_name: Optional[str] = None,
                 serving_enabled: bool = True,
                 ) -> DbusInterfaceMetaSync:
@@ -139,7 +131,7 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
                 "already created."
             )
 
-        all_mro_bases: Set[Type[Any]] = set(
+        all_mro_bases: set[type[Any]] = set(
             chain.from_iterable((c.__mro__ for c in bases))
         )
         reserved_attr_names = cls._collect_dbus_to_python_attr_names(
@@ -177,7 +169,7 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMetaSync):
     @classmethod
     def _dbus_iter_interfaces_meta(
         cls,
-    ) -> Iterator[Tuple[str, DbusClassMeta]]:
+    ) -> Iterator[tuple[str, DbusClassMeta]]:
 
         for base in cls.__mro__:
             meta = DBUS_CLASS_TO_META.get(base)

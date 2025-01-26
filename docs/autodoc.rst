@@ -51,7 +51,7 @@ stub function.
 .. code-block:: python
 
     @dbus_property_async('as')
-    def features(self) -> List[str]:
+    def features(self) -> list[str]:
         """List of D-Bus daemon features.
 
         Features include:

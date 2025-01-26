@@ -72,7 +72,7 @@ Classes
             either raise an ``"error"`` (default), ``"ignore"`` the property
             or ``"reuse"`` the D-Bus name for the member.
         :return: dictionary of properties
-        :rtype: Dict[str, Any]
+        :rtype: dict[str, Any]
 
     Example: ::
 
@@ -91,12 +91,12 @@ Classes
 
             # Method that does not take any arguments and returns a list of str
             @dbus_method()
-            def get_capabilities(self) -> List[str]:
+            def get_capabilities(self) -> list[str]:
                 raise NotImplementedError
 
             # Method that takes a dict of {str: str} and returns an int
             @dbus_method('a{ss}')
-            def count_entries(self, a_dict: Dict[str, str]) -> int:
+            def count_entries(self, a_dict: dict[str, str]) -> int:
                 raise NotImplementedError
 
             # Read only property of int
@@ -124,9 +124,9 @@ Classes
             Triple nested dictionary that contains all the objects
             paths with their properties values.
 
-            Dict[ObjectPath, Dict[InterfaceName, Dict[PropertyName, PropertyValue]]]
+            dict[ObjectPath, dict[InterfaceName, dict[PropertyName, PropertyValue]]]
 
-        :rtype: Dict[str, Dict[str, Dict[str, Any]]]
+        :rtype: dict[str, dict[str, dict[str, Any]]]
 
 Decorators
 +++++++++++++++
@@ -168,12 +168,12 @@ Decorators
 
             # Method that does not take any arguments and returns a list of str
             @dbus_method()
-            def get_capabilities(self) -> List[str]:
+            def get_capabilities(self) -> list[str]:
                 raise NotImplementedError
 
             # Method that takes a dict of {str: str} and returns an int
             @dbus_method('a{ss}')
-            def count_entries(self, a_dict: Dict[str, str]) -> int:
+            def count_entries(self, a_dict: dict[str, str]) -> int:
                 raise NotImplementedError
 
     Calling methods example::

@@ -27,13 +27,13 @@ from .dbus_proxy_async_method import dbus_method_async
 from .dbus_proxy_async_signal import dbus_signal_async
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Literal, Tuple
+    from typing import Any, Literal
 
     DBUS_PROPERTIES_CHANGED_TYPING = (
-        Tuple[
+        tuple[
             str,
-            Dict[str, Tuple[str, Any]],
-            List[str],
+            dict[str, tuple[str, Any]],
+            list[str],
         ]
     )
 
@@ -76,15 +76,15 @@ class DbusPropertiesInterfaceAsync(
 
     @dbus_method_async('s', 'a{sv}', method_name='GetAll')
     async def _properties_get_all(
-            self, interface_name: str) -> Dict[str, Tuple[str, Any]]:
+            self, interface_name: str) -> dict[str, tuple[str, Any]]:
         raise NotImplementedError
 
     async def properties_get_all_dict(
             self,
             on_unknown_member: Literal['error', 'ignore', 'reuse'] = 'error',
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
 
-        properties: Dict[str, Any] = {}
+        properties: dict[str, Any] = {}
 
         for interface_name, meta in self._dbus_iter_interfaces_meta():
             if not meta.serving_enabled:

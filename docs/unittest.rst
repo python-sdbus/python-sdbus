@@ -30,7 +30,7 @@ Python-sdbus provides several utilities to enable unit testing.
                 """Uppercase the input"""
                 return string.upper()
 
-        def initialize_object() -> Tuple[TestInterface, TestInterface]:
+        def initialize_object() -> tuple[TestInterface, TestInterface]:
             test_object = TestInterface()
             test_object.export_to_dbus('/')
 
@@ -74,7 +74,7 @@ Python-sdbus provides several utilities to enable unit testing.
       The object returned by context manager has following attributes:
 
       .. py:attribute:: output
-        :type: List[Any]
+        :type: list[Any]
 
         List of captured data.
 

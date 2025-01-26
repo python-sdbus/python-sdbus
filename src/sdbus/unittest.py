@@ -37,15 +37,9 @@ from .dbus_proxy_async_signal import DbusLocalSignalAsync, DbusProxySignalAsync
 from .sd_bus_internals import SdBusMessage, sd_bus_open_user
 
 if TYPE_CHECKING:
-    from typing import (
-        Any,
-        AsyncContextManager,
-        Iterator,
-        List,
-        Optional,
-        TypeVar,
-        Union,
-    )
+    from collections.abc import Iterator
+    from contextlib import AbstractAsyncContextManager
+    from typing import Any, Optional, TypeVar, Union
 
     from .dbus_proxy_async_signal import (
         DbusBoundSignalAsyncBase,
@@ -77,7 +71,7 @@ class DbusSignalRecorderBase:
         timeout: Union[int, float],
     ):
         self._timeout = timeout
-        self._captured_data: List[Any] = []
+        self._captured_data: list[Any] = []
         self._ready_event = Event()
         self._callback_method = self._callback
 
@@ -112,7 +106,7 @@ class DbusSignalRecorderBase:
         self._ready_event.set()
 
     @property
-    def output(self) -> List[Any]:
+    def output(self) -> list[Any]:
         return self._captured_data.copy()
 
 
@@ -239,7 +233,7 @@ class IsolatedDbusTestCase(IsolatedAsyncioTestCase):
         self,
         signal: DbusBoundSignalAsyncBase[Any],
         timeout: Union[int, float] = 1,
-    ) -> AsyncContextManager[DbusSignalRecorderBase]:
+    ) -> AbstractAsyncContextManager[DbusSignalRecorderBase]:
 
         if isinstance(signal, DbusLocalSignalAsync):
             return DbusSignalRecorderLocal(timeout, signal)

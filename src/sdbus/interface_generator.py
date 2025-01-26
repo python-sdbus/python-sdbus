@@ -25,16 +25,8 @@ from xml.etree.ElementTree import fromstring as etree_from_str
 from xml.etree.ElementTree import parse as etree_from_file
 
 if TYPE_CHECKING:
-    from typing import (
-        Dict,
-        Iterable,
-        Iterator,
-        List,
-        Literal,
-        Optional,
-        Tuple,
-        Union,
-    )
+    from collections.abc import Iterable, Iterator
+    from typing import Literal, Optional, Union
     from xml.etree.ElementTree import Element
 
 
@@ -146,7 +138,7 @@ class DbusSigToTyping:
 
     @staticmethod
     def slice_container(dbus_sig_iter: Iterator[str], peek_str: str) -> str:
-        accumulator: List[str] = [peek_str]
+        accumulator: list[str] = [peek_str]
         round_braces_count = 0
         curly_braces_count = 0
 
@@ -186,8 +178,8 @@ class DbusSigToTyping:
         return ''.join(accumulator)
 
     @classmethod
-    def split_sig(cls, sig: str) -> List[str]:
-        completes: List[str] = []
+    def split_sig(cls, sig: str) -> list[str]:
+        completes: list[str] = []
 
         sig_iter = iter(sig)
 
@@ -249,7 +241,7 @@ class DbusSigToTyping:
             return cls.typing_basic(complete_sig)
 
     @classmethod
-    def result_typing(cls, result_args: List[str]) -> str:
+    def result_typing(cls, result_args: list[str]) -> str:
         result_len = len(result_args)
 
         if result_len == 0:
@@ -365,8 +357,8 @@ class DbusMethodInrospection(DbusMemberAbstract):
 
         self.is_no_reply = False
 
-        self.input_args: List[DbusArgsIntrospection] = []
-        self.result_args: List[DbusArgsIntrospection] = []
+        self.input_args: list[DbusArgsIntrospection] = []
+        self.result_args: list[DbusArgsIntrospection] = []
 
         super().__init__(element)
 
@@ -399,8 +391,8 @@ class DbusMethodInrospection(DbusMemberAbstract):
         )
 
     @property
-    def args_names_and_typing(self) -> List[Tuple[str, str]]:
-        arg_names: List[Tuple[str, str]] = []
+    def args_names_and_typing(self) -> list[tuple[str, str]]:
+        arg_names: list[tuple[str, str]] = []
 
         for i, input_arg in enumerate(self.input_args):
             if input_arg.name is not None:
@@ -432,7 +424,7 @@ class DbusMethodInrospection(DbusMemberAbstract):
 
 
 class DbusPropertyIntrospection(DbusMemberAbstract):
-    _EMITS_CHANGED_MAP: Dict[
+    _EMITS_CHANGED_MAP: dict[
         Union[bool, Literal['const', 'invalidates']], str
     ] = {
         True: 'DbusPropertyEmitsChangeFlag',
@@ -504,7 +496,7 @@ class DbusSignalIntrospection(DbusMemberAbstract):
         if element.tag != 'signal':
             raise ValueError(f"Expected signal tag, got {element.tag}")
 
-        self.args: List[DbusArgsIntrospection] = []
+        self.args: list[DbusArgsIntrospection] = []
         super().__init__(element)
 
     def _can_use_unpivileged(self) -> bool:
@@ -548,9 +540,9 @@ class DbusInterfaceIntrospection:
         self.is_deprecated = False
         self.c_name: Optional[str] = None
 
-        self.methods: List[DbusMethodInrospection] = []
-        self.properties: List[DbusPropertyIntrospection] = []
-        self.signals: List[DbusSignalIntrospection] = []
+        self.methods: list[DbusMethodInrospection] = []
+        self.properties: list[DbusPropertyIntrospection] = []
+        self.signals: list[DbusSignalIntrospection] = []
         for dbus_member in element:
             if dbus_member.tag == 'method':
                 self.methods.append(DbusMethodInrospection(dbus_member))
@@ -584,7 +576,7 @@ SKIP_INTERFACES = {
 }
 
 
-INTERFACE_TEMPLATES: Dict[str, str] = {
+INTERFACE_TEMPLATES: dict[str, str] = {
     "generic_no_members": """\
 ...  # Interface has no members
 """,
@@ -809,9 +801,9 @@ def {{ a_property.python_name }}(self) -> {{ a_property.typing }}:
 
 
 def xml_to_interfaces_introspection(
-        root: Element) -> List[DbusInterfaceIntrospection]:
+        root: Element) -> list[DbusInterfaceIntrospection]:
 
-    list_of_interface_introspection: List[DbusInterfaceIntrospection] = []
+    list_of_interface_introspection: list[DbusInterfaceIntrospection] = []
 
     if root.tag != 'node':
         raise ValueError(f"Expected node tag got {root.tag}")
@@ -830,14 +822,14 @@ def xml_to_interfaces_introspection(
 
 
 def interfaces_from_file(filename_or_path: Union[str, Path]
-                         ) -> List[DbusInterfaceIntrospection]:
+                         ) -> list[DbusInterfaceIntrospection]:
 
     etree = etree_from_file(filename_or_path)
 
     return xml_to_interfaces_introspection(etree.getroot())
 
 
-def interfaces_from_str(xml_str: str) -> List[DbusInterfaceIntrospection]:
+def interfaces_from_str(xml_str: str) -> list[DbusInterfaceIntrospection]:
 
     etree = etree_from_str(xml_str)
 
@@ -845,7 +837,7 @@ def interfaces_from_str(xml_str: str) -> List[DbusInterfaceIntrospection]:
 
 
 def generate_py_file(
-    interfaces: List[DbusInterfaceIntrospection],
+    interfaces: list[DbusInterfaceIntrospection],
     include_import_header: bool = True,
     do_async: bool = True,
 ) -> str:

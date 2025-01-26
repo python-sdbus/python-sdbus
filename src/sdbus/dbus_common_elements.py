@@ -30,17 +30,9 @@ from .dbus_common_funcs import (
 from .sd_bus_internals import is_interface_name_valid, is_member_name_valid
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
     from types import FunctionType
-    from typing import (
-        Any,
-        Callable,
-        Dict,
-        List,
-        Optional,
-        Sequence,
-        Tuple,
-        Type,
-    )
+    from typing import Any, Optional
 
     SelfMeta = TypeVar('SelfMeta', bound="DbusInterfaceMetaCommon")
 
@@ -63,9 +55,9 @@ class DbusMemberSync(DbusMemberCommon):
 
 
 class DbusInterfaceMetaCommon(type):
-    def __new__(cls: Type[SelfMeta], name: str,
-                bases: Tuple[type, ...],
-                namespace: Dict[str, Any],
+    def __new__(cls: type[SelfMeta], name: str,
+                bases: tuple[type, ...],
+                namespace: dict[str, Any],
                 interface_name: Optional[str] = None,
                 serving_enabled: bool = True,
                 ) -> SelfMeta:
@@ -181,7 +173,7 @@ class DbusMethodCommon(DbusMemberCommon):
             self,
             function: FunctionType,
             *args: Any,
-            **kwargs: Dict[str, Any]) -> List[Any]:
+            **kwargs: dict[str, Any]) -> list[Any]:
         # 3 types of arguments
         # *args - should be passed directly
         # **kwargs - should be put in a proper order
@@ -204,7 +196,7 @@ class DbusMethodCommon(DbusMemberCommon):
         passed_args_iter = iter(args)
         default_args_iter = iter(self.args_defaults)
 
-        new_args_list: List[Any] = []
+        new_args_list: list[Any] = []
 
         for i, a_name in enumerate(self.args_spec.args[1:]):
             try:
@@ -338,7 +330,7 @@ class DbusRemoteObjectMeta:
 
 class DbusLocalObjectMeta:
     def __init__(self) -> None:
-        self.activated_interfaces: List[SdBusInterface] = []
+        self.activated_interfaces: list[SdBusInterface] = []
         self.serving_object_path: Optional[str] = None
         self.attached_bus: Optional[SdBus] = None
 
@@ -351,5 +343,5 @@ class DbusClassMeta:
     ) -> None:
         self.interface_name = interface_name
         self.serving_enabled = serving_enabled
-        self.dbus_member_to_python_attr: Dict[str, str] = {}
-        self.python_attr_to_dbus_member: Dict[str, str] = {}
+        self.dbus_member_to_python_attr: dict[str, str] = {}
+        self.python_attr_to_dbus_member: dict[str, str] = {}

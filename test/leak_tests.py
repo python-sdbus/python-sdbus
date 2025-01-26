@@ -29,7 +29,7 @@ from asyncio import (
 )
 from os import environ
 from resource import RUSAGE_SELF, getrusage
-from typing import Any, List, cast
+from typing import Any, cast
 from unittest import SkipTest
 
 from sdbus.exceptions import DbusFailedError
@@ -189,7 +189,7 @@ class LeakTests(IsolatedDbusTestCase):
                 nonlocal i
                 i += 1
 
-        tasks: List[Task[None]] = []
+        tasks: list[Task[None]] = []
         loop = get_running_loop()
         for _ in range(num_of_tasks):
             tasks.append(loop.create_task(the_test()))

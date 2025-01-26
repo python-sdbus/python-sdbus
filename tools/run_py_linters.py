@@ -23,7 +23,6 @@ from argparse import ArgumentParser
 from os import environ
 from pathlib import Path
 from subprocess import SubprocessError, run
-from typing import List
 
 source_root = Path(environ['MESON_SOURCE_ROOT'])
 build_dir = Path(environ['MESON_BUILD_ROOT'])
@@ -51,7 +50,7 @@ def run_mypy() -> None:
         args=(
             'mypy', '--strict', '--pretty',
             '--cache-dir', mypy_cache_dir,
-            '--python-version', '3.8',
+            '--python-version', '3.9',
             '--namespace-packages',
             '--explicit-package-bases',
             *all_python_modules,
@@ -88,8 +87,8 @@ def linter_main() -> None:
         raise SystemExit(1)
 
 
-def get_all_python_files() -> List[Path]:
-    python_files: List[Path] = [source_root / 'setup.py']
+def get_all_python_files() -> list[Path]:
+    python_files: list[Path] = [source_root / 'setup.py']
 
     for python_module in all_python_modules:
         if python_module.is_dir():

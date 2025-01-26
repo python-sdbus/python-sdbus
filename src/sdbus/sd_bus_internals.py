@@ -23,24 +23,14 @@ from asyncio import Future
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import (
-        Any,
-        Callable,
-        Coroutine,
-        Dict,
-        List,
-        Optional,
-        Sequence,
-        Tuple,
-        Type,
-        Union,
-    )
+    from collections.abc import Callable, Coroutine, Sequence
+    from typing import Any, Optional, Union
 
     DbusBasicTypes = Union[str, int, bytes, float, Any]
-    DbusStructType = Tuple[DbusBasicTypes, ...]
-    DbusDictType = Dict[DbusBasicTypes, DbusBasicTypes]
-    DbusVariantType = Tuple[str, DbusStructType]
-    DbusListType = List[DbusBasicTypes]
+    DbusStructType = tuple[DbusBasicTypes, ...]
+    DbusDictType = dict[DbusBasicTypes, DbusBasicTypes]
+    DbusVariantType = tuple[str, DbusStructType]
+    DbusListType = list[DbusBasicTypes]
     DbusCompleteTypes = Union[DbusBasicTypes, DbusStructType,
                               DbusDictType, DbusVariantType, DbusListType]
 
@@ -60,12 +50,12 @@ class SdBusSlot:
 
 class SdBusInterface:
     slot: Optional[SdBusSlot]
-    method_list: List[object]
-    method_dict: Dict[bytes, object]
-    property_list: List[object]
-    property_get_dict: Dict[bytes, object]
-    property_set_dict: Dict[bytes, object]
-    signal_list: List[object]
+    method_list: list[object]
+    method_dict: dict[bytes, object]
+    property_list: list[object]
+    property_get_dict: dict[bytes, object]
+    property_set_dict: dict[bytes, object]
+    signal_list: list[object]
 
     def add_method(
         self,
@@ -122,7 +112,7 @@ class SdBusMessage:
         raise NotImplementedError(__STUB_ERROR)
 
     def get_contents(self
-                     ) -> Tuple[DbusCompleteTypes, ...]:
+                     ) -> tuple[DbusCompleteTypes, ...]:
         raise NotImplementedError(__STUB_ERROR)
 
     def create_reply(self) -> SdBusMessage:
@@ -137,7 +127,7 @@ class SdBusMessage:
     def send(self) -> None:
         raise NotImplementedError(__STUB_ERROR)
 
-    def parse_to_tuple(self) -> Tuple[Any, ...]:
+    def parse_to_tuple(self) -> tuple[Any, ...]:
         raise NotImplementedError(__STUB_ERROR)
 
     expect_reply: bool = False
@@ -261,7 +251,7 @@ def decode_object_path(prefix: str, full_path: str) -> str:
     raise NotImplementedError(__STUB_ERROR)
 
 
-def map_exception_to_dbus_error(exc: Type[Exception],
+def map_exception_to_dbus_error(exc: type[Exception],
                                 dbus_error_name: str, /) -> None:
     ...  # We want to be able to generate docs without module
 
@@ -314,9 +304,9 @@ class SdBusRequestNameAlreadyOwnerError(SdBusRequestNameError):
     ...
 
 
-DBUS_ERROR_TO_EXCEPTION: Dict[str, Exception] = {}
+DBUS_ERROR_TO_EXCEPTION: dict[str, Exception] = {}
 
-EXCEPTION_TO_DBUS_ERROR: Dict[Exception, str] = {}
+EXCEPTION_TO_DBUS_ERROR: dict[Exception, str] = {}
 
 DbusDeprecatedFlag: int = 0
 DbusHiddenFlag: int = 0

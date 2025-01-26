@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Optional
 
 from sdbus import DbusInterfaceCommon, SdBus, dbus_method, dbus_property
 
@@ -84,7 +84,7 @@ class FreedesktopDbus(DbusInterfaceCommon,
         raise NotImplementedError
 
     @dbus_method()
-    def list_activatable_names(self) -> List[str]:
+    def list_activatable_names(self) -> list[str]:
         """Lists all activatable services names.
 
         :return: List of all names.
@@ -92,7 +92,7 @@ class FreedesktopDbus(DbusInterfaceCommon,
         raise NotImplementedError
 
     @dbus_method()
-    def list_names(self) -> List[str]:
+    def list_names(self) -> list[str]:
         """List all services and connections currently of the bus.
 
         :return: List of all current names.
@@ -125,7 +125,7 @@ class FreedesktopDbus(DbusInterfaceCommon,
         raise NotImplementedError
 
     @dbus_property('as')
-    def features(self) -> List[str]:
+    def features(self) -> list[str]:
         """List of D-Bus daemon features.
 
         Features include:
@@ -140,6 +140,6 @@ class FreedesktopDbus(DbusInterfaceCommon,
         raise NotImplementedError
 
     @dbus_property('as')
-    def interfaces(self) -> List[str]:
+    def interfaces(self) -> list[str]:
         """Extra D-Bus daemon interfaces"""
         raise NotImplementedError

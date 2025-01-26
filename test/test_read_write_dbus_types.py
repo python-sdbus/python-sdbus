@@ -19,7 +19,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import Dict, List
 from unittest import main
 
 from sdbus.sd_bus_internals import SdBus, SdBusMessage
@@ -171,7 +170,7 @@ class TestDbusTypes(IsolatedDbusTestCase):
     def test_empty_array(self) -> None:
         message = create_message(self.bus)
 
-        test_array: List[str] = []
+        test_array: list[str] = []
         message.append_data("as", test_array)
 
         message.seal()
@@ -234,7 +233,7 @@ class TestDbusTypes(IsolatedDbusTestCase):
     def test_empty_dict(self) -> None:
         message = create_message(self.bus)
 
-        test_dict: Dict[str, str] = {}
+        test_dict: dict[str, str] = {}
         message.append_data("a{ss}", test_dict)
 
         message.seal()

@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from sdbus import (
     DbusInterfaceCommonAsync,
@@ -91,7 +91,7 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
         raise NotImplementedError
 
     @dbus_method_async()
-    async def list_activatable_names(self) -> List[str]:
+    async def list_activatable_names(self) -> list[str]:
         """Lists all activatable services names.
 
         :return: List of all names.
@@ -99,7 +99,7 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
         raise NotImplementedError
 
     @dbus_method_async()
-    async def list_names(self) -> List[str]:
+    async def list_names(self) -> list[str]:
         """List all services and connections currently of the bus.
 
         :return: List of all current names.
@@ -134,7 +134,7 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
         raise NotImplementedError
 
     @dbus_property_async('as')
-    def features(self) -> List[str]:
+    def features(self) -> list[str]:
         """List of D-Bus daemon features.
 
         Features include:
@@ -149,7 +149,7 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
         raise NotImplementedError
 
     @dbus_property_async('as')
-    def interfaces(self) -> List[str]:
+    def interfaces(self) -> list[str]:
         """Extra D-Bus daemon interfaces"""
         raise NotImplementedError
 
@@ -164,7 +164,7 @@ class FreedesktopDbus(DbusInterfaceCommonAsync,
         raise NotImplementedError
 
     @dbus_signal_async('sss')
-    def name_owner_changed(self) -> Tuple[str, str, str]:
+    def name_owner_changed(self) -> tuple[str, str, str]:
         """Signal when some name on a bus changes owner.
 
         Is a tuple of:

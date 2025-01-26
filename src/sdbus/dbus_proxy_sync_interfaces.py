@@ -25,7 +25,7 @@ from .dbus_proxy_sync_interface_base import DbusInterfaceBase
 from .dbus_proxy_sync_method import dbus_method
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Literal, Tuple
+    from typing import Any, Literal
 
 
 class DbusPeerInterface(
@@ -61,14 +61,14 @@ class DbusPropertiesInterface(
 ):
     @dbus_method('s', 'a{sv}', method_name='GetAll')
     def _properties_get_all(
-            self, interface_name: str) -> Dict[str, Tuple[str, Any]]:
+            self, interface_name: str) -> dict[str, tuple[str, Any]]:
         raise NotImplementedError
 
     def properties_get_all_dict(
             self,
             on_unknown_member: Literal['error', 'ignore', 'reuse'] = 'error',
-    ) -> Dict[str, Any]:
-        properties: Dict[str, Any] = {}
+    ) -> dict[str, Any]:
+        properties: dict[str, Any] = {}
 
         for interface_name, meta in self._dbus_iter_interfaces_meta():
             if not meta.serving_enabled:
@@ -107,5 +107,5 @@ class DbusObjectManagerInterface(
 ):
     @dbus_method(result_signature='a{oa{sa{sv}}}')
     def get_managed_objects(
-            self) -> Dict[str, Dict[str, Dict[str, Any]]]:
+            self) -> dict[str, dict[str, dict[str, Any]]]:
         raise NotImplementedError

@@ -28,7 +28,7 @@ from .sd_bus_internals import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Tuple
+    from typing import Any
 
 
 class DbusErrorMeta(type):
@@ -36,8 +36,8 @@ class DbusErrorMeta(type):
     def __new__(
         cls,
         name: str,
-        bases: Tuple[type, ...],
-        namespace: Dict[str, Any],
+        bases: tuple[type, ...],
+        namespace: dict[str, Any],
     ) -> DbusErrorMeta:
 
         dbus_error_name = namespace.get('dbus_error_name')

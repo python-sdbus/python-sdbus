@@ -19,11 +19,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from collections.abc import Callable
 from copy import copy
 from inspect import getmembers
 from itertools import chain
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, cast
 from warnings import warn
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
@@ -48,18 +49,8 @@ from .dbus_proxy_async_signal import DbusLocalSignalAsync, DbusSignalAsync
 from .sd_bus_internals import SdBusInterface
 
 if TYPE_CHECKING:
-    from typing import (
-        Dict,
-        Iterable,
-        Iterator,
-        List,
-        Optional,
-        Set,
-        Tuple,
-        Type,
-        TypeVar,
-        Union,
-    )
+    from collections.abc import Iterable, Iterator
+    from typing import Optional, TypeVar, Union
 
     from .dbus_common_elements import DbusBoundAsync
     from .sd_bus_internals import SdBus, SdBusSlot
@@ -81,7 +72,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
     def _process_dbus_method_override(
         override_attr_name: str,
         override: DbusMethodOverride[T],
-        mro_dbus_elements: Dict[str, DbusMemberAsync],
+        mro_dbus_elements: dict[str, DbusMemberAsync],
     ) -> DbusMethodAsync:
         try:
             original_method = mro_dbus_elements[override_attr_name]
@@ -105,7 +96,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
     def _process_dbus_property_override(
         override_attr_name: str,
         override: DbusPropertyOverride[T],
-        mro_dbus_elements: Dict[str, DbusMemberAsync],
+        mro_dbus_elements: dict[str, DbusMemberAsync],
     ) -> DbusPropertyAsync[Any]:
         try:
             original_property = mro_dbus_elements[override_attr_name]
@@ -136,12 +127,12 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
     def _check_collisions(
         cls,
         new_class_name: str,
-        namespace: Dict[str, Any],
-        mro_dbus_elements: Dict[str, DbusMemberAsync],
+        namespace: dict[str, Any],
+        mro_dbus_elements: dict[str, DbusMemberAsync],
     ) -> None:
 
         possible_collisions = namespace.keys() & mro_dbus_elements.keys()
-        new_overrides: Dict[str, DbusMemberAsync] = {}
+        new_overrides: dict[str, DbusMemberAsync] = {}
 
         for attr_name, attr in namespace.items():
             if isinstance(attr, DbusMethodOverride):
@@ -173,8 +164,8 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
     def _extract_dbus_elements(
         dbus_class: type,
         dbus_meta: DbusClassMeta,
-    ) -> Dict[str, DbusMemberAsync]:
-        dbus_elements_map: Dict[str, DbusMemberAsync] = {}
+    ) -> dict[str, DbusMemberAsync]:
+        dbus_elements_map: dict[str, DbusMemberAsync] = {}
 
         for attr_name in dbus_meta.python_attr_to_dbus_member.keys():
             dbus_element = dbus_class.__dict__.get(attr_name)
@@ -193,9 +184,9 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         cls,
         new_class_name: str,
         base_classes: Iterable[type],
-    ) -> Dict[str, DbusMemberAsync]:
-        all_python_dbus_map: Dict[str, DbusMemberAsync] = {}
-        possible_collisions: Set[str] = set()
+    ) -> dict[str, DbusMemberAsync]:
+        all_python_dbus_map: dict[str, DbusMemberAsync] = {}
+        possible_collisions: set[str] = set()
 
         for c in base_classes:
             dbus_meta = DBUS_CLASS_TO_META.get(c)
@@ -252,8 +243,8 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
             raise TypeError(f"Unknown D-Bus element: {attr!r}")
 
     def __new__(cls, name: str,
-                bases: Tuple[type, ...],
-                namespace: Dict[str, Any],
+                bases: tuple[type, ...],
+                namespace: dict[str, Any],
                 interface_name: Optional[str] = None,
                 serving_enabled: bool = True,
                 ) -> DbusInterfaceMetaAsync:
@@ -264,7 +255,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
                 "already created."
             )
 
-        all_mro_bases: Set[Type[Any]] = set(
+        all_mro_bases: set[type[Any]] = set(
             chain.from_iterable((c.__mro__ for c in bases))
         )
         reserved_dbus_map = cls._map_mro_dbus_elements(
@@ -303,7 +294,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
     @classmethod
     def _dbus_iter_interfaces_meta(
         cls,
-    ) -> Iterator[Tuple[str, DbusClassMeta]]:
+    ) -> Iterator[tuple[str, DbusClassMeta]]:
 
         for base in cls.__mro__:
             meta = DBUS_CLASS_TO_META.get(base)
@@ -344,7 +335,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
         local_object_meta.attached_bus = bus
         local_object_meta.serving_object_path = object_path
         # TODO: can be optimized with a single loop
-        interface_map: Dict[str, List[DbusBoundAsync]] = {}
+        interface_map: dict[str, list[DbusBoundAsync]] = {}
 
         for key, value in getmembers(self):
             assert not isinstance(value, DbusMemberAsync)
@@ -448,7 +439,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
 
     @classmethod
     def new_connect(
-        cls: Type[Self],
+        cls: type[Self],
         service_name: str,
         object_path: str,
         bus: Optional[SdBus] = None,
@@ -464,7 +455,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
 
     @classmethod
     def new_proxy(
-        cls: Type[Self],
+        cls: type[Self],
         service_name: str,
         object_path: str,
         bus: Optional[SdBus] = None,
@@ -477,7 +468,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
 
 class DbusExportHandle:
     def __init__(self, local_meta: DbusLocalObjectMeta):
-        self._dbus_slots: List[SdBusSlot] = [
+        self._dbus_slots: list[SdBusSlot] = [
             i.slot
             for i in local_meta.activated_interfaces
             if i.slot is not None

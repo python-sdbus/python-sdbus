@@ -19,21 +19,16 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from sdbus.unittest import IsolatedDbusTestCase
 
 from sdbus import DbusInterfaceCommonAsync, dbus_method_async
-
-if TYPE_CHECKING:
-    from typing import Tuple, Type
 
 TEST_SERVICE_NAME = 'org.example.test'
 
 
 def initialize_object(
-    interface_class: Type[DbusInterfaceCommonAsync],
-) -> Tuple[DbusInterfaceCommonAsync, DbusInterfaceCommonAsync]:
+    interface_class: type[DbusInterfaceCommonAsync],
+) -> tuple[DbusInterfaceCommonAsync, DbusInterfaceCommonAsync]:
     test_object = interface_class()
     test_object.export_to_dbus('/')
 

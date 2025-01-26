@@ -33,7 +33,8 @@ from .dbus_proxy_async_method import dbus_method_async
 from .dbus_proxy_async_signal import dbus_signal_async
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Optional, Tuple
+    from collections.abc import Callable
+    from typing import Any, Optional
 
     from .sd_bus_internals import SdBus, SdBusSlot
 
@@ -60,19 +61,19 @@ class DbusObjectManagerInterfaceAsync(
     def __init__(self) -> None:
         super().__init__()
         self._object_manager_slot: Optional[SdBusSlot] = None
-        self._managed_object_to_path: Dict[DbusInterfaceBaseAsync, str] = {}
+        self._managed_object_to_path: dict[DbusInterfaceBaseAsync, str] = {}
 
     @dbus_method_async(result_signature='a{oa{sa{sv}}}')
     async def get_managed_objects(
-            self) -> Dict[str, Dict[str, Dict[str, Any]]]:
+            self) -> dict[str, dict[str, dict[str, Any]]]:
         raise NotImplementedError
 
     @dbus_signal_async('oa{sa{sv}}')
-    def interfaces_added(self) -> Tuple[str, Dict[str, Dict[str, Any]]]:
+    def interfaces_added(self) -> tuple[str, dict[str, dict[str, Any]]]:
         raise NotImplementedError
 
     @dbus_signal_async('oao')
-    def interfaces_removed(self) -> Tuple[str, List[str]]:
+    def interfaces_removed(self) -> tuple[str, list[str]]:
         raise NotImplementedError
 
     def export_to_dbus(

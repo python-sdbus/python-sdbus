@@ -19,9 +19,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from collections.abc import Awaitable
 from inspect import iscoroutinefunction
 from types import FunctionType
-from typing import TYPE_CHECKING, Awaitable, Generic, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Generic, TypeVar, cast, overload
 from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
@@ -33,7 +34,8 @@ from .dbus_common_elements import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Generator, Optional, Type, Union
+    from collections.abc import Callable, Generator
+    from typing import Any, Optional, Union
 
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
     from .sd_bus_internals import SdBusMessage
@@ -75,7 +77,7 @@ class DbusPropertyAsync(DbusMemberAsync, DbusPropertyCommon, Generic[T]):
     def __get__(
         self,
         obj: None,
-        obj_class: Type[DbusInterfaceBaseAsync],
+        obj_class: type[DbusInterfaceBaseAsync],
     ) -> DbusPropertyAsync[T]:
         ...
 
@@ -83,14 +85,14 @@ class DbusPropertyAsync(DbusMemberAsync, DbusPropertyCommon, Generic[T]):
     def __get__(
         self,
         obj: DbusInterfaceBaseAsync,
-        obj_class: Type[DbusInterfaceBaseAsync],
+        obj_class: type[DbusInterfaceBaseAsync],
     ) -> DbusBoundPropertyAsyncBase[T]:
         ...
 
     def __get__(
         self,
         obj: Optional[DbusInterfaceBaseAsync],
-        obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
+        obj_class: Optional[type[DbusInterfaceBaseAsync]] = None,
     ) -> Union[DbusBoundPropertyAsyncBase[T], DbusPropertyAsync[T]]:
         if obj is not None:
             dbus_meta = obj._dbus

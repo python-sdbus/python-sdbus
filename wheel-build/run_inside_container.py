@@ -25,9 +25,8 @@ from os import environ, execl
 from pathlib import Path
 from shutil import copy
 from subprocess import PIPE, CalledProcessError, run
-from typing import List
 
-yum_packages: List[str] = [
+yum_packages: list[str] = [
     'gettext-autopoint', 'gperf',
 ]
 
@@ -53,14 +52,14 @@ yum_packages: List[str] = [
 
 ROOT_DIR = Path('/root')
 NPROC = '4'
-PYTHON_VERSIONS = ['cp39-cp39', 'cp38-cp38', 'cp37-cp37m']
+PYTHON_VERSIONS = ['cp39-cp39']
 
-BASIC_C_FLAGS: List[str] = [
+BASIC_C_FLAGS: list[str] = [
     '-O2', '-fno-plt', '-D_FORTIFY_SOURCE=2',
     '-fstack-clash-protection',
 ]
 
-SYSTEMD_OPTIONS: List[str] = [
+SYSTEMD_OPTIONS: list[str] = [
     "static-libsystemd=pic",
     "tests=false",
     "coredump=false",

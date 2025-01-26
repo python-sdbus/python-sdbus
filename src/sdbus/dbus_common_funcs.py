@@ -37,7 +37,8 @@ from .sd_bus_internals import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Generator, Iterator, Literal, Mapping, Tuple
+    from collections.abc import Generator, Iterator, Mapping
+    from typing import Any, Literal
 
     from .sd_bus_internals import SdBus
 
@@ -167,11 +168,11 @@ def _check_sync_in_async_env() -> bool:
 
 def _parse_properties_vardict(
         properties_name_map: Mapping[str, str],
-        properties_vardict: Dict[str, Tuple[str, Any]],
+        properties_vardict: dict[str, tuple[str, Any]],
         on_unknown_member: Literal['error', 'ignore', 'reuse'],
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
 
-    properties_translated: Dict[str, Any] = {}
+    properties_translated: dict[str, Any] = {}
 
     for member_name, variant in properties_vardict.items():
         try:

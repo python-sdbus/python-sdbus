@@ -30,7 +30,8 @@ from .dbus_common_elements import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Sequence, Type
+    from collections.abc import Callable, Sequence
+    from typing import Any, Optional
 
     from .dbus_proxy_sync_interface_base import DbusInterfaceBase
 
@@ -40,7 +41,7 @@ T = TypeVar('T')
 class DbusMethodSync(DbusMethodCommon, DbusMemberSync):
     def __get__(self,
                 obj: DbusInterfaceBase,
-                obj_class: Optional[Type[DbusInterfaceBase]] = None,
+                obj_class: Optional[type[DbusInterfaceBase]] = None,
                 ) -> Callable[..., Any]:
         return DbusLocalMethodSync(self, obj)
 

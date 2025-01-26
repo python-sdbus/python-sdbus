@@ -29,35 +29,25 @@ from ..dbus_proxy_async_interface_base import (
 )
 
 if TYPE_CHECKING:
-    from typing import (
-        Any,
-        Dict,
-        FrozenSet,
-        Iterable,
-        List,
-        Literal,
-        Optional,
-        Tuple,
-        Type,
-        Union,
-    )
+    from collections.abc import Iterable
+    from typing import Any, Literal, Optional, Union
 
     from ..dbus_proxy_async_interfaces import DBUS_PROPERTIES_CHANGED_TYPING
 
     InterfacesInputElements = Union[
         DbusInterfaceBaseAsync,
-        Type[DbusInterfaceBaseAsync],
+        type[DbusInterfaceBaseAsync],
     ]
     InterfacesInput = Union[
         InterfacesInputElements,
         Iterable[InterfacesInputElements],
     ]
-    InterfacesToClassMap = Dict[FrozenSet[str], Type[DbusInterfaceBaseAsync]]
+    InterfacesToClassMap = dict[frozenset[str], type[DbusInterfaceBaseAsync]]
     OnUnknownMember = Literal['error', 'ignore', 'reuse']
     OnUnknownInterface = Literal['error', 'none']
-    ParseGetManaged = Dict[
+    ParseGetManaged = dict[
         str,
-        Tuple[Optional[Type[DbusInterfaceBaseAsync]], Dict[str, Any]],
+        tuple[Optional[type[DbusInterfaceBaseAsync]], dict[str, Any]],
     ]
 
 
@@ -65,7 +55,7 @@ def parse_properties_changed(
         interface: InterfacesInputElements,
         properties_changed_data: DBUS_PROPERTIES_CHANGED_TYPING,
         on_unknown_member: OnUnknownMember = 'error',
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     interface_name, changed_properties, invalidated_properties = (
         properties_changed_data
     )
@@ -120,7 +110,7 @@ def _get_class_from_interfaces(
     interfaces_to_class_map: InterfacesToClassMap,
     interface_names_iter: Iterable[str],
     raise_key_error: bool,
-) -> Optional[Type[DbusInterfaceBaseAsync]]:
+) -> Optional[type[DbusInterfaceBaseAsync]]:
     class_set = frozenset(interface_names_iter) - SKIP_INTERFACES
     try:
         return interfaces_to_class_map[class_set]
@@ -132,8 +122,8 @@ def _get_class_from_interfaces(
 
 
 def _get_member_map_from_class(
-    python_class: Optional[Type[DbusInterfaceBaseAsync]],
-) -> Dict[str, Dict[str, str]]:
+    python_class: Optional[type[DbusInterfaceBaseAsync]],
+) -> dict[str, dict[str, str]]:
     if python_class is None:
         return {}
     else:
@@ -145,11 +135,11 @@ def _get_member_map_from_class(
 
 
 def _translate_and_merge_members(
-    properties_data: Dict[str, Dict[str, Any]],
-    dbus_to_python_map: Dict[str, Dict[str, str]],
+    properties_data: dict[str, dict[str, Any]],
+    dbus_to_python_map: dict[str, dict[str, str]],
     on_unknown_member: OnUnknownMember,
-) -> Dict[str, Any]:
-    python_properties: Dict[str, Any] = {}
+) -> dict[str, Any]:
+    python_properties: dict[str, Any] = {}
     for interface_name, properties in properties_data.items():
         interface_member_map = dbus_to_python_map.get(
             interface_name, {},
@@ -167,10 +157,10 @@ def _translate_and_merge_members(
 
 def parse_interfaces_added(
     interfaces: InterfacesInput,
-    interfaces_added_data: Tuple[str, Dict[str, Dict[str, Any]]],
+    interfaces_added_data: tuple[str, dict[str, dict[str, Any]]],
     on_unknown_interface: OnUnknownInterface = 'error',
     on_unknown_member: OnUnknownMember = 'error',
-) -> Tuple[str, Optional[Type[DbusInterfaceBaseAsync]], Dict[str, Any]]:
+) -> tuple[str, Optional[type[DbusInterfaceBaseAsync]], dict[str, Any]]:
 
     interfaces_to_class_map = _create_interfaces_map(interfaces)
 
@@ -184,7 +174,7 @@ def parse_interfaces_added(
         )
     )
     dbus_to_python_member_map = _get_member_map_from_class(python_class)
-    python_properties: Dict[str, Any] = {}
+    python_properties: dict[str, Any] = {}
     for interface_name, properties in properties_data.items():
         interface_member_map = dbus_to_python_member_map.get(
             interface_name, {},
@@ -210,9 +200,9 @@ def parse_interfaces_added(
 
 def parse_interfaces_removed(
     interfaces: InterfacesInput,
-    interfaces_removed_data: Tuple[str, List[str]],
+    interfaces_removed_data: tuple[str, list[str]],
     on_unknown_interface: OnUnknownInterface = 'error',
-) -> Tuple[str, Optional[Type[DbusInterfaceBaseAsync]]]:
+) -> tuple[str, Optional[type[DbusInterfaceBaseAsync]]]:
 
     interfaces_to_class_map = _create_interfaces_map(interfaces)
 
@@ -231,7 +221,7 @@ def parse_interfaces_removed(
 
 def parse_get_managed_objects(
     interfaces: InterfacesInput,
-    managed_objects_data: Dict[str, Dict[str, Dict[str, Any]]],
+    managed_objects_data: dict[str, dict[str, dict[str, Any]]],
     on_unknown_interface: OnUnknownInterface = 'error',
     on_unknown_member: OnUnknownMember = 'error',
 ) -> ParseGetManaged:

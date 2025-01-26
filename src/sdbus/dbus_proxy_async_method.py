@@ -36,7 +36,8 @@ from .dbus_exceptions import DbusFailedError
 from .sd_bus_internals import DbusNoReplyFlag
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Sequence, Type, TypeVar, Union
+    from collections.abc import Callable, Sequence
+    from typing import Any, Optional, TypeVar, Union
 
     from .dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
     from .sd_bus_internals import SdBusMessage
@@ -58,7 +59,7 @@ class DbusMethodAsync(DbusMethodCommon, DbusMemberAsync):
     def __get__(
         self,
         obj: None,
-        obj_class: Type[DbusInterfaceBaseAsync],
+        obj_class: type[DbusInterfaceBaseAsync],
     ) -> DbusMethodAsync:
         ...
 
@@ -66,14 +67,14 @@ class DbusMethodAsync(DbusMethodCommon, DbusMemberAsync):
     def __get__(
         self,
         obj: DbusInterfaceBaseAsync,
-        obj_class: Type[DbusInterfaceBaseAsync],
+        obj_class: type[DbusInterfaceBaseAsync],
     ) -> Callable[..., Any]:
         ...
 
     def __get__(
         self,
         obj: Optional[DbusInterfaceBaseAsync],
-        obj_class: Optional[Type[DbusInterfaceBaseAsync]] = None,
+        obj_class: Optional[type[DbusInterfaceBaseAsync]] = None,
     ) -> Union[Callable[..., Any], DbusMethodAsync]:
         if obj is not None:
             dbus_meta = obj._dbus

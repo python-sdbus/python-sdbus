@@ -22,11 +22,11 @@ from __future__ import annotations
 from os import environ
 from subprocess import DEVNULL, PIPE
 from subprocess import run as subprocess_run
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from setuptools import Extension, setup
 
-c_macros: List[Tuple[str, Optional[str]]] = []
+c_macros: list[tuple[str, Optional[str]]] = []
 
 
 def get_libsystemd_version() -> int:
@@ -55,7 +55,7 @@ if not environ.get('PYTHON_SDBUS_USE_IGNORE_SYSTEMD_VERSION'):
         c_macros.append(('LIBSYSTEMD_NO_OPEN_USER_MACHINE', None))
 
 
-def get_link_arguments() -> List[str]:
+def get_link_arguments() -> list[str]:
     process = subprocess_run(
         args=('pkg-config', '--libs-only-l', 'libsystemd'),
         stderr=DEVNULL,
@@ -68,7 +68,7 @@ def get_link_arguments() -> List[str]:
     return result_str.rstrip(' \n').split(' ')
 
 
-link_arguments: List[str] = get_link_arguments()
+link_arguments: list[str] = get_link_arguments()
 
 if environ.get('PYTHON_SDBUS_USE_STATIC_LINK'):
     # Link statically against libsystemd and libcap
@@ -77,7 +77,7 @@ if environ.get('PYTHON_SDBUS_USE_STATIC_LINK'):
 
 link_arguments.append('-flto')
 
-compile_arguments: List[str] = ['-flto']
+compile_arguments: list[str] = ['-flto']
 
 use_limited_api = False
 

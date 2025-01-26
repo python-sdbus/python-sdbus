@@ -50,7 +50,7 @@ Example: ::
 
         # Signal with a list of strings
         @dbus_signal_async('as')
-        def str_signal(self) -> List[str]:
+        def str_signal(self) -> list[str]:
             raise NotImplementedError
 
 Initiating proxy
@@ -342,7 +342,7 @@ Example: ::
                         ):
 
         @dbus_method_async('as', 's')
-        async def join_str(self, str_array: List[str]) -> str:
+        async def join_str(self, str_array: list[str]) -> str:
             return ''.join(str_array)
 
 

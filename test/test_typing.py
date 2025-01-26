@@ -19,8 +19,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from sdbus import (
     DbusInterfaceCommon,
     DbusInterfaceCommonAsync,
@@ -31,9 +29,6 @@ from sdbus import (
     dbus_signal_async,
 )
 
-if TYPE_CHECKING:
-    from typing import List
-
 
 class TestTypingBlocking(
     DbusInterfaceCommon,
@@ -41,11 +36,11 @@ class TestTypingBlocking(
 ):
 
     @dbus_method(result_signature="as")
-    def get_str_list_method(self) -> List[str]:
+    def get_str_list_method(self) -> list[str]:
         raise NotImplementedError
 
     @dbus_property("as")
-    def str_list_property(self) -> List[str]:
+    def str_list_property(self) -> list[str]:
         raise NotImplementedError
 
 
@@ -82,15 +77,15 @@ class TestTypingAsync(
 ):
 
     @dbus_method_async(result_signature="as")
-    async def get_str_list_method(self) -> List[str]:
+    async def get_str_list_method(self) -> list[str]:
         raise NotImplementedError
 
     @dbus_property_async("as")
-    def str_list_property(self) -> List[str]:
+    def str_list_property(self) -> list[str]:
         raise NotImplementedError
 
     @dbus_signal_async("as")
-    def str_list_signal(self) -> List[str]:
+    def str_list_signal(self) -> list[str]:
         raise NotImplementedError
 
 
@@ -158,7 +153,7 @@ async def check_async_interface_signal_typing(
 
 async def check_async_element_class_access_typing() -> None:
 
-    test_list: List[str] = []
+    test_list: list[str] = []
 
     # TODO: Fix dbus async method typing
     # test_list.append(

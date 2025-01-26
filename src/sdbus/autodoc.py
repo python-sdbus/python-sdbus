@@ -28,7 +28,7 @@ from .dbus_proxy_async_property import DbusPropertyAsync
 from .dbus_proxy_async_signal import DbusSignalAsync
 
 if TYPE_CHECKING:
-    from typing import Any, Dict
+    from typing import Any
 
     from sphinx.application import Sphinx
 
@@ -129,7 +129,7 @@ class DbusSignalDocumenter(AttributeDocumenter):
         super().add_content(*args, **kwargs)
 
 
-def setup(app: Sphinx) -> Dict[str, bool]:
+def setup(app: Sphinx) -> dict[str, bool]:
     app.setup_extension('sphinx.ext.autodoc')
     app.add_autodocumenter(DbusMethodDocumenter)
     app.add_autodocumenter(DbusPropertyDocumenter)

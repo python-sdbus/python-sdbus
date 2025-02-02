@@ -256,7 +256,7 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
             )
 
         all_mro_bases: set[type[Any]] = set(
-            chain.from_iterable((c.__mro__ for c in bases))
+            chain.from_iterable(c.__mro__ for c in bases)
         )
         reserved_dbus_map = cls._map_mro_dbus_elements(
             name, all_mro_bases,

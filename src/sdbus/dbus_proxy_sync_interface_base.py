@@ -132,7 +132,7 @@ class DbusInterfaceMetaSync(DbusInterfaceMetaCommon):
             )
 
         all_mro_bases: set[type[Any]] = set(
-            chain.from_iterable((c.__mro__ for c in bases))
+            chain.from_iterable(c.__mro__ for c in bases)
         )
         reserved_attr_names = cls._collect_dbus_to_python_attr_names(
             name, all_mro_bases,

@@ -86,10 +86,8 @@ class TestLowLeveApi(TestCase):
             )
         except NotImplementedError:
             raise SkipTest(
-                (
-                    "Validation funcs not implemented. "
-                    "Probably too old libsystemd. (< 246)"
-                )
+                "Validation funcs not implemented. "
+                "Probably too old libsystemd. (< 246)"
             )
 
     def test_bus_method_call_timeout(self) -> None:

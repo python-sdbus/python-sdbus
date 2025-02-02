@@ -250,7 +250,7 @@ class DbusSigToTyping:
             return cls.typing_complete(result_args[0])
         else:
             return cls.typing_into_tuple(
-                (cls.typing_complete(x) for x in result_args)
+                cls.typing_complete(x) for x in result_args
             )
 
     @classmethod
@@ -380,14 +380,14 @@ class DbusMethodInrospection(DbusMemberAbstract):
     @property
     def dbus_input_signature(self) -> str:
         return ''.join(
-            (x.dbus_type for x in self.input_args)
+            x.dbus_type for x in self.input_args
         )
 
     @property
     def dbus_result_signature(self) -> str:
         return ''.join(
-            (x.dbus_type if not x.is_input else ''
-             for x in self.result_args)
+            x.dbus_type if not x.is_input else ''
+            for x in self.result_args
         )
 
     @property
@@ -411,7 +411,7 @@ class DbusMethodInrospection(DbusMemberAbstract):
 
     @property
     def is_results_args_valid_names(self) -> bool:
-        return all((r.name is not None for r in self.result_args))
+        return all(r.name is not None for r in self.result_args)
 
     @property
     def result_args_names_repr(self) -> str:
@@ -512,7 +512,7 @@ class DbusSignalIntrospection(DbusMemberAbstract):
 
     @property
     def dbus_signature(self) -> str:
-        return ''.join((x.dbus_type for x in self.args))
+        return ''.join(x.dbus_type for x in self.args)
 
     @property
     def typing(self) -> str:
@@ -521,7 +521,7 @@ class DbusSignalIntrospection(DbusMemberAbstract):
 
     @property
     def is_args_valid_names(self) -> bool:
-        return all((a.name is not None for a in self.args))
+        return all(a.name is not None for a in self.args)
 
     @property
     def args_names_repr(self) -> str:

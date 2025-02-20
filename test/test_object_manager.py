@@ -29,9 +29,12 @@ from sdbus.utils import (
 
 from sdbus import (
     DbusInterfaceCommonAsync,
+    DbusInterfaceCommon,
     DbusObjectManagerInterfaceAsync,
     dbus_method_async,
     dbus_property_async,
+    dbus_method,
+    dbus_property,
 )
 
 HELLO_WORLD = 'Hello World!'
@@ -55,12 +58,22 @@ CONNECTION_NAME = 'org.example.test'
 MANAGED_INTERFACE_NAME = 'org.test.testing'
 
 
-class ManagedInterface(
+class ManagedInterfaceAsync(
     DbusInterfaceCommonAsync,
     interface_name=MANAGED_INTERFACE_NAME,
 ):
 
     @dbus_property_async('x')
+    def test_int(self) -> int:
+        return TEST_NUMBER
+
+
+class ManagedInterface(
+    DbusInterfaceCommon,
+    interface_name=MANAGED_INTERFACE_NAME,
+):
+
+    @dbus_property('x')
     def test_int(self) -> int:
         return TEST_NUMBER
 
@@ -82,7 +95,7 @@ class TestObjectManager(IsolatedDbusTestCase):
             await object_manager_connection.get_hello_world(),
             HELLO_WORLD)
 
-        managed_object = ManagedInterface()
+        managed_object = ManagedInterfaceAsync()
 
         async with self.assertDbusSignalEmits(
             object_manager_connection.interfaces_added
@@ -103,7 +116,7 @@ class TestObjectManager(IsolatedDbusTestCase):
         )
 
         with self.subTest("Test interfaces added parser"):
-            parse_interfaces_added(ManagedInterface, caught_added)
+            parse_interfaces_added(ManagedInterfaceAsync, caught_added)
 
         async with self.assertDbusSignalEmits(
             object_manager_connection.interfaces_removed
@@ -119,7 +132,7 @@ class TestObjectManager(IsolatedDbusTestCase):
     def test_expot_with_no_manager(self) -> None:
         object_manager = ObjectManagerTestInterface()
 
-        managed_object = ManagedInterface()
+        managed_object = ManagedInterfaceAsync()
 
         self.assertRaises(
             RuntimeError,
@@ -131,12 +144,20 @@ class TestObjectManager(IsolatedDbusTestCase):
     async def test_parse_interfaces_added_removed(self) -> None:
         MANAGED_TWO_INTERFACE_NAME = MANAGED_INTERFACE_NAME + 'Two'
 
-        class ManagedTwoInterface(
-            ManagedInterface,
+        class ManagedTwoInterfaceAsync(
+            ManagedInterfaceAsync,
             interface_name=MANAGED_TWO_INTERFACE_NAME,
         ):
 
             @dbus_property_async('s')
+            def test_str(self) -> str:
+                return 'test'
+
+        class ManagedTwoInterface(
+            ManagedInterface,
+            interface_name=MANAGED_TWO_INTERFACE_NAME,
+        ):
+            @dbus_property('s')
             def test_str(self) -> str:
                 return 'test'
 
@@ -148,44 +169,46 @@ class TestObjectManager(IsolatedDbusTestCase):
         object_manager_connection = DbusObjectManagerInterfaceAsync.new_proxy(
             CONNECTION_NAME, OBJECT_MANAGER_PATH)
 
-        managed_object = ManagedTwoInterface()
+        managed_object_async = ManagedTwoInterfaceAsync()
+        managed_object = ManagedTwoInterface(CONNECTION_NAME, MANAGED_PATH)
+
 
         async with self.assertDbusSignalEmits(
             object_manager_connection.interfaces_added
         ) as added_interfaces_catch:
-            object_manager.export_with_manager(MANAGED_PATH, managed_object)
+            object_manager.export_with_manager(MANAGED_PATH, managed_object_async)
 
         caught_added = added_interfaces_catch.output[0]
 
         with self.subTest('Parse added class'):
             path, python_class, python_properties = (
-                parse_interfaces_added(ManagedTwoInterface, caught_added)
+                parse_interfaces_added(ManagedTwoInterfaceAsync, caught_added)
             )
 
             self.assertEqual(path, MANAGED_PATH)
-            self.assertEqual(python_class, ManagedTwoInterface)
+            self.assertEqual(python_class, ManagedTwoInterfaceAsync)
             self.assertIn('test_str', python_properties)
             self.assertIn('test_int', python_properties)
 
         with self.subTest('Parse added object'):
             path, python_class, python_properties = (
-                parse_interfaces_added(managed_object, caught_added)
+                parse_interfaces_added(managed_object_async, caught_added)
             )
 
             self.assertEqual(path, MANAGED_PATH)
-            self.assertEqual(python_class, ManagedTwoInterface)
+            self.assertEqual(python_class, ManagedTwoInterfaceAsync)
             self.assertIn('test_str', python_properties)
             self.assertIn('test_int', python_properties)
 
         with self.subTest('Parse added iterable'):
             path, python_class, python_properties = (
                 parse_interfaces_added(
-                    (ManagedInterface, ManagedTwoInterface),
+                    (ManagedInterfaceAsync, ManagedTwoInterfaceAsync),
                     caught_added)
             )
 
             self.assertEqual(path, MANAGED_PATH)
-            self.assertEqual(python_class, ManagedTwoInterface)
+            self.assertEqual(python_class, ManagedTwoInterfaceAsync)
             self.assertIn('test_str', python_properties)
             self.assertIn('test_int', python_properties)
 
@@ -193,14 +216,14 @@ class TestObjectManager(IsolatedDbusTestCase):
             with self.assertRaises(KeyError):
                 path, python_class, python_properties = (
                     parse_interfaces_added(
-                        ManagedInterface,
+                        ManagedInterfaceAsync,
                         caught_added)
                 )
 
             with self.assertRaises(KeyError):
                 path, python_class, python_properties = (
                     parse_interfaces_added(
-                        ManagedInterface,
+                        ManagedInterfaceAsync,
                         caught_added,
                         on_unknown_interface='none',
                     )
@@ -208,7 +231,7 @@ class TestObjectManager(IsolatedDbusTestCase):
 
             path, python_class, python_properties = (
                 parse_interfaces_added(
-                    ManagedInterface,
+                    ManagedInterfaceAsync,
                     caught_added,
                     on_unknown_interface='none',
                     on_unknown_member='reuse',
@@ -224,58 +247,67 @@ class TestObjectManager(IsolatedDbusTestCase):
             await object_manager_connection.get_managed_objects()
         )
         with self.subTest('Parse get managed objects class'):
-            managed_dict = (
-                parse_get_managed_objects(
-                    ManagedTwoInterface,
-                    get_managed_data,
-                )
-            )
+            for interface in (ManagedTwoInterfaceAsync, ManagedTwoInterface):
+                with self.subTest(interface.__name__):
+                    managed_dict = (
+                        parse_get_managed_objects(
+                            interface,
+                            get_managed_data,
+                        )
+                    )
 
-            self.assertIn(MANAGED_PATH, managed_dict)
-            managed_class, managed_properties = (
-                managed_dict[MANAGED_PATH]
-            )
-            self.assertEqual(managed_class, ManagedTwoInterface)
-            self.assertIn('test_str', managed_properties)
-            self.assertIn('test_int', managed_properties)
+                    self.assertIn(MANAGED_PATH, managed_dict)
+                    managed_class, managed_properties = (
+                        managed_dict[MANAGED_PATH]
+                    )
+                    self.assertEqual(managed_class, interface)
+                    self.assertIn('test_str', managed_properties)
+                    self.assertIn('test_int', managed_properties)
 
         with self.subTest('Parse get managed objects object'):
-            managed_dict = (
-                parse_get_managed_objects(
-                    managed_object,
-                    get_managed_data,
-                )
-            )
+            for obj in (managed_object_async, managed_object):
+                with self.subTest(interface.__class__.__name__):
+                    managed_dict = (
+                        parse_get_managed_objects(
+                            managed_object_async,
+                            get_managed_data,
+                        )
+                    )
 
-            self.assertIn(MANAGED_PATH, managed_dict)
-            managed_class, managed_properties = (
-                managed_dict[MANAGED_PATH]
-            )
-            self.assertEqual(managed_class, ManagedTwoInterface)
-            self.assertIn('test_str', managed_properties)
-            self.assertIn('test_int', managed_properties)
+                    self.assertIn(MANAGED_PATH, managed_dict)
+                    managed_class, managed_properties = (
+                        managed_dict[MANAGED_PATH]
+                    )
+                    self.assertEqual(managed_class, ManagedTwoInterfaceAsync)
+                    self.assertIn('test_str', managed_properties)
+                    self.assertIn('test_int', managed_properties)
 
         with self.subTest('Parse get managed objects iterable'):
-            managed_dict = (
-                parse_get_managed_objects(
-                    (ManagedInterface, ManagedTwoInterface),
-                    get_managed_data,
-                )
-            )
+            for iterable in (
+                (ManagedInterfaceAsync, ManagedTwoInterfaceAsync),
+                (ManagedInterface, ManagedTwoInterface)
+            ):
+                with self.subTest(interface.__class__.__name__):
+                    managed_dict = (
+                        parse_get_managed_objects(
+                            iterable,
+                            get_managed_data,
+                        )
+                    )
 
-            self.assertIn(MANAGED_PATH, managed_dict)
-            managed_class, managed_properties = (
-                managed_dict[MANAGED_PATH]
-            )
-            self.assertEqual(managed_class, ManagedTwoInterface)
-            self.assertIn('test_str', managed_properties)
-            self.assertIn('test_int', managed_properties)
+                    self.assertIn(MANAGED_PATH, managed_dict)
+                    managed_class, managed_properties = (
+                        managed_dict[MANAGED_PATH]
+                    )
+                    self.assertEqual(managed_class, iterable[1])
+                    self.assertIn('test_str', managed_properties)
+                    self.assertIn('test_int', managed_properties)
 
         with self.subTest('Parse get managed objects unknown'):
             with self.assertRaises(KeyError):
                 managed_dict = (
                     parse_get_managed_objects(
-                        ManagedInterface,
+                        ManagedInterfaceAsync,
                         get_managed_data,
                     )
                 )
@@ -283,7 +315,7 @@ class TestObjectManager(IsolatedDbusTestCase):
             with self.assertRaises(KeyError):
                 managed_dict = (
                     parse_get_managed_objects(
-                        ManagedInterface,
+                        ManagedInterfaceAsync,
                         get_managed_data,
                         on_unknown_interface='none',
                     )
@@ -291,7 +323,7 @@ class TestObjectManager(IsolatedDbusTestCase):
 
             managed_dict = (
                 parse_get_managed_objects(
-                    ManagedInterface,
+                    ManagedInterfaceAsync,
                     get_managed_data,
                     on_unknown_interface='none',
                     on_unknown_member='reuse',
@@ -299,7 +331,7 @@ class TestObjectManager(IsolatedDbusTestCase):
             )
             path, python_class, python_properties = (
                 parse_interfaces_added(
-                    ManagedInterface,
+                    ManagedInterfaceAsync,
                     caught_added,
                     on_unknown_interface='none',
                     on_unknown_member='reuse',
@@ -317,33 +349,33 @@ class TestObjectManager(IsolatedDbusTestCase):
         async with self.assertDbusSignalEmits(
             object_manager_connection.interfaces_removed
         ) as removed_interfaces_catch:
-            object_manager.remove_managed_object(managed_object)
+            object_manager.remove_managed_object(managed_object_async)
 
         interfaces_removed_data = removed_interfaces_catch.output[0]
 
         with self.subTest('Parse removed class'):
             path, python_class = (
                 parse_interfaces_removed(
-                    ManagedTwoInterface,
+                    ManagedTwoInterfaceAsync,
                     interfaces_removed_data,
                 )
             )
 
             self.assertEqual(path, MANAGED_PATH)
-            self.assertEqual(python_class, ManagedTwoInterface)
+            self.assertEqual(python_class, ManagedTwoInterfaceAsync)
 
         with self.subTest('Parse removed unknown'):
             with self.assertRaises(KeyError):
                 path, python_class = (
                     parse_interfaces_removed(
-                        ManagedInterface,
+                        ManagedInterfaceAsync,
                         interfaces_removed_data,
                     )
                 )
 
             path, python_class = (
                 parse_interfaces_removed(
-                    ManagedInterface,
+                    ManagedInterfaceAsync,
                     interfaces_removed_data,
                     on_unknown_interface='none',
                 )
@@ -381,8 +413,8 @@ class TestObjectManager(IsolatedDbusTestCase):
             CONNECTION_NAME, OBJECT_MANAGER_PATH)
         object_manager.export_to_dbus(OBJECT_MANAGER_PATH)
 
-        managed_object = ManagedInterface()
-        managed_proxy = ManagedInterface.new_proxy(
+        managed_object = ManagedInterfaceAsync()
+        managed_proxy = ManagedInterfaceAsync.new_proxy(
             CONNECTION_NAME, MANAGED_PATH,
         )
 

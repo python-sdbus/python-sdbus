@@ -185,7 +185,7 @@ Classes
         my_object_manager.export_to_dbus('/object/manager')
 
         managed_object = DbusInterfaceCommonAsync()
-        my_object_manager.export_with_manager('/object/manager/example')
+        my_object_manager.export_with_manager('/object/manager/example', managed_object)
 
     .. py:method:: get_managed_objects()
         :async:

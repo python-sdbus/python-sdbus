@@ -39,13 +39,13 @@ from .dbus_common_elements import (
     DbusPropertyOverride,
     DbusRemoteObjectMeta,
 )
-from .dbus_common_funcs import get_default_bus
 from .dbus_proxy_async_method import DbusLocalMethodAsync, DbusMethodAsync
 from .dbus_proxy_async_property import (
     DbusLocalPropertyAsync,
     DbusPropertyAsync,
 )
 from .dbus_proxy_async_signal import DbusLocalSignalAsync, DbusSignalAsync
+from .default_bus import get_default_bus
 from .sd_bus_internals import SdBusInterface
 
 if TYPE_CHECKING:

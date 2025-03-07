@@ -8,7 +8,7 @@ function but returns an awaitable for backwards compatibility.
 
 * **Since**: 0.11.0
 * **Warning**: 0.11.0
-* **Removed**: 1.0.0
+* **Removed**: 0.14.0
 
 ## Importing exceptions from `sdbus` module
 

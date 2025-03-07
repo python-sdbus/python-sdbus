@@ -3,77 +3,37 @@ Common API
 
 These calls are shared between async and blocking API.
 
+Default bus
++++++++++++
+
+.. automodule:: sdbus.default_bus
+    :members:
+
 .. py:currentmodule:: sdbus
 
 D-Bus connections calls
-++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++
 
-.. py:function:: request_default_bus_name_async(new_name, allow_replacement, replace_existing, queue)
-    :async:
+.. py:function:: sd_bus_open()
 
-    Acquire a name on the default bus async.
+    Opens a new bus connection. The session bus will be opened
+    when available or system bus otherwise.
 
-    :param str new_name: the name to acquire.
-        Must be a valid D-Bus service name.
-    :param str new_name: the name to acquire.
-        Must be a valid D-Bus service name.
-    :param bool allow_replacement: If name was acquired allow other peers
-        to take away the name.
-    :param bool replace_existing: If current name owner allows, take
-        away the name.
-    :param bool queue: Queue up for name acquisition.
-        :py:exc:`.SdBusRequestNameInQueueError` will be raised when successfully
-        placed in queue. :py:meth:`Ownership change signal <sdbus_async.dbus_daemon.FreedesktopDbus.name_owner_changed>`
-        should be monitored get notified when the name was acquired.
-    :raises: :ref:`name-request-exceptions` and other D-Bus exceptions.
-
-.. py:function:: request_default_bus_name(new_name, allow_replacement, replace_existing, queue)
-
-    Acquire a name on the default bus.
-
-    :param str new_name: the name to acquire.
-        Must be a valid D-Bus service name.
-    :param bool allow_replacement: If name was acquired allow other peers
-        to take away the name.
-    :param bool replace_existing: If current name owner allows, take
-        away the name.
-    :param bool queue: Queue up for name acquisition.
-        :py:exc:`.SdBusRequestNameInQueueError` will be raised when successfully
-        placed in queue. :py:meth:`Ownership change signal <sdbus_async.dbus_daemon.FreedesktopDbus.name_owner_changed>`
-        should be monitored get notified when the name was acquired.
-    :raises: :ref:`name-request-exceptions` and other D-Bus exceptions.
-
-.. py:function:: set_default_bus(new_default)
-
-    Sets default bus.
-
-    Should be called before you create any objects that might use
-    default bus.
-
-    Default bus can be replaced but the change will only affect
-    newly created objects.
-
-    :param SdBus new_default: The bus object to set default to.
-
-.. py:function:: get_default_bus(new_default)
-
-    Gets default bus.
-
-    :return: default bus
+    :return: Session or system bus.
     :rtype: SdBus
 
 .. py:function:: sd_bus_open_user()
 
     Opens a new user session bus connection.
 
-    :return: session bus
+    :return: Session bus.
     :rtype: SdBus
 
 .. py:function:: sd_bus_open_system()
 
     Opens a new system bus connection.
 
-    :return: system bus
+    :return: System bus.
     :rtype: SdBus
 
 .. py:function:: sd_bus_open_system_remote(host)
@@ -84,7 +44,7 @@ D-Bus connections calls
     ``systemd-nspawn`` container name.
 
     :param str host: Host name to connect.
-    :return: Remote system bus
+    :return: Remote system bus.
     :rtype: SdBus
 
 .. py:function:: sd_bus_open_system_machine(machine)
@@ -94,7 +54,7 @@ D-Bus connections calls
     Special machine name ``.host`` indicates local system.
 
     :param str machine: Machine (container) name.
-    :return: Remote system bus
+    :return: Remote system bus.
     :rtype: SdBus
 
 .. py:function:: sd_bus_open_user_machine(machine)
@@ -104,7 +64,7 @@ D-Bus connections calls
     prefixed with ``username@`` for a specific user.
 
     :param str machine: Machine (container) name.
-    :return: Remote system bus
+    :return: Remote system bus.
     :rtype: SdBus
 
 Helper functions

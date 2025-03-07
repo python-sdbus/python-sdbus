@@ -23,7 +23,6 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from .dbus_common_elements import DbusLocalObjectMeta
-from .dbus_common_funcs import get_default_bus
 from .dbus_proxy_async_interface_base import (
     DbusExportHandle,
     DbusInterfaceBaseAsync,
@@ -31,6 +30,7 @@ from .dbus_proxy_async_interface_base import (
 from .dbus_proxy_async_interfaces import DbusInterfaceCommonAsync
 from .dbus_proxy_async_method import dbus_method_async
 from .dbus_proxy_async_signal import dbus_signal_async
+from .default_bus import get_default_bus
 
 if TYPE_CHECKING:
     from collections.abc import Callable

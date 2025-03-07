@@ -17,13 +17,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+from __future__ import annotations
 
-from .dbus_common_funcs import (
-    get_default_bus,
-    request_default_bus_name,
-    request_default_bus_name_async,
-    set_default_bus,
-)
 from .dbus_exceptions import (
     DbusAccessDeniedError,
     DbusAddressInUseError,
@@ -75,6 +70,12 @@ from .dbus_proxy_sync_interfaces import (
 )
 from .dbus_proxy_sync_method import dbus_method
 from .dbus_proxy_sync_property import dbus_property
+from .default_bus import (
+    get_default_bus,
+    request_default_bus_name,
+    request_default_bus_name_async,
+    set_default_bus,
+)
 from .sd_bus_internals import (
     DbusDeprecatedFlag,
     DbusHiddenFlag,
@@ -101,9 +102,6 @@ from .sd_bus_internals import (
 )
 
 __all__ = (
-    'get_default_bus', 'request_default_bus_name',
-    'request_default_bus_name_async', 'set_default_bus',
-
     'DbusAccessDeniedError', 'DbusAddressInUseError',
     'DbusAuthFailedError', 'DbusBadAddressError',
     'DbusDisconnectedError', 'DbusFailedError',
@@ -143,6 +141,11 @@ __all__ = (
     'dbus_method',
 
     'dbus_property',
+
+    "get_default_bus",
+    "request_default_bus_name",
+    "request_default_bus_name_async",
+    "set_default_bus",
 
     'DbusDeprecatedFlag',
     'DbusHiddenFlag',

@@ -24,9 +24,9 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 from .dbus_common_funcs import (
     _is_property_flags_correct,
-    get_default_bus,
     snake_case_to_camel_case,
 )
+from .default_bus import get_default_bus
 from .sd_bus_internals import is_interface_name_valid, is_member_name_valid
 
 if TYPE_CHECKING:

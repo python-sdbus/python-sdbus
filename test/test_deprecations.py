@@ -21,19 +21,5 @@ from __future__ import annotations
 
 from unittest import main
 
-from sdbus.unittest import IsolatedDbusTestCase
-
-from sdbus import request_default_bus_name
-
-
-class TestDeprecations(IsolatedDbusTestCase):
-    async def test_await_on_blocking_request_name(self) -> None:
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            'Awaiting on request_default_bus_name'
-        ):
-            await request_default_bus_name('org.example.test')
-
-
 if __name__ == '__main__':
     main()

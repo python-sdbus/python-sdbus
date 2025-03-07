@@ -32,8 +32,8 @@ from typing import TYPE_CHECKING
 from unittest import IsolatedAsyncioTestCase
 from weakref import ref as weak_ref
 
-from .dbus_common_funcs import set_default_bus
 from .dbus_proxy_async_signal import DbusLocalSignalAsync, DbusProxySignalAsync
+from .default_bus import _get_defaul_bus_tls, _set_default_bus_tls
 from .sd_bus_internals import SdBusMessage, sd_bus_open_user
 
 if TYPE_CHECKING:
@@ -214,8 +214,10 @@ def _isolated_dbus(
             )
         environ["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={dbus_socket_path}"
 
+        old_bus = _get_defaul_bus_tls()
         bus = sd_bus_open_user()
-        set_default_bus(bus)
+        _set_default_bus_tls(bus)
+        exit_stack.callback(_set_default_bus_tls, old_bus)
         yield bus
 
 
@@ -225,9 +227,6 @@ class IsolatedDbusTestCase(IsolatedAsyncioTestCase):
         _isolated_dbus_cm = _isolated_dbus()
         self.bus = _isolated_dbus_cm.__enter__()
         self.addCleanup(_isolated_dbus_cm.__exit__, None, None, None)
-
-    async def asyncSetUp(self) -> None:
-        set_default_bus(self.bus)
 
     def assertDbusSignalEmits(
         self,

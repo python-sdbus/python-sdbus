@@ -123,7 +123,7 @@ def run_gen_from_connection(
     from .dbus_proxy_sync_interfaces import DbusInterfaceCommon
 
     if system:
-        from .dbus_common_funcs import set_default_bus
+        from .default_bus import set_default_bus
         from .sd_bus_internals import sd_bus_open_system
         set_default_bus(sd_bus_open_system())
 

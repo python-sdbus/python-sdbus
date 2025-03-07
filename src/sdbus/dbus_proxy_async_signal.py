@@ -33,7 +33,7 @@ from .dbus_common_elements import (
     DbusRemoteObjectMeta,
     DbusSignalCommon,
 )
-from .dbus_common_funcs import get_default_bus
+from .default_bus import get_default_bus
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence

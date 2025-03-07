@@ -22,9 +22,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..dbus_common_elements import DbusLocalObjectMeta, DbusRemoteObjectMeta
-from ..dbus_common_funcs import get_default_bus
 from ..dbus_proxy_async_interface_base import DbusInterfaceBaseAsync
 from ..dbus_proxy_sync_interface_base import DbusInterfaceBase
+from ..default_bus import get_default_bus
 
 if TYPE_CHECKING:
     from typing import Optional, Union

@@ -20,8 +20,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+import threading
 from asyncio import Future, get_running_loop
-from contextvars import ContextVar
+from logging import getLogger
 from typing import TYPE_CHECKING
 from warnings import warn
 
@@ -38,11 +39,19 @@ from .sd_bus_internals import (
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Mapping
-    from typing import Any, Literal
+    from typing import Any, Literal, Optional
 
     from .sd_bus_internals import SdBus
 
-DEFAULT_BUS: ContextVar[SdBus] = ContextVar('DEFAULT_BUS')
+
+logger = getLogger(__name__)
+
+
+class DefaultBusTLStorage(threading.local):
+    bus: Optional[SdBus] = None
+
+
+bus_tls = DefaultBusTLStorage()
 
 PROPERTY_FLAGS_MASK = (
     DbusPropertyConstFlag | DbusPropertyEmitsChangeFlag |
@@ -73,17 +82,30 @@ def _prepare_request_name_flags(
     )
 
 
+def _get_defaul_bus_tls() -> Optional[SdBus]:
+    return bus_tls.bus
+
+
+def _set_default_bus_tls(new_bus: Optional[SdBus]) -> None:
+    bus_tls.bus = new_bus
+
+
 def get_default_bus() -> SdBus:
-    try:
-        return DEFAULT_BUS.get()
-    except LookupError:
+    current_bus = _get_defaul_bus_tls()
+    if current_bus is not None:
+        return current_bus
+    else:
         new_bus = sd_bus_open()
-        DEFAULT_BUS.set(new_bus)
+        logger.info(
+            "Created new default bus for thread %r",
+            threading.current_thread(),
+        )
+        _set_default_bus_tls(new_bus)
         return new_bus
 
 
 def set_default_bus(new_default: SdBus) -> None:
-    DEFAULT_BUS.set(new_default)
+    _set_default_bus_tls(new_default)
 
 
 async def request_default_bus_name_async(

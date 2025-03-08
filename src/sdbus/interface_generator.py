@@ -24,6 +24,8 @@ from typing import TYPE_CHECKING
 from xml.etree.ElementTree import fromstring as etree_from_str
 from xml.etree.ElementTree import parse as etree_from_file
 
+from .dbus_common_funcs import snake_case_to_camel_case
+
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
     from typing import Literal, Optional, Union
@@ -317,6 +319,10 @@ class DbusMemberAbstract:
                 raise ValueError(
                     'Uknown member annotation tag: ', tag)
 
+    @property
+    def wants_rename(self) -> bool:
+        return self.method_name != snake_case_to_camel_case(self.python_name)
+
 
 class DbusArgsIntrospection:
     def __init__(self, element: Element):
@@ -591,6 +597,9 @@ result_signature="{{ method.dbus_result_signature }}",
 {% if method.flags_str %}
 flags={{ method.flags_str }},
 {% endif %}
+{% if method.wants_rename %}
+method_name="{{method.method_name}}",
+{% endif %}
 """
     ),
     "generic_property_flags": (
@@ -600,6 +609,9 @@ property_signature="{{ a_property.dbus_signature }}",
 {% endif %}
 {% if a_property.flags_str %}
 flags={{ a_property.flags_str }},
+{% endif %}
+{% if a_property.wants_rename %}
+property_name="{{a_property.method_name}}",
 {% endif %}
 """
     ),
@@ -708,6 +720,9 @@ def {{ a_property.python_name }}(self) -> {{ a_property.typing }}:
 {% endif %}
 {% if signal.flags_str %}
     flags={{ signal.flags_str }},
+{% endif %}
+{% if signal.wants_rename %}
+    signal_name=signal.method_name,
 {% endif %}
 )
 def {{ signal.python_name }}(self) -> {{ signal.typing }}:

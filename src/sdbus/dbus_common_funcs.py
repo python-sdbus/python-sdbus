@@ -135,8 +135,8 @@ def request_default_bus_name(
     return _DeprecationAwaitable()
 
 
-def _method_name_converter(python_name: str) -> Iterator[str]:
-    char_iter = iter(python_name)
+def _snake_case_to_camel_case_gen(snake: str) -> Iterator[str]:
+    char_iter = iter(snake)
     # Name starting with upper case letter
     try:
         first_char = next(char_iter)
@@ -156,6 +156,10 @@ def _method_name_converter(python_name: str) -> Iterator[str]:
                 yield c
         else:
             upper_next_one = True
+
+
+def snake_case_to_camel_case(snake: str) -> str:
+    return "".join(_snake_case_to_camel_case_gen(snake))
 
 
 def _check_sync_in_async_env() -> bool:

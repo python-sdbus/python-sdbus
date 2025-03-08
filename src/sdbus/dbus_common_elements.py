@@ -24,8 +24,8 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 from .dbus_common_funcs import (
     _is_property_flags_correct,
-    _method_name_converter,
     get_default_bus,
+    snake_case_to_camel_case,
 )
 from .sd_bus_internals import is_interface_name_valid, is_member_name_valid
 
@@ -122,8 +122,7 @@ class DbusMethodCommon(DbusMemberCommon):
             " it in to a tuple ('string', ) ?")
 
         if method_name is None:
-            method_name = ''.join(
-                _method_name_converter(original_method.__name__))
+            method_name = snake_case_to_camel_case(original_method.__name__)
 
         try:
             assert is_member_name_valid(method_name), (
@@ -230,8 +229,7 @@ class DbusPropertyCommon(DbusMemberCommon):
                  flags: int,
                  original_method: FunctionType):
         if property_name is None:
-            property_name = ''.join(
-                _method_name_converter(original_method.__name__))
+            property_name = snake_case_to_camel_case(original_method.__name__)
 
         try:
             assert is_member_name_valid(property_name), (
@@ -262,8 +260,7 @@ class DbusSignalCommon(DbusMemberCommon):
                  flags: int,
                  original_method: FunctionType):
         if signal_name is None:
-            signal_name = ''.join(
-                _method_name_converter(original_method.__name__))
+            signal_name = snake_case_to_camel_case(original_method.__name__)
 
         try:
             assert is_member_name_valid(signal_name), (

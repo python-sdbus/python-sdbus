@@ -71,7 +71,7 @@ Available under ``sdbus.utils.parse`` subpackage.
     Returns a dictionary where keys a paths of the managed objects and value is a tuple of class of the object
     and dictionary of its python named properties and their values.
 
-    :param Iterable[DbusInterfaceBaseAsync] interfaces: Possible interfaces of the managed objects.
+    :param Union[DbusInterfaceBase, Iterable[DbusInterfaceBase], DbusInterfaceBaseAsync, Iterable[DbusInterfaceBaseAsync]] interfaces: Possible interfaces of the managed objects.
         Can accept classes with multiple interfaces defined.
     :param Dict managed_objects_data: Data returned by ``get_managed_objects`` call.
     :param str on_unknown_interface: If an unknown D-Bus interface was encountered

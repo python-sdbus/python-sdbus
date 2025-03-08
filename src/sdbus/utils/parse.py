@@ -27,6 +27,7 @@ from ..dbus_proxy_async_interface_base import (
     DBUS_INTERFACE_NAME_TO_CLASS,
     DbusInterfaceBaseAsync,
 )
+from ..dbus_proxy_sync_interface_base import DbusInterfaceBase
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -34,25 +35,37 @@ if TYPE_CHECKING:
 
     from ..dbus_proxy_async_interfaces import DBUS_PROPERTIES_CHANGED_TYPING
 
+    InterfacesInputAsyncElements = Union[
+        DbusInterfaceBaseAsync,
+        type[DbusInterfaceBaseAsync],
+    ]
+
     InterfacesInputElements = Union[
         DbusInterfaceBaseAsync,
         type[DbusInterfaceBaseAsync],
+        DbusInterfaceBase,
+        type[DbusInterfaceBase],
     ]
     InterfacesInput = Union[
         InterfacesInputElements,
         Iterable[InterfacesInputElements],
     ]
-    InterfacesToClassMap = dict[frozenset[str], type[DbusInterfaceBaseAsync]]
+    InterfacesInputAsync = Union[
+        InterfacesInputAsyncElements,
+        Iterable[InterfacesInputAsyncElements],
+    ]
+    InterfaceTypes = Union[type[DbusInterfaceBaseAsync], type[DbusInterfaceBase]]
+    InterfacesToClassMap = dict[frozenset[str], InterfaceTypes]
     OnUnknownMember = Literal['error', 'ignore', 'reuse']
     OnUnknownInterface = Literal['error', 'none']
     ParseGetManaged = dict[
         str,
-        tuple[Optional[type[DbusInterfaceBaseAsync]], dict[str, Any]],
+        tuple[Optional[InterfaceTypes], dict[str, Any]],
     ]
 
 
 def parse_properties_changed(
-        interface: InterfacesInputElements,
+        interface: InterfacesInputAsyncElements,
         properties_changed_data: DBUS_PROPERTIES_CHANGED_TYPING,
         on_unknown_member: OnUnknownMember = 'error',
 ) -> dict[str, Any]:
@@ -85,7 +98,7 @@ def _create_interfaces_map(
 ) -> InterfacesToClassMap:
 
     if isinstance(interfaces,
-                  (DbusInterfaceBaseAsync, type)):
+                  (DbusInterfaceBaseAsync, DbusInterfaceBase, type)):
         interfaces_iter = iter((interfaces, ))
     else:
         interfaces_iter = iter(interfaces)
@@ -156,7 +169,7 @@ def _translate_and_merge_members(
 
 
 def parse_interfaces_added(
-    interfaces: InterfacesInput,
+    interfaces: InterfacesInputAsync,
     interfaces_added_data: tuple[str, dict[str, dict[str, Any]]],
     on_unknown_interface: OnUnknownInterface = 'error',
     on_unknown_member: OnUnknownMember = 'error',
@@ -199,7 +212,7 @@ def parse_interfaces_added(
 
 
 def parse_interfaces_removed(
-    interfaces: InterfacesInput,
+    interfaces: InterfacesInputAsync,
     interfaces_removed_data: tuple[str, list[str]],
     on_unknown_interface: OnUnknownInterface = 'error',
 ) -> tuple[str, Optional[type[DbusInterfaceBaseAsync]]]:

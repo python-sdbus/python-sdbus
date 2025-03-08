@@ -588,9 +588,6 @@ input_signature="{{ method.dbus_input_signature }}",
 {% if method.dbus_result_signature %}
 result_signature="{{ method.dbus_result_signature }}",
 {% endif %}
-{% if method.is_results_args_valid_names %}
-result_args_names={{method.result_args_names_repr}},
-{% endif %}
 {% if method.flags_str %}
 flags={{ method.flags_str }},
 {% endif %}
@@ -674,6 +671,9 @@ class {{ interface.python_name }}(
 {% filter indent(first=True) %}
     {% include 'generic_method_flags' %}
 {% endfilter %}
+{% if method.is_results_args_valid_names %}
+    result_args_names={{method.result_args_names_repr}},
+{% endif %}
 )
 async def {{ method.python_name }}(
     self,

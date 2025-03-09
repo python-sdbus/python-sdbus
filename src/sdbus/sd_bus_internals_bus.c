@@ -20,7 +20,9 @@
 */
 #include <errno.h>
 #include <poll.h>
+#include <stdlib.h>
 #include <sys/timerfd.h>
+#include <systemd/sd-event.h>
 #include <time.h>
 #include "sd_bus_internals.h"
 
@@ -35,6 +37,7 @@ static void SdBus_dealloc(SdBusObject* self) {
                 close(self->timer_fd_int);
         }
         sd_bus_unref(self->sd_bus_ref);
+        sd_event_unref(self->sd_event);
         Py_XDECREF(self->bus_fd);
         Py_XDECREF(self->loop);
 
@@ -248,6 +251,10 @@ static PyObject* SdBus_get_fd(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         return PyLong_FromLong((long)file_descriptor);
 }
 
+static PyObject* SdBus_asyncio_init_sd_event(SdBusObject* self, PyObject* Py_UNUSED(args));
+
+#define CHECK_ASYNCIO_SD_EVENT ({ CALL_PYTHON_EXPECT_NONE(SdBus_asyncio_init_sd_event(self, NULL)); })
+
 static PyObject* SdBus_asyncio_update_fd_watchers(SdBusObject* self);
 
 #define CHECK_ASYNCIO_WATCHERS ({ CALL_PYTHON_EXPECT_NONE(SdBus_asyncio_update_fd_watchers(self)); })
@@ -339,7 +346,7 @@ static PyObject* SdBus_call_async(SdBusObject* self, PyObject* args) {
         if (PyObject_SetAttrString(new_future, "_sd_bus_py_slot", (PyObject*)new_slot_object) < 0) {
                 return NULL;
         }
-        CHECK_ASYNCIO_WATCHERS;
+        CHECK_ASYNCIO_SD_EVENT;
         return new_future;
 }
 
@@ -453,7 +460,7 @@ static PyObject* SdBus_match_signal_async(SdBusObject* self, PyObject* args) {
                                                         interface_name_char_ptr, member_name_char_ptr, _SdBus_signal_callback,
                                                         _SdBus_match_signal_instant_callback, new_future));
 
-        CHECK_ASYNCIO_WATCHERS;
+        CHECK_ASYNCIO_SD_EVENT;
         Py_INCREF(new_future);
         return new_future;
 }
@@ -530,7 +537,7 @@ static PyObject* SdBus_request_name_async(SdBusObject* self, PyObject* args) {
             sd_bus_request_name_async(self->sd_bus_ref, &new_slot_object->slot_ref, service_name_char_ptr, flags, SdBus_request_name_callback, new_future));
 
         CALL_PYTHON_INT_CHECK(PyObject_SetAttrString(new_future, "_sd_bus_py_slot", (PyObject*)new_slot_object));
-        CHECK_ASYNCIO_WATCHERS;
+        CHECK_ASYNCIO_SD_EVENT;
         return new_future;
 }
 
@@ -659,6 +666,113 @@ static inline int sd_bus_get_timeout_uint_max_on_closed(SdBusObject* self, uint6
         return r;
 }
 
+static PyObject* SdBus_asyncio_process_sd_event2(SdBusObject* self, PyObject* Py_UNUSED(args)) {
+        int event_loop_state = sd_event_get_state(self->sd_event);
+        switch (event_loop_state) {
+                case SD_EVENT_INITIAL:
+                        goto initial;
+                case SD_EVENT_ARMED:
+                        goto armed;
+                case SD_EVENT_PENDING:
+                        goto pending;
+        }
+
+initial:
+        if (CALL_SD_BUS_AND_CHECK(sd_event_prepare(self->sd_event)) > 0) {
+                printf("Initial to pending\n");
+                goto pending;
+        } else {
+                printf("Initial to armed\n");
+                goto armed;
+        }
+
+armed:
+        if (CALL_SD_BUS_AND_CHECK(sd_event_wait(self->sd_event, 0)) > 0) {
+                printf("Armed to pending\n");
+                goto pending;
+        } else {
+                printf("Armed to wait\n");
+                Py_RETURN_NONE;
+        }
+
+pending:
+        if (CALL_SD_BUS_AND_CHECK(sd_event_dispatch(self->sd_event)) > 0) {
+                printf("Pending to initial\n");
+                goto initial;
+        }
+
+        Py_RETURN_NONE;
+}
+
+static PyObject* SdBus_asyncio_init_sd_event(SdBusObject* self, PyObject* Py_UNUSED(args)) {
+        if (self->sd_event) {
+                Py_RETURN_NONE;
+        }
+
+        CALL_SD_BUS_AND_CHECK(sd_event_new(&self->sd_event));
+        CALL_SD_BUS_AND_CHECK(sd_bus_attach_event(self->sd_bus_ref, self->sd_event, 0));
+        int event_fd = CALL_SD_BUS_AND_CHECK(sd_event_get_fd(self->sd_event));
+        PyObject* running_loop = CALL_PYTHON_AND_CHECK(_get_or_bind_loop(self));
+        PyObject* drive_method CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString((PyObject*)self, "process_sd_event"));
+        Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "add_reader", "iO", event_fd, drive_method)));
+        Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "add_writer", "iO", event_fd, drive_method)));
+
+        printf("Init sd-event\n");
+        CALL_PYTHON_AND_CHECK(SdBus_asyncio_process_sd_event2(self, NULL));
+        Py_RETURN_NONE;
+}
+
+static PyObject* SdBus_asyncio_process_sd_event(SdBusObject* self, PyObject* Py_UNUSED(args)) {
+        if (NULL == self->sd_event) {
+                CALL_SD_BUS_AND_CHECK(sd_event_new(&self->sd_event));
+                CALL_SD_BUS_AND_CHECK(sd_bus_attach_event(self->sd_bus_ref, self->sd_event, 0));
+                int event_fd = CALL_SD_BUS_AND_CHECK(sd_event_get_fd(self->sd_event));
+                PyObject* running_loop = CALL_PYTHON_AND_CHECK(_get_or_bind_loop(self));
+                PyObject* drive_method CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString((PyObject*)self, "process_sd_event"));
+                Py_XDECREF(CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "add_reader", "iO", event_fd, drive_method)));
+        }
+
+        int event_loop_state = sd_event_get_state(self->sd_event);
+
+        switch (event_loop_state) {
+                case SD_EVENT_INITIAL:
+
+                        if (CALL_SD_BUS_AND_CHECK(sd_event_prepare(self->sd_event)) > 0) {
+                                printf("Initial to pending\n");
+                                CALL_SD_BUS_AND_CHECK(sd_event_dispatch(self->sd_event));
+                                CALL_SD_BUS_AND_CHECK(sd_event_prepare(self->sd_event));
+                        } else {
+                                printf("Initial to wait\n");
+                        }
+                        break;
+                case SD_EVENT_ARMED:
+
+                        if (CALL_SD_BUS_AND_CHECK(sd_event_wait(self->sd_event, 0)) > 0) {
+                                printf("Armed to pending\n");
+                                CALL_SD_BUS_AND_CHECK(sd_event_dispatch(self->sd_event));
+                                CALL_SD_BUS_AND_CHECK(sd_event_prepare(self->sd_event));
+                        } else {
+                                printf("Armed to wait\n");
+                        }
+                        Py_RETURN_NONE;
+                        break;
+                case SD_EVENT_PENDING:
+                        printf("Pending\n");
+                        CALL_SD_BUS_AND_CHECK(sd_event_dispatch(self->sd_event));
+                        CALL_SD_BUS_AND_CHECK(sd_event_prepare(self->sd_event));
+                        break;
+                default:
+                        abort();
+                        break;
+        }
+
+        Py_RETURN_NONE;
+
+        printf("STATE: %i\n", sd_event_get_state(self->sd_event));
+
+        Py_RETURN_NONE;
+}
+
 static PyObject* SdBus_asyncio_update_fd_watchers(SdBusObject* self) {
         PyObject* running_loop = CALL_PYTHON_AND_CHECK(_get_or_bind_loop(self));
         PyObject* drive_method CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString((PyObject*)self, "process"));
@@ -720,6 +834,7 @@ static PyMethodDef SdBus_methods[] = {
     {"call", (SD_BUS_PY_FUNC_TYPE)SdBus_call, SD_BUS_PY_METH, PyDoc_STR("Send message and block until the reply.")},
     {"call_async", (SD_BUS_PY_FUNC_TYPE)SdBus_call_async, SD_BUS_PY_METH, PyDoc_STR("Async send message, returns awaitable future.")},
     {"process", (PyCFunction)SdBus_process, METH_NOARGS, PyDoc_STR("Process pending IO work.")},
+    {"process_sd_event", (PyCFunction)SdBus_asyncio_process_sd_event2, METH_NOARGS, PyDoc_STR("Process sd-event attached to bus.")},
     {"get_fd", (SD_BUS_PY_FUNC_TYPE)SdBus_get_fd, SD_BUS_PY_METH, PyDoc_STR("Get file descriptor to poll on.")},
     {"new_method_call_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_method_call_message, SD_BUS_PY_METH, PyDoc_STR("Create new empty method call message.")},
     {"new_property_get_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_property_get_message, SD_BUS_PY_METH, PyDoc_STR("Create new empty property get message.")},

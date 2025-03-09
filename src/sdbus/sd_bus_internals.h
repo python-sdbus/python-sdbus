@@ -23,6 +23,7 @@
 #include <Python.h>
 #include <structmember.h>
 #include <systemd/sd-bus.h>
+#include <systemd/sd-event.h>
 // Macros
 
 #define SD_BUS_PY_CHECK_ARGS_NUMBER(number_args)                                                     \
@@ -337,6 +338,7 @@ typedef struct {
         PyObject* timer_fd;
         int asyncio_watchers_last_state;
         int timer_fd_int;
+        sd_event* sd_event;
 } SdBusObject;
 
 extern PyType_Spec SdBusType;

@@ -19,16 +19,175 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from unittest import TestCase
+
 from sdbus.unittest import IsolatedDbusTestCase
 from sdbus.utils.inspect import inspect_dbus_path
+from sdbus.utils.parse import parse_get_managed_objects
 
 from sdbus import (
     DbusInterfaceCommon,
     DbusInterfaceCommonAsync,
+    dbus_property,
+    dbus_property_async,
     sd_bus_open_user,
 )
 
 TEST_PATH = "/test"
+
+
+class FooAsync(DbusInterfaceCommonAsync, interface_name="org.foo"):
+    @dbus_property_async("x")
+    def foo(self) -> int:
+        return 1
+
+
+class BarAsync(DbusInterfaceCommonAsync, interface_name="org.bar"):
+    @dbus_property_async("x")
+    def bar(self) -> int:
+        return 2
+
+
+class FooBarAsync(FooAsync, BarAsync):
+    ...
+
+
+class Foo(DbusInterfaceCommon, interface_name="org.foo"):
+    @dbus_property("x")
+    def foo(self) -> int:
+        return 1
+
+
+class Bar(DbusInterfaceCommon, interface_name="org.bar"):
+    @dbus_property("x")
+    def bar(self) -> int:
+        return 2
+
+
+class FooBar(Foo, Bar):
+    ...
+
+
+MANAGED_OBJECTS_COMBINED = {
+    "/test": {
+        "org.foo": {"Foo": ("x", 1)},
+        "org.bar": {"Bar": ("x", 2)},
+    }
+}
+
+MANAGED_OBJECTS_SPLIT = {
+    "/foo": {
+        "org.foo": {"Foo": ("x", 1)},
+    },
+    "/bar": {
+        "org.bar": {"Bar": ("x", 2)},
+    },
+}
+
+MANAGED_OBJECTS_BOTH = {**MANAGED_OBJECTS_COMBINED, **MANAGED_OBJECTS_SPLIT}
+
+
+class TestSdbusUtilsParse(TestCase):
+    def test_parse_get_managed_objects_async_combined(self) -> None:
+        parsed_managed = parse_get_managed_objects(
+            FooBarAsync,
+            MANAGED_OBJECTS_COMBINED,
+        )
+
+        self.assertEqual(1, len(parsed_managed))
+
+        class_type, properties_data = parsed_managed["/test"]
+        self.assertEqual(FooBarAsync, class_type)
+        self.assertEqual(properties_data["foo"], 1)
+        self.assertEqual(properties_data["bar"], 2)
+
+    def test_parse_get_managed_objects_block_combined(self) -> None:
+        parsed_managed = parse_get_managed_objects(
+            FooBar,
+            MANAGED_OBJECTS_COMBINED,
+        )
+
+        self.assertEqual(1, len(parsed_managed))
+
+        class_type, properties_data = parsed_managed["/test"]
+        self.assertEqual(FooBar, class_type)
+        self.assertEqual(properties_data["foo"], 1)
+        self.assertEqual(properties_data["bar"], 2)
+
+    def test_parse_get_managed_objects_async_split(self) -> None:
+        parsed_managed = parse_get_managed_objects(
+            [FooAsync, BarAsync],
+            MANAGED_OBJECTS_SPLIT,
+        )
+
+        self.assertEqual(2, len(parsed_managed))
+
+        class_type, properties_data = parsed_managed["/foo"]
+        self.assertEqual(FooAsync, class_type)
+        self.assertEqual(properties_data["foo"], 1)
+
+        class_type, properties_data = parsed_managed["/bar"]
+        self.assertEqual(BarAsync, class_type)
+        self.assertEqual(properties_data["bar"], 2)
+
+    def test_parse_get_managed_objects_block_split(self) -> None:
+        parsed_managed = parse_get_managed_objects(
+            [Foo, Bar],
+            MANAGED_OBJECTS_SPLIT,
+        )
+
+        self.assertEqual(2, len(parsed_managed))
+
+        class_type, properties_data = parsed_managed["/foo"]
+        self.assertEqual(Foo, class_type)
+        self.assertEqual(properties_data["foo"], 1)
+
+        class_type, properties_data = parsed_managed["/bar"]
+        self.assertEqual(Bar, class_type)
+        self.assertEqual(properties_data["bar"], 2)
+
+    def test_parse_get_managed_objects_unknown_interface_error(self) -> None:
+        with self.assertRaisesRegex(KeyError, "org.foo"):
+            parse_get_managed_objects(
+                Bar,
+                MANAGED_OBJECTS_SPLIT,
+            )
+
+    def test_parse_get_managed_objects_unknown_interface_none_reuse(
+        self,
+    ) -> None:
+        parsed_managed = parse_get_managed_objects(
+            {BarAsync},
+            MANAGED_OBJECTS_SPLIT,
+            on_unknown_interface="none",
+            on_unknown_member="reuse",
+        )
+
+        class_type, properties_data = parsed_managed["/foo"]
+        self.assertIsNone(class_type)
+        self.assertEqual(properties_data["Foo"], 1)
+
+        class_type, properties_data = parsed_managed["/bar"]
+        self.assertEqual(BarAsync, class_type)
+        self.assertEqual(properties_data["bar"], 2)
+
+    def test_parse_get_managed_objects_unknown_member_skip(self) -> None:
+        parsed_managed = parse_get_managed_objects(
+            [Foo],
+            MANAGED_OBJECTS_SPLIT,
+            on_unknown_interface="none",
+            on_unknown_member="ignore",
+        )
+
+        self.assertEqual(2, len(parsed_managed))
+
+        class_type, properties_data = parsed_managed["/foo"]
+        self.assertEqual(Foo, class_type)
+        self.assertEqual(properties_data["foo"], 1)
+
+        class_type, properties_data = parsed_managed["/bar"]
+        self.assertIsNone(class_type)
+        self.assertEqual(0, len(properties_data))
 
 
 class TestSdbusUtilsInspect(IsolatedDbusTestCase):

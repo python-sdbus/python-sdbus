@@ -196,6 +196,10 @@ class TestInterface(
 
         raise DbusErrorUnmappedLater('Should be unmapped')
 
+    @dbus_method_async()
+    async def raise_python_exc(self) -> None:
+        raise ValueError("Test!")
+
     @dbus_method_async('s', flags=DbusNoReplyFlag)
     async def no_reply_method(self, new_value: str) -> None:
         self.no_reply_sync.set()
@@ -1004,3 +1008,12 @@ class TestProxy(IsolatedDbusTestCase):
 
         with self.assertRaisesRegex(RuntimeError, "different loop"):
             asyncio_run(test())
+
+    async def test_python_exc(self) -> None:
+        test_object, test_object_connection = initialize_object()
+
+        with self.assertRaisesRegex(ValueError, "Test!"):
+            await test_object.raise_python_exc()
+
+        with self.assertRaisesRegex(ValueError, "Test!"):
+            await test_object_connection.raise_python_exc()

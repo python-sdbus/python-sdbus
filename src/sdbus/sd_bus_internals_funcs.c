@@ -144,7 +144,7 @@ static PyObject* map_exception_to_dbus_error(PyObject* Py_UNUSED(self), PyObject
 
 #endif
         if (CALL_PYTHON_INT_CHECK(PyDict_Contains(dbus_error_to_exception_dict, dbus_error_string)) > 0) {
-                PyErr_Format(PyExc_ValueError, "Dbus error %R is already mapped.", dbus_error_string);
+                PyErr_Format(PyExc_ValueError, "D-Bus error %R is already mapped.", dbus_error_string);
                 return NULL;
         }
 
@@ -166,7 +166,7 @@ static PyObject* add_exception_mapping(PyObject* Py_UNUSED(self), PyObject* args
         PyObject* dbus_error_string CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(exception, "dbus_error_name"));
 
         if (CALL_PYTHON_INT_CHECK(PyDict_Contains(dbus_error_to_exception_dict, dbus_error_string)) > 0) {
-                PyErr_Format(PyExc_ValueError, "Dbus error %R is already mapped.", dbus_error_string);
+                PyErr_Format(PyExc_ValueError, "D-Bus error %R is already mapped.", dbus_error_string);
                 return NULL;
         }
 

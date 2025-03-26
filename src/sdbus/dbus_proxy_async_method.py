@@ -33,7 +33,7 @@ from .dbus_common_elements import (
     DbusRemoteObjectMeta,
 )
 from .dbus_exceptions import DbusFailedError
-from .sd_bus_internals import DbusNoReplyFlag
+from .sd_bus_internals import EXCEPTION_TO_DBUS_ERROR, DbusNoReplyFlag
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -193,20 +193,17 @@ class DbusLocalMethodAsync(DbusBoundMethodAsyncBase):
                 request_message,
                 local_object,
             )
-        except DbusFailedError as e:
+        except Exception as e:
             if not request_message.expect_reply:
                 return
 
+            dbus_error = EXCEPTION_TO_DBUS_ERROR.get(type(e))
+            if dbus_error is None:
+                dbus_error = DbusFailedError.dbus_error_name
+
             error_message = request_message.create_error_reply(
-                e.dbus_error_name,
+                dbus_error,
                 str(e.args[0]) if e.args else "",
-            )
-            error_message.send()
-            return
-        except Exception:
-            error_message = request_message.create_error_reply(
-                DbusFailedError.dbus_error_name,
-                "",
             )
             error_message.send()
             return

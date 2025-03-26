@@ -304,9 +304,9 @@ class SdBusRequestNameAlreadyOwnerError(SdBusRequestNameError):
     ...
 
 
-DBUS_ERROR_TO_EXCEPTION: dict[str, Exception] = {}
+DBUS_ERROR_TO_EXCEPTION: dict[str, type[Exception]] = {}
 
-EXCEPTION_TO_DBUS_ERROR: dict[Exception, str] = {}
+EXCEPTION_TO_DBUS_ERROR: dict[type[Exception], str] = {}
 
 DbusDeprecatedFlag: int = 0
 DbusHiddenFlag: int = 0

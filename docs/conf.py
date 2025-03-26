@@ -28,7 +28,6 @@ extensions = ['sdbus.autodoc']
 html_theme = "sphinx_rtd_theme"
 
 autoclass_content = 'both'
-autodoc_typehints = 'description'
 autodoc_member_order = 'bysource'
 
 path.insert(0, abspath('../src'))

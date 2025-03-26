@@ -76,6 +76,28 @@ def parse_properties_changed(
         properties_changed_data: DBUS_PROPERTIES_CHANGED_TYPING,
         on_unknown_member: OnUnknownMember = 'error',
 ) -> dict[str, Any]:
+    """Parse data from :py:meth:`properties_changed \
+    <sdbus.DbusInterfaceCommonAsync.properties_changed>` signal.
+
+    Parses changed properties from a single D-Bus object. The object's
+    interface class must be known in advance and passed as a first
+    argument.
+
+    Member names will be translated to python defined names.
+    Invalidated properties will have a value of None.
+
+    :param interface:
+        Takes either D-Bus interface class or its object.
+    :param properties_changed_data:
+        Tuple caught from signal.
+    :param on_unknown_member:
+        If an unknown D-Bus property was encountered either raise
+        an ``"error"`` (default), ``"ignore"`` the property
+        or ``"reuse"`` the D-Bus name for the member.
+    :returns:
+        Dictionary of changed properties with keys translated to python
+        names. Invalidated properties will have value of None.
+    """
     interface_name, changed_properties, invalidated_properties = (
         properties_changed_data
     )
@@ -175,7 +197,33 @@ def parse_interfaces_added(
     on_unknown_interface: OnUnknownInterface = 'error',
     on_unknown_member: OnUnknownMember = 'error',
 ) -> tuple[str, Optional[InterfacesBaseTypes], dict[str, Any]]:
+    """Parse data from :py:meth:`interfaces_added \
+    <sdbus.DbusObjectManagerInterfaceAsync.interfaces_added>` signal.
 
+    Takes the possible interface classes and the signal data.
+    Returns the path of new object, the class of the
+    added object (if it matched one of passed interface classes)
+    and the dictionary of python named properties and their values.
+
+    The passed interfaces can be async or blocking, the class
+    or an instantiated object, a single item or an iterable of interfaces.
+
+    :param interfaces:
+        Possible interfaces that were added.
+    :param interfaces_added_data:
+        Tuple caught from signal.
+    :param on_unknown_interface:
+        If an unknown D-Bus interface was encountered either raise
+        an ``"error"`` (default) or return ``"none"`` instead of
+        interface class.
+    :param on_unknown_member:
+        If an unknown D-Bus property was encountered either raise
+        an ``"error"`` (default), ``"ignore"`` the property
+        or ``"reuse"`` the D-Bus name for the member.
+    :returns:
+        Path of new added object, object's class (or ``None``) and dictionary
+        of python translated members and their values.
+    """
     interfaces_types = _interfaces_input_to_types(interfaces)
     interfaces_to_class_map = _create_interfaces_map(interfaces_types)
 
@@ -218,7 +266,26 @@ def parse_interfaces_removed(
     interfaces_removed_data: tuple[str, list[str]],
     on_unknown_interface: OnUnknownInterface = 'error',
 ) -> tuple[str, Optional[InterfacesBaseTypes]]:
+    """Parse data from :py:meth:`interfaces_added \
+    <sdbus.DbusObjectManagerInterfaceAsync.interfaces_removed>` signal.
 
+    Takes the possible interface classes and the signal data.
+    Returns the path and the matched class of removed object.
+    (if it matched one of passed interface classes)
+
+    The passed interfaces can be async or blocking, the class
+    or an instantiated object, a single item or an iterable of interfaces.
+
+    :param interfaces:
+        Possible interfaces that were removed.
+    :param interfaces_added_data:
+        Tuple caught from signal.
+    :param on_unknown_member:
+        If an unknown D-Bus interface was encountered either raise an
+        ``"error"`` (default) or return ``"none"`` instead of interface class.
+    :returns:
+        Path of removed object and object's class (or ``None``).
+    """
     interfaces_types = _interfaces_input_to_types(interfaces)
     interfaces_to_class_map = _create_interfaces_map(interfaces_types)
 
@@ -241,7 +308,34 @@ def parse_get_managed_objects(
     on_unknown_interface: OnUnknownInterface = 'error',
     on_unknown_member: OnUnknownMember = 'error',
 ) -> ParseGetManaged:
+    """Parse data from :py:meth:`get_managed_objects \
+    <sdbus.DbusObjectManagerInterfaceAsync.get_managed_objects>` call.
 
+    Takes the possible interface classes and the method's returned data.
+    Returns a dictionary where keys a paths of the managed objects and
+    value is a tuple of class of the object and dictionary of its python
+    named properties and their values.
+
+    The passed interfaces can be async or blocking, the class
+    or an instantiated object, a single item or an iterable of interfaces.
+
+    :param interfaces:
+        Possible interfaces of the managed objects.
+    :param managed_objects_data:
+        Data returned by ``get_managed_objects`` call.
+    :param on_unknown_interface:
+        If an unknown D-Bus interface was encountered either raise an
+        ``"error"`` (default) or return ``"none"`` instead of interface class.
+    :param on_unknown_member:
+        If an unknown D-Bus property was encountered either raise
+        an ``"error"`` (default), ``"ignore"`` the property
+        or ``"reuse"`` the D-Bus name for the member.
+    :returns:
+        Dictionary where keys are paths and values are tuples of managed
+        objects classes and their properties data.
+
+    *New in version 0.12.0.*
+    """
     interfaces_types = _interfaces_input_to_types(interfaces)
     interfaces_to_class_map = _create_interfaces_map(interfaces_types)
 

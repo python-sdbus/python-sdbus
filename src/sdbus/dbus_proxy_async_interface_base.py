@@ -21,7 +21,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from copy import copy
-from inspect import getmembers
 from itertools import chain
 from types import MethodType
 from typing import TYPE_CHECKING, Any, cast
@@ -52,7 +51,6 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
     from typing import Optional, TypeVar, Union
 
-    from .dbus_common_elements import DbusBoundAsync
     from .sd_bus_internals import SdBus, SdBusSlot
 
     T = TypeVar('T')
@@ -312,12 +310,14 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
              DeprecationWarning)
         self.export_to_dbus(object_path, bus)
 
+    def _dbus_on_no_members_exported(self) -> None:
+        raise ValueError("No D-Bus interfaces were exported")
+
     def export_to_dbus(
         self,
         object_path: str,
         bus: Optional[SdBus] = None,
     ) -> DbusExportHandle:
-
         local_object_meta = self._dbus
         if isinstance(local_object_meta, DbusRemoteObjectMeta):
             raise RuntimeError("Cannot export D-Bus proxies.")
@@ -334,38 +334,17 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
 
         local_object_meta.attached_bus = bus
         local_object_meta.serving_object_path = object_path
-        # TODO: can be optimized with a single loop
-        interface_map: dict[str, list[DbusBoundAsync]] = {}
 
-        for key, value in getmembers(self):
-            assert not isinstance(value, DbusMemberAsync)
-
-            if isinstance(value, DbusLocalMethodAsync):
-                interface_name = value.dbus_method.interface_name
-                if not value.dbus_method.serving_enabled:
-                    continue
-            elif isinstance(value, DbusLocalPropertyAsync):
-                interface_name = value.dbus_property.interface_name
-                if not value.dbus_property.serving_enabled:
-                    continue
-            elif isinstance(value, DbusLocalSignalAsync):
-                interface_name = value.dbus_signal.interface_name
-                if not value.dbus_signal.serving_enabled:
-                    continue
-            else:
+        for interface_name, meta in self._dbus_iter_interfaces_meta():
+            if not meta.serving_enabled:
                 continue
 
-            try:
-                interface_member_list = interface_map[interface_name]
-            except KeyError:
-                interface_member_list = []
-                interface_map[interface_name] = interface_member_list
-
-            interface_member_list.append(value)
-
-        for interface_name, member_list in interface_map.items():
             new_interface = SdBusInterface()
-            for dbus_something in member_list:
+
+            for python_attr, dbus_member in (
+                meta.python_attr_to_dbus_member.items()
+            ):
+                dbus_something = getattr(self, python_attr)
                 if isinstance(dbus_something, DbusLocalMethodAsync):
                     new_interface.add_method(
                         dbus_something.dbus_method.method_name,
@@ -404,11 +383,15 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                         dbus_something.dbus_signal.flags,
                     )
                 else:
-                    raise TypeError
+                    raise TypeError(
+                        "Expected D-Bus element, got: {dbus_something!r}"
+                    )
 
-            bus.add_interface(new_interface, object_path,
-                              interface_name)
+            bus.add_interface(new_interface, object_path, interface_name)
             local_object_meta.activated_interfaces.append(new_interface)
+
+        if not local_object_meta.activated_interfaces:
+            self._dbus_on_no_members_exported()
 
         return DbusExportHandle(local_object_meta)
 

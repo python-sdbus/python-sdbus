@@ -1017,3 +1017,17 @@ class TestProxy(IsolatedDbusTestCase):
 
         with self.assertRaisesRegex(ValueError, "Test!"):
             await test_object_connection.raise_python_exc()
+
+    async def test_empty_dbus_interface(self) -> None:
+        class Empty(
+            DbusInterfaceCommonAsync,
+            interface_name="org.empty",
+        ):
+            ...
+
+        empty_local = Empty()
+        empty_local.export_to_dbus("/")
+        empty_proxy = Empty.new_proxy(TEST_SERVICE_NAME, "/")
+
+        intro = await empty_proxy.dbus_introspect()
+        self.assertIn('<interface name="org.empty">', intro)

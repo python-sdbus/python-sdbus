@@ -212,7 +212,7 @@ class TestSdbusUtilsInspect(IsolatedDbusTestCase):
             inspect_dbus_path(proxy, new_bus)
 
     def test_inspect_dbus_path_async_local(self) -> None:
-        local_obj = DbusInterfaceCommonAsync()
+        local_obj = FooBarAsync()
 
         with self.assertRaisesRegex(
             LookupError, "is not exported to any D-Bus",

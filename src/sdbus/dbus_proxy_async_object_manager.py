@@ -76,6 +76,9 @@ class DbusObjectManagerInterfaceAsync(
     def interfaces_removed(self) -> tuple[str, list[str]]:
         raise NotImplementedError
 
+    def _dbus_on_no_members_exported(self) -> None:
+        ...  # Object manager is allowed to be exported empty
+
     def export_to_dbus(
         self,
         object_path: str,

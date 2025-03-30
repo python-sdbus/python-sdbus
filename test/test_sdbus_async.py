@@ -374,7 +374,6 @@ class TestProxy(IsolatedDbusTestCase):
 
             @test_property.setter
             def test_property_setter(self, var: str) -> None:
-                nonlocal test_var
                 test_var.insert(0, var)
 
         test_subclass = TestInheritence()

@@ -1,0 +1,30 @@
+diff --git a/meson.build b/meson.build
+index 8c16c1c5c0..f34e4a0c3a 100644
+--- a/meson.build
++++ b/meson.build
+@@ -573,8 +573,6 @@ endforeach
+ 
+ foreach ident : [
+         ['memfd_create',      '''#include <sys/mman.h>'''],
+-        ['gettid',            '''#include <sys/types.h>
+-                                 #include <unistd.h>'''],
+         ['fchmodat2',         '''#include <stdlib.h>
+                                  #include <fcntl.h>'''],      # no known header declares fchmodat2
+         ['pivot_root',        '''#include <stdlib.h>
+@@ -631,13 +629,15 @@ foreach ident : [
+         ['fsopen',            '''#include <sys/mount.h>'''],
+         ['fsconfig',          '''#include <sys/mount.h>'''],
+         ['fsmount',           '''#include <sys/mount.h>'''],
+-        ['getdents64',        '''#include <dirent.h>'''],
+ ]
+ 
+         have = cc.has_function(ident[0], prefix : ident[1], args : '-D_GNU_SOURCE')
+         conf.set10('HAVE_' + ident[0].to_upper(), have)
+ endforeach
+ 
++conf.set10('HAVE_GETTID', false)
++conf.set10('HAVE_GETDENTS64', false)
++
+ if cc.has_function('getrandom', prefix : '''#include <sys/random.h>''', args : '-D_GNU_SOURCE')
+         conf.set10('USE_SYS_RANDOM_H', true)
+         conf.set10('HAVE_GETRANDOM', true)

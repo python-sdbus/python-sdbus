@@ -112,7 +112,7 @@ class TestConverter(TestCase):
 
         with self.subTest('Parse variant'):
             self.assertEqual(
-                'Tuple[str, Any]', DbusSigToTyping.typing_complete('v')
+                'tuple[str, Any]', DbusSigToTyping.typing_complete('v')
             )
 
         with self.subTest('Splitter test'):
@@ -124,40 +124,40 @@ class TestConverter(TestCase):
         with self.subTest('Parse struct'):
             self.assertEqual(
                 DbusSigToTyping.typing_complete('(sx)'),
-                'Tuple[str, int]',
+                'tuple[str, int]',
             )
 
         with self.subTest('Parse list'):
             self.assertEqual(
                 DbusSigToTyping.typing_complete('a(sx)'),
-                'List[Tuple[str, int]]',
+                'list[tuple[str, int]]',
             )
 
         with self.subTest('Parse dict'):
             self.assertEqual(
                 DbusSigToTyping.typing_complete('a{s(xh)}'),
-                'Dict[str, Tuple[int, int]]',
+                'dict[str, tuple[int, int]]',
             )
 
         with self.subTest('Parse signature'):
             self.assertEqual(
                 DbusSigToTyping.sig_to_typing('a{s(xh)}'),
-                'Dict[str, Tuple[int, int]]',
+                'dict[str, tuple[int, int]]',
             )
 
             self.assertEqual(
                 DbusSigToTyping.sig_to_typing('a{s(xh)}xs'),
-                'Tuple[Dict[str, Tuple[int, int]], int, str]',
+                'tuple[dict[str, tuple[int, int]], int, str]',
             )
 
             self.assertEqual(
                 DbusSigToTyping.sig_to_typing('a{s(xh)}xs'),
-                'Tuple[Dict[str, Tuple[int, int]], int, str]',
+                'tuple[dict[str, tuple[int, int]], int, str]',
             )
 
             self.assertEqual(
                 DbusSigToTyping.sig_to_typing('as'),
-                'List[str]',
+                'list[str]',
             )
 
             self.assertEqual(

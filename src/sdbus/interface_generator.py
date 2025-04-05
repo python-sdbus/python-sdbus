@@ -136,7 +136,7 @@ class DbusSigToTyping:
 
     @staticmethod
     def typing_into_tuple(typing_iter: Iterable[str]) -> str:
-        return f"Tuple[{', '.join(typing_iter)}]"
+        return f"tuple[{', '.join(typing_iter)}]"
 
     @staticmethod
     def slice_container(dbus_sig_iter: Iterator[str], peek_str: str) -> str:
@@ -219,7 +219,7 @@ class DbusSigToTyping:
             dict_value_sig = complete_sig[3:-1]
             dict_value_typing = cls.typing_complete(dict_value_sig)
 
-            return f"Dict[{dict_key_typing}, {dict_value_typing}]"
+            return f"dict[{dict_key_typing}, {dict_value_typing}]"
 
         elif complete_sig.startswith('a'):
             array_completes = cls.split_sig(complete_sig[1:])
@@ -230,7 +230,7 @@ class DbusSigToTyping:
 
             array_single_complete = array_completes[0]
 
-            return f"List[{cls.typing_complete(array_single_complete)}]"
+            return f"list[{cls.typing_complete(array_single_complete)}]"
         elif complete_sig.startswith('('):
             if complete_sig[-1] != ')':
                 raise ValueError(f"Malformed struct {complete_sig}")
@@ -618,7 +618,7 @@ property_name="{{a_property.method_name}}",
     "generic_header": """\
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 """,
     "async_imports_header": """from sdbus import (

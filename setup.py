@@ -82,7 +82,7 @@ compile_arguments: list[str] = ['-flto']
 use_limited_api = False
 
 if environ.get('PYTHON_SDBUS_USE_LIMITED_API'):
-    c_macros.append(('Py_LIMITED_API', '0x03070000'))
+    c_macros.append(('Py_LIMITED_API', '0x03090000'))
     use_limited_api = True
 
 

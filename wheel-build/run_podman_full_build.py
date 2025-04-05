@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from argparse import ArgumentParser
 from collections.abc import Callable, Iterator
 from functools import partial
 from pathlib import Path
@@ -33,7 +34,7 @@ PROJECT_ROOT = WHEEL_BUILD_DIR.parent
 BUILD_DIR = PROJECT_ROOT / "build/wheel-build/"
 LAST_STAGE_FILE = BUILD_DIR / "last_stage"
 
-CONTAINER_IMAGE = "debian:11-slim"
+CONTAINER_IMAGE = "docker.io/debian:11-slim"
 CONTAINER_NAME = "python-sdbus-build"
 CONTAINER_ARCH = "x86_64"
 DEBIAN_PACKAGES = (
@@ -122,9 +123,16 @@ def podman_exec(
     )
 
 
-def podman_cp(src: Path, dest: Path) -> None:
+def podman_cp(src: Path, dest: Path, to_contatiner: bool = True) -> None:
+    if to_contatiner:
+        src_str = str(src.absolute())
+        dest_str = f"{CONTAINER_NAME}:{dest}"
+    else:
+        src_str = f"{CONTAINER_NAME}:{src}"
+        dest_str = str(dest.absolute())
+
     run(
-        args=("podman", "cp", str(src.absolute()), f"{CONTAINER_NAME}:{dest}")
+        args=("podman", "cp", src_str, dest_str)
     )
 
 
@@ -271,11 +279,21 @@ def copy_sdbus_sources() -> None:
 def compile_sdbus() -> None:
     podman_exec(
         "python3", "setup.py", "build", "bdist_wheel",
+        "--py-limited-api", "cp39",
         cwd=SDBUS_SRC_DIR,
         env={
             "PYTHON_SDBUS_USE_STATIC_LINK": "1",
             "PYTHON_SDBUS_USE_LIMITED_API": "1",
+            "CFLAGS": " ".join(BASIC_CFLAGS),
         },
+    )
+
+
+def copy_dist() -> None:
+    podman_cp(
+        SDBUS_SRC_DIR / "dist",
+        BUILD_DIR / f"{CONTAINER_ARCH}-dist",
+        to_contatiner=False,
     )
 
 
@@ -288,6 +306,7 @@ STAGES: dict[str, Callable[[], None]] = {
     "install_systemd_files": install_systemd_files,
     "copy_sdbus_sources": copy_sdbus_sources,
     "compile_sdbus": compile_sdbus,
+    "copy_dist": copy_dist,
 }
 
 
@@ -306,6 +325,14 @@ def iter_stages() -> Iterator[tuple[str, Callable[[], None]]]:
 
 
 def main() -> None:
+    args_parser = ArgumentParser()
+    args_parser.add_argument("--arch")
+    args = args_parser.parse_args()
+
+    if arch := args.arch:
+        global CONTAINER_ARCH
+        CONTAINER_ARCH = arch
+
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
 
     for stage_name, stage_func in iter_stages():

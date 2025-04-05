@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     ]
     InterfacesToClassMap = dict[
         frozenset[str],
-        type[Union[DbusInterfaceBaseAsync, DbusInterfaceBase]],
+        InterfacesBaseTypes,
     ]
     OnUnknownMember = Literal['error', 'ignore', 'reuse']
     OnUnknownInterface = Literal['error', 'none']
@@ -72,9 +72,9 @@ def _interfaces_input_to_types(
 
 
 def parse_properties_changed(
-        interface: InterfacesInputElements,
-        properties_changed_data: DBUS_PROPERTIES_CHANGED_TYPING,
-        on_unknown_member: OnUnknownMember = 'error',
+    interface: InterfacesInputElements,
+    properties_changed_data: DBUS_PROPERTIES_CHANGED_TYPING,
+    on_unknown_member: OnUnknownMember = 'error',
 ) -> dict[str, Any]:
     """Parse data from :py:meth:`properties_changed \
     <sdbus.DbusInterfaceCommonAsync.properties_changed>` signal.
@@ -146,8 +146,19 @@ def _get_class_from_interfaces(
     interfaces_to_class_map: InterfacesToClassMap,
     interface_names_iter: Iterable[str],
     raise_key_error: bool,
+    use_subset: bool,
 ) -> Optional[InterfacesBaseTypes]:
     class_set = frozenset(interface_names_iter) - SKIP_INTERFACES
+    if use_subset:
+        for interface_available in sorted(
+            interfaces_to_class_map.keys(),
+            key=len,
+            reverse=True,
+        ):
+            if interface_available.issubset(class_set):
+                class_set = interface_available
+                break
+
     try:
         return interfaces_to_class_map[class_set]
     except KeyError:
@@ -196,6 +207,8 @@ def parse_interfaces_added(
     interfaces_added_data: tuple[str, dict[str, dict[str, Any]]],
     on_unknown_interface: OnUnknownInterface = 'error',
     on_unknown_member: OnUnknownMember = 'error',
+    *,
+    use_interface_subsets: bool = False,
 ) -> tuple[str, Optional[InterfacesBaseTypes], dict[str, Any]]:
     """Parse data from :py:meth:`interfaces_added \
     <sdbus.DbusObjectManagerInterfaceAsync.interfaces_added>` signal.
@@ -220,6 +233,12 @@ def parse_interfaces_added(
         If an unknown D-Bus property was encountered either raise
         an ``"error"`` (default), ``"ignore"`` the property
         or ``"reuse"`` the D-Bus name for the member.
+    :param use_interface_subsets:
+        Use the subset of interfaces as a valid match. For example,
+        the class that implements ``org.example.foo`` would be matched
+        with an data consising of both ``org.example.foo`` and
+        ``org.example.bar``. The classes implementing more interfaces
+        will have higher priority over the ones implementing fewer.
     :returns:
         Path of new added object, object's class (or ``None``) and dictionary
         of python translated members and their values.
@@ -234,6 +253,7 @@ def parse_interfaces_added(
             interfaces_to_class_map,
             properties_data.keys(),
             on_unknown_interface == "error",
+            use_interface_subsets,
         )
     )
     dbus_to_python_member_map = _get_member_map_from_class(python_class)
@@ -265,6 +285,8 @@ def parse_interfaces_removed(
     interfaces: InterfacesInput,
     interfaces_removed_data: tuple[str, list[str]],
     on_unknown_interface: OnUnknownInterface = 'error',
+    *,
+    use_interface_subsets: bool = False,
 ) -> tuple[str, Optional[InterfacesBaseTypes]]:
     """Parse data from :py:meth:`interfaces_added \
     <sdbus.DbusObjectManagerInterfaceAsync.interfaces_removed>` signal.
@@ -283,6 +305,12 @@ def parse_interfaces_removed(
     :param on_unknown_member:
         If an unknown D-Bus interface was encountered either raise an
         ``"error"`` (default) or return ``"none"`` instead of interface class.
+    :param use_interface_subsets:
+        Use the subset of interfaces as a valid match. For example,
+        the class that implements ``org.example.foo`` would be matched
+        with an data consising of both ``org.example.foo`` and
+        ``org.example.bar``. The classes implementing more interfaces
+        will have higher priority over the ones implementing fewer.
     :returns:
         Path of removed object and object's class (or ``None``).
     """
@@ -296,6 +324,7 @@ def parse_interfaces_removed(
             interfaces_to_class_map,
             interfaces_removed,
             on_unknown_interface == "error",
+            use_interface_subsets,
         )
     )
 
@@ -307,6 +336,8 @@ def parse_get_managed_objects(
     managed_objects_data: dict[str, dict[str, dict[str, Any]]],
     on_unknown_interface: OnUnknownInterface = 'error',
     on_unknown_member: OnUnknownMember = 'error',
+    *,
+    use_interface_subsets: bool = False,
 ) -> ParseGetManaged:
     """Parse data from :py:meth:`get_managed_objects \
     <sdbus.DbusObjectManagerInterfaceAsync.get_managed_objects>` call.
@@ -330,6 +361,12 @@ def parse_get_managed_objects(
         If an unknown D-Bus property was encountered either raise
         an ``"error"`` (default), ``"ignore"`` the property
         or ``"reuse"`` the D-Bus name for the member.
+    :param use_interface_subsets:
+        Use the subset of interfaces as a valid match. For example,
+        the class that implements ``org.example.foo`` would be matched
+        with an data consising of both ``org.example.foo`` and
+        ``org.example.bar``. The classes implementing more interfaces
+        will have higher priority over the ones implementing fewer.
     :returns:
         Dictionary where keys are paths and values are tuples of managed
         objects classes and their properties data.
@@ -347,6 +384,7 @@ def parse_get_managed_objects(
                 interfaces_to_class_map,
                 properties_data.keys(),
                 on_unknown_interface == "error",
+                use_interface_subsets,
             )
         )
         dbus_to_python_member_map = _get_member_map_from_class(python_class)

@@ -189,6 +189,37 @@ class TestSdbusUtilsParse(TestCase):
         self.assertIsNone(class_type)
         self.assertEqual(0, len(properties_data))
 
+    def test_parse_get_managed_objects_interface_subset_single(self) -> None:
+        parsed_managed = parse_get_managed_objects(
+            [FooAsync],
+            MANAGED_OBJECTS_COMBINED,
+            on_unknown_interface="error",
+            on_unknown_member="reuse",
+            use_interface_subsets=True,
+        )
+        class_type, properties_data = parsed_managed["/test"]
+        self.assertIs(class_type, FooAsync)
+        self.assertEqual(properties_data["foo"], 1)
+        self.assertEqual(properties_data["Bar"], 2)
+
+    def test_parse_get_managed_objects_interface_subset_multiple(self) -> None:
+        parsed_managed = parse_get_managed_objects(
+            [FooAsync, FooBarAsync],
+            # FooBarAsync should be prioritized then both interfaces
+            # are available on the path.
+            MANAGED_OBJECTS_BOTH,
+            on_unknown_interface="none",
+            on_unknown_member="reuse",
+            use_interface_subsets=True,
+        )
+
+        class_type, _ = parsed_managed["/test"]
+        self.assertIs(class_type, FooBarAsync)
+        class_type, _ = parsed_managed["/foo"]
+        self.assertIs(class_type, FooAsync)
+        class_type, _ = parsed_managed["/bar"]
+        self.assertIsNone(class_type)
+
 
 class TestSdbusUtilsInspect(IsolatedDbusTestCase):
     def test_inspect_dbus_path_block(self) -> None:

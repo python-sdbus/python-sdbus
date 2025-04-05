@@ -202,10 +202,13 @@ class TestConverter(TestCase):
 
 
 class TestGeneratorAgainstDbus(IsolatedDbusTestCase):
-    def test_generate_from_connection(self) -> None:
+    def setUp(self) -> None:
         if find_spec('jinja2') is None:
             raise SkipTest('Jinja2 not installed')
 
+        super().setUp()
+
+    def test_generate_from_connection(self) -> None:
         with patch("sdbus.__main__.stdout") as stdout_mock:
             generator_main(
                 [
@@ -234,9 +237,6 @@ class TestGeneratorAgainstDbus(IsolatedDbusTestCase):
         )
 
     def test_generate_from_connection_blocking(self) -> None:
-        if find_spec('jinja2') is None:
-            raise SkipTest('Jinja2 not installed')
-
         with patch("sdbus.__main__.stdout") as stdout_mock:
             generator_main(
                 [
@@ -275,6 +275,12 @@ INTERFACE_NO_MEMBERS_XML = """
 
 
 class TestGeneratorSyntaxCompile(TestCase):
+    def setUp(self) -> None:
+        if find_spec('jinja2') is None:
+            raise SkipTest('Jinja2 not installed')
+
+        super().setUp()
+
     def test_syntax_compile_async(self) -> None:
         source_code = generate_py_file(
             interfaces_from_str(test_xml),

@@ -43,4 +43,3 @@ else
 endif
 
 subdir('src')
-subdir('wheel-build')

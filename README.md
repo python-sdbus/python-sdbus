@@ -1,4 +1,5 @@
 [![Documentation Status](https://readthedocs.org/projects/python-sdbus/badge/?version=latest)](https://python-sdbus.readthedocs.io/en/latest/?badge=latest)
+[![PyPI - Version](https://img.shields.io/pypi/v/sdbus)](https://pypi.org/project/sdbus/)
 
 # Modern Python library for D-Bus
 

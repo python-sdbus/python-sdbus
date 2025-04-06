@@ -131,7 +131,7 @@ async def request_default_bus_name_async(
     replace_existing: bool = False,
     queue: bool = False,
 ) -> None:
-    r"""Asyncronously acquire a name on the default bus.
+    r"""Asynchronously acquire a name on the default bus.
 
     :param new_name:
         Name to acquire.
@@ -167,7 +167,7 @@ def request_default_bus_name(
 ) -> None:
     r"""Acquire a name on the default bus.
 
-    Blocks until a reply is recieved from D-Bus daemon.
+    Blocks until a reply is received from D-Bus daemon.
 
     :param new_name:
         Name to acquire.

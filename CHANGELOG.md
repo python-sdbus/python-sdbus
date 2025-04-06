@@ -1,3 +1,61 @@
+## 0.14.0
+
+### Minimum requirements raised
+
+* Python 3.9 or higher.
+
+For binary PyPI wheel:
+
+* glibc 2.28 or higher. (Debian 10+, Ubuntu 18.10+, CentOS/RHEL 8+)
+* pip 20.3 or higher.
+* Added 32 bit ARM (`armv7l`) architecture wheel.
+
+### Default bus changes
+
+Previously the default bus always used the context-local variables
+to store the reference to the current default bus. As it turned out
+the context tends to be changed a lot which resulted in new buses being
+opened multiple times. (reported by @wes8ty)
+
+To avoid this the default bus was changed to be thread-local.
+`set_default_bus` will now set the thread-local default bus.
+A new function `set_context_default_bus` was added to set the context-local
+bus. The `get_default_bus` will return the context-local bus if set or
+thread-local otherwise. If no default bus has been set a new thread-local
+bus will be initialized and set.
+
+### Code generator
+
+* Code generator will now add manual D-Bus member name override where
+  automatic snake_case to CamelCase does not result in the original member name.
+  This applies to when member renaming options were used. (reported by @nicomuns)
+* Generated code will now use Python 3.9 built-in collections type hints.
+  (`typing.List[str]` -> `list[str]`)
+* Fixed blocking generated code adding unexpected `result_args_names` keyword.
+  (reported by @christophehenry)
+
+### Features
+
+* All `sdbus.utils.parse` functions can now accept the blocking interfaces.
+  (requested by @christophehenry)
+* Added boolean `use_interface_subsets` option to `sdbus.utils.parse` functions.
+  When enabled the subset of interfaces will be considered a valid match.
+  (requested by @christophehenry)
+
+### Fixes
+
+* Fixed exceptions mapped by `map_exception_to_dbus_error` not being translated
+  from Python to D-Bus errors. This means the Python built-in exceptions will
+  now be properly returned as D-Bus errors when raised in exported object callback.
+  The built-in exceptions translating as added back in version 0.10.0 but probably
+  never worked correctly. (reported by @arkq)
+* Fixed not being able to export interfaces with no implemented D-Bus members.
+  This also means `export_to_dbus` will only access D-Bus related attributes
+  avoiding triggering unrelated `@property` methods.
+* Renamed certain internal classes from `Binded` to `Bound` and
+  from `DbusSomething` to `DbusMember`. (reported by @souliane,
+  implemented by @dragomirecky)
+
 ## 0.13.0
 
 ### Code generator improvements

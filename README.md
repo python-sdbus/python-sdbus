@@ -50,13 +50,13 @@ please open a new issue.
 
 ### Binary package from PyPI
 
-* Python 3.8 or higher. (3.7 might work but is not supported)
-* `x86_64` or `aarch64` architecture.
-* glibc 2.17 or higher. (released in 2014)
-* pip 19.3 or higher.
+* Python 3.9 or higher.
+* `x86_64`, `aarch64` or `armv7l` architecture.
+* glibc 2.28 or higher. (Debian 10+, Ubuntu 18.10+, CentOS/RHEL 8+)
+* pip 20.3 or higher.
 
-Starting with version `0.8rc2` the libsystemd is statically
-linked and is not required.
+`libsystemd` is statically linked and is not required to be installed
+on the system.
 
 Pass `--only-binary ':all:'` to pip to ensure that it
 installs binary package.
@@ -67,7 +67,7 @@ platforms.
 
 ### Source package or compiling from source
 
-* Python 3.8 or higher.
+* Python 3.9 or higher.
 * Python headers. (`python3-dev` package on ubuntu)
 * GCC.
 * libsystemd or libelogind

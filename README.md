@@ -1,4 +1,3 @@
-[![CodeQL](https://github.com/python-sdbus/python-sdbus/actions/workflows/codeql.yml/badge.svg)](https://github.com/python-sdbus/python-sdbus/actions/workflows/codeql.yml)
 [![Documentation Status](https://readthedocs.org/projects/python-sdbus/badge/?version=latest)](https://python-sdbus.readthedocs.io/en/latest/?badge=latest)
 
 # Modern Python library for D-Bus

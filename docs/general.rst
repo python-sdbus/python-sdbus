@@ -130,7 +130,7 @@ See API documentation for a particular decorator.
 
 
 Default bus
-++++++++++++++++++++++++++
++++++++++++
 
 Most object methods that take a bus as a parameter
 will use a thread-local default bus connection if a bus object
@@ -139,17 +139,23 @@ is not explicitly passed.
 Session bus is default bus when running as a user and
 system bus otherwise.
 
-:py:func:`request_default_bus_name_async` can be used to acquire
-a service name on default bus.
+The :py:func:`request_default_bus_name_async <sdbus.default_bus.request_default_bus_name_async>`
+and :py:func:`request_default_bus_name <sdbus.default_bus.request_default_bus_name>`
+can be used to acquire a service name on the default bus.
 
 Use :py:func:`sd_bus_open_user` and :py:func:`sd_bus_open_system` to
 acquire a specific bus connection.
 
-Set the default connection to a new default with :py:func:`set_default_bus`.
-This should be done before any object that take bus as an init argument are created.
+The :py:func:`set_default_bus <sdbus.default_bus.set_default_bus>` can be used to set the new
+thread-local bus. This should be done before any objects that take bus as
+an init argument are created. If no bus has been set the new bus will
+be initialized and set as thread-local default.
 
-In the future there will be a better way to create and acquire
-new bus connections.
+The bus can also be set as default for the current context using
+:py:func:`set_context_default_bus <sdbus.default_bus.set_context_default_bus>`.
+The context refers to the standard library's ``contextvars`` module context variables
+frequently used in asyncio frameworks. Context-local default bus has higher priority over
+thread-local default bus.
 
 Glossary
 +++++++++++++++++++++

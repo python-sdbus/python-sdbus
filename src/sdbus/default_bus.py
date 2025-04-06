@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import threading
+from contextvars import ContextVar, Token
 from logging import getLogger
 from typing import TYPE_CHECKING
 
@@ -43,6 +44,7 @@ class DefaultBusTLStorage(threading.local):
 
 
 bus_tls = DefaultBusTLStorage()
+bus_contextvar: ContextVar[SdBus] = ContextVar("DEFAULT_BUS")
 
 
 def _get_defaul_bus_tls() -> Optional[SdBus]:
@@ -54,10 +56,20 @@ def _set_default_bus_tls(new_bus: Optional[SdBus]) -> None:
 
 
 def get_default_bus() -> SdBus:
-    """Get default thread-local bus."""
-    current_bus = _get_defaul_bus_tls()
-    if current_bus is not None:
-        return current_bus
+    """Get default bus.
+
+    Returns context-local default bus if set or
+    thread-local otherwise.
+
+    If no default bus is set initializes a new bus using
+    :py:func:`sdbus.sd_bus_open` and sets it as a thread-local
+    default bus.
+    """
+    if (context_bus := bus_contextvar.get(None)) is not None:
+        return context_bus
+
+    if (tls_bus := _get_defaul_bus_tls()) is not None:
+        return tls_bus
     else:
         new_bus = sd_bus_open()
         logger.info(
@@ -69,7 +81,7 @@ def get_default_bus() -> SdBus:
 
 
 def set_default_bus(new_default: SdBus) -> None:
-    """Set default thread-local bus.
+    """Set thread-local default bus.
 
     Should be called before creating any objects that will use
     default bus.
@@ -78,6 +90,25 @@ def set_default_bus(new_default: SdBus) -> None:
     newly created objects.
     """
     _set_default_bus_tls(new_default)
+
+
+def set_context_default_bus(new_default: SdBus) -> Token[SdBus]:
+    """Set context-local default bus.
+
+    Should be called before creating any objects that will use
+    default bus.
+
+    Default bus can be replaced but the change will only affect
+    newly created objects.
+
+    Context-local default bus has higher priority over thread-local one
+    but has to be explicitly set.
+
+    :returns:
+        Token that can be used to reset context bus back.
+        See ``contextvars`` documentation for details.
+    """
+    return bus_contextvar.set(new_default)
 
 
 def _prepare_request_name_flags(
@@ -167,6 +198,7 @@ def request_default_bus_name(
 __all__ = (
     "get_default_bus",
     "set_default_bus",
+    "set_context_default_bus",
     "request_default_bus_name_async",
     "request_default_bus_name",
 )

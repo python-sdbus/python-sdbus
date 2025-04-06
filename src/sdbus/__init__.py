@@ -74,6 +74,7 @@ from .default_bus import (
     get_default_bus,
     request_default_bus_name,
     request_default_bus_name_async,
+    set_context_default_bus,
     set_default_bus,
 )
 from .sd_bus_internals import (
@@ -145,6 +146,7 @@ __all__ = (
     "get_default_bus",
     "request_default_bus_name",
     "request_default_bus_name_async",
+    "set_context_default_bus",
     "set_default_bus",
 
     'DbusDeprecatedFlag',

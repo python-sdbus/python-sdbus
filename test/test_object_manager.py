@@ -399,7 +399,10 @@ class TestObjectManager(IsolatedDbusTestCase):
             )
 
         self.assertEqual(added.output[0][0], MANAGED_PATH)
-        self.assertEqual(removed.output[0][0], MANAGED_PATH)
+
+        removed_path, removed_interfaces = removed.output[0]
+        self.assertEqual(removed_path, MANAGED_PATH)
+        self.assertIn(MANAGED_INTERFACE_NAME, removed_interfaces)
 
         with self.assertRaises(DbusUnknownObjectError):
             await managed_proxy.test_int

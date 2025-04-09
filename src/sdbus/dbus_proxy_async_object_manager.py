@@ -49,8 +49,8 @@ class DbusObjectManagerExportHandle(DbusExportHandle):
         self.remove_object_call = remove_object_call
 
     def stop(self) -> None:
-        super().stop()
         self.remove_object_call()
+        super().stop()
 
 
 class DbusObjectManagerInterfaceAsync(

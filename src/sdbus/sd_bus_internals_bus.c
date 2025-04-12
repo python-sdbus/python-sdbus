@@ -624,6 +624,60 @@ static PyObject* SdBus_emit_object_removed(SdBusObject* self, PyObject* args) {
         Py_RETURN_NONE;
 }
 
+static inline void cleanup_char_ptr_array_py_mem(char*** char_ptr_array) {
+        if (*char_ptr_array != NULL) {
+                PyMem_Free(*char_ptr_array);
+        }
+}
+
+#define CLEANUP_CHAR_PTR_ARRAY_PY_MEM __attribute__((cleanup(cleanup_char_ptr_array_py_mem)))
+
+static PyObject* SdBus_emit_interfaces_added(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
+        SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PySequence_Check);
+
+        const char* removed_object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+
+        Py_ssize_t num_interfaces = CALL_PYTHON_INT_CHECK(PySequence_Length(args[1]));
+        char** interface_names CLEANUP_CHAR_PTR_ARRAY_PY_MEM = PyMem_Calloc(num_interfaces + 1, sizeof(char*));
+        if (interface_names == NULL) {
+                return PyErr_NoMemory();
+        }
+        for (Py_ssize_t i = 0; i < num_interfaces; i++) {
+                PyObject* interface_name_str CLEANUP_PY_OBJECT = PySequence_GetItem(args[1], i);
+                interface_names[i] = (char*)SD_BUS_PY_UNICODE_AS_CHAR_PTR(interface_name_str);
+        }
+        interface_names[num_interfaces] = NULL;
+
+        CALL_SD_BUS_AND_CHECK(sd_bus_emit_interfaces_added_strv(self->sd_bus_ref, removed_object_path, interface_names));
+
+        Py_RETURN_NONE;
+}
+
+static PyObject* SdBus_emit_interfaces_removed(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
+        SD_BUS_PY_CHECK_ARGS_NUMBER(2);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, PyUnicode_Check);
+        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(1, PySequence_Check);
+
+        const char* removed_object_path = SD_BUS_PY_UNICODE_AS_CHAR_PTR(args[0]);
+
+        Py_ssize_t num_interfaces = CALL_PYTHON_INT_CHECK(PySequence_Length(args[1]));
+        char** interface_names CLEANUP_CHAR_PTR_ARRAY_PY_MEM = PyMem_Calloc(num_interfaces + 1, sizeof(char*));
+        if (interface_names == NULL) {
+                return PyErr_NoMemory();
+        }
+        for (Py_ssize_t i = 0; i < num_interfaces; i++) {
+                PyObject* interface_name_str CLEANUP_PY_OBJECT = PySequence_GetItem(args[1], i);
+                interface_names[i] = (char*)SD_BUS_PY_UNICODE_AS_CHAR_PTR(interface_name_str);
+        }
+        interface_names[num_interfaces] = NULL;
+
+        CALL_SD_BUS_AND_CHECK(sd_bus_emit_interfaces_removed_strv(self->sd_bus_ref, removed_object_path, interface_names));
+
+        Py_RETURN_NONE;
+}
+
 static PyObject* SdBus_close(SdBusObject* self, PyObject* Py_UNUSED(args)) {
         sd_bus_close(self->sd_bus_ref);
         if (NULL != self->loop && NULL != self->bus_fd) {
@@ -732,7 +786,11 @@ static PyMethodDef SdBus_methods[] = {
     {"request_name", (SD_BUS_PY_FUNC_TYPE)SdBus_request_name, SD_BUS_PY_METH, PyDoc_STR("Request D-Bus name blocking.")},
     {"add_object_manager", (SD_BUS_PY_FUNC_TYPE)SdBus_add_object_manager, SD_BUS_PY_METH, PyDoc_STR("Add object manager at the path.")},
     {"emit_object_added", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_added, SD_BUS_PY_METH, PyDoc_STR("Emit signal that object was added.")},
+    {"emit_interfaces_added", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_interfaces_added, SD_BUS_PY_METH,
+     PyDoc_STR("Emit signal that a given sequence of interfaces was added.")},
     {"emit_object_removed", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_object_removed, SD_BUS_PY_METH, PyDoc_STR("Emit signal that object was removed.")},
+    {"emit_interfaces_removed", (SD_BUS_PY_FUNC_TYPE)SdBus_emit_interfaces_removed, SD_BUS_PY_METH,
+     PyDoc_STR("Emit signal that a given sequence of interfaces was removed.")},
     {"close", (PyCFunction)SdBus_close, METH_NOARGS, PyDoc_STR("Close connection.")},
     {"start", (PyCFunction)SdBus_start, METH_NOARGS, PyDoc_STR("Start connection.")},
     {NULL, NULL, 0, NULL},

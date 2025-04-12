@@ -119,7 +119,16 @@ class DbusObjectManagerInterfaceAsync(
             meta,
             partial(self.remove_managed_object, object_to_export),
         )
-        bus.emit_object_added(object_path)
+        # bus.emit_object_added(object_path)
+        bus.emit_interfaces_added(
+            object_path,
+            tuple(
+                interface_name
+                for interface_name, meta
+                in object_to_export._dbus_iter_interfaces_meta()
+                if meta.serving_enabled
+            ),
+        )
         self._managed_object_to_path[object_to_export] = object_path
 
         return handle
@@ -131,4 +140,12 @@ class DbusObjectManagerInterfaceAsync(
             raise RuntimeError('Object manager not exported')
 
         removed_path = self._managed_object_to_path.pop(managed_object)
-        self._dbus.attached_bus.emit_object_removed(removed_path)
+        self._dbus.attached_bus.emit_interfaces_removed(
+            removed_path,
+            tuple(
+                interface_name
+                for interface_name, meta
+                in managed_object._dbus_iter_interfaces_meta()
+                if meta.serving_enabled
+            ),
+        )

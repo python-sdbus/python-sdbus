@@ -209,6 +209,22 @@ class SdBus:
     def emit_object_removed(self, path: str, /) -> None:
         raise NotImplementedError(__STUB_ERROR)
 
+    def emit_interfaces_added(
+        self,
+        path: str,
+        interface_names: Sequence[str],
+        /,
+    ) -> None:
+        raise NotImplementedError(__STUB_ERROR)
+
+    def emit_interfaces_removed(
+        self,
+        path: str,
+        interface_names: Sequence[str],
+        /,
+    ) -> None:
+        raise NotImplementedError(__STUB_ERROR)
+
     def close(self) -> None:
         raise NotImplementedError(__STUB_ERROR)
 

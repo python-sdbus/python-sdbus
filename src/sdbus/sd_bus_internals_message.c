@@ -338,7 +338,7 @@ static const char* _subscript_char_ptr(const char* old_char_ptr, size_t start, s
         // 3 string length without \0
         // 4 string length with \0
         size_t new_string_size = (end - start) + 1;
-        char* new_string = malloc(new_string_size + 1);
+        char* new_string = PyMem_Malloc(new_string_size + 1);
         if (new_string == NULL) {
                 return NULL;
         }
@@ -357,7 +357,7 @@ static PyObject* _parse_dict(PyObject* dict_object, _Parse_state* parser_state) 
                 return NULL;
         }
 
-        const char* dict_sig_char_ptr CLEANUP_STR_MALLOC = _subscript_char_ptr(parser_state->container_char_ptr, 1, parser_state->max_index - 2);
+        const char* dict_sig_char_ptr CLEANUP_STR_PY_MEM = _subscript_char_ptr(parser_state->container_char_ptr, 1, parser_state->max_index - 2);
         // "sx"
         parser_state->container_char_ptr = dict_sig_char_ptr;  // This is OK because its cleanup from
                                                                // outside
@@ -396,7 +396,7 @@ static PyObject* _parse_array(PyObject* array_object, _Parse_state* parser_state
         //         ^
         // "...a(as)..."
         //         ^
-        const char* array_sig_char_ptr CLEANUP_STR_MALLOC = _subscript_char_ptr(parser_state->container_char_ptr, parser_state->index + 1, array_end);
+        const char* array_sig_char_ptr CLEANUP_STR_PY_MEM = _subscript_char_ptr(parser_state->container_char_ptr, parser_state->index + 1, array_end);
         // array_sig_char_ptr
         // "...as..."
         //     "s"
@@ -495,7 +495,7 @@ static PyObject* _parse_struct(PyObject* tuple_object, _Parse_state* parser_stat
         // Struct end points to
         // "...(...)..."
         //         ^
-        const char* struct_signature CLEANUP_STR_MALLOC = _subscript_char_ptr(parser_state->container_char_ptr, parser_state->index, struct_end - 1);
+        const char* struct_signature CLEANUP_STR_PY_MEM = _subscript_char_ptr(parser_state->container_char_ptr, parser_state->index, struct_end - 1);
         // struct_signature should be
         // "...(...)..."
         //     ^   ^

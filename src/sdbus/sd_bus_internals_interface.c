@@ -43,7 +43,7 @@ static void SdBusInterface_dealloc(SdBusInterfaceObject* self) {
         Py_XDECREF(self->property_set_dict);
         Py_XDECREF(self->signal_list);
         if (self->vtable) {
-                free(self->vtable);
+                PyMem_Free(self->vtable);
         }
 
         SD_BUS_DEALLOC_TAIL;
@@ -215,7 +215,7 @@ static PyObject* SdBusInterface_create_vtable(SdBusInterfaceObject* self, PyObje
         Py_ssize_t num_of_properties = PyList_Size(self->property_list);
         Py_ssize_t num_of_signals = PyList_Size(self->signal_list);
 
-        self->vtable = calloc(num_of_signals + num_of_properties + num_of_methods + 2, sizeof(sd_bus_vtable));
+        self->vtable = PyMem_Calloc(num_of_signals + num_of_properties + num_of_methods + 2, sizeof(sd_bus_vtable));
         if (self->vtable == NULL) {
                 return PyErr_NoMemory();
         }

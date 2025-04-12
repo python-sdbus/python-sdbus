@@ -280,6 +280,14 @@ __attribute__((used)) static inline void PyObject_cleanup(PyObject** object) {
 
 #define CLEANUP_PY_OBJECT __attribute__((cleanup(PyObject_cleanup)))
 
+__attribute__((used)) static inline void _cleanup_char_ptr_pymem(const char** ptr) {
+        if (*ptr != NULL) {
+                PyMem_Free((void*)*ptr);
+        }
+}
+
+#define CLEANUP_STR_PY_MEM __attribute__((cleanup(_cleanup_char_ptr_pymem)))
+
 // SdBusSlot
 typedef struct {
         PyObject_HEAD;

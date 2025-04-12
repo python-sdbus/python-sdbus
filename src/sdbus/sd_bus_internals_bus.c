@@ -168,22 +168,10 @@ static SdBusMessageObject* SdBus_new_signal_message(SdBusObject* self, PyObject*
         return new_message_object;
 }
 
-#ifndef Py_LIMITED_API
-static int _check_sdbus_message(PyObject* something) {
-        return PyType_IsSubtype(Py_TYPE(something), (PyTypeObject*)SdBusMessage_class);
-}
-
-static SdBusMessageObject* SdBus_call(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
-        // TODO: Check reference counting
-        SD_BUS_PY_CHECK_ARGS_NUMBER(1);
-        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, _check_sdbus_message);
-
-        SdBusMessageObject* call_message = (SdBusMessageObject*)args[0];
-#else
-static SdBusMessageObject* SdBus_call(SdBusObject* self, PyObject* args) {
+static SdBusMessageObject* SdBus_call(SdBusObject* self, PyObject* arg) {
         SdBusMessageObject* call_message = NULL;
-        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "O", &call_message, NULL));
-#endif
+        CALL_PYTHON_BOOL_CHECK(PyArg_Parse(arg, "O!", SdBusMessage_class, &call_message, NULL));
+
         SdBusMessageObject* reply_message_object CLEANUP_SD_BUS_MESSAGE =
             (SdBusMessageObject*)CALL_PYTHON_AND_CHECK(SD_BUS_PY_CLASS_DUNDER_NEW(SdBusMessage_class));
 
@@ -316,17 +304,10 @@ int SdBus_async_callback(sd_bus_message* m,
         return 0;
 }
 
-#ifndef Py_LIMITED_API
-static PyObject* SdBus_call_async(SdBusObject* self, PyObject* const* args, Py_ssize_t nargs) {
-        SD_BUS_PY_CHECK_ARGS_NUMBER(1);
-        SD_BUS_PY_CHECK_ARG_CHECK_FUNC(0, _check_sdbus_message);
-
-        SdBusMessageObject* call_message = (SdBusMessageObject*)args[0];
-#else
-static PyObject* SdBus_call_async(SdBusObject* self, PyObject* args) {
+static PyObject* SdBus_call_async(SdBusObject* self, PyObject* arg) {
         SdBusMessageObject* call_message = NULL;
-        CALL_PYTHON_BOOL_CHECK(PyArg_ParseTuple(args, "O", &call_message, NULL));
-#endif
+        CALL_PYTHON_BOOL_CHECK(PyArg_Parse(arg, "O!", SdBusMessage_class, &call_message, NULL));
+
         PyObject* running_loop = CALL_PYTHON_AND_CHECK(_get_or_bind_loop(self));
 
         PyObject* new_future = CALL_PYTHON_AND_CHECK(PyObject_CallMethod(running_loop, "create_future", ""));
@@ -717,8 +698,8 @@ static PyObject* SdBus_asyncio_update_fd_watchers(SdBusObject* self) {
 }
 
 static PyMethodDef SdBus_methods[] = {
-    {"call", (SD_BUS_PY_FUNC_TYPE)SdBus_call, SD_BUS_PY_METH, PyDoc_STR("Send message and block until the reply.")},
-    {"call_async", (SD_BUS_PY_FUNC_TYPE)SdBus_call_async, SD_BUS_PY_METH, PyDoc_STR("Async send message, returns awaitable future.")},
+    {"call", (PyCFunction)SdBus_call, METH_O, PyDoc_STR("Send message and block until the reply.")},
+    {"call_async", (PyCFunction)SdBus_call_async, METH_O, PyDoc_STR("Async send message, returns awaitable future.")},
     {"process", (PyCFunction)SdBus_process, METH_NOARGS, PyDoc_STR("Process pending IO work.")},
     {"get_fd", (SD_BUS_PY_FUNC_TYPE)SdBus_get_fd, SD_BUS_PY_METH, PyDoc_STR("Get file descriptor to poll on.")},
     {"new_method_call_message", (SD_BUS_PY_FUNC_TYPE)SdBus_new_method_call_message, SD_BUS_PY_METH, PyDoc_STR("Create new empty method call message.")},

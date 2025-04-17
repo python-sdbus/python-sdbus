@@ -97,15 +97,15 @@ if __name__ == '__main__':
         long_description=long_description,
         long_description_content_type='text/markdown',
         version='0.14.0',
-        url='https://github.com/igo95862/python-sdbus',
+        url='https://github.com/python-sdbus/python-sdbus',
         author='igo95862',
         author_email='igo95862@yandex.ru',
         license='LGPL-2.1-or-later',
         keywords='dbus ipc linux freedesktop',
         project_urls={
             'Documentation': 'https://python-sdbus.readthedocs.io/en/latest/',
-            'Source': 'https://github.com/igo95862/python-sdbus/',
-            'Tracker': 'https://github.com/igo95862/python-sdbus/issues/',
+            'Source': 'https://github.com/python-sdbus/python-sdbus/',
+            'Tracker': 'https://github.com/python-sdbus/python-sdbus/issues/',
         },
         classifiers=[
             'Development Status :: 4 - Beta',

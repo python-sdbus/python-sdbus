@@ -12,7 +12,7 @@ To use it include ``"sdbus.autodoc"`` extension in your
     extensions = ['sdbus.autodoc']
 
 The extension can document interface class bodies. For example,
-`python-sdbus-networkmanager <https://github.com/igo95862/python-sdbus-networkmanager>`_
+`python-sdbus-networkmanager <https://github.com/python-sdbus/python-sdbus-networkmanager>`_
 uses it to document the classes.
 
 .. code-block:: rst

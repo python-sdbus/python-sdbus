@@ -256,7 +256,7 @@ def map_exception_to_dbus_error(exc: type[Exception],
     ...  # We want to be able to generate docs without module
 
 
-def add_exception_mapping(exc: Exception, /) -> None:
+def add_exception_mapping(exc: type[Exception], /) -> None:
     ...  # We want to be able to generate docs without module
 
 

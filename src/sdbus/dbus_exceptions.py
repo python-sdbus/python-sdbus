@@ -38,7 +38,7 @@ class DbusErrorMeta(type):
         name: str,
         bases: tuple[type, ...],
         namespace: dict[str, Any],
-    ) -> DbusErrorMeta:
+    ) -> type[Exception]:
 
         dbus_error_name = namespace.get('dbus_error_name')
 

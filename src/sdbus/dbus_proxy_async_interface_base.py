@@ -22,7 +22,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from copy import copy
 from itertools import chain
-from types import MethodType
 from typing import TYPE_CHECKING, Any, cast
 from warnings import warn
 from weakref import WeakKeyDictionary, WeakValueDictionary
@@ -73,21 +72,23 @@ class DbusInterfaceMetaAsync(DbusInterfaceMetaCommon):
         mro_dbus_elements: dict[str, DbusMemberAsync],
     ) -> DbusMethodAsync:
         try:
-            original_method = mro_dbus_elements[override_attr_name]
+            original_dbus_method = mro_dbus_elements[override_attr_name]
         except KeyError:
             raise ValueError(
                 f"No D-Bus method {override_attr_name!r} found "
                 f"to override."
             )
 
-        if not isinstance(original_method, DbusMethodAsync):
+        if not isinstance(original_dbus_method, DbusMethodAsync):
             raise TypeError(
-                f"Expected {DbusMethodAsync!r} got {original_method!r} "
+                f"Expected {DbusMethodAsync!r} got {original_dbus_method!r} "
                 f"under name {override_attr_name!r}"
             )
 
-        new_method = copy(original_method)
-        new_method.original_method = cast(MethodType, override.override_method)
+        new_method = copy(original_dbus_method)
+        new_method.original_method = (
+            override.override_method  # type: ignore[assignment]
+        )
         return new_method
 
     @staticmethod

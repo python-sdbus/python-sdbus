@@ -105,6 +105,7 @@ class DbusPropertiesInterfaceAsync(
 
 
 class DbusInterfaceCommonAsync(
-        DbusPeerInterfaceAsync, DbusPropertiesInterfaceAsync,
-        DbusIntrospectableAsync):
+        DbusPropertiesInterfaceAsync,
+        DbusIntrospectableAsync,
+        DbusPeerInterfaceAsync):
     ...

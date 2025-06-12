@@ -171,7 +171,7 @@ class DbusInterfaceBase(metaclass=DbusInterfaceMetaSync):
         cls,
     ) -> Iterator[tuple[str, DbusClassMeta]]:
 
-        for base in cls.__mro__:
+        for base in reversed(cls.__mro__):
             meta = DBUS_CLASS_TO_META.get(base)
             if meta is None:
                 continue

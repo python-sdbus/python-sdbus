@@ -94,9 +94,9 @@ class DbusPropertiesInterface(
 
 
 class DbusInterfaceCommon(
-        DbusPeerInterface,
+        DbusPropertiesInterface,
         DbusIntrospectable,
-        DbusPropertiesInterface):
+        DbusPeerInterface):
     ...
 
 

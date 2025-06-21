@@ -948,8 +948,22 @@ class TestProxy(IsolatedDbusTestCase):
             async def two(self) -> int:
                 return 2
 
-        class CombinedInterface(OneInterface, TwoInterface):
+        class CombinedInterface(TwoInterface, OneInterface):
             ...
+
+        test_combined = CombinedInterface()
+        test_combined_interfaces = [
+            iface for iface, _ in test_combined._dbus_iter_interfaces_meta()
+        ]
+
+        # Verify the order of reported interfaces on the combined class.
+        self.assertEqual(test_combined_interfaces, [
+            "org.freedesktop.DBus.Peer",
+            "org.freedesktop.DBus.Introspectable",
+            "org.freedesktop.DBus.Properties",
+            "org.example.one",
+            "org.example.two",
+        ])
 
     async def test_extremely_large_string(self) -> None:
         test_object, test_object_connection = initialize_object()

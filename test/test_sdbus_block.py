@@ -92,8 +92,22 @@ class TestSync(IsolatedDbusTestCase):
             def two(self) -> int:
                 raise NotImplementedError
 
-        class CombinedInterface(OneInterface, TwoInterface):
+        class CombinedInterface(TwoInterface, OneInterface):
             ...
+
+        test_combined = CombinedInterface("org.test", "/")
+        test_combined_interfaces = [
+            iface for iface, _ in test_combined._dbus_iter_interfaces_meta()
+        ]
+
+        # Verify the order of reported interfaces on the combined class.
+        self.assertEqual(test_combined_interfaces, [
+            "org.freedesktop.DBus.Peer",
+            "org.freedesktop.DBus.Introspectable",
+            "org.freedesktop.DBus.Properties",
+            "org.example.one",
+            "org.example.two",
+        ])
 
 
 if __name__ == '__main__':

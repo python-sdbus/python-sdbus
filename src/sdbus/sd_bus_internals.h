@@ -241,6 +241,7 @@
 // Python functions and objects
 extern PyObject* asyncio_get_running_loop;
 extern PyObject* is_coroutine_function;
+extern PyObject* task_done_callback;
 // Str objects
 extern PyObject* set_result_str;
 extern PyObject* set_exception_str;
@@ -254,6 +255,7 @@ extern PyObject* extend_str;
 extern PyObject* append_str;
 extern PyObject* call_soon_str;
 extern PyObject* create_task_str;
+extern PyObject* add_done_callback_str;
 // Exceptions
 extern PyObject* exception_base;
 extern PyObject* unmapped_error_exception;

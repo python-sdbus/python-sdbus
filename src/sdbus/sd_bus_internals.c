@@ -23,6 +23,7 @@
 // Python functions and objects
 PyObject* asyncio_get_running_loop = NULL;
 PyObject* is_coroutine_function = NULL;
+PyObject* task_done_callback = NULL;
 // Str objects
 PyObject* set_result_str = NULL;
 PyObject* set_exception_str = NULL;
@@ -36,6 +37,7 @@ PyObject* extend_str = NULL;
 PyObject* append_str = NULL;
 PyObject* call_soon_str = NULL;
 PyObject* create_task_str = NULL;
+PyObject* add_done_callback_str = NULL;
 // Exceptions
 PyObject* exception_base = NULL;
 PyObject* unmapped_error_exception = NULL;
@@ -106,6 +108,18 @@ PyObject* SdBusInterface_class = NULL;
                 return NULL;                                          \
         }
 
+static PyObject* SdBusInterface_dbus_reply_task_done(PyObject* Py_UNUSED(self), PyObject* task) {
+        Py_DECREF(task);
+        Py_RETURN_NONE;
+}
+
+static PyMethodDef SdBusInterface_dbus_reply_task_done_def = {
+    .ml_name = "_dbus_reply_task_done",
+    .ml_meth = SdBusInterface_dbus_reply_task_done,
+    .ml_flags = METH_O,
+    .ml_doc = PyDoc_STR("Function called upon task completion."),
+};
+
 PyMODINIT_FUNC PyInit_sd_bus_internals(void) {
         PyObject* m CLEANUP_PY_OBJECT = CALL_PYTHON_AND_CHECK(PyModule_Create(&sd_bus_internals_module));
 
@@ -171,6 +185,7 @@ PyMODINIT_FUNC PyInit_sd_bus_internals(void) {
         set_exception_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("set_exception"));
         call_soon_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("call_soon"));
         create_task_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("create_task"));
+        add_done_callback_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("add_done_callback"));
         remove_reader_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("remove_reader"));
         add_reader_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("add_reader"));
         add_writer_str = CALL_PYTHON_AND_CHECK(PyUnicode_FromString("add_writer"));
@@ -182,6 +197,8 @@ PyMODINIT_FUNC PyInit_sd_bus_internals(void) {
 
         PyObject* inspect_module = CALL_PYTHON_AND_CHECK(PyImport_ImportModule("inspect"));
         is_coroutine_function = CALL_PYTHON_AND_CHECK(PyObject_GetAttrString(inspect_module, "iscoroutinefunction"));
+
+        task_done_callback = CALL_PYTHON_AND_CHECK(PyCFunction_New(&SdBusInterface_dbus_reply_task_done_def, NULL));
 
         CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusDeprecatedFlag", SD_BUS_VTABLE_DEPRECATED));
         CALL_PYTHON_INT_CHECK(PyModule_AddIntConstant(m, "DbusHiddenFlag", SD_BUS_VTABLE_HIDDEN));

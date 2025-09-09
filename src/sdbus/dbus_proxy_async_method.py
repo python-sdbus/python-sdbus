@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 from __future__ import annotations
 
+from asyncio import get_running_loop
 from contextvars import ContextVar, copy_context
 from inspect import iscoroutinefunction
 from types import FunctionType
@@ -27,6 +28,7 @@ from weakref import ref as weak_ref
 
 from .dbus_common_elements import (
     DbusBoundAsync,
+    DbusLocalObjectMeta,
     DbusMemberAsync,
     DbusMethodCommon,
     DbusMethodOverride,
@@ -177,16 +179,31 @@ class DbusLocalMethodAsync(DbusBoundMethodAsyncBase):
 
         return await local_method(*request_message.parse_to_tuple())
 
-    async def _dbus_reply_call(
+    def _dbus_reply_call(
         self,
         request_message: SdBusMessage
     ) -> None:
         local_object = self.local_object_ref()
         if local_object is None:
             raise RuntimeError("Local object no longer exists!")
+        local_meta = local_object._dbus
+        if not isinstance(local_meta, DbusLocalObjectMeta):
+            raise RuntimeError("D-Bus object is a remote proxy!")
 
+        loop = get_running_loop()
+        reply_task = loop.create_task(
+            self._dbus_reply_call_async(local_object, request_message)
+        )
+        tasks_set = local_meta.tasks
+        tasks_set.add(reply_task)
+        reply_task.add_done_callback(tasks_set.discard)
+
+    async def _dbus_reply_call_async(
+        self,
+        local_object: DbusInterfaceBaseAsync,
+        request_message: SdBusMessage
+    ) -> None:
         call_context = copy_context()
-
         try:
             reply_data = await call_context.run(
                 self._dbus_reply_call_method,

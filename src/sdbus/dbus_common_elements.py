@@ -30,6 +30,7 @@ from .default_bus import get_default_bus
 from .sd_bus_internals import is_interface_name_valid, is_member_name_valid
 
 if TYPE_CHECKING:
+    from asyncio import Task
     from collections.abc import Callable, Sequence
     from types import FunctionType
     from typing import Any, Optional
@@ -330,6 +331,16 @@ class DbusLocalObjectMeta:
         self.activated_interfaces: list[SdBusInterface] = []
         self.serving_object_path: Optional[str] = None
         self.attached_bus: Optional[SdBus] = None
+        self._tasks: Optional[set[Task[None]]] = None
+
+    @property
+    def tasks(self) -> set[Task[None]]:
+        tasks_set = self._tasks
+        if tasks_set is None:
+            tasks_set = set()
+            self._tasks = tasks_set
+
+        return tasks_set
 
 
 class DbusClassMeta:

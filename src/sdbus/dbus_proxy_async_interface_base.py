@@ -385,7 +385,7 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
                     )
                 else:
                     raise TypeError(
-                        "Expected D-Bus element, got: {dbus_something!r}"
+                        f"Expected D-Bus element, got: {dbus_something!r}"
                     )
 
             bus.add_interface(new_interface, object_path, interface_name)

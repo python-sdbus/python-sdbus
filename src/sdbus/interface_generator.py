@@ -226,7 +226,7 @@ class DbusSigToTyping:
 
             if len(array_completes) != 1:
                 raise ValueError("Array does not have only "
-                                 "one complete type: {array_completes}")
+                                 f"one complete type: {array_completes}")
 
             array_single_complete = array_completes[0]
 

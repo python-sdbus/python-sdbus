@@ -110,6 +110,32 @@ def inspect_dbus_path(
         raise TypeError(f"Expected D-Bus object got {obj!r}")
 
 
+def inspect_dbus_bus(
+    obj: Union[DbusInterfaceBase, DbusInterfaceBaseAsync]
+) -> Optional[SdBus]:
+    """Return D-Bus bus used by the object.
+
+    If called on D-Bus proxies or exported local D-Bus objects returns
+    bus object.
+
+    If called on local D-Bus objects that had not been exported returns None.
+
+    If called on an object that is unrelated to D-Bus raises ``TypeError``.
+
+    :param obj:
+        Object to inspect.
+    :returns:
+        D-Bus bus object.
+
+    *New in version 0.14.1.*
+    """
+    if isinstance(obj, (DbusInterfaceBase, DbusInterfaceBaseAsync)):
+        return obj._dbus.attached_bus
+    else:
+        raise TypeError(f"Expected D-Bus object got {obj!r}")
+
+
 __all__ = (
+    'inspect_dbus_bus',
     "inspect_dbus_path",
 )

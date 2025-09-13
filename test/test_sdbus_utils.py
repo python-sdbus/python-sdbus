@@ -22,7 +22,7 @@ from __future__ import annotations
 from unittest import TestCase
 
 from sdbus.unittest import IsolatedDbusTestCase
-from sdbus.utils.inspect import inspect_dbus_path
+from sdbus.utils.inspect import inspect_dbus_bus, inspect_dbus_path
 from sdbus.utils.parse import parse_get_managed_objects
 
 from sdbus import (
@@ -258,3 +258,24 @@ class TestSdbusUtilsInspect(IsolatedDbusTestCase):
 
         with self.assertRaisesRegex(LookupError, "is not attached to bus"):
             inspect_dbus_path(local_obj, new_bus)
+
+    def test_inspect_attached_bus(self) -> None:
+        proxy = DbusInterfaceCommon("example.org", TEST_PATH)
+
+        self.assertIs(inspect_dbus_bus(proxy), self.bus)
+
+        with self.assertRaises(TypeError):
+            inspect_dbus_bus(object())  # type: ignore[arg-type]
+
+    def test_inspect_attached_bus_async(self) -> None:
+        proxy = DbusInterfaceCommonAsync.new_proxy("example.org", TEST_PATH)
+
+        self.assertIs(inspect_dbus_bus(proxy), self.bus)
+
+        local_obj = FooBarAsync()
+
+        self.assertIsNone(inspect_dbus_bus(local_obj))
+
+        local_obj.export_to_dbus("/")
+
+        self.assertIs(inspect_dbus_bus(local_obj), self.bus)

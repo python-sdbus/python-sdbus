@@ -60,7 +60,7 @@ BASIC_CFLAGS: list[str] = [
 
 SYSTEMD_REPO = "https://github.com/systemd/systemd-stable.git"
 # systemd 255 is last one before glibc 2.31 requirement
-SYSTEMD_TAG = "v255.18"
+SYSTEMD_TAG = "v255.22"
 SYSTEMD_SRC_DIR = Path("/root/systemd")
 SYSTEMD_BUILD_DIR = SYSTEMD_SRC_DIR / "build"
 SYSTEMD_COMPAT_PATCH_NAME = "systemd_no_gettid_no_getdents64.patch"

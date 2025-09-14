@@ -157,7 +157,8 @@ def install_packages() -> None:
     podman_exec(
         "bash",
         "-c",
-        f"echo 'deb http://deb.debian.org/debian {DEBIAN_NAME}-backports main'"
+        "echo 'deb http://archive.debian.org/debian "
+        f"{DEBIAN_NAME}-backports main'"
         " > /etc/apt/sources.list.d/backports.list"
     )
     podman_exec("apt-get", "update", env=deb_env)

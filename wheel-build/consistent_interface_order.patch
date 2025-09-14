@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# SPDX-FileCopyrightText: 2025 Arkadiusz Bokowy <arkadiusz.bokowy@gmail.com>
+From 998aa62a21c69b34700f6cbbeb540beddffa9c89 Mon Sep 17 00:00:00 2001
+From: Arkadiusz Bokowy <arkadiusz.bokowy@gmail.com>
+Date: Thu, 12 Jun 2025 16:20:29 +0200
+Subject: [PATCH] sd-bus: Preserve interfaces addition order
+
+When adding a new interface to the object add it at the end of the list.
+This way, when iterating over the list, e.g., during handling introspect
+call, the order of returned interfaces will mach the order in which they
+were added.
+---
+ src/libsystemd/sd-bus/bus-objects.c             | 3 +++
+ test/units/TEST-23-UNIT-FILE.oneshot-restart.sh | 2 +-
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/libsystemd/sd-bus/bus-objects.c b/src/libsystemd/sd-bus/bus-objects.c
+index 7309ad621a0a7..cc1ef226f0cdd 100644
+--- a/src/libsystemd/sd-bus/bus-objects.c
++++ b/src/libsystemd/sd-bus/bus-objects.c
+@@ -1973,6 +1973,9 @@ static int add_object_vtable_internal(
+                 }
+         }
+ 
++        if (!existing)
++                existing = LIST_FIND_TAIL(vtables, n->vtables);
++
+         s->node_vtable.node = n;
+         LIST_INSERT_AFTER(vtables, n->vtables, existing, &s->node_vtable);
+         bus->nodes_modified = true;

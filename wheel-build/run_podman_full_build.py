@@ -63,8 +63,10 @@ SYSTEMD_REPO = "https://github.com/systemd/systemd-stable.git"
 SYSTEMD_TAG = "v255.22"
 SYSTEMD_SRC_DIR = Path("/root/systemd")
 SYSTEMD_BUILD_DIR = SYSTEMD_SRC_DIR / "build"
-SYSTEMD_COMPAT_PATCH_NAME = "systemd_no_gettid_no_getdents64.patch"
-SYSTEMD_COMPAT_PATCH_FILE = WHEEL_BUILD_DIR / SYSTEMD_COMPAT_PATCH_NAME
+SYSTEMD_COMPAT_PATCHES: list[str] = [
+    "systemd_no_gettid_no_getdents64.patch",
+    "consistent_interface_order.patch",
+]
 SYSTEMD_OPTIONS: list[str] = [
     "static-libsystemd=pic",
     "tests=false",
@@ -192,11 +194,12 @@ def clone_systemd() -> None:
 
 
 def apply_systemd_patch() -> None:
-    podman_cp(SYSTEMD_COMPAT_PATCH_FILE, SYSTEMD_SRC_DIR)
-    podman_exec(
-        "git", "apply", SYSTEMD_COMPAT_PATCH_NAME,
-        cwd=SYSTEMD_SRC_DIR,
-    )
+    for patch_filename in SYSTEMD_COMPAT_PATCHES:
+        podman_cp(WHEEL_BUILD_DIR / patch_filename, SYSTEMD_SRC_DIR)
+        podman_exec(
+            "git", "apply", patch_filename,
+            cwd=SYSTEMD_SRC_DIR,
+        )
 
 
 def build_systemd() -> None:

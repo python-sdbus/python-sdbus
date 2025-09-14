@@ -1,3 +1,20 @@
+## 0.14.1
+
+### Features
+
+* Added `sdbus.utils.inspect.inspect_dbus_bus` function. Returns a bus object
+  used by a proxy or exported local object.
+
+### Fixes
+
+* Fix object manager's `InterfacesRemoved` signal being emitted without having
+  interface names. (reported and fixed by @arkq)
+* Fixed interface ordering for signals and methods that return interface information
+  like `InterfacesAdded` or `GetManagedObjects`. (reported and fixed by @arkq)
+* Fixed exported methods callbacks sometimes getting garbage collected before
+  reply could be sent. (reported by @arkq)
+* Fixed several documentation URLs linking outdated repository. (reported and fixed by @rmelotte)
+
 ## 0.14.0
 
 ### Minimum requirements raised

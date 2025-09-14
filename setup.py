@@ -96,7 +96,7 @@ if __name__ == '__main__':
                      'Based on sd-bus from libsystemd.'),
         long_description=long_description,
         long_description_content_type='text/markdown',
-        version='0.14.0',
+        version='0.14.1',
         url='https://github.com/python-sdbus/python-sdbus',
         author='igo95862',
         author_email='igo95862@yandex.ru',

@@ -1,31 +1,42 @@
 ---
-name: Install package from PyPI and run unit tests on Ubuntu 20.04
+name: Install package from PyPI and run unit tests
 on:
   workflow_dispatch:
     inputs:
       pypi_version:
         description: "Version specifier to install from PyPI"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   run:
-    name: Install from PyPI and run unit tests
-    runs-on: ubuntu-22.04
+    name: Install PyPI binary package and run unit tests
+    strategy:
+      matrix:
+        ubuntu_version:
+          - "ubuntu-22.04"
+          - "ubuntu-24.04"
+          - "ubuntu-22.04-arm"
+          - "ubuntu-24.04-arm"
+    runs-on: ${{ matrix.ubuntu_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install python3-setuptools \
-            systemd dbus python3 python3-pip python3-jinja2
+          sudo apt-get update
+          sudo apt-get install dbus python3 python3-pip python3-venv
       - name: Install package
         run: |
-          sudo pip3 install "sdbus ${SDBUS_VERSION}"
+          python3 -m venv venv
+          ./venv/bin/pip3 install --only-binary ':all:' "sdbus ${SDBUS_VERSION}"
         env:
           SDBUS_VERSION: ${{ inputs.pypi_version }}
       - name: List package
         run: |
-          pip3 list | grep sdbus
+          ./venv/bin/pip3 list | grep sdbus
       - name: Run unit tests
         run: |
-          python3 -m unittest
+          ./venv/bin/python3 -m unittest

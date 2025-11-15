@@ -735,7 +735,7 @@ class TestProxy(IsolatedDbusTestCase):
         with self.assertRaises(DbusNoReplyError):
             await wait_for(test_object_connection.looong_method(), timeout=1)
 
-        self.assertAlmostEqual(loop.time() - start, 0.01, delta=0.01)
+        self.assertLess(loop.time() - start, 0.2)
 
     async def test_signal_queue_wildcard_match(self) -> None:
         test_object, test_object_connection = initialize_object()

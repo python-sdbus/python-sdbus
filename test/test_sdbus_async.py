@@ -1008,6 +1008,28 @@ class TestProxy(IsolatedDbusTestCase):
         with self.assertRaises(DbusUnknownObjectError):
             await test_object_connection.returns_none_method()
 
+    async def test_export_handle_lifetime(self) -> None:
+        test_object = TestInterface()
+        test_object_connection = TestInterface.new_proxy(
+            TEST_SERVICE_NAME, '/',
+        )
+        handle = test_object.export_to_dbus("/")
+        await test_object_connection.returns_none_method()
+
+        del test_object
+
+        handle.stop()
+
+        with self.assertRaises(DbusUnknownObjectError):
+            await test_object_connection.returns_none_method()
+
+        # Test idempotency
+        handle.stop()
+        handle.stop()
+
+        with self.assertRaises(DbusUnknownObjectError):
+            await test_object_connection.returns_none_method()
+
     def test_asyncio_run_different_loops(self) -> None:
         bus = self.bus
 

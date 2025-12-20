@@ -49,7 +49,6 @@ class SdBusSlot:
 
 
 class SdBusInterface:
-    slot: Optional[SdBusSlot]
     method_list: list[object]
     method_dict: dict[bytes, object]
     property_list: list[object]
@@ -84,6 +83,9 @@ class SdBusInterface:
         signal_args_names: Sequence[str],
         flags: int, /
     ) -> None:
+        raise NotImplementedError(__STUB_ERROR)
+
+    def _stop_export(self) -> None:
         raise NotImplementedError(__STUB_ERROR)
 
 

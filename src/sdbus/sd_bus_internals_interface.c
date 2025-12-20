@@ -323,16 +323,23 @@ static PyObject* SdBusInterface_create_vtable(SdBusInterfaceObject* self, PyObje
         Py_RETURN_NONE;
 }
 
+static PyObject* SdBusInterface_stop_export(SdBusInterfaceObject* self, PyObject* Py_UNUSED(args)) {
+        Py_XDECREF(self->interface_slot);
+        self->interface_slot = NULL;
+
+        Py_RETURN_NONE;
+}
+
 static PyMethodDef SdBusInterface_methods[] = {
     {"add_method", (SD_BUS_PY_FUNC_TYPE)SdBusInterface_add_method, SD_BUS_PY_METH, PyDoc_STR("Add method to the D-Bus interface.")},
     {"add_property", (SD_BUS_PY_FUNC_TYPE)SdBusInterface_add_property, SD_BUS_PY_METH, PyDoc_STR("Add property to the D-Bus interface.")},
     {"add_signal", (SD_BUS_PY_FUNC_TYPE)SdBusInterface_add_signal, SD_BUS_PY_METH, PyDoc_STR("Add signal to the D-Bus interface.")},
     {"_create_vtable", (PyCFunction)SdBusInterface_create_vtable, METH_NOARGS, PyDoc_STR("Creates the vtable.")},
+    {"_stop_export", (PyCFunction)SdBusInterface_stop_export, METH_NOARGS, PyDoc_STR("Stop exporting object.")},
     {NULL, NULL, 0, NULL},
 };
 
-static PyMemberDef SdBusInterface_members[] = {{"slot", T_OBJECT, offsetof(SdBusInterfaceObject, interface_slot), READONLY, NULL},
-                                               {"method_list", T_OBJECT, offsetof(SdBusInterfaceObject, method_list), READONLY, NULL},
+static PyMemberDef SdBusInterface_members[] = {{"method_list", T_OBJECT, offsetof(SdBusInterfaceObject, method_list), READONLY, NULL},
                                                {"method_dict", T_OBJECT, offsetof(SdBusInterfaceObject, method_dict), READONLY, NULL},
                                                {"property_list", T_OBJECT, offsetof(SdBusInterfaceObject, property_list), READONLY, NULL},
                                                {"property_get_dict", T_OBJECT, offsetof(SdBusInterfaceObject, property_get_dict), READONLY, NULL},

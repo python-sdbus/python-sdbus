@@ -453,11 +453,8 @@ class DbusInterfaceBaseAsync(metaclass=DbusInterfaceMetaAsync):
 class DbusExportHandle:
     def __init__(self, local_meta: DbusLocalObjectMeta):
         self._tasks = local_meta.tasks
-        self._dbus_slots: list[SdBusSlot] = [
-            i.slot
-            for i in local_meta.activated_interfaces
-            if i.slot is not None
-        ]
+        self._dbus_slots: list[SdBusSlot] = []
+        self._dbus_interfaces = local_meta.activated_interfaces
 
     async def __aenter__(self) -> DbusExportHandle:
         return self
@@ -484,6 +481,9 @@ class DbusExportHandle:
     def stop(self) -> None:
         for task in self._tasks:
             task.cancel("D-Bus export stopped")
+
+        for interface in self._dbus_interfaces:
+            interface._stop_export()
 
         for slot in self._dbus_slots:
             slot.close()

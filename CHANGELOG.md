@@ -1,3 +1,10 @@
+## 0.14.2
+
+### Fixes
+
+* Fix segmentation fault if export handle outlives the exported object. (reported by @arkq)
+* Fix some tests failing on slow systems.
+
 ## 0.14.1
 
 ### Features

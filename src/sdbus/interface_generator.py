@@ -722,7 +722,7 @@ def {{ a_property.python_name }}(self) -> {{ a_property.typing }}:
     flags={{ signal.flags_str }},
 {% endif %}
 {% if signal.wants_rename %}
-    signal_name=signal.method_name,
+    signal_name="{{signal.method_name}}",
 {% endif %}
 )
 def {{ signal.python_name }}(self) -> {{ signal.typing }}:

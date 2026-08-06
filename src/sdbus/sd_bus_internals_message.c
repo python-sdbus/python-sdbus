@@ -18,6 +18,7 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 */
+#include <fcntl.h>
 #include "sd_bus_internals.h"
 
 void _SdBusMessage_set_messsage(SdBusMessageObject* self, sd_bus_message* new_message) {
@@ -800,6 +801,10 @@ static PyObject* _iter_basic(sd_bus_message* message, char basic_type) {
                 case 'h': {
                         int new_fd = 0;
                         CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_fd));
+
+                        // The fd is owned by the message and would be closed after the end of the message's lifetime
+                        new_fd = fcntl(new_fd, F_DUPFD_CLOEXEC, 3);
+
                         return PyLong_FromLong((long)new_fd);
                         break;
                 }

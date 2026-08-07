@@ -803,7 +803,7 @@ static PyObject* _iter_basic(sd_bus_message* message, char basic_type) {
                         CALL_SD_BUS_AND_CHECK(sd_bus_message_read_basic(message, basic_type, &new_fd));
 
                         // The fd is owned by the message and would be closed after the end of the message's lifetime
-                        new_fd = fcntl(new_fd, F_DUPFD_CLOEXEC, 3);
+                        new_fd = CALL_SD_BUS_AND_CHECK(fcntl(new_fd, F_DUPFD_CLOEXEC, 3));
 
                         return PyLong_FromLong((long)new_fd);
                         break;

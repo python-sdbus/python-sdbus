@@ -1,3 +1,11 @@
+## 0.14.3
+
+### Fixes
+
+* Fix code generated signals not using proper member name. (reported and fixed by @SqueakyBeaver)
+* Fix file descriptors from D-Bus messages (type `h`) instantly being closed after message
+  was parsed. (reported and fixed by @luleyleo)
+
 ## 0.14.2
 
 ### Fixes

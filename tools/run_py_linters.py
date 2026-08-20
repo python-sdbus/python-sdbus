@@ -50,7 +50,7 @@ def run_mypy() -> None:
         args=(
             'mypy', '--strict', '--pretty',
             '--cache-dir', mypy_cache_dir,
-            '--python-version', '3.10',
+            '--python-version', '3.9',
             '--namespace-packages',
             '--explicit-package-bases',
             *all_python_modules,
